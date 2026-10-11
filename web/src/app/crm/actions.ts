@@ -396,12 +396,13 @@ export async function crmOverview(): Promise<Overview> {
 }
 
 /** Сводка по сделкам для списка клиентов: последняя открытая сделка (этап, сумма) по клиенту. */
-export async function clientDealSummary(ids: string[]): Promise<Record<string, { stageId: string | null; amount: number | null; cur: string; title: string }>> {
+export type DealSummary = { id: string; stageId: string | null; amount: number | null; cur: string; title: string; deal: string };
+export async function clientDealSummary(ids: string[]): Promise<Record<string, DealSummary>> {
   const c = await crmCtx();
   if (!ids.length) return {};
-  const { data } = await c.sb.from("crm_deals").select("client_id, stage_id, amount, cur, title, updated_at").in("client_id", ids).is("closed_at", null).order("updated_at", { ascending: false });
-  const out: Record<string, { stageId: string | null; amount: number | null; cur: string; title: string }> = {};
-  for (const d of (data ?? []) as Row[]) { const k = d.client_id as string; if (!out[k]) out[k] = { stageId: s(d.stage_id), amount: n(d.amount), cur: (d.cur as string) || "TRY", title: (d.title as string) ?? "" }; }
+  const { data } = await c.sb.from("crm_deals").select("id, client_id, stage_id, amount, cur, title, deal, updated_at").in("client_id", ids).is("closed_at", null).order("updated_at", { ascending: false });
+  const out: Record<string, DealSummary> = {};
+  for (const d of (data ?? []) as Row[]) { const k = d.client_id as string; if (!out[k]) out[k] = { id: d.id as string, stageId: s(d.stage_id), amount: n(d.amount), cur: (d.cur as string) || "TRY", title: (d.title as string) ?? "", deal: (d.deal as string) || "sale" }; }
   return out;
 }
 
@@ -422,4 +423,15 @@ export async function bulkClients(ids: string[], patch: { ownerId?: string | nul
       await c.sb.from("crm_clients").update({ tags }).eq("id", r.id as string);
     }
   }
+}
+
+/** Счётчики для бокового меню: активные клиенты, открытые сделки, невыполненные задачи. */
+export async function crmCounts(): Promise<{ clients: number; deals: number; tasks: number }> {
+  const c = await crmCtx();
+  const [{ count: a }, { count: b }, { count: d }] = await Promise.all([
+    c.sb.from("crm_clients").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", "active"),
+    c.sb.from("crm_deals").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("closed_at", null),
+    c.sb.from("crm_tasks").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("done_at", null),
+  ]);
+  return { clients: a ?? 0, deals: b ?? 0, tasks: d ?? 0 };
 }

@@ -1356,7 +1356,36 @@
       "overdue": "Gecikmiş",
       "open": "Kartı aç",
       "addTagPh": "Yeni etiket ve Enter",
-      "rows": "{n} müşteri"
+      "rows": "{n} müşteri",
+      "views": {
+        "all": "Tümü",
+        "mine": "Benim",
+        "withTask": "Görevli",
+        "overdue": "Gecikmiş",
+        "noDeal": "İşlemsiz",
+        "save": "+ Görünümü kaydet"
+      },
+      "stageRow": "Aşama:",
+      "noStage": "İşlem yok",
+      "compact": "Kompakt",
+      "expanded": "Geniş",
+      "allFilters": "Tüm filtreler",
+      "cols2": {
+        "client": "Müşteri",
+        "region": "Bölge",
+        "deal": "Mülk ve işlem",
+        "status": "Durum",
+        "source": "Kaynak",
+        "team": "Ekip"
+      },
+      "unassigned": "Atanmadı",
+      "overdueBy": "görev {d} gecikti",
+      "openTab": "Sekmede aç",
+      "role": {
+        "owner": "Sahip",
+        "member": "Üye"
+      },
+      "listOf": "Müşteri listesi"
     },
     "kb": {
       "days": "{n} gün",

@@ -5,7 +5,10 @@ import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Dict, Lang } from "@/i18n";
 import type { CrmMe, Source, Stage, TaskKind } from "@/lib/crm/types";
 
-export type CrmCtxT = { me: CrmMe; stages: Stage[]; sources: Source[]; base: string; refresh: () => void; setStages: (s: Stage[]) => void; setSources: (s: Source[]) => void };
+export type CrmTab = { id: string; name: string };
+export type CrmCtxT = { me: CrmMe; stages: Stage[]; sources: Source[]; base: string; refresh: () => void; setStages: (s: Stage[]) => void; setSources: (s: Source[]) => void;
+  /** вкладки открытых карточек (как в браузере): регистрирует ClientPage, закрывает крестик/удаление */
+  openTab?: (id: string, name: string) => void; closeTab?: (id: string) => void };
 export const CrmCtx = createContext<CrmCtxT | null>(null);
 export function useCrm(): CrmCtxT { const c = useContext(CrmCtx); if (!c) throw new Error("CrmCtx"); return c; }
 
@@ -54,6 +57,7 @@ function readPref(key: string): string | null {
   if (!prefCache.has(key)) { try { prefCache.set(key, localStorage.getItem(key)); } catch { prefCache.set(key, null); } }
   return prefCache.get(key) ?? null;
 }
+export const getPref = (key: string): string | null => readPref(key);
 export function setPref(key: string, value: string) { prefCache.set(key, value); try { localStorage.setItem(key, value); } catch {} prefSubs.forEach((l) => l()); }
 export function usePref(key: string): string | null {
   return useSyncExternalStore((l) => { prefSubs.add(l); return () => { prefSubs.delete(l); }; }, () => readPref(key), () => null);

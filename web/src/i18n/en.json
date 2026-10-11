@@ -1356,7 +1356,36 @@
       "overdue": "Overdue",
       "open": "Open card",
       "addTagPh": "New tag and Enter",
-      "rows": "{n} clients"
+      "rows": "{n} clients",
+      "views": {
+        "all": "All",
+        "mine": "Mine",
+        "withTask": "With task",
+        "overdue": "Overdue",
+        "noDeal": "No deal",
+        "save": "+ Save view"
+      },
+      "stageRow": "Stage:",
+      "noStage": "No deal",
+      "compact": "Compact",
+      "expanded": "Expanded",
+      "allFilters": "All filters",
+      "cols2": {
+        "client": "Client",
+        "region": "Region",
+        "deal": "Property & deal",
+        "status": "Status",
+        "source": "Source",
+        "team": "Team"
+      },
+      "unassigned": "Unassigned",
+      "overdueBy": "task overdue {d}",
+      "openTab": "Open in a tab",
+      "role": {
+        "owner": "Owner",
+        "member": "Member"
+      },
+      "listOf": "Client list"
     },
     "kb": {
       "days": "{n} d.",

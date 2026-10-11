@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconArrowLeft, IconBrandWhatsapp, IconCheck, IconCopy, IconLanguage, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconArchive, IconBrandWhatsapp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
 import { addNote, crmBootstrap, deleteClient, deleteDeal, doneTask, findDups, getClient, mergeClients, moveDeal, setClientStatus, translateNote } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
@@ -44,7 +44,9 @@ function Inner({ id }: { id: string }) {
   const [noteKind, setNoteKind] = useState<EventKind>("note");
   const [dups, setDups] = useState<DupHit[]>([]);
   const ro = crm.me.access !== "full";
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => setData(null)); }, [id]);
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => setData(null));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   useEffect(() => { load(); }, [load]);
 
   if (data === undefined) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
@@ -65,7 +67,7 @@ function Inner({ id }: { id: string }) {
   async function archive() { try { await setClientStatus(cl.id, cl.status === "active" ? "archived" : "active"); load(); } catch (e) { err(e); } }
   async function del() {
     if (!(await confirmDialog({ title: c.client.delT, text: c.client.delQ, danger: true }))) return;
-    try { await deleteClient(cl.id); router.push(`${crm.base}/clients`); } catch (e) { err(e); }
+    try { await deleteClient(cl.id); crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } catch (e) { err(e); }
   }
   async function merge(d: DupHit) {
     if (!(await confirmDialog({ title: c.client.mergeT, text: c.client.mergeQ }))) return;
@@ -79,88 +81,91 @@ function Inner({ id }: { id: string }) {
   async function delDeal(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
 
   const refLabel = cl.refKind === "none" ? null : cl.refKind === "text" ? cl.refText : cl.refKind === "realtor" ? c.client.refRealtor : c.client.refAgency;
+  const mainPhone = cl.contacts.find((x) => x.kind === "phone" || x.kind === "whatsapp");
+  const openDeal = deals.find((d) => !d.closedAt);
+  const openTasks = tasks.filter((x) => !x.doneAt);
+  const field = (l: string, v?: string | null) => v ? <div key={l} className="min-w-0"><div className="text-[11px] font-medium text-muted">{l}</div><div className="truncate text-[13px] text-ink">{v}</div></div> : null;
   return (
     <>
-      <Link href={`${crm.base}/clients`} className="mb-3 inline-flex items-center gap-1 text-[13px] font-semibold text-muted hover:text-ink"><IconArrowLeft size={15} /> {c.nav.clients}</Link>
-      <div className="grid grid-cols-[360px_1fr] gap-4 max-[1100px]:grid-cols-1">
-      <div className="flex flex-col gap-4 self-start min-[1101px]:sticky min-[1101px]:top-[128px]">
-      <div className={card}>
-        <div className="flex flex-wrap items-start gap-4">
-          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-ink text-[14px] font-semibold text-white">{initials(cl.name)}</span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2"><h1 className="text-[18px] font-semibold text-ink">{cl.name}</h1><span className={chip}>{cl.lang}</span>{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
-              <span>{c.source}: <b className="text-text">{sourceName(src, t)}</b></span>
-              {owner && <span>{c.owner}: <b className="text-text">{owner.name}</b></span>}
-              {refLabel && <span>{c.client.ref}: <b className="text-text">{refLabel}</b></span>}
-              <span>{c.client.created}: {fmtDate(cl.createdAt, lang)}</span>
-            </div>
-            {(want || budget) && <div className="mt-2 text-[13.5px] text-text">{want && <span>{c.client.want}: <b>{want}</b></span>}{want && budget && " · "}{budget && <span>{c.client.budget}: <b>{budget}</b></span>}</div>}
-            {cl.notes && <div className="mt-2 whitespace-pre-line text-[13.5px] text-text-2">{cl.notes}</div>}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={15} /> {c.client.edit}</button>
-            <button type="button" onClick={archive} disabled={ro} className={btnS}><IconArchive size={15} /> {cl.status === "active" ? c.client.archive : c.client.unarchive}</button>
-            <button type="button" onClick={del} disabled={ro} className={btnD}><IconTrash size={15} /> {c.client.delete}</button>
-          </div>
+      {/* шапка карточки — образец пользователя: имя · номер, строка с телефоном/источником/ответственным, справа этап и действия */}
+      <div className="-mx-4 -mt-4 mb-4 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-5 py-3">
+        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-tint text-[14px] font-semibold text-sel-ink">{initials(cl.name)}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
+          <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {cl.contacts.length === 0 && <span className="text-[13px] text-muted">{c.client.noContacts}</span>}
-          {cl.contacts.map((x) => (
-            <div key={x.id} className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px]">
-              <span className="text-[11px] font-bold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span>
-              <span className="ml-2 font-semibold text-ink">{x.value}</span>
-              {(x.kind === "phone" || x.kind === "whatsapp") && <a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} title={c.client.call} className="ml-1 flex h-7 w-7 items-center justify-center rounded-[8px] text-muted hover:bg-surface hover:text-ink"><IconPhone size={15} /></a>}
-              {(x.kind === "phone" || x.kind === "whatsapp") && <a href={waOf(x.value)} target="_blank" rel="noreferrer" title={c.client.wa} className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[#25d366] hover:bg-surface"><IconBrandWhatsapp size={16} /></a>}
-              <button type="button" onClick={() => copy(x.value)} title={c.client.copy} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] text-muted hover:bg-surface hover:text-ink"><IconCopy size={14} /></button>
-            </div>
-          ))}
-        </div>
-        {dups.length > 0 && (
-          <div className="mt-3 rounded-[12px] border border-[#f5d58a] bg-[#fff8e6] p-3 text-[13px]">
-            <div className="mb-1 font-bold text-ink">{dups.length > 1 ? c.client.dupMany : c.client.dup}:</div>
-            {dups.map((d) => <div key={d.clientId} className="flex flex-wrap items-center gap-3"><Link href={`${crm.base}/c/${d.clientId}`} className="font-semibold text-blue-2 hover:underline">{d.name}</Link><span className="text-muted">{c.kinds[d.kind]}</span><button type="button" onClick={() => merge(d)} disabled={ro} className="cursor-pointer text-[12.5px] font-bold text-ink underline">{c.client.dupMerge}</button></div>)}
-          </div>
-        )}
+        {openDeal && <Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />}
+        {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}
+        {mainPhone && <a href={waOf(mainPhone.value)} target="_blank" rel="noreferrer" className={btnS}><IconBrandWhatsapp size={15} /> {c.client.wa}</a>}
+        <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
       </div>
 
-      </div>
-      <div className="flex min-w-0 flex-col gap-4">
-        <div className={card}>
-          <div className="mb-2 flex flex-wrap gap-1">
-            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-[6px] border px-[10px] text-[12.5px] font-medium ${noteKind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
-            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-[6px] border border-line bg-surface px-[10px] text-[12.5px] font-medium text-text hover:bg-bg-3">{c.card.task}</button>
+      <div className="grid grid-cols-[1fr_400px] gap-4 max-[1100px]:grid-cols-1">
+        {/* ---- основная колонка: данные, сделки, задачи ---- */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className={card}>
+            <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
+            <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
+              {field(c.client.want, want)}{field(c.client.budget, budget)}{field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}
+              {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.client.consent, cl.consent ? "✓" : "—")}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {cl.contacts.map((x) => (
+                <div key={x.id} className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px]">
+                  <span className="text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink">{x.value}</span>
+                  {(x.kind === "phone" || x.kind === "whatsapp") && <><a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={13} /></a><a href={waOf(x.value)} target="_blank" rel="noreferrer" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-[#25d366] hover:bg-bg-2"><IconBrandWhatsapp size={14} /></a></>}
+                  {x.kind === "email" && <a href={`mailto:${x.value}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconMail size={13} /></a>}
+                  <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
+                </div>
+              ))}
+            </div>
+            {cl.notes && <div className="mt-3 whitespace-pre-line rounded-[6px] bg-[#fafbfc] px-3 py-2 text-[12.5px] text-text">{cl.notes}</div>}
+            {dups.length > 0 && (
+              <div className="mt-3 rounded-[6px] border border-[#f5d58a] bg-[#fff8e6] p-3 text-[12.5px]">
+                <div className="mb-1 font-semibold text-ink">{dups.length > 1 ? c.client.dupMany : c.client.dup}:</div>
+                {dups.map((d) => <div key={d.clientId} className="flex flex-wrap items-center gap-2"><Link href={`${crm.base}/c/${d.clientId}`} className="font-medium text-blue-2 hover:underline">{d.name}</Link><span className="text-muted">{c.kinds[d.kind]}</span><button type="button" onClick={() => merge(d)} disabled={ro} className="cursor-pointer text-[12px] font-semibold text-ink underline">{c.client.dupMerge}</button></div>)}
+              </div>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
+              <button type="button" onClick={archive} disabled={ro} className={btnS}><IconArchive size={14} /> {cl.status === "active" ? c.client.archive : c.client.unarchive}</button>
+              <button type="button" onClick={del} disabled={ro} className={btnD}><IconTrash size={14} /> {c.client.delete}</button>
+            </div>
           </div>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[72px] resize-y py-2`} />
-          <div className="mt-2 flex items-center justify-between"><span className="text-[11.5px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={btnP}>{c.ev.add}</button></div>
+
+          <div className={card}>
+            <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
+            {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
+              <div className="flex flex-col gap-3">{deals.map((d) => { const st = crm.stages.find((s) => s.id === d.stageId); return (
+                <div key={d.id} className="rounded-[6px] border border-line p-3">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <span className="mt-[6px] h-[9px] w-[9px] flex-none rounded-full" style={{ background: st?.color ?? "#8a93a2" }} />
+                    <button type="button" onClick={() => setDealM({ open: true, deal: d })} className="min-w-0 flex-1 cursor-pointer text-left"><div className="text-[13.5px] font-semibold text-ink hover:text-blue-2">{d.title || "—"}</div><div className="text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div></button>
+                    <Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />
+                    <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
+                  </div>
+                  <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
+                </div>); })}</div>
+            )}
+          </div>
+
+          <div className={card}>
+            <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.tasks} · {openTasks.length}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
+            {openTasks.length === 0 ? <div className="text-[12.5px] text-muted">{c.task.none}</div> : <div className="flex flex-col gap-1">{openTasks.map((x) => <div key={x.id} className="flex items-center gap-2 rounded-[6px] border border-line px-2 py-[6px]"><button type="button" onClick={async () => { try { await doneTask(x.id, true); load(); } catch (e) { err(e); } }} disabled={ro} className="h-5 w-5 flex-none cursor-pointer rounded-full border-2 border-line hover:border-blue" /><button type="button" onClick={() => setTaskM({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className="truncate text-[12.5px] font-medium text-ink">{x.title}</div><div className={`text-[11px] ${new Date(x.dueAt) < new Date() ? "font-semibold text-red" : "text-muted"}`}>{taskKindName(x.kind, t)} · {fmtDT(x.dueAt, lang)}</div></button></div>)}</div>}
+          </div>
         </div>
-        <div className={card}>
-          <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
-          {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
-            <div className="flex flex-col gap-2">{deals.map((d) => (
-              <div key={d.id} className="rounded-[6px] border border-line p-3">
-                <div className="flex items-start justify-between gap-2"><button type="button" onClick={() => setDealM({ open: true, deal: d })} className="cursor-pointer text-left text-[13.5px] font-bold text-ink hover:text-blue-2">{d.title || "—"}</button><button type="button" onClick={() => delDeal(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></div>
-                <div className="mt-1 text-[12.5px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div>
-                <div className="mt-2"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
-                <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
-              </div>))}</div>
-          )}
+
+        {/* ---- правая колонка: лента активности с комментарием ---- */}
+        <div className={`${card} self-start min-[1101px]:sticky min-[1101px]:top-[160px]`}>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex h-7 cursor-pointer items-center rounded-[6px] border px-[10px] text-[12px] font-medium ${noteKind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
+            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex h-7 cursor-pointer items-center rounded-[6px] border border-line bg-surface px-[10px] text-[12px] font-medium text-text hover:bg-bg-3">{c.card.task}</button>
+          </div>
+          <div className="flex gap-2">
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[40px] flex-1 resize-y py-2`} rows={1} />
+            <button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={`${btnS} flex-none self-start`}>{c.ev.add}</button>
+          </div>
+          <div className="mt-4"><Timeline events={events} /></div>
         </div>
-        <div className={card}>
-          <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.tasks}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
-          {tasks.length === 0 ? <div className="text-[13px] text-muted">{c.task.none}</div> : (
-            <div className="flex flex-col gap-2">{tasks.map((x) => (
-              <div key={x.id} className="flex items-center gap-3 rounded-[6px] border border-line px-3 py-[6px]">
-                <button type="button" onClick={async () => { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }} disabled={ro} className={`flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-full border-2 ${x.doneAt ? "border-green bg-green text-white" : "border-line hover:border-blue"}`}>{x.doneAt && <IconCheck size={14} />}</button>
-                <button type="button" onClick={() => setTaskM({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className={`truncate text-[13.5px] font-semibold ${x.doneAt ? "text-muted line-through" : "text-ink"}`}>{x.title}</div><div className="text-[12px] text-muted">{taskKindName(x.kind, t)} · <span className={!x.doneAt && new Date(x.dueAt) < new Date() ? "font-semibold text-red" : ""}>{fmtDT(x.dueAt, lang)}</span></div></button>
-              </div>))}</div>
-          )}
-        </div>
-      <div className={card}>
-        <div className="mb-3 text-[15px] font-extrabold text-ink">{c.card.activity}</div>
-        <Timeline events={events} />
-      </div>
-      </div>
       </div>
 
       <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
