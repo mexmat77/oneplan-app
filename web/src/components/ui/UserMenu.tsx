@@ -24,7 +24,8 @@ export function UserMenu({ name, sub, email, avatar, color, items, logoutLabel, 
   const box = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   // Панель — порталом в body с fixed-позицией: липкие панели страниц (фильтры каталога и т. п.) имеют свой z-index и иначе перекрывали меню.
-  const place = () => { const r = box.current?.getBoundingClientRect(); if (r) setPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) }); };
+  // панель 280px прижата к правому краю кнопки, но никогда не уходит за край окна (аватар может оказаться слева, если шапка перенеслась)
+  const place = () => { const r = box.current?.getBoundingClientRect(); if (r) setPos({ top: r.bottom + 6, right: Math.min(Math.max(8, window.innerWidth - r.right), Math.max(8, window.innerWidth - 280 - 8)) }); };
   useLayoutEffect(() => { if (open) place(); }, [open]);
   useEffect(() => {
     if (!open) return;

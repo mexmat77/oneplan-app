@@ -237,6 +237,12 @@ body {
   [data-obj-bar] { display: flex !important; }
   [data-demo] { bottom: 84px !important; }
 }
+/* у админа в шапке ещё переключатель пространств (риэлторы/застройщики/управление) + CRM: до 1750px подписи пунктов прячем,
+   иначе шапка переносится на вторую строку и аватар с меню уезжают влево (скриншот пользователя 11.10.2026) */
+@media (max-width: 1750px) {
+  [data-topbar][data-admin="1"] [data-nav-label] { display: none !important; }
+  [data-topbar][data-admin="1"] [data-nav-item] { padding: 9px 11px !important; }
+}
 @media (max-width: 900px) {
   [data-nav-label] { display: none !important; }
   [data-nav-item] { padding: 9px 11px !important; }

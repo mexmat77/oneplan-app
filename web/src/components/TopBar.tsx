@@ -79,7 +79,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
 
   return (
     <>
-      <header data-topbar="1" data-hdr-hidden={hidden ? "1" : "0"} className="sticky top-0 z-100 flex min-h-[62px] flex-wrap items-center gap-[clamp(8px,2vw,16px)] gap-y-[6px] border-b border-line bg-surface px-[clamp(14px,4vw,28px)] py-2">
+      <header data-topbar="1" data-admin={isAdmin ? "1" : "0"} data-hdr-hidden={hidden ? "1" : "0"} className="sticky top-0 z-100 flex min-h-[62px] flex-wrap items-center gap-[clamp(8px,2vw,16px)] gap-y-[6px] border-b border-line bg-surface px-[clamp(14px,4vw,28px)] py-2">
         <Link href="/catalog" className="flex shrink-0 items-center gap-[9px] hover:brightness-95">
           <Logo />
           {!isAdmin && <span data-brand-tag="1" className="rounded-[16px] bg-blue-tint px-[9px] py-[3px] text-[10.5px] font-bold tracking-[.02em] text-blue">{t.common.tag}</span>}
