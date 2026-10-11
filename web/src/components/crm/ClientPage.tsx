@@ -14,11 +14,10 @@ import { useI18n } from "@/i18n/provider";
 import type { Client, CrmEvent, CrmMe, Deal, DupHit, EventKind, Source, Stage, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
-import { GEO } from "@/lib/seed";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { CrmCtx, btnD, btnP, btnS, card, chip, fill, fmtDT, fmtDate, initials, inp, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { CrmCtx, btnD, btnP, btnS, card, chip, fill, fmtDT, fmtDate, initials, inp, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -55,7 +54,7 @@ function Inner({ id }: { id: string }) {
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   const src = crm.sources.find((s) => s.id === cl.sourceId);
   const owner = crm.me.members.find((m) => m.id === cl.ownerId);
-  const want = [cl.want.deal ? t.deal[cl.want.deal as keyof typeof t.deal] : null, cl.want.type ? t.typ[cl.want.type as keyof typeof t.typ] : null, cl.want.rooms?.length ? cl.want.rooms.join(", ") : null, cl.want.il ? GEO.find((g) => g.k === cl.want.il)?.n ?? cl.want.il : null].filter(Boolean).join(" · ");
+  const want = [cl.want.deal ? t.deal[cl.want.deal as keyof typeof t.deal] : null, cl.want.type ? t.typ[cl.want.type as keyof typeof t.typ] : null, cl.want.rooms?.length ? cl.want.rooms.join(", ") : null, cl.want.il ? wantGeoLabel(cl.want, "") : null].filter(Boolean).join(" · ");
   const budget = cl.budgetMin || cl.budgetMax ? `${cl.budgetMin ? fmt(cl.budgetMin, cl.cur as Currency) : "…"} — ${cl.budgetMax ? fmt(cl.budgetMax, cl.cur as Currency) : "…"}` : "";
   const waOf = (v: string) => `https://wa.me/${v.replace(/\D/g, "").replace(/^0/, "90")}`;
   const copy = (v: string) => { navigator.clipboard?.writeText(v).then(() => showToast(c.client.copied)); };

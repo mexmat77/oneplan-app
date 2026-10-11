@@ -3,7 +3,9 @@
 // Карточка клиента (создание/правка): имя, язык, контакты (несколько), источник, ответственный, «кто привёл»
 // (застройщик), бюджет, что ищет, теги, заметки, согласие. Перед сохранением — проверка дублей по телефону/e-mail.
 import { useEffect, useState } from "react";
-import { IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
+import { IconChevronDown, IconMapPin, IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
+import { GeoPicker } from "@/components/GeoPicker";
+import { useMahalleLoaded } from "@/lib/geo";
 import { findDups, listReferrers, saveClient } from "@/app/crm/actions";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
@@ -11,9 +13,8 @@ import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Lang } from "@/i18n";
 import type { Client, ClientInput, ContactKind, DupHit, RefKind } from "@/lib/crm/types";
-import { GEO } from "@/lib/seed";
 import { ROOMS_ALL } from "@/lib/types";
-import { btnP, btnS, inp, lbl, sourceName, useCrm } from "./crmUi";
+import { btnP, btnS, inp, lbl, sourceName, useCrm, wantGeoLabel } from "./crmUi";
 
 type CForm = { id?: string; kind: ContactKind; value: string; label: string; isMain: boolean };
 const KINDS: ContactKind[] = ["phone", "whatsapp", "email", "telegram", "other"];
@@ -32,6 +33,8 @@ export function ClientModal(props: Props) {
 function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
   const { t, lang } = useI18n();
   const crm = useCrm();
+  const [geo, setGeo] = useState(false);
+  useMahalleLoaded();
   const c = t.crm;
   const [f, setF] = useState<ClientInput>(() => fromClient(client, lang, crm.me.meId));
   const [tags, setTags] = useState(client?.tags.join(", ") ?? "");
@@ -64,7 +67,6 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
     finally { setBusy(false); }
   }
 
-  const ilOpts = [{ value: "", label: c.want.any }, ...GEO.map((g) => ({ value: g.k, label: g.n }))];
   return (
     <div data-crm-form="1">
       <div className="mb-4 flex items-center justify-between">
@@ -119,7 +121,11 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
           <Select value={f.want.deal ?? ""} onChange={(v) => set({ want: { ...f.want, deal: v || undefined } })} options={[{ value: "", label: `${c.want.deal}: ${c.want.any}` }, ...(["sale", "rent", "daily"] as const).map((d) => ({ value: d, label: t.deal[d] }))]} />
           <Select value={f.want.type ?? ""} onChange={(v) => set({ want: { ...f.want, type: v || undefined } })} options={[{ value: "", label: `${c.want.type}: ${c.want.any}` }, ...(["flat", "house", "comm", "land"] as const).map((d) => ({ value: d, label: t.typ[d] }))]} />
-          <Select value={f.want.il ?? ""} onChange={(v) => set({ want: { ...f.want, il: v || undefined } })} options={ilOpts} searchable />
+          {/* расположение — то же окно İl / İlçe / Mahalle, что в форме объекта (правило пользователя 11.10.2026), с множественным выбором */}
+          <button type="button" onClick={() => setGeo(true)} className="relative h-9 cursor-pointer truncate rounded-[6px] border border-line bg-surface pl-8 pr-7 text-left text-[13px] text-ink hover:border-blue">
+            <IconMapPin size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />{wantGeoLabel(f.want, `${t.geo.loc}: ${c.want.any}`)}
+            <IconChevronDown size={13} className="absolute right-[9px] top-1/2 -translate-y-1/2 text-muted" />
+          </button>
         </div>
         <div className="mt-2 flex flex-wrap gap-[6px]">
           {ROOMS_ALL.map((r) => { const on = f.want.rooms?.includes(r); return <button key={r} type="button" onClick={() => set({ want: { ...f.want, rooms: on ? (f.want.rooms ?? []).filter((x) => x !== r) : [...(f.want.rooms ?? []), r] } })} className={`cursor-pointer rounded-[14px] border px-[11px] py-[5px] text-[12px] font-semibold ${on ? "border-sel-line bg-blue-tint text-sel-ink" : "border-line text-text-2 hover:bg-bg-3"}`}>{r}</button>; })}
@@ -147,6 +153,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         <button type="button" onClick={onClose} className={btnS}>{c.cancel}</button>
         <button type="button" onClick={() => submit(false)} disabled={busy} className={btnP}>{client ? c.save : c.create}</button>
       </div>
+      {geo && <GeoPicker mode="filter" showAll z={500} applyLabel={c.want.applyGeo} value={{ il: f.want.il ?? "", ilces: f.want.ilces ?? [], semts: f.want.semts ?? [] }} onApply={(v) => { set({ want: { ...f.want, il: v.il || undefined, ilces: v.ilces, semts: v.semts } }); setGeo(false); }} onClose={() => setGeo(false)} />}
     </div>
   );
 }

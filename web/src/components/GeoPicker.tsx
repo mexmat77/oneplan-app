@@ -24,13 +24,16 @@ type Props = {
   countLabel?: string;             // "объектов" / "проектов"
   onApply: (v: GeoValue) => void;
   onClose: () => void;
+  showAll?: boolean;               // filter-режим, но показывать ВСЕ районы/махалле (пожелания клиента в CRM, не поиск по базе)
+  applyLabel?: string;             // подпись кнопки вместо «Показать N объектов»
+  z?: number;                      // z-index поверх модалки (Modal = 410)
 };
 
 const norm = (s: string) => s.toLocaleLowerCase("tr").normalize("NFD").replace(/[̀-ͯ]/g, "");
 const ilName = (k: string) => GEO.find((x) => x.k === k)?.n ?? k;
 const ilceName = (k: string) => { for (const il of GEO) { const ic = il.ilces.find((x) => x.k === k); if (ic) return ic.n; } return k; };
 
-export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, onClose }: Props) {
+export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, onClose, showAll, applyLabel, z }: Props) {
   const t = useT();
   useMahalleLoaded(); // махалле подгружаются лениво; после загрузки список семтов перерисуется
   const all = useAllListings();
@@ -71,7 +74,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
     }
     return true;
   }).length, [scopeAll, il, ilces, semts]);
-  const showLabel = projects
+  const showLabel = applyLabel ? applyLabel : projects
     ? `${t.geo.show} ${projects.filter((p) => nbGeoOk(p, { il, ilces, semts })).length} ${countLabel ?? t.geo.obj}`
     : `${t.geo.show} ${resultN} ${countLabel ?? t.geo.obj}`;
 
@@ -83,15 +86,15 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
   const count = "text-[12px] font-semibold text-muted";
 
   const semtGroups = (isAdd ? (gIl?.ilces.filter((ic) => ic.k === focus) ?? []) : (gIl?.ilces.filter((ic) => ilces.includes(ic.k)) ?? []))
-    .map((ic) => ({ ic, rows: ic.semts.filter((sm) => match(sm.n) && (isAdd || (cnt.bySemt[`${ic.k}/${sm.k}`] || 0) > 0)) }))
+    .map((ic) => ({ ic, rows: ic.semts.filter((sm) => match(sm.n) && (isAdd || showAll || (cnt.bySemt[`${ic.k}/${sm.k}`] || 0) > 0)) }))
     .filter((g) => g.rows.length);
   // В поиске показываем только районы/махалле с объектами; при добавлении — все (правило пользователя 09.10.2026).
-  const ilceRows = gIl?.ilces.filter((ic) => match(ic.n) && (isAdd || (cnt.byIlce[ic.k] || 0) > 0)) ?? [];
+  const ilceRows = gIl?.ilces.filter((ic) => match(ic.n) && (isAdd || showAll || (cnt.byIlce[ic.k] || 0) > 0)) ?? [];
 
   return (
     <>
-      <div className="animate-bg fixed inset-0 z-330 bg-[rgba(10,16,28,.45)]" onClick={onClose} />
-      <div data-geo-panel="1" className="animate-fade fixed left-1/2 top-1/2 z-340 flex h-[min(620px,86vh)] w-[520px] max-w-[calc(100vw-24px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[18px] bg-surface shadow-[0_30px_80px_rgba(0,0,0,.35)]">
+      <div className="animate-bg fixed inset-0 z-330 bg-[rgba(10,16,28,.45)]" style={z ? { zIndex: z } : undefined} onClick={onClose} />
+      <div data-geo-panel="1" style={z ? { zIndex: z + 10 } : undefined} className="animate-fade fixed left-1/2 top-1/2 z-340 flex h-[min(620px,86vh)] w-[520px] max-w-[calc(100vw-24px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[18px] bg-surface shadow-[0_30px_80px_rgba(0,0,0,.35)]">
         <div className="flex items-center gap-[10px] border-b border-[#f2f4f8] px-[18px] py-[15px]">
           {step !== "il" && (
             <button type="button" onClick={() => { setStep(step === "semt" ? "ilce" : "il"); setQ(""); }} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-[16px] text-text hover:border-blue hover:text-blue"><IconArrowLeft size={16} /></button>
@@ -124,7 +127,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
                   className={`${row} ${selIl === g.k ? "bg-blue-tint" : ""}`}
                 >
                   <span className="min-w-0 flex-1">{g.n}</span>
-                  <span className={count}>{isAdd ? "" : cnt.byIl[g.k] || 0}</span>
+                  <span className={count}>{isAdd || showAll ? "" : cnt.byIl[g.k] || 0}</span>
                   <IconChevronRight size={16} className="text-[#c3c9d4]" />
                 </button>
               ))}
@@ -159,7 +162,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
                       <span className="block">{ic.n}</span>
                       {sub && <span className="mt-[1px] block truncate text-[11.5px] text-blue">{sub}</span>}
                     </span>
-                    <span className={count}>{isAdd ? "" : cnt.byIlce[ic.k] || 0}</span>
+                    <span className={count}>{isAdd || showAll ? "" : cnt.byIlce[ic.k] || 0}</span>
                   </button>
                 );
               })}
@@ -181,7 +184,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
                       <button key={sm.k} type="button" onClick={() => (isAdd ? finishAdd(il || value.il, ic.k, sm.k) : setSemts(on ? semts.filter((x) => x !== sm.k) : [...semts, sm.k]))} className={row}>
                         {!isAdd && <span className={chk(on)}><IconCheck size={13} stroke={3} /></span>}
                         <span className="min-w-0 flex-1">{sm.n}</span>
-                        <span className={count}>{isAdd ? "" : cnt.bySemt[`${ic.k}/${sm.k}`] || 0}</span>
+                        <span className={count}>{isAdd || showAll ? "" : cnt.bySemt[`${ic.k}/${sm.k}`] || 0}</span>
                       </button>
                     );
                   })}

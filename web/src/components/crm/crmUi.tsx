@@ -1,6 +1,7 @@
 "use client";
 
 // Общее для экранов CRM: контекст (ws, доступ, этапы, источники, базовый путь кабинета), стили, форматирование.
+import { SEMT2ILCE, ilName, ilceName, semtName } from "@/lib/seed";
 import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Dict, Lang } from "@/i18n";
 import type { CrmMe, Source, Stage, TaskKind } from "@/lib/crm/types";
@@ -65,4 +66,15 @@ export function usePref(key: string): string | null {
 /** Текущее время с точностью до минуты (стабильный снимок для рендера; на сервере 0). */
 export function useNow(): number {
   return useSyncExternalStore(() => () => {}, () => Math.floor(Date.now() / 60000) * 60000, () => 0);
+}
+
+/** Подпись расположения из пожеланий клиента: «Antalya › Muratpaşa, Konyaaltı › Lara, Güzeloba +2». */
+export function wantGeoLabel(w: { il?: string; ilces?: string[]; semts?: string[] } | undefined, anyLabel: string): string {
+  if (!w?.il) return anyLabel;
+  const parts = [ilName(w.il)];
+  const ilces = w.ilces ?? [];
+  if (ilces.length) parts.push(ilces.length > 3 ? `${ilces.slice(0, 2).map(ilceName).join(", ")} +${ilces.length - 2}` : ilces.map(ilceName).join(", "));
+  const semts = (w.semts ?? []).filter((k) => ilces.includes(SEMT2ILCE[k]));
+  if (semts.length) { const names = semts.slice(0, 2).map((k) => semtName(SEMT2ILCE[k], k)); parts.push(semts.length > 2 ? `${names.join(", ")} +${semts.length - 2}` : names.join(", ")); }
+  return parts.join(" › ");
 }

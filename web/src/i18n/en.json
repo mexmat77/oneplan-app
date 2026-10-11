@@ -1215,6 +1215,7 @@
     "needContact": "Add at least one contact",
     "needTitle": "Enter a title",
     "want": {
+      "applyGeo": "Apply",
       "deal": "Deal",
       "type": "Type",
       "rooms": "Rooms",

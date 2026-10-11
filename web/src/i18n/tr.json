@@ -1215,6 +1215,7 @@
     "needContact": "En az bir iletişim ekleyin",
     "needTitle": "Ad girin",
     "want": {
+      "applyGeo": "Uygula",
       "deal": "İşlem",
       "type": "Tür",
       "rooms": "Oda",
