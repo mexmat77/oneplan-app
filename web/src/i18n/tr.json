@@ -1302,7 +1302,9 @@
       "newDeal": "İşlem",
       "newTask": "Görev",
       "create": "Oluştur",
-      "search": "Müşteri ara  /"
+      "search": "Müşteri ara  /",
+      "collapse": "Menüyü daralt",
+      "expand": "Menüyü genişlet"
     },
     "ov": {
       "title": "Genel bakış",

@@ -1302,7 +1302,9 @@
       "newDeal": "Deal",
       "newTask": "Task",
       "create": "Create",
-      "search": "Search clients  /"
+      "search": "Search clients  /",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu"
     },
     "ov": {
       "title": "Overview",
