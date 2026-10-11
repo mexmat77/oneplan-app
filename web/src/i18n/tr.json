@@ -1063,7 +1063,40 @@
       "copy": "Kopyala",
       "copied": "Kopyalandı",
       "wa": "WhatsApp",
-      "call": "Ara"
+      "call": "Ara",
+      "kindPerson": "Gerçek kişi",
+      "kindCompany": "Tüzel kişi",
+      "company": "Şirket adı",
+      "roles": "Müşteri rolleri",
+      "stage": "İletişim durumu",
+      "priority": "Öncelik",
+      "country": "İkamet ülkesi",
+      "citizenship": "Uyruk",
+      "channel": "İletişim kanalı",
+      "contactTime": "Uygun saat",
+      "contactTimePh": "örn. hafta içi 18:00 sonrası",
+      "campaign": "Kampanya",
+      "campaignPh": "UTM, ilan, telefon numarası",
+      "refClient": "Veritabanındaki müşteri",
+      "branch": "Şube",
+      "noBranch": "Şube yok",
+      "anyCountry": "Belirtilmedi",
+      "section": {
+        "main": "Temel",
+        "classify": "Sınıflandırma",
+        "contact": "İletişim",
+        "kvkk": "KVKK — kişisel veriler",
+        "first": "İlk talep",
+        "next": "Sonraki adım",
+        "more": "Ek"
+      },
+      "nextTitle": "Ne yapılacak",
+      "nextTitlePh": "örn. geri ara, seçki gönder",
+      "noFirst": "Talep yok",
+      "transfer": "Devret",
+      "transferT": "Müşterileri devret",
+      "transferTo": "Kime",
+      "transferBranch": "Şubeye"
     },
     "kinds": {
       "phone": "Telefon",
@@ -1092,7 +1125,15 @@
       "delQ": "İşlem silinsin mi? Geçmişi de silinir.",
       "sum": "Aşama toplamı",
       "closed": "Kapandı",
-      "move": "Aşamaya taşı"
+      "move": "Aşamaya taşı",
+      "request": "Talep",
+      "noRequest": "Talep yok",
+      "commission": "Komisyon",
+      "commissionPct": "%",
+      "commissionSum": "Tutar",
+      "deposit": "Kapora",
+      "depositAt": "Kapora tarihi",
+      "lostPick": "Kayıp nedeni"
     },
     "task": {
       "add": "Yeni görev",
@@ -1135,7 +1176,10 @@
       "translated": "çeviri",
       "original": "orijinal",
       "trErr": "Çeviri başarısız",
-      "doc": "Belge: {title}"
+      "doc": "Belge: {title}",
+      "request": "Talep: {kind}",
+      "requestEdit": "Talep değişti: {kind}",
+      "transfer": "Müşteri devredildi"
     },
     "stages": {
       "new": "Yeni",
@@ -1211,7 +1255,8 @@
       "key_created": "Şifreleme anahtarı oluşturuldu",
       "source_token": "Kaynak tokeni oluşturdu",
       "download_doc": "Belge indirdi",
-      "delete_doc": "Belge sildi"
+      "delete_doc": "Belge sildi",
+      "member_role": "Personel rolünü değiştirdi"
     },
     "errReadonly": "CRM salt okunur — değişiklik yapılamaz",
     "errSave": "Kaydedilemedi",
@@ -1379,10 +1424,11 @@
       "cols2": {
         "client": "Müşteri",
         "region": "Bölge",
-        "deal": "Mülk ve işlem",
+        "deal": "Gayrimenkul ve işlem",
         "status": "Durum",
         "source": "Kaynak",
-        "team": "Ekip"
+        "team": "Ekip",
+        "requests": "Talepler"
       },
       "unassigned": "Atanmadı",
       "overdueBy": "görev {d} gecikti",
@@ -1392,7 +1438,10 @@
         "owner": "Sahip",
         "member": "Üye"
       },
-      "listOf": "Müşteri listesi"
+      "listOf": "Müşteri listesi",
+      "roles": "Roller",
+      "branch": "Şube",
+      "anyBranch": "Tüm şubeler"
     },
     "kb": {
       "days": "{n} gün",
@@ -1441,7 +1490,401 @@
       "sources": "Kaynaklar",
       "company": "Şirket",
       "templates": "Şablonlar",
-      "data": "Veri ve günlük"
+      "data": "Veri ve günlük",
+      "team": "Ekip"
+    },
+    "roles": {
+      "buyer": "Alıcı",
+      "seller": "Satıcı",
+      "landlord": "Ev sahibi",
+      "tenant": "Kiracı"
+    },
+    "cstage": {
+      "new": "Yeni",
+      "contacted": "Görüşüldü",
+      "qualified": "Nitelikli",
+      "unqualified": "Uygun değil"
+    },
+    "prio": {
+      "hot": "Sıcak",
+      "warm": "Ilık",
+      "cold": "Soğuk",
+      "none": "Öncelik yok"
+    },
+    "channel": {
+      "call": "Arama",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "E-posta"
+    },
+    "kvkk": {
+      "title": "KVKK",
+      "info": "Aydınlatma Metni",
+      "infoHint": "Her zaman zorunlu — müşteri veri işleme hakkında bilgilendirilmelidir.",
+      "infoMethod": "Yöntem",
+      "infoAt": "Tarih",
+      "infoVersion": "Metin sürümü",
+      "notInformed": "Bilgilendirilmedi",
+      "informed": "Bilgilendirildi {date}",
+      "consent": "Açık Rıza",
+      "consentHint": "Kanal bazında; yalnızca rıza hukuki dayanak olduğunda.",
+      "consentAt": "Rıza tarihi",
+      "revokedAt": "Geri çekilme tarihi",
+      "basis": "Hukuki dayanak",
+      "source": "Veri kaynağı",
+      "retain": "Saklama süresi, ay",
+      "deleteAt": "Planlanan silme",
+      "methods": {
+        "verbal": "Sözlü",
+        "whatsapp": "WhatsApp",
+        "email": "E-posta",
+        "site": "Web formu",
+        "paper": "Kağıt"
+      },
+      "bases": {
+        "consent": "Açık rıza",
+        "contract": "Sözleşme",
+        "interest": "Meşru menfaat"
+      },
+      "ch": {
+        "call": "Aramalar",
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "email": "E-posta"
+      },
+      "none": "Rıza yok",
+      "revoke": "Geri çek",
+      "revoked": "Geri çekildi {date}"
+    },
+    "rq": {
+      "title": "Talepler",
+      "add": "Yeni talep",
+      "edit": "Talep",
+      "none": "Henüz talep yok — ilkini ekleyin: alım, satım, kiraya verme veya kiralama",
+      "kind": "Talep türü",
+      "status": "Durum",
+      "deadline": "Süre",
+      "delQ": "Talep silinsin mi?",
+      "details": "Ayrıntıları doldur",
+      "closed": "Gizli alanlar",
+      "closedHint": "Sahip, şube müdürü ve sorumlu görebilir",
+      "quickHint": "Diğer alanlar — oluşturduktan sonra talep kartında",
+      "empty": "—",
+      "kinds": {
+        "buy": "Alım",
+        "sell": "Satış",
+        "rent_out": "Kiraya verme",
+        "rent_in": "Kiralama"
+      },
+      "st": {
+        "active": "Aktif",
+        "matching": "Eşleştirme",
+        "showing": "Gösterimler",
+        "negotiation": "Pazarlık",
+        "paused": "Beklemede",
+        "closed": "Kapalı"
+      },
+      "dl": {
+        "asap": "Acil",
+        "1m": "1 ay içinde",
+        "3m": "3 aya kadar",
+        "later": "Daha sonra",
+        "none": "Belirsiz"
+      },
+      "g": {
+        "main": "Temel",
+        "finance": "Finans",
+        "params": "Parametreler",
+        "must": "Özellikler",
+        "terms": "Koşullar",
+        "tenant": "Kiracı",
+        "showing": "Gösterimler",
+        "owner": "Mal sahibi",
+        "access": "Erişim ve pazarlama",
+        "legal": "Sözleşme ve belgeler",
+        "eids": "EİDS"
+      },
+      "f": {
+        "purpose": "Alım amacı",
+        "propType": "Gayrimenkul türü",
+        "geo": "Konum",
+        "budgetMin": "Bütçe (min)",
+        "budgetMax": "Bütçe (max)",
+        "cur": "Para birimi",
+        "payment": "Ödeme şekli",
+        "downPayment": "Peşinat",
+        "monthly": "Aylık ödeme kapasitesi",
+        "rooms": "Oda",
+        "areaNet": "Net alan (min), m²",
+        "areaGross": "Brüt alan (min), m²",
+        "floorMin": "Kat (min)",
+        "floorMax": "Kat (max)",
+        "ageMax": "Bina yaşı (max)",
+        "condition": "Durum",
+        "furnished": "Eşya",
+        "must": "Zorunlu",
+        "nice": "Tercihen",
+        "showTime": "Gösterim uygunluğu",
+        "decider": "Karar veren",
+        "translator": "Tercüman gerekli",
+        "foreigner": "Yabancı alıcı",
+        "listing": "Gayrimenkul",
+        "ownerRole": "Müşteri",
+        "ownersN": "Malik sayısı",
+        "coOwners": "Ortak malikler",
+        "priceList": "İlan fiyatı",
+        "priceWant": "İstenen fiyat",
+        "priceMin": "Minimum fiyat",
+        "commission": "Hizmet bedeli",
+        "urgency": "Aciliyet",
+        "sellReason": "Satış nedeni",
+        "occupancy": "Taşınmaz",
+        "tenantUntil": "Kira sözleşmesi bitiş",
+        "access": "Gösterim erişimi",
+        "marketing": "Pazarlama izinleri",
+        "contract": "Sözleşme türü",
+        "yetkiNo": "Yetkilendirme Sözleşmesi no",
+        "yetkiFrom": "Sözleşme başlangıç",
+        "yetkiTo": "Sözleşme bitiş",
+        "representation": "Temsil yetkisi",
+        "lien": "İpotek / haciz / şerh",
+        "lienNote": "Açıklama",
+        "docTapu": "Tapu",
+        "docIskan": "İskan",
+        "docDask": "DASK",
+        "eidsStatus": "EİDS durumu",
+        "tasinmazId": "Taşınmaz ID",
+        "eidsOwner": "EİDS'teki malik",
+        "eidsTo": "Yetki bitiş",
+        "eidsChecked": "Son kontrol",
+        "eidsError": "EİDS hata nedeni",
+        "portalIds": "Portal ilan numaraları",
+        "sellStatus": "Taşınmaz durumu",
+        "rent": "Kira bedeli",
+        "rentMin": "Minimum kira",
+        "depositKind": "Depozito",
+        "depositVal": "Depozito: ay / tutar",
+        "payPeriod": "Ödeme",
+        "aidat": "Aidat",
+        "aidatKind": "Aidat",
+        "minTerm": "Minimum süre, ay",
+        "freeFrom": "Boşalma tarihi",
+        "inventory": "Eşya listesi",
+        "usage": "Kullanım amacı",
+        "pets": "Evcil hayvan",
+        "guarantee": "Teminat şartları",
+        "commercial": "Ticari kiralama (stopaj, fatura, tüzel kişi)",
+        "ownerTerms": "Mal sahibinin şartları",
+        "keys": "Anahtarlar",
+        "rentMax": "Maksimum kira",
+        "aidatMax": "Maksimum aidat",
+        "moveIn": "Taşınma tarihi",
+        "term": "Kira süresi, ay",
+        "residents": "Kişi sayısı",
+        "work": "İş / şirket",
+        "incomeProof": "Gelir belgesi",
+        "guarantor": "Kefil",
+        "prepayMonths": "Peşin ödeme, ay",
+        "registration": "Adres kaydı gerekli",
+        "entity": "Kiracı türü"
+      },
+      "o": {
+        "purpose": {
+          "live": "Oturmak için",
+          "invest": "Yatırım",
+          "citizenship": "Vatandaşlık",
+          "residence": "İkamet izni",
+          "resale": "Yeniden satış",
+          "rentout": "Kiraya vermek"
+        },
+        "propType": {
+          "flat": "Daire",
+          "villa": "Villa",
+          "comm": "Ticari",
+          "land": "Arsa",
+          "hotel": "Otel"
+        },
+        "payment": {
+          "cash": "Nakit",
+          "mortgage": "Kredi",
+          "installment": "Taksit",
+          "exchange": "Takas",
+          "aftersale": "Kendi mülkünü sattıktan sonra"
+        },
+        "condition": {
+          "new": "Sıfır",
+          "ready": "Hazır",
+          "renovation": "Tadilat gerekli"
+        },
+        "yesNoAny": {
+          "yes": "Evet",
+          "no": "Hayır",
+          "any": "Fark etmez"
+        },
+        "features": {
+          "parking": "Otopark",
+          "pool": "Havuz",
+          "security": "Güvenlik",
+          "elevator": "Asansör",
+          "gas": "Doğalgaz",
+          "seaview": "Deniz manzarası",
+          "garden": "Bahçe",
+          "balcony": "Balkon",
+          "school": "Okul yakın",
+          "beach": "Plaj yakın",
+          "center": "Merkez",
+          "gym": "Spor salonu"
+        },
+        "decider": {
+          "self": "Kendisi",
+          "spouses": "Eşler",
+          "partners": "Ortaklar"
+        },
+        "ownerRole": {
+          "owner": "Malik",
+          "representative": "Temsilci",
+          "attorney": "Vekil"
+        },
+        "urgency": {
+          "high": "Yüksek",
+          "normal": "Normal",
+          "low": "Acelesi yok"
+        },
+        "sellReason": {
+          "relocation": "Taşınma",
+          "upgrade": "Daha iyi konut",
+          "money": "Nakit ihtiyacı",
+          "invest_exit": "Yatırımdan çıkış",
+          "inheritance": "Miras",
+          "other": "Diğer"
+        },
+        "occupancy": {
+          "free": "Boş",
+          "owner_lives": "Malik oturuyor",
+          "tenant": "Kiracı var"
+        },
+        "access": {
+          "free": "Serbest",
+          "by_appointment": "Randevu ile",
+          "keys_office": "Anahtar ofiste"
+        },
+        "marketing": {
+          "photo": "Fotoğraf",
+          "video": "Video",
+          "drone": "Drone",
+          "social": "Sosyal medya",
+          "portals": "Portallar"
+        },
+        "contract": {
+          "exclusive": "Münhasır",
+          "open": "Açık"
+        },
+        "representation": {
+          "owner": "Malik",
+          "vekalet": "Vekaletname"
+        },
+        "lien": {
+          "none": "Yok",
+          "mortgage": "İpotek",
+          "seizure": "Haciz",
+          "serh": "Şerh"
+        },
+        "docStatus": {
+          "ok": "Var",
+          "missing": "Yok",
+          "pending": "Süreçte"
+        },
+        "sellStatus": {
+          "prep": "Hazırlık",
+          "published": "Yayında",
+          "showing": "Gösterimler",
+          "offer": "Teklif",
+          "deposit": "Kapora",
+          "sold": "Satıldı"
+        },
+        "eids": {
+          "pending": "Bekliyor",
+          "active": "Aktif",
+          "expired": "Süresi doldu",
+          "revoked": "İptal"
+        },
+        "deposit": {
+          "months": "Ay",
+          "sum": "Tutar"
+        },
+        "payPeriod": {
+          "monthly": "Aylık",
+          "6m": "6 ay peşin",
+          "12m": "1 yıl peşin"
+        },
+        "aidat": {
+          "included": "Dahil",
+          "separate": "Ayrı"
+        },
+        "usage": {
+          "living": "Konut",
+          "office": "Ofis",
+          "commerce": "Ticari"
+        },
+        "pets": {
+          "yes": "Kabul",
+          "no": "Kabul edilmez",
+          "discuss": "Görüşülür"
+        },
+        "guarantee": {
+          "income": "Gelir belgesi",
+          "guarantor": "Kefil",
+          "prepay": "Peşin ödeme"
+        },
+        "furnishedWant": {
+          "required": "Eşyalı şart",
+          "any": "Fark etmez",
+          "none": "Eşyasız"
+        },
+        "incomeProof": {
+          "have": "Var",
+          "later": "Sunulacak"
+        },
+        "entity": {
+          "person": "Gerçek kişi",
+          "company": "Şirket"
+        },
+        "cur": {
+          "TRY": "TRY",
+          "EUR": "EUR",
+          "USD": "USD"
+        }
+      }
+    },
+    "team": {
+      "title": "Ekip ve şubeler",
+      "sub": "Personel rolleri ve şubeler. Sahip her şeyi, şube müdürü kendi şubesini, danışman kendi müşterilerini görür.",
+      "members": "Personel",
+      "branches": "Şubeler",
+      "addBranch": "Şube ekle",
+      "branchName": "Ad",
+      "branchCity": "Şehir",
+      "branchHead": "Müdür",
+      "noBranches": "Şube yok — küçük bir ofis için gerekmez",
+      "roles": {
+        "owner": "Sahip",
+        "manager": "Şube müdürü",
+        "agent": "Danışman"
+      },
+      "lastOwner": "Tek sahip rolü değiştirilemez",
+      "forbidden": "Ekibi yalnızca sahip değiştirebilir",
+      "solo": "Tek başınıza çalışıyorsunuz — ofise başka danışmanlar katılınca ekip görünür.",
+      "lostT": "Kayıp nedenleri",
+      "lostS": "Kaybedilen işlemleri kapatmak için liste.",
+      "lostAdd": "Yeni neden",
+      "you": "siz"
+    },
+    "due": {
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "in3": "3 gün sonra",
+      "week": "1 hafta sonra",
+      "none": "Tarihsiz"
     }
   }
 }

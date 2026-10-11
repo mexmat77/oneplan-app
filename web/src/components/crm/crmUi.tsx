@@ -78,3 +78,20 @@ export function wantGeoLabel(w: { il?: string; ilces?: string[]; semts?: string[
   if (semts.length) { const names = semts.slice(0, 2).map((k) => semtName(SEMT2ILCE[k], k)); parts.push(semts.length > 2 ? `${names.join(", ")} +${semts.length - 2}` : names.join(", ")); }
   return parts.join(" › ");
 }
+
+// ---------- заявки (0017) ----------
+import { requestSummary } from "@/lib/crm/requestFields";
+import { fmt as fmtMoney } from "@/lib/money";
+import type { Currency } from "@/lib/types";
+import type { Priority, RequestKind } from "@/lib/crm/types";
+/** Краткая строка заявки для списка/карточки. */
+export function reqSummary(kind: RequestKind, fields: Record<string, unknown>): string {
+  return requestSummary(kind, fields, (v, cur) => fmtMoney(v, cur as Currency), (f) => { const g = f.geo as { il?: string; ilces?: string[]; semts?: string[] } | undefined; return g?.il ? wantGeoLabel(g, "") : ""; });
+}
+export const PRIO_COLOR: Record<Priority, string> = { hot: "#e5484d", warm: "#f5a623", cold: "#4d7cfe" };
+export const REQ_COLOR: Record<RequestKind, string> = { buy: "#4d7cfe", sell: "#22c15e", rent_out: "#7b4fd0", rent_in: "#0ea5a4" };
+/** Название страны по ISO-2 на языке интерфейса (без справочника — Intl). */
+export function countryName(code: string | null | undefined, lang: Lang): string {
+  if (!code) return "";
+  try { return new Intl.DisplayNames([LOC[lang]], { type: "region" }).of(code) ?? code; } catch { return code; }
+}

@@ -17,7 +17,7 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { btnP, btnS, fill, fmtDate, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { PRIO_COLOR, btnP, btnS, fill, fmtDate, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type SortKey = "name" | "updated" | "created";
@@ -38,7 +38,7 @@ export function ClientsTable() {
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [view, setView] = useState<View>("all");
   const [stage, setStage] = useState<string>(""); // "" все, "none" без сделки, иначе id этапа
-  const [owner, setOwner] = useState(""); const [source, setSource] = useState(""); const [tag, setTag] = useState("");
+  const [owner, setOwner] = useState(""); const [source, setSource] = useState(""); const [tag, setTag] = useState(""); const [branch, setBranch] = useState(""); const [role, setRole] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [list, setList] = useState<Client[] | null>(null);
   const [deals, setDeals] = useState<Record<string, DealSummary>>({});
@@ -68,17 +68,19 @@ export function ClientsTable() {
     if (owner) r = r.filter((x) => x.ownerId === owner);
     if (source) r = r.filter((x) => x.sourceId === source);
     if (tag) r = r.filter((x) => x.tags.includes(tag));
+    if (branch) r = r.filter((x) => x.branchId === branch);
+    if (role) r = r.filter((x) => x.roles.includes(role as Client["roles"][number]));
     const key = (x: Client) => (sort.key === "name" ? x.name.toLowerCase() : sort.key === "created" ? x.createdAt : x.updatedAt);
     return r.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0) * sort.dir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, view, stage, owner, source, tag, sort, deals, now]);
+  }, [base, view, stage, owner, source, tag, branch, role, sort, deals, now]);
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   async function bulk(patch: Parameters<typeof bulkClients>[1]) { try { await bulkClients([...sel], patch); setSel(new Set()); load(); } catch (e) { err(e); } }
   const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
-  const regionOf = (x: Client) => { const il = GEO.find((g) => g.k === x.want.il); return il ? { name: il.n, more: x.want.ilces?.length ?? 0 } : null; };
-  const activeFilters = [owner, source, tag].filter(Boolean).length;
+  const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
+  const activeFilters = [owner, source, tag, branch, role].filter(Boolean).length;
   const th = (label: string, key?: SortKey) => (
     <th key={label} onClick={key ? () => toggleSort(key) : undefined} className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted ${key ? "cursor-pointer select-none hover:text-ink" : ""}`}>
       <span className="inline-flex items-center gap-1">{label}{key && (sort.key === key ? <span className="text-blue-2">{sort.dir === 1 ? "▲" : "▼"}</span> : <IconArrowsSort size={12} className="opacity-40" />)}</span>
@@ -118,13 +120,16 @@ export function ClientsTable() {
           {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.tbl.anyOwner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} className="w-[190px]" size="sm" />}
           <Select value={source} onChange={setSource} options={[{ value: "", label: c.tbl.anySource }, ...crm.sources.map((s) => ({ value: s.id, label: sourceName(s, t) }))]} className="w-[180px]" size="sm" />
           <Select value={tag} onChange={setTag} options={[{ value: "", label: c.tbl.anyTag }, ...allTags.map((g) => ({ value: g, label: g }))]} className="w-[160px]" size="sm" />
-          {activeFilters > 0 && <button type="button" onClick={() => { setOwner(""); setSource(""); setTag(""); }} className="cursor-pointer text-[12.5px] font-semibold text-red">{c.tbl.clear}</button>}
+          {crm.me.branches.length > 0 && <Select value={branch} onChange={setBranch} options={[{ value: "", label: c.tbl.anyBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} className="w-[170px]" size="sm" />}
+          <Select value={role} onChange={setRole} options={[{ value: "", label: c.tbl.roles }, ...(["buyer", "seller", "landlord", "tenant"] as const).map((r) => ({ value: r, label: c.roles[r] }))]} className="w-[160px]" size="sm" />
+          {activeFilters > 0 && <button type="button" onClick={() => { setOwner(""); setSource(""); setTag(""); setBranch(""); setRole(""); }} className="cursor-pointer text-[12.5px] font-semibold text-red">{c.tbl.clear}</button>}
         </div>
       )}
       {sel.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] bg-ink px-3 py-[6px] text-[12.5px] text-white">
           <span className="font-semibold">{fill(c.tbl.selected, { n: sel.size })}</span>
           {crm.me.members.length > 1 && <Select value="" onChange={(v) => bulk({ ownerId: v })} placeholder={c.tbl.assign} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} className="w-[170px]" size="sm" />}
+          {crm.me.branches.length > 0 && <Select value="" onChange={(v) => bulk({ branchId: v || null })} placeholder={c.client.transferBranch} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} className="w-[170px]" size="sm" />}
           <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && tagInput.trim()) { bulk({ addTag: tagInput.trim() }); setTagInput(""); } }} placeholder={c.tbl.addTagPh} className="h-7 w-[170px] rounded-[4px] border border-white/20 bg-white/10 px-2 text-[12.5px] text-white outline-none placeholder:text-white/60" />
           <button type="button" onClick={() => bulk({ status: status === "active" ? "archived" : "active" })} className="h-7 cursor-pointer rounded-[4px] bg-white/15 px-3 font-semibold hover:bg-white/25">{status === "active" ? c.tbl.archive : c.tbl.restore}</button>
           <button type="button" onClick={() => setSel(new Set())} className="ml-auto cursor-pointer"><IconX size={15} /></button>
@@ -141,7 +146,7 @@ export function ClientsTable() {
               {rows.map((x) => { const d = deals[x.id]; const m = crm.me.members.find((y) => y.id === x.ownerId); const main = x.contacts.find((y) => y.isMain) ?? x.contacts[0]; const reg = regionOf(x); const over = isOver(x); const st = crm.stages.find((s) => s.id === d?.stageId); return (
                 <tr key={x.id} onClick={() => router.push(`${crm.base}/c/${x.id}`)} className={`group cursor-pointer hover:bg-[#f7f8fa] ${sel.has(x.id) ? "bg-blue-tint/50" : ""}`} style={over ? { boxShadow: "inset 3px 0 0 #e5484d" } : undefined}>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><span className="flex items-center gap-2"><IconChevronRight size={14} className="text-muted" /><input type="checkbox" checked={sel.has(x.id)} onChange={(e) => setSel((s) => { const n = new Set(s); if (e.target.checked) n.add(x.id); else n.delete(x.id); return n; })} /></span></td>
-                  <td className={`px-3 ${pad}`}><Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="block truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
+                  <td className={`px-3 ${pad}`}><span className="flex items-center gap-[6px]">{x.priority && <span className="h-2 w-2 flex-none rounded-full" title={c.prio[x.priority]} style={{ background: PRIO_COLOR[x.priority] }} />}<Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{x.roles.slice(0, 2).map((r) => <span key={r} className="rounded-[3px] bg-bg-2 px-[5px] text-[10.5px] font-medium text-muted">{c.roles[r]}</span>)}</span>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
                   <td className={`px-3 ${pad}`}>{reg ? <span className="inline-flex items-center gap-[6px] text-text">{reg.name}{reg.more > 0 && <span className="rounded-full bg-blue-tint px-[6px] text-[11px] font-semibold text-sel-ink">+{reg.more}</span>}</span> : <span className="text-muted">—</span>}</td>
                   <td className={`max-w-[260px] px-3 ${pad}`}>{d ? <><span className="block truncate text-text">{d.title || (d.amount != null ? fmt(d.amount, d.cur as Currency) : "—")}</span>{!dense && <span className="block truncate text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}</span>}</> : <span className="text-muted">—</span>}</td>
                   <td className={`px-3 ${pad}`}>{stageChip(d)}{!dense && st && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>

@@ -340,6 +340,15 @@
   `showAll` (все районы/махалле, без счётчиков объектов), `applyLabel` («Применить») и `z={500}` (поверх Modal 410);
   множественный выбор ilçe/mahalle в `Client.want` (il/ilces/semts), подпись `wantGeoLabel` в crmUi («Antalya › Muratpaşa,
   Konyaaltı › Lara +2»). Правило пользователя 11.10.2026 («эталонно, как при добавлении объекта»).
+  CRM v2 (12.10.2026, миграция `0017_crm_v2.sql`, ТЗ docs/crm-spec.md): ws_kind `agency` (риэлтор с `profiles.agency_id` →
+  CRM агентства, `wsOf` в lib/crm/server.ts; одиночка — `realtor`), `crm_members` (роль owner/manager/agent + филиал;
+  `crm_claim_member` — первый открывший становится владельцем), `crm_branches`; RLS `crm_row_ok` (owner — всё, manager — свой
+  филиал, agent — свои); клиент: kind/company, roles[], stage, priority, country, channel, campaign, ref_client_id, branch_id,
+  kvkk jsonb (info + consent раздельно); `crm_requests` (buy/sell/rent_out/rent_in, поля по реестру `lib/crm/requestFields.ts`,
+  закрытые поля в closed_enc; «Что ищет» старых клиентов перенесено в заявку); сделка: request_id, commission, deposit;
+  причины отказа — crm_settings.lost_reasons. UI: `RequestModal` (форма по реестру, `ReqFieldGroups`/`ReqFieldInput`),
+  `ClientModal` (минимум + первая заявка + следующее действие + KVKK), `DuePicker` (пресеты дат в 1 клик), настройки «Команда».
+  Данные старого ws одиночки при переходе в агентство НЕ переносятся автоматически (отдельная задача).
   ОБРАЗЕЦ ПОЛЬЗОВАТЕЛЯ (11.10.2026, скриншоты «crm-redesign-v8»): светлое левое меню с подписями и счётчиками (сворачивается
   в иконки, `usePref("opl-crm-side")`), ВКЛАДКИ открытых карточек как в браузере над содержимым (`CrmShell`: первая вкладка —
   «Список клиентов», далее карточки с крестиком; `openTab/closeTab` в CrmCtx, localStorage `opl-crm-tabs:<base>`; ClientPage

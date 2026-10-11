@@ -3,7 +3,8 @@
 // Настройки CRM: этапы воронки, источники (с токеном для внешнего сайта), выгрузка CSV, журнал доступа.
 import { useEffect, useState } from "react";
 import { IconChevronDown, IconChevronUp, IconDownload, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
-import { deleteSource, exportClientsCsv, issueSourceToken, listAudit, saveSource, saveStages } from "@/app/crm/actions";
+import { deleteBranch, deleteSource, exportClientsCsv, issueSourceToken, listAudit, listTeam, saveBranch, saveLostReasons, saveSource, saveStages, setMember } from "@/app/crm/actions";
+import type { Branch, CrmMember, MemberRole } from "@/lib/crm/types";
 import { deleteTemplate, getCompany, listTemplates, saveCompany, uploadTemplate, type Company, type TemplateInfo } from "@/app/crm/doc-actions";
 import { FIELDS, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
 import { confirmDialog } from "@/components/ui/confirm";
@@ -19,7 +20,7 @@ type StRow = { id?: string; key: string; name: Record<string, string>; kind: Sta
 const COLORS = ["#8a93a2", "#4d7cfe", "#2563eb", "#0ea5a4", "#14b8a6", "#22c15e", "#84cc16", "#f5a623", "#f97316", "#e5484d", "#dc2626", "#e06aa3", "#d946ef", "#7b4fd0", "#6366f1", "#475569"];
 
 export function CrmSettings({ sub }: { sub?: string }) {
-  const tab = (sub && ["pipeline", "sources", "company", "templates", "data"].includes(sub) ? sub : "pipeline") as "pipeline" | "sources" | "company" | "templates" | "data";
+  const tab = (sub && ["pipeline", "sources", "team", "company", "templates", "data"].includes(sub) ? sub : "pipeline") as "pipeline" | "sources" | "team" | "company" | "templates" | "data";
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
@@ -71,7 +72,23 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const inboundUrl = typeof window !== "undefined" ? `${window.location.origin}/api/crm/inbound` : "/api/crm/inbound";
   const auditLabel = (a: string, meta: Record<string, unknown>) => fill((c.audit as Record<string, string>)[a] ?? a, { n: String(meta.n ?? "") });
 
-  const nav: [typeof tab, string][] = [["pipeline", c.setNav.pipeline], ["sources", c.setNav.sources], ["company", c.setNav.company], ["templates", c.setNav.templates], ["data", c.setNav.data]];
+  const nav: [typeof tab, string][] = [["pipeline", c.setNav.pipeline], ["sources", c.setNav.sources], ["team", c.setNav.team], ["company", c.setNav.company], ["templates", c.setNav.templates], ["data", c.setNav.data]];
+  // ---- команда и филиалы (0017) ----
+  const [team, setTeam] = useState<{ members: CrmMember[]; branches: Branch[] } | null>(null);
+  useEffect(() => { if (tab === "team") listTeam().then(setTeam).catch(() => setTeam({ members: [], branches: [] })); }, [tab]);
+  const [nb, setNb] = useState({ name: "", city: "" });
+  const [reasons, setReasons] = useState<string[]>(() => crm.me.lostReasons);
+  const [newReason, setNewReason] = useState("");
+  const isOwner = crm.me.role === "owner";
+  const teamErr = (e: unknown) => { const m = (e as Error).message; showToast(m === "last-owner" ? c.team.lastOwner : m === "forbidden" ? c.team.forbidden : m === "readonly" ? c.errReadonly : c.errSave); };
+  async function member(id: string, patch: { role?: MemberRole; branchId?: string | null }) {
+    const m = team?.members.find((x) => x.id === id); if (!m) return;
+    try { await setMember(id, patch.role ?? m.role, patch.branchId === undefined ? m.branchId : patch.branchId); setTeam(await listTeam()); } catch (e) { teamErr(e); }
+  }
+  async function addBranch() { if (!nb.name.trim()) return; try { const branches = await saveBranch({ name: nb.name, city: nb.city, headId: null }); setTeam((v) => (v ? { ...v, branches } : v)); setNb({ name: "", city: "" }); crm.refresh(); } catch (e) { teamErr(e); } }
+  async function branchHead(b: Branch, headId: string | null) { try { const branches = await saveBranch({ id: b.id, name: b.name, city: b.city ?? "", headId }); setTeam((v) => (v ? { ...v, branches } : v)); } catch (e) { teamErr(e); } }
+  async function delBranch(b: Branch) { if (!(await confirmDialog({ text: `${b.name}?`, danger: true }))) return; try { const branches = await deleteBranch(b.id); setTeam((v) => (v ? { ...v, branches } : v)); crm.refresh(); } catch (e) { teamErr(e); } }
+  async function saveReasons(list: string[]) { try { setReasons(await saveLostReasons(list)); crm.refresh(); } catch (e) { teamErr(e); } }
   const show = (k: typeof tab) => tab === k;
   return (
     <div className="grid grid-cols-[200px_1fr] gap-5 max-md:grid-cols-1">
@@ -80,7 +97,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
       </nav>
     <div className="flex min-w-0 flex-col gap-4">
       {show("pipeline") && <div className={card}>
-        <div className="text-[15px] font-extrabold text-ink">{c.set.stagesT}</div>
+        <div className="text-[15px] font-semibold text-ink">{c.set.stagesT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.stagesS}</p>
         <div className="flex flex-col gap-2">
           {st.map((s, i) => (
@@ -109,7 +126,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
       </div>}
 
       {show("sources") && <div className={card}>
-        <div className="text-[15px] font-extrabold text-ink">{c.set.sourcesT}</div>
+        <div className="text-[15px] font-semibold text-ink">{c.set.sourcesT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS}</p>
         <div className="flex flex-col gap-2">
           {crm.sources.map((s) => (
@@ -131,8 +148,47 @@ export function CrmSettings({ sub }: { sub?: string }) {
         </div>
       </div>}
 
+      {show("team") && <div className={card}>
+        <div className="text-[15px] font-semibold text-ink">{c.team.title}</div>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.team.sub}</p>
+        {!team ? <div className="text-[13px] text-muted">…</div> : crm.me.ws.kind === "realtor" ? <div className="text-[13px] text-muted">{c.team.solo}</div> : (
+          <>
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.team.members} · {team.members.length}</div>
+            <div className="flex flex-col gap-1">
+              {team.members.map((m) => (
+                <div key={m.id} className="grid grid-cols-[1fr_190px_190px] items-center gap-2 rounded-[6px] border border-line px-3 py-[6px] max-md:grid-cols-1">
+                  <span className="flex min-w-0 items-center gap-2"><span className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{m.name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2)}</span><span className="truncate text-[13px] font-medium text-ink">{m.name}{m.id === crm.me.meId ? <span className="ml-1 text-[11px] font-normal text-muted">· {c.team.you}</span> : null}</span></span>
+                  <Select value={m.role} onChange={(v) => member(m.id, { role: v as MemberRole })} options={(["owner", "manager", "agent"] as MemberRole[]).map((r) => ({ value: r, label: c.team.roles[r] }))} size="sm" disabled={!isOwner || ro} />
+                  <Select value={m.branchId ?? ""} onChange={(v) => member(m.id, { branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...team.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" disabled={!isOwner || ro || team.branches.length === 0} />
+                </div>
+              ))}
+            </div>
+            <div className="mb-2 mt-5 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.team.branches} · {team.branches.length}</div>
+            {team.branches.length === 0 && <div className="mb-2 text-[12.5px] text-muted">{c.team.noBranches}</div>}
+            <div className="flex flex-col gap-1">
+              {team.branches.map((b) => (
+                <div key={b.id} className="grid grid-cols-[1fr_140px_190px_auto] items-center gap-2 rounded-[6px] border border-line px-3 py-[6px] max-md:grid-cols-1">
+                  <span className="truncate text-[13px] font-medium text-ink">{b.name}</span>
+                  <span className="truncate text-[12.5px] text-muted">{b.city ?? "—"}</span>
+                  <Select value={b.headId ?? ""} onChange={(v) => branchHead(b, v || null)} placeholder={c.team.branchHead} options={[{ value: "", label: c.team.branchHead }, ...team.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" disabled={!isOwner || ro} />
+                  <button type="button" disabled={!isOwner || ro} onClick={() => delBranch(b)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={14} /></button>
+                </div>
+              ))}
+            </div>
+            {isOwner && <div className="mt-2 grid grid-cols-[1fr_140px_auto] gap-2"><input value={nb.name} onChange={(e) => setNb({ ...nb, name: e.target.value })} placeholder={c.team.branchName} disabled={ro} className={inp} /><input value={nb.city} onChange={(e) => setNb({ ...nb, city: e.target.value })} placeholder={c.team.branchCity} disabled={ro} className={inp} /><button type="button" disabled={ro || !nb.name.trim()} onClick={addBranch} className={btnS}><IconPlus size={14} /> {c.team.addBranch}</button></div>}
+          </>
+        )}
+      </div>}
+
+      {show("sources") && <div className={card}>
+        <div className="text-[15px] font-semibold text-ink">{c.team.lostT}</div>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.team.lostS}</p>
+        <div className="flex flex-wrap gap-[6px]">{reasons.map((r) => <span key={r} className="inline-flex h-7 items-center gap-1 rounded-full border border-line bg-bg-2 pl-3 pr-1 text-[12.5px] text-ink">{r}{isOwner && !ro && <button type="button" onClick={() => saveReasons(reasons.filter((x) => x !== r))} className="h-5 w-5 cursor-pointer rounded-full text-muted hover:text-red">×</button>}</span>)}</div>
+        {isOwner && <div className="mt-2 flex gap-2"><input value={newReason} onChange={(e) => setNewReason(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newReason.trim()) { saveReasons([...reasons, newReason]); setNewReason(""); } }} placeholder={c.team.lostAdd} disabled={ro} className={`${inp} w-[260px]`} /><button type="button" disabled={ro || !newReason.trim()} onClick={() => { saveReasons([...reasons, newReason]); setNewReason(""); }} className={btnS}><IconPlus size={14} /></button></div>}
+      </div>}
+
       {show("company") && <div className={card}>
-        <div className="text-[15px] font-extrabold text-ink">{d.company}</div>
+        <div className="text-[15px] font-semibold text-ink">{d.company}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.companyS}</p>
         {!company ? <div className="text-[13px] text-muted">…</div> : (
           <div className="grid grid-cols-2 gap-2 max-md:grid-cols-1">
@@ -145,7 +201,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
       </div>}
 
       {show("templates") && <div className={card}>
-        <div className="text-[15px] font-extrabold text-ink">{d.templates}</div>
+        <div className="text-[15px] font-semibold text-ink">{d.templates}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS}</p>
         <div className="flex flex-col gap-1">
           {(tpls ?? []).map((t2) => (
@@ -172,14 +228,14 @@ export function CrmSettings({ sub }: { sub?: string }) {
       </div>}
 
       {show("data") && <div className={card}>
-        <div className="text-[15px] font-extrabold text-ink">{c.set.exportT}</div>
+        <div className="text-[15px] font-semibold text-ink">{c.set.exportT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.exportS}</p>
         <button type="button" onClick={doExport} className={btnS}><IconDownload size={15} /> {c.set.export}</button>
       </div>}
 
       {show("data") && crm.me.isAdmin && (
         <div className={card}>
-          <div className="text-[15px] font-extrabold text-ink">{c.set.auditT}</div>
+          <div className="text-[15px] font-semibold text-ink">{c.set.auditT}</div>
           <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.auditS}</p>
           {!audit ? <div className="text-[13px] text-muted">…</div> : audit.length === 0 ? <div className="text-[13px] text-muted">{c.set.noAudit}</div> : (
             <div className="max-h-[320px] overflow-y-auto">

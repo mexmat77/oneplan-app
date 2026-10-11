@@ -5,19 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconArchive, IconBrandWhatsapp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
-import { addNote, crmBootstrap, deleteClient, deleteDeal, doneTask, findDups, getClient, mergeClients, moveDeal, setClientStatus, translateNote } from "@/app/crm/actions";
+import { addNote, crmBootstrap, deleteClient, deleteDeal, deleteRequest, doneTask, findDups, getClient, mergeClients, moveDeal, setClientStatus, setRequestStatus, translateNote } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { Client, CrmEvent, CrmMe, Deal, DupHit, EventKind, Source, Stage, Task } from "@/lib/crm/types";
+import type { Client, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, EventKind, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
+import { REQUEST_KINDS } from "@/lib/crm/requestFields";
+import { RequestModal } from "./RequestModal";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { CrmCtx, btnD, btnP, btnS, card, chip, fill, fmtDT, fmtDate, initials, inp, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
+import { CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -35,7 +37,8 @@ function Inner({ id }: { id: string }) {
   const c = t.crm;
   const crm = useCrm();
   const router = useRouter();
-  const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[] } | null | undefined>(undefined);
+  const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[] } | null | undefined>(undefined);
+  const [reqM, setReqM] = useState<{ open: boolean; req: CrmRequest | null; kind?: RequestKind }>({ open: false, req: null });
   const [edit, setEdit] = useState(false);
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
@@ -50,12 +53,10 @@ function Inner({ id }: { id: string }) {
 
   if (data === undefined) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
   if (data === null) return <div className={card}>{c.notFound} · <Link href={`${crm.base}/clients`} className="text-blue-2">{c.nav.clients}</Link></div>;
-  const { client: cl, deals, tasks, events } = data;
+  const { client: cl, deals, tasks, events, requests } = data;
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   const src = crm.sources.find((s) => s.id === cl.sourceId);
   const owner = crm.me.members.find((m) => m.id === cl.ownerId);
-  const want = [cl.want.deal ? t.deal[cl.want.deal as keyof typeof t.deal] : null, cl.want.type ? t.typ[cl.want.type as keyof typeof t.typ] : null, cl.want.rooms?.length ? cl.want.rooms.join(", ") : null, cl.want.il ? wantGeoLabel(cl.want, "") : null].filter(Boolean).join(" · ");
-  const budget = cl.budgetMin || cl.budgetMax ? `${cl.budgetMin ? fmt(cl.budgetMin, cl.cur as Currency) : "…"} — ${cl.budgetMax ? fmt(cl.budgetMax, cl.cur as Currency) : "…"}` : "";
   const waOf = (v: string) => `https://wa.me/${v.replace(/\D/g, "").replace(/^0/, "90")}`;
   const copy = (v: string) => { navigator.clipboard?.writeText(v).then(() => showToast(c.client.copied)); };
 
@@ -74,8 +75,9 @@ function Inner({ id }: { id: string }) {
   }
   async function move(d: Deal, stageId: string) {
     const st = crm.stages.find((s) => s.id === stageId);
-    const reason = st?.kind === "lost" ? window.prompt(c.deal.lostPh) ?? undefined : undefined;
-    try { await moveDeal(d.id, stageId, reason); load(); } catch (e) { err(e); }
+    const reason = st?.kind === "lost" ? window.prompt(crm.me.lostReasons.length ? `${c.deal.lostPh}\n${crm.me.lostReasons.map((x, i) => `${i + 1}. ${x}`).join("\n")}` : c.deal.lostPh) ?? undefined : undefined;
+    const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
+    try { await moveDeal(d.id, stageId, picked); load(); } catch (e) { err(e); }
   }
   async function delDeal(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
 
@@ -90,7 +92,7 @@ function Inner({ id }: { id: string }) {
       <div className="-mx-4 -mt-4 mb-4 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-5 py-3">
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-tint text-[14px] font-semibold text-sel-ink">{initials(cl.name)}</span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
+          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
           <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
         {openDeal && <Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />}
@@ -105,8 +107,8 @@ function Inner({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
-              {field(c.client.want, want)}{field(c.client.budget, budget)}{field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}
-              {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.client.consent, cl.consent ? "✓" : "—")}
+              {field(c.client.stage, c.cstage[cl.stage])}{field(c.client.priority, cl.priority ? c.prio[cl.priority] : null)}{field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
+              {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.kvkk.info, cl.kvkk.info?.method ? fill(c.kvkk.informed, { date: fmtDate(cl.kvkk.info.at, lang) }) + ` · ${c.kvkk.methods[cl.kvkk.info.method]}` : c.kvkk.notInformed)}{field(c.kvkk.consent, cl.kvkk.consent?.revokedAt ? fill(c.kvkk.revoked, { date: fmtDate(cl.kvkk.consent.revokedAt, lang) }) : (["call", "sms", "whatsapp", "email"] as const).filter((k) => cl.kvkk.consent?.[k]).map((k) => c.kvkk.ch[k]).join(", ") || c.kvkk.none)}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {cl.contacts.map((x) => (
@@ -131,6 +133,24 @@ function Inner({ id }: { id: string }) {
               <button type="button" onClick={archive} disabled={ro} className={btnS}><IconArchive size={14} /> {cl.status === "active" ? c.client.archive : c.client.unarchive}</button>
               <button type="button" onClick={del} disabled={ro} className={btnD}><IconTrash size={14} /> {c.client.delete}</button>
             </div>
+          </div>
+
+          {/* ---- заявки (0017): одна карточка клиента — несколько потребностей ---- */}
+          <div className={card}>
+            <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.rq.title} · {requests.length}</div><button type="button" onClick={() => setReqM({ open: true, req: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.rq.add}</button></div>
+            {requests.length === 0 ? (
+              <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted">{c.rq.none}{REQUEST_KINDS.map((k) => <button key={k} type="button" disabled={ro} onClick={() => setReqM({ open: true, req: null, kind: k })} className="h-7 cursor-pointer rounded-full border border-line bg-surface px-3 text-[12px] font-medium text-text hover:bg-bg-3">+ {c.rq.kinds[k]}</button>)}</div>
+            ) : (
+              <div className="flex flex-col gap-2">{requests.map((r) => (
+                <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line px-3 py-2">
+                  <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: REQ_COLOR[r.kind] }}>{c.rq.kinds[r.kind]}</span>
+                  <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer text-left text-[13px] text-ink hover:text-blue-2">{reqSummary(r.kind, r.fields) || c.rq.details}</button>
+                  {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
+                  {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
+                  <Select value={r.status} onChange={async (v) => { try { await setRequestStatus(r.id, v as RequestStatus); load(); } catch (e) { err(e); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
+                  <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
+                </div>))}</div>
+            )}
           </div>
 
           <div className={card}>
@@ -168,8 +188,9 @@ function Inner({ id }: { id: string }) {
         </div>
       </div>
 
+      <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
       <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
-      <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
+      <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
       <TaskModal open={taskM.open} task={taskM.task} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setTaskM({ open: false, task: null })} onSaved={() => { setTaskM({ open: false, task: null }); load(); }} />
     </>
   );
@@ -189,6 +210,7 @@ function Timeline({ events }: { events: CrmEvent[] }) {
       case "deal": return fill(c.ev.deal, { title: p.title ?? "" });
       case "doc": return fill(c.ev.doc, { title: p.title ?? "" });
       case "lead": return fill(c.ev.lead, { source: sourceName(crm.sources.find((s) => s.id === p.sourceId), t) });
+      case "request": return fill(p.edit ? c.ev.requestEdit : c.ev.request, { kind: (c.rq.kinds as Record<string, string>)[p.requestKind] ?? p.requestKind ?? "" });
       default: return (c.ev as Record<string, string>)[e.kind] ?? e.kind;
     }
   };

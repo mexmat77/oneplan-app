@@ -6,11 +6,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth";
 import { decField, encField, newWrappedKey, normalizeContact, unwrapKey, valueHash } from "./crypto";
-import { DEFAULT_SOURCES, DEFAULT_STAGES, type CrmAccess, type CrmMember, type Ws, type WsKind } from "./types";
+import { DEFAULT_SOURCES, DEFAULT_STAGES, type Branch, type CrmAccess, type CrmMember, type MemberRole, type Ws, type WsKind } from "./types";
 
 export const TRIAL_MONTHS = 6;
 
-export type Ctx = { sb: SupabaseClient; me: CurrentUser; ws: Ws; dek: Buffer; access: CrmAccess; trialUntil: string | null; paidTo: string | null; isAdmin: boolean };
+export type Ctx = { sb: SupabaseClient; me: CurrentUser; ws: Ws; dek: Buffer; access: CrmAccess; trialUntil: string | null; paidTo: string | null; isAdmin: boolean; role: MemberRole; branchId: string | null };
 
 const dekCache = new Map<string, Buffer>();
 
@@ -21,11 +21,22 @@ export async function crmCtx(): Promise<Ctx> {
   const ws = await wsOf(sb, me);
   const { access, trialUntil, paidTo } = await accessOf(sb, ws);
   const dek = await dekOf(sb, ws, me.id);
-  const isAdmin = ws.kind === "realtor" || me.devRole === "admin" || me.role === "admin";
-  return { sb, me, ws, dek, access, trialUntil, paidTo, isAdmin };
+  // роль в пространстве (0017): одиночка — владелец; агентство/компания — первый открывший становится владельцем, остальные агенты
+  const { role, branchId } = await roleOf(sb, ws, me.id);
+  const isAdmin = role === "owner";
+  return { sb, me, ws, dek, access, trialUntil, paidTo, isAdmin, role, branchId };
 }
 
-/** Рабочее пространство: застройщик → его компания (profiles.developer_id или первое членство), иначе — сам пользователь. */
+async function roleOf(sb: SupabaseClient, ws: Ws, meId: string): Promise<{ role: MemberRole; branchId: string | null }> {
+  if (ws.kind === "realtor") return { role: "owner", branchId: null };
+  const { data: r } = await sb.rpc("crm_claim_member", { kind: ws.kind, ws: ws.id });
+  const { data: m } = await sb.from("crm_members").select("role, branch_id").eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("profile_id", meId).maybeSingle();
+  const role = ((m?.role as MemberRole) ?? (r as MemberRole) ?? "agent");
+  return { role, branchId: (m?.branch_id as string | null) ?? null };
+}
+
+/** Рабочее пространство: застройщик → его компания (profiles.developer_id или первое членство); риэлтор в агентстве →
+ *  агентство (0017, одна CRM на всех сотрудников); иначе — сам пользователь. */
 async function wsOf(sb: SupabaseClient, me: CurrentUser): Promise<Ws> {
   if (me.role === "developer") {
     if (me.developerId) return { kind: "developer", id: me.developerId };
@@ -33,12 +44,14 @@ async function wsOf(sb: SupabaseClient, me: CurrentUser): Promise<Ws> {
     if (data?.developer_id) return { kind: "developer", id: data.developer_id as string };
     throw new Error("no-company");
   }
+  const { data: p } = await sb.from("profiles").select("agency_id").eq("id", me.id).maybeSingle();
+  if (p?.agency_id) return { kind: "agency", id: p.agency_id as string };
   return { kind: "realtor", id: me.id };
 }
 
 /** Пробный период стартует при первом открытии CRM; после него без оплаты — только чтение. */
 async function accessOf(sb: SupabaseClient, ws: Ws): Promise<{ access: CrmAccess; trialUntil: string | null; paidTo: string | null }> {
-  const table = ws.kind === "realtor" ? "profiles" : "developers";
+  const table = ws.kind === "realtor" ? "profiles" : ws.kind === "agency" ? "agencies" : "developers";
   const { data } = await sb.from(table).select("crm_started_at, crm_paid_to").eq("id", ws.id).maybeSingle();
   let started = data?.crm_started_at as string | null;
   if (!started) {
@@ -93,21 +106,45 @@ export async function audit(sb: SupabaseClient, ws: Ws, actor: string, action: s
   await sb.from("crm_audit").insert({ ws_kind: ws.kind, ws_id: ws.id, actor_id: actor, action, target_id: targetId, meta });
 }
 
-/** Участники ws (для выбора ответственного): у риэлтора — он сам, у застройщика — команда компании. */
+/** Участники ws (для выбора ответственного): одиночка — он сам; агентство — активные риэлторы агентства; застройщик — команда
+ *  компании. Роль и филиал — из crm_members (0017; нет записи → agent без филиала). */
 export async function membersOf(sb: SupabaseClient, ws: Ws, me: CurrentUser): Promise<CrmMember[]> {
-  if (ws.kind === "realtor") return [{ id: me.id, name: me.name || me.email, color: "#4d7cfe" }];
-  const [{ data: a }, { data: b }] = await Promise.all([
-    sb.from("profiles").select("id, name, color").eq("developer_id", ws.id).eq("status", "active"),
-    sb.from("developer_members").select("profiles(id, name, color, status, platform_staff)").eq("developer_id", ws.id),
-  ]);
   const map = new Map<string, CrmMember>();
-  (a ?? []).forEach((p) => map.set(p.id as string, { id: p.id as string, name: (p.name as string) || "—", color: (p.color as string) || "#4d7cfe" }));
-  (b ?? []).forEach((r) => {
-    const p = (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles) as { id: string; name: string; color: string; status: string; platform_staff: boolean } | null;
-    if (p && p.status === "active" && !p.platform_staff) map.set(p.id, { id: p.id, name: p.name || "—", color: p.color || "#4d7cfe" });
-  });
-  if (!map.has(me.id)) map.set(me.id, { id: me.id, name: me.name || me.email, color: "#4d7cfe" });
+  const put = (id: string, name: string, color: string) => map.set(id, { id, name: name || "—", color: color || "#4d7cfe", role: "agent", branchId: null });
+  if (ws.kind === "realtor") put(me.id, me.name || me.email, "#4d7cfe");
+  else if (ws.kind === "agency") {
+    const { data } = await sb.from("profiles").select("id, name, color").eq("agency_id", ws.id).eq("status", "active").order("name");
+    (data ?? []).forEach((p) => put(p.id as string, p.name as string, p.color as string));
+  } else {
+    const [{ data: a }, { data: b }] = await Promise.all([
+      sb.from("profiles").select("id, name, color").eq("developer_id", ws.id).eq("status", "active"),
+      sb.from("developer_members").select("profiles(id, name, color, status, platform_staff)").eq("developer_id", ws.id),
+    ]);
+    (a ?? []).forEach((p) => put(p.id as string, p.name as string, p.color as string));
+    (b ?? []).forEach((r) => {
+      const p = (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles) as { id: string; name: string; color: string; status: string; platform_staff: boolean } | null;
+      if (p && p.status === "active" && !p.platform_staff) put(p.id, p.name, p.color);
+    });
+  }
+  if (!map.has(me.id)) put(me.id, me.name || me.email, "#4d7cfe");
+  if (ws.kind !== "realtor") {
+    const { data: ms } = await sb.from("crm_members").select("profile_id, role, branch_id").eq("ws_kind", ws.kind).eq("ws_id", ws.id);
+    (ms ?? []).forEach((m) => { const x = map.get(m.profile_id as string); if (x) { x.role = m.role as MemberRole; x.branchId = (m.branch_id as string | null) ?? null; } });
+  } else { const x = map.get(me.id); if (x) x.role = "owner"; }
   return [...map.values()];
+}
+
+/** Филиалы пространства (0017). */
+export async function branchesOf(sb: SupabaseClient, ws: Ws): Promise<Branch[]> {
+  if (ws.kind === "realtor") return [];
+  const { data } = await sb.from("crm_branches").select("id, name, city, head_id, sort").eq("ws_kind", ws.kind).eq("ws_id", ws.id).order("sort").order("name");
+  return (data ?? []).map((b) => ({ id: b.id as string, name: b.name as string, city: (b.city as string | null) ?? null, headId: (b.head_id as string | null) ?? null, sort: (b.sort as number) ?? 0 }));
+}
+
+/** Справочник причин отказа пространства (crm_settings.lost_reasons). */
+export async function lostReasonsOf(sb: SupabaseClient, ws: Ws): Promise<string[]> {
+  const { data } = await sb.from("crm_settings").select("lost_reasons").eq("ws_kind", ws.kind).eq("ws_id", ws.id).maybeSingle();
+  const v = data?.lost_reasons; return Array.isArray(v) ? (v as string[]) : [];
 }
 
 // ---------- шифрование полей (AAD = таблица.поле:id) ----------

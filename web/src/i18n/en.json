@@ -1063,7 +1063,40 @@
       "copy": "Copy",
       "copied": "Copied",
       "wa": "WhatsApp",
-      "call": "Call"
+      "call": "Call",
+      "kindPerson": "Individual",
+      "kindCompany": "Company",
+      "company": "Company name",
+      "roles": "Client roles",
+      "stage": "Contact status",
+      "priority": "Priority",
+      "country": "Country of residence",
+      "citizenship": "Citizenship",
+      "channel": "Preferred channel",
+      "contactTime": "Best time to contact",
+      "contactTimePh": "e.g. weekdays after 18:00",
+      "campaign": "Campaign",
+      "campaignPh": "UTM, ad, phone number",
+      "refClient": "Client from the base",
+      "branch": "Branch",
+      "noBranch": "No branch",
+      "anyCountry": "Not set",
+      "section": {
+        "main": "Basics",
+        "classify": "Classification",
+        "contact": "Contact",
+        "kvkk": "KVKK — personal data",
+        "first": "First request",
+        "next": "Next action",
+        "more": "More"
+      },
+      "nextTitle": "What to do",
+      "nextTitlePh": "e.g. call back, send a selection",
+      "noFirst": "No request",
+      "transfer": "Transfer",
+      "transferT": "Transfer clients",
+      "transferTo": "To whom",
+      "transferBranch": "To branch"
     },
     "kinds": {
       "phone": "Phone",
@@ -1092,7 +1125,15 @@
       "delQ": "Delete the deal? Its history will be deleted too.",
       "sum": "Stage total",
       "closed": "Closed",
-      "move": "Move to stage"
+      "move": "Move to stage",
+      "request": "Request",
+      "noRequest": "No request",
+      "commission": "Commission",
+      "commissionPct": "%",
+      "commissionSum": "Amount",
+      "deposit": "Deposit",
+      "depositAt": "Deposit date",
+      "lostPick": "Lost reason"
     },
     "task": {
       "add": "New task",
@@ -1135,7 +1176,10 @@
       "translated": "translation",
       "original": "original",
       "trErr": "Translation failed",
-      "doc": "Document: {title}"
+      "doc": "Document: {title}",
+      "request": "Request: {kind}",
+      "requestEdit": "Request changed: {kind}",
+      "transfer": "Client transferred"
     },
     "stages": {
       "new": "New",
@@ -1211,7 +1255,8 @@
       "key_created": "Encryption key created",
       "source_token": "Created a source token",
       "download_doc": "Downloaded a document",
-      "delete_doc": "Deleted a document"
+      "delete_doc": "Deleted a document",
+      "member_role": "Changed a staff role"
     },
     "errReadonly": "CRM is read-only — changes are unavailable",
     "errSave": "Could not save",
@@ -1379,10 +1424,11 @@
       "cols2": {
         "client": "Client",
         "region": "Region",
-        "deal": "Property & deal",
+        "deal": "Property and deal",
         "status": "Status",
         "source": "Source",
-        "team": "Team"
+        "team": "Team",
+        "requests": "Requests"
       },
       "unassigned": "Unassigned",
       "overdueBy": "task overdue {d}",
@@ -1392,7 +1438,10 @@
         "owner": "Owner",
         "member": "Member"
       },
-      "listOf": "Client list"
+      "listOf": "Client list",
+      "roles": "Roles",
+      "branch": "Branch",
+      "anyBranch": "All branches"
     },
     "kb": {
       "days": "{n} d.",
@@ -1441,7 +1490,401 @@
       "sources": "Sources",
       "company": "Company",
       "templates": "Templates",
-      "data": "Data & log"
+      "data": "Data & log",
+      "team": "Team"
+    },
+    "roles": {
+      "buyer": "Buyer",
+      "seller": "Seller",
+      "landlord": "Landlord",
+      "tenant": "Tenant"
+    },
+    "cstage": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "unqualified": "Unqualified"
+    },
+    "prio": {
+      "hot": "Hot",
+      "warm": "Warm",
+      "cold": "Cold",
+      "none": "No priority"
+    },
+    "channel": {
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "E-mail"
+    },
+    "kvkk": {
+      "title": "KVKK",
+      "info": "Aydınlatma Metni (notice)",
+      "infoHint": "Always required — the client must be informed about data processing.",
+      "infoMethod": "Method",
+      "infoAt": "Date",
+      "infoVersion": "Text version",
+      "notInformed": "Not informed",
+      "informed": "Informed {date}",
+      "consent": "Açık Rıza (consent)",
+      "consentHint": "Per channel, only when consent is the legal basis.",
+      "consentAt": "Consent date",
+      "revokedAt": "Revoked on",
+      "basis": "Legal basis",
+      "source": "Data source",
+      "retain": "Retention, months",
+      "deleteAt": "Planned deletion",
+      "methods": {
+        "verbal": "Verbally",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "site": "Website form",
+        "paper": "Paper"
+      },
+      "bases": {
+        "consent": "Consent",
+        "contract": "Contract",
+        "interest": "Legitimate interest"
+      },
+      "ch": {
+        "call": "Calls",
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail"
+      },
+      "none": "No consents",
+      "revoke": "Revoke",
+      "revoked": "Revoked {date}"
+    },
+    "rq": {
+      "title": "Requests",
+      "add": "New request",
+      "edit": "Request",
+      "none": "No requests yet — add the first one: buy, sell, rent out or rent",
+      "kind": "Request type",
+      "status": "Status",
+      "deadline": "Timeframe",
+      "delQ": "Delete the request?",
+      "details": "Fill in details",
+      "closed": "Private fields",
+      "closedHint": "Visible to the owner, branch manager and the responsible agent",
+      "quickHint": "The other fields — after creation, in the request card",
+      "empty": "—",
+      "kinds": {
+        "buy": "Buy",
+        "sell": "Sell",
+        "rent_out": "Rent out",
+        "rent_in": "Rent"
+      },
+      "st": {
+        "active": "Active",
+        "matching": "Matching",
+        "showing": "Showings",
+        "negotiation": "Negotiation",
+        "paused": "Paused",
+        "closed": "Closed"
+      },
+      "dl": {
+        "asap": "ASAP",
+        "1m": "Within a month",
+        "3m": "Up to 3 months",
+        "later": "Later",
+        "none": "Not set"
+      },
+      "g": {
+        "main": "Basics",
+        "finance": "Money",
+        "params": "Parameters",
+        "must": "Property features",
+        "terms": "Terms",
+        "tenant": "Tenant",
+        "showing": "Viewings",
+        "owner": "Owner",
+        "access": "Access and marketing",
+        "legal": "Contract and documents",
+        "eids": "EİDS"
+      },
+      "f": {
+        "purpose": "Purpose",
+        "propType": "Property type",
+        "geo": "Location",
+        "budgetMin": "Budget from",
+        "budgetMax": "Budget to",
+        "cur": "Currency",
+        "payment": "Payment",
+        "downPayment": "Down payment",
+        "monthly": "Affordable monthly payment",
+        "rooms": "Rooms",
+        "areaNet": "Net area from, m²",
+        "areaGross": "Gross area from, m²",
+        "floorMin": "Floor from",
+        "floorMax": "Floor to",
+        "ageMax": "Building age up to, years",
+        "condition": "Condition",
+        "furnished": "Furnished",
+        "must": "Must have",
+        "nice": "Nice to have",
+        "showTime": "Availability for viewings",
+        "decider": "Decision maker",
+        "translator": "Needs an interpreter",
+        "foreigner": "Foreign buyer",
+        "listing": "Property",
+        "ownerRole": "Client is",
+        "ownersN": "Number of owners",
+        "coOwners": "Co-owners",
+        "priceList": "Listing price",
+        "priceWant": "Desired price",
+        "priceMin": "Minimum price",
+        "commission": "Agency commission",
+        "urgency": "Urgency",
+        "sellReason": "Reason for sale",
+        "occupancy": "Property is",
+        "tenantUntil": "Lease until",
+        "access": "Access for viewings",
+        "marketing": "Marketing permissions",
+        "contract": "Contract type",
+        "yetkiNo": "Yetkilendirme Sözleşmesi no.",
+        "yetkiFrom": "Contract from",
+        "yetkiTo": "Contract to",
+        "representation": "Representation",
+        "lien": "Mortgage / seizure / şerh",
+        "lienNote": "Comment",
+        "docTapu": "Tapu",
+        "docIskan": "İskan",
+        "docDask": "DASK",
+        "eidsStatus": "EİDS status",
+        "tasinmazId": "Taşınmaz ID",
+        "eidsOwner": "Owner per EİDS",
+        "eidsTo": "Permission until",
+        "eidsChecked": "Last check",
+        "eidsError": "EİDS error reason",
+        "portalIds": "Portal listing IDs",
+        "sellStatus": "Property status",
+        "rent": "Rent",
+        "rentMin": "Minimum rent",
+        "depositKind": "Deposit",
+        "depositVal": "Deposit: months / amount",
+        "payPeriod": "Payment",
+        "aidat": "Aidat",
+        "aidatKind": "Aidat",
+        "minTerm": "Minimum term, months",
+        "freeFrom": "Available from",
+        "inventory": "Furniture inventory",
+        "usage": "Permitted use",
+        "pets": "Pets",
+        "guarantee": "Guarantee requirements",
+        "commercial": "Commercial lease (stopaj, invoice, legal entity)",
+        "ownerTerms": "Owner's terms",
+        "keys": "Keys",
+        "rentMax": "Maximum rent",
+        "aidatMax": "Maximum aidat",
+        "moveIn": "Move-in date",
+        "term": "Term, months",
+        "residents": "Residents",
+        "work": "Job / company",
+        "incomeProof": "Proof of income",
+        "guarantor": "Guarantor",
+        "prepayMonths": "Prepayment, months",
+        "registration": "Needs address registration",
+        "entity": "Lease to"
+      },
+      "o": {
+        "purpose": {
+          "live": "To live",
+          "invest": "Investment",
+          "citizenship": "Citizenship",
+          "residence": "Residence permit",
+          "resale": "Resale",
+          "rentout": "To rent out"
+        },
+        "propType": {
+          "flat": "Apartment",
+          "villa": "Villa",
+          "comm": "Commercial",
+          "land": "Land",
+          "hotel": "Hotel"
+        },
+        "payment": {
+          "cash": "Cash",
+          "mortgage": "Mortgage",
+          "installment": "Installments",
+          "exchange": "Exchange",
+          "aftersale": "After selling own"
+        },
+        "condition": {
+          "new": "New",
+          "ready": "Ready",
+          "renovation": "Needs renovation"
+        },
+        "yesNoAny": {
+          "yes": "Yes",
+          "no": "No",
+          "any": "Any"
+        },
+        "features": {
+          "parking": "Parking",
+          "pool": "Pool",
+          "security": "Security",
+          "elevator": "Elevator",
+          "gas": "Gas",
+          "seaview": "Sea view",
+          "garden": "Garden",
+          "balcony": "Balcony",
+          "school": "School nearby",
+          "beach": "Beach nearby",
+          "center": "Center",
+          "gym": "Gym"
+        },
+        "decider": {
+          "self": "Self",
+          "spouses": "Spouses",
+          "partners": "Partners"
+        },
+        "ownerRole": {
+          "owner": "Owner",
+          "representative": "Representative",
+          "attorney": "Attorney"
+        },
+        "urgency": {
+          "high": "High",
+          "normal": "Normal",
+          "low": "No rush"
+        },
+        "sellReason": {
+          "relocation": "Relocation",
+          "upgrade": "Upgrade",
+          "money": "Needs money",
+          "invest_exit": "Investment exit",
+          "inheritance": "Inheritance",
+          "other": "Other"
+        },
+        "occupancy": {
+          "free": "Vacant",
+          "owner_lives": "Owner lives",
+          "tenant": "Tenant"
+        },
+        "access": {
+          "free": "Free",
+          "by_appointment": "By appointment",
+          "keys_office": "Keys in office"
+        },
+        "marketing": {
+          "photo": "Photo",
+          "video": "Video",
+          "drone": "Drone",
+          "social": "Social media",
+          "portals": "Portals"
+        },
+        "contract": {
+          "exclusive": "Exclusive",
+          "open": "Open"
+        },
+        "representation": {
+          "owner": "Owner",
+          "vekalet": "Vekaletname"
+        },
+        "lien": {
+          "none": "None",
+          "mortgage": "Mortgage",
+          "seizure": "Seizure",
+          "serh": "Şerh"
+        },
+        "docStatus": {
+          "ok": "Available",
+          "missing": "Missing",
+          "pending": "In progress"
+        },
+        "sellStatus": {
+          "prep": "Preparation",
+          "published": "Published",
+          "showing": "Showings",
+          "offer": "Offer",
+          "deposit": "Deposit",
+          "sold": "Sold"
+        },
+        "eids": {
+          "pending": "Pending",
+          "active": "Active",
+          "expired": "Expired",
+          "revoked": "Revoked"
+        },
+        "deposit": {
+          "months": "Months",
+          "sum": "Amount"
+        },
+        "payPeriod": {
+          "monthly": "Monthly",
+          "6m": "6 months ahead",
+          "12m": "Year ahead"
+        },
+        "aidat": {
+          "included": "Included",
+          "separate": "Separate"
+        },
+        "usage": {
+          "living": "Residential",
+          "office": "Office",
+          "commerce": "Commerce"
+        },
+        "pets": {
+          "yes": "Allowed",
+          "no": "Not allowed",
+          "discuss": "Negotiable"
+        },
+        "guarantee": {
+          "income": "Proof of income",
+          "guarantor": "Guarantor",
+          "prepay": "Prepayment"
+        },
+        "furnishedWant": {
+          "required": "Required",
+          "any": "Any",
+          "none": "Unfurnished"
+        },
+        "incomeProof": {
+          "have": "Available",
+          "later": "Will be provided"
+        },
+        "entity": {
+          "person": "Individual",
+          "company": "Company"
+        },
+        "cur": {
+          "TRY": "TRY",
+          "EUR": "EUR",
+          "USD": "USD"
+        }
+      }
+    },
+    "team": {
+      "title": "Team and branches",
+      "sub": "Staff roles and agency branches. The owner sees everything, a branch manager their branch, an agent their own clients.",
+      "members": "Staff",
+      "branches": "Branches",
+      "addBranch": "Add branch",
+      "branchName": "Name",
+      "branchCity": "City",
+      "branchHead": "Manager",
+      "noBranches": "No branches — a small agency doesn't need them",
+      "roles": {
+        "owner": "Owner",
+        "manager": "Branch manager",
+        "agent": "Agent"
+      },
+      "lastOwner": "The only owner cannot be demoted",
+      "forbidden": "Only the owner can change the team",
+      "solo": "You work alone — the team appears when other realtors join the agency.",
+      "lostT": "Lost reasons",
+      "lostS": "Reference list for closing deals as lost.",
+      "lostAdd": "New reason",
+      "you": "you"
+    },
+    "due": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "in3": "In 3 days",
+      "week": "In a week",
+      "none": "No date"
     }
   }
 }
