@@ -118,6 +118,8 @@ function Inner({ id }: { id: string }) {
                   <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
                 </div>
               ))}
+              {/* второй телефон / e-mail добавляются в форме редактирования — кнопка прямо у контактов (вопрос пользователя 11.10.2026) */}
+              <button type="button" onClick={() => setEdit(true)} disabled={ro} className="inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-[6px] border border-dashed border-line px-2 text-[12.5px] font-medium text-blue-2 hover:bg-blue-tint disabled:opacity-50"><IconPlus size={13} /> {c.client.addContact}</button>
             </div>
             {cl.notes && <div className="mt-3 whitespace-pre-line rounded-[6px] bg-[#fafbfc] px-3 py-2 text-[12.5px] text-text">{cl.notes}</div>}
             {dups.length > 0 && (

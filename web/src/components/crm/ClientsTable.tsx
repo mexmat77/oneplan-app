@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArrowsSort, IconChevronRight, IconExternalLink, IconPhone, IconPlus, IconSearch, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconPhone, IconPlus, IconSearch, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, type DealSummary } from "@/app/crm/actions";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
@@ -105,7 +105,8 @@ export function ClientsTable() {
       <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
         {(["all", "mine", "withTask", "overdue", "noDeal"] as View[]).map((v) => { const n = viewCount(v); return (
           <button key={v} type="button" onClick={() => setView(v)} className={`-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${view === v ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}>{c.tbl.views[v]}<span className={`rounded-full px-[7px] py-[1px] text-[11px] ${v === "overdue" && n ? "bg-red-tint text-red" : "bg-bg-2 text-muted"}`}>{n}</span></button>); })}
-        <Select value={status} onChange={(v) => setStatus(v as "active" | "archived")} options={[{ value: "active", label: c.active }, { value: "archived", label: c.archived }]} className="ml-auto w-[130px]" size="sm" />
+        {/* архив — отдельная вкладка справа: архивные клиенты скрыты из «Активных», но остаются для истории и поиска дублей */}
+        <button type="button" onClick={() => setStatus(status === "active" ? "archived" : "active")} className={`-mb-px ml-auto flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${status === "archived" ? "border-blue-2 text-ink" : "border-transparent text-muted hover:text-ink"}`}><IconArchive size={14} /> {c.archived}{status === "archived" && list ? <span className="rounded-full bg-bg-2 px-[7px] py-[1px] text-[11px] text-muted">{base.length}</span> : null}</button>
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
@@ -130,7 +131,7 @@ export function ClientsTable() {
         </div>
       )}
       <div className="overflow-x-auto rounded-[6px] border border-line bg-surface">
-        {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : c.noClients}</div> : (
+        {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
           <table data-crm-table="1" className="w-full min-w-[900px] text-[13px]">
             <thead><tr>
               <th className="w-[56px] px-3 py-2"><input type="checkbox" checked={allSel} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /></th>

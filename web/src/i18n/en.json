@@ -1011,6 +1011,7 @@
     "search": "Name, phone or e-mail",
     "addClient": "Add client",
     "noClients": "No clients yet — add the first one or connect your website leads.",
+    "noArchived": "Archive is empty. Clients removed from the active list land here; their history, deals and documents are kept and they can be restored.",
     "notFound": "Nothing found",
     "all": "All",
     "mine": "Mine",

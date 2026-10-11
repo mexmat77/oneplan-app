@@ -1011,6 +1011,7 @@
     "search": "Ad, telefon veya e-posta",
     "addClient": "Müşteri ekle",
     "noClients": "Henüz müşteri yok — ilkini ekleyin veya web sitenizden başvuru alın.",
+    "noArchived": "Arşiv boş. Aktif listeden kaldırılan müşteriler buraya gelir; geçmiş, işlemler ve belgeler korunur, geri alınabilir.",
     "notFound": "Sonuç yok",
     "all": "Tümü",
     "mine": "Benim",
