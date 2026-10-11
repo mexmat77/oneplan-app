@@ -1382,6 +1382,7 @@
       "unassigned": "Unassigned",
       "overdueBy": "task overdue {d}",
       "openTab": "Open in a tab",
+      "quickView": "Quick view",
       "role": {
         "owner": "Owner",
         "member": "Member"

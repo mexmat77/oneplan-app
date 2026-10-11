@@ -1382,6 +1382,7 @@
       "unassigned": "Atanmadı",
       "overdueBy": "görev {d} gecikti",
       "openTab": "Sekmede aç",
+      "quickView": "Hızlı görünüm",
       "role": {
         "owner": "Sahip",
         "member": "Üye"

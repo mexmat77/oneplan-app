@@ -100,7 +100,7 @@ function Inner({ id }: { id: string }) {
         <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
       </div>
 
-      <div className="grid grid-cols-[1fr_400px] gap-4 max-[1100px]:grid-cols-1">
+      <div className="grid grid-cols-[1fr_460px] gap-4 max-[1100px]:grid-cols-1">
         {/* ---- основная колонка: данные, сделки, задачи ---- */}
         <div className="flex min-w-0 flex-col gap-4">
           <div className={card}>
@@ -162,10 +162,9 @@ function Inner({ id }: { id: string }) {
             {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex h-7 cursor-pointer items-center rounded-[6px] border px-[10px] text-[12px] font-medium ${noteKind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
             <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex h-7 cursor-pointer items-center rounded-[6px] border border-line bg-surface px-[10px] text-[12px] font-medium text-text hover:bg-bg-3">{c.card.task}</button>
           </div>
-          <div className="flex gap-2">
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[40px] flex-1 resize-y py-2`} rows={1} />
-            <button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={`${btnS} flex-none self-start`}>{c.ev.add}</button>
-          </div>
+          {/* поле комментария во всю ширину колонки, кнопка под ним (замечание пользователя 11.10.2026 — «форма мелкая, текст не виден») */}
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[84px] w-full resize-y py-2 leading-[1.45]`} rows={3} />
+          <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={btnP}>{c.ev.add}</button></div>
           <div className="mt-4"><Timeline events={events} /></div>
         </div>
       </div>

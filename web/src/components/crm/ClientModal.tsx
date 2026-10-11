@@ -66,9 +66,9 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
 
   const ilOpts = [{ value: "", label: c.want.any }, ...GEO.map((g) => ({ value: g.k, label: g.n }))];
   return (
-    <>
+    <div data-crm-form="1">
       <div className="mb-4 flex items-center justify-between">
-        <div className="text-[18px] font-extrabold text-ink">{client ? c.client.edit : c.addClient}</div>
+        <div className="text-[18px] font-semibold text-ink">{client ? c.client.edit : c.addClient}</div>
         <ModalClose onClick={onClose} />
       </div>
       <div className="max-h-[70vh] overflow-y-auto pr-1 max-md:max-h-none">
@@ -147,6 +147,6 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         <button type="button" onClick={onClose} className={btnS}>{c.cancel}</button>
         <button type="button" onClick={() => submit(false)} disabled={busy} className={btnP}>{client ? c.save : c.create}</button>
       </div>
-    </>
+    </div>
   );
 }

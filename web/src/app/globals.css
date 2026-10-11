@@ -315,4 +315,7 @@ html[data-crmmode] body { background: #f5f6f8; }
 [data-crm-table] th { position: sticky; top: 0; z-index: 2; background: #fafbfc; border-bottom: 1px solid var(--line); }
 [data-crm-table] td { border-bottom: 1px solid var(--line); }
 [data-crm-kanban] { scrollbar-width: thin; }
+/* формы CRM (модалки клиента/сделки/задачи): все контролы одной высоты 36px и радиуса 6px (замечание пользователя 11.10.2026) */
+[data-crm-form] input:not([type="checkbox"]):not([type="radio"]), [data-crm-form] button[aria-haspopup="listbox"] { height: 36px; padding-top: 0; padding-bottom: 0; border-radius: 6px; font-size: 13px; }
+[data-crm-form] textarea { border-radius: 6px; font-size: 13px; }
 .crm-drag-over { background: var(--blue-tint) !important; }

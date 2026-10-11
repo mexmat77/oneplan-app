@@ -44,8 +44,8 @@ function DealForm({ deal, clients, clientId, onClose, onSaved }: DealProps) {
     finally { setBusy(false); }
   }
   return (
-    <>
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-extrabold text-ink">{deal ? deal.title || c.deal.add : c.deal.add}</div><ModalClose onClick={onClose} /></div>
+    <div data-crm-form="1">
+      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{deal ? deal.title || c.deal.add : c.deal.add}</div><ModalClose onClick={onClose} /></div>
       <label className={lbl}>{c.deal.client}</label>
       <Select value={f.clientId} onChange={(v) => set({ clientId: v })} placeholder={c.deal.pickClient} searchable options={clients.map((x) => ({ value: x.id, label: x.name }))} disabled={!!deal} />
       <label className={`${lbl} mt-3`}>{c.deal.title}</label>
@@ -66,7 +66,7 @@ function DealForm({ deal, clients, clientId, onClose, onSaved }: DealProps) {
         {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>}
       </div>
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{deal ? c.save : c.create}</button></div>
-    </>
+    </div>
   );
 }
 
@@ -93,8 +93,8 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
   }
   const kinds: TaskKind[] = ["call", "show", "meeting", "message", "other"];
   return (
-    <>
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-extrabold text-ink">{c.task.add}</div><ModalClose onClick={onClose} /></div>
+    <div data-crm-form="1">
+      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.task.add}</div><ModalClose onClick={onClose} /></div>
       <label className={lbl}>{c.task.title}</label>
       <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.task.titlePh} className={inp} autoFocus />
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -104,6 +104,6 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
       {!clientId && <><label className={`${lbl} mt-3`}>{c.deal.client}</label><Select value={f.clientId ?? ""} onChange={(v) => set({ clientId: v || null })} searchable options={[{ value: "", label: "—" }, ...clients.map((x) => ({ value: x.id, label: x.name }))]} /></>}
       {crm.me.members.length > 1 && <><label className={`${lbl} mt-3`}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></>}
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button></div>
-    </>
+    </div>
   );
 }
