@@ -2,9 +2,10 @@
 
 // CRM v2 — каркас: боковое меню (обзор / клиенты / сделки / задачи / настройки), строка поиска, кнопка «Создать»,
 // контекст рабочего пространства. Маршруты: [] обзор, ["clients"], ["deals"], ["tasks"], ["settings", sub?], ["c", id]
-// (и старые ["<uuid>"]). Во всю ширину окна под шапкой (html[data-crmmode]).
+// (и старые ["<uuid>"]). Во всю ширину окна под шапкой (html[data-crmmode]). Живёт в layout маршрута и читает путь
+// из usePathname — содержимое раздела меняется без пересоздания каркаса.
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { IconCalendarCheck, IconChevronDown, IconLayoutDashboard, IconLayoutKanban, IconLock, IconMenu2, IconPlus, IconSearch, IconSettings, IconUsers, IconX } from "@tabler/icons-react";
 import { crmBootstrap, crmCounts } from "@/app/crm/actions";
@@ -24,10 +25,12 @@ const SIDE_LS = "opl-crm-side";
 const TABS_LS = "opl-crm-tabs";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function CrmShell({ base, path }: { base: string; path: string[] }) {
+export function CrmShell({ base }: { base: string }) {
   const { t, lang } = useI18n();
   const c = t.crm;
   const router = useRouter();
+  const pathname = usePathname();
+  const path = pathname.startsWith(base) ? pathname.slice(base.length).split("/").filter(Boolean) : [];
   const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; sources: Source[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [create, setCreate] = useState<"" | "client" | "deal" | "task">("");
@@ -50,7 +53,7 @@ export function CrmShell({ base, path }: { base: string; path: string[] }) {
 
   const wide = usePref(SIDE_LS) !== "0"; // левое меню с подписями и счётчиками (образец пользователя); сворачивается в иконки
   const [counts, setCounts] = useState<{ clients: number; deals: number; tasks: number } | null>(null);
-  useEffect(() => { crmCounts().then(setCounts).catch(() => {}); }, [path]);
+  useEffect(() => { crmCounts().then(setCounts).catch(() => {}); }, [pathname]);
   const me = boot?.me.members.find((m) => m.id === boot.me.meId);
   // вкладки открытых карточек (localStorage, на кабинет): [{id, name}]
   const tabsPref = usePref(`${TABS_LS}:${base}`);
@@ -78,7 +81,7 @@ export function CrmShell({ base, path }: { base: string; path: string[] }) {
   const submitSearch = () => { router.push(`${base}/clients?q=${encodeURIComponent(q.trim())}`); };
 
   let page: ReactNode;
-  if (clientId) page = <ClientPage base={base} id={clientId} embedded />;
+  if (clientId) page = <ClientPage key={clientId} base={base} id={clientId} embedded />;
   else if (section === "clients") page = <ClientsTable />;
   else if (section === "deals") page = <DealsBoard />;
   else if (section === "tasks") page = <TasksView />;
@@ -89,16 +92,16 @@ export function CrmShell({ base, path }: { base: string; path: string[] }) {
     <CrmCtx.Provider value={ctx}>
       <div className="flex min-h-[calc(100vh-62px)]">
         <aside data-crm-side="1" data-wide={wide ? "1" : "0"} className="sticky top-[62px] flex h-[calc(100vh-62px)] flex-none flex-col border-r border-line bg-surface py-3">
-          <button type="button" onClick={() => setPref(SIDE_LS, wide ? "0" : "1")} title={wide ? c.nav.collapse : c.nav.expand} className={`mx-2 mb-2 flex h-9 cursor-pointer items-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink ${wide ? "gap-3 px-3" : "justify-center"}`}><IconMenu2 size={19} />{wide && <span className="flex items-center gap-2 text-[14px] font-semibold text-ink"><span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-blue-2 text-[11px] font-bold text-white">C</span>CRM</span>}</button>
+          <button type="button" onClick={() => setPref(SIDE_LS, wide ? "0" : "1")} title={wide ? c.nav.collapse : c.nav.expand} className="mx-2 mb-2 flex h-9 cursor-pointer items-center gap-3 overflow-hidden whitespace-nowrap rounded-[6px] px-3 text-muted hover:bg-bg-3 hover:text-ink"><IconMenu2 size={19} className="flex-none" /><span data-crm-label="1" className="flex items-center gap-2 text-[14px] font-semibold text-ink"><span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-blue-2 text-[11px] font-bold text-white">C</span>CRM</span></button>
           <nav className="flex flex-col gap-[2px] px-2">
             {nav.map((n) => { const cnt = n.key === "clients" ? counts?.clients : n.key === "deals" ? counts?.deals : n.key === "tasks" ? counts?.tasks : undefined; return (
-              <Link key={n.key} href={n.href} title={n.label} className={`flex items-center rounded-[6px] text-[13px] transition ${wide ? "gap-3 px-3 py-[8px]" : "flex-col gap-[3px] px-1 py-[7px] text-[10px]"} ${n.active ? "bg-blue-tint font-semibold text-sel-ink" : "font-medium text-text hover:bg-bg-3"}`}>
-                <n.Icon size={wide ? 18 : 20} stroke={1.8} className="flex-none" /><span className="min-w-0 flex-1 truncate leading-none">{n.label}</span>{wide && cnt !== undefined && <span className="text-[12px] font-normal text-muted">{cnt.toLocaleString("ru-RU")}</span>}
+              <Link key={n.key} href={n.href} title={n.label} className={`flex h-9 items-center gap-3 overflow-hidden whitespace-nowrap rounded-[6px] px-3 text-[13px] transition-colors ${n.active ? "bg-blue-tint font-semibold text-sel-ink" : "font-normal text-text hover:bg-bg-3"}`}>
+                <n.Icon size={19} stroke={1.7} className="flex-none" /><span data-crm-label="1" className="min-w-0 flex-1 truncate leading-none">{n.label}</span>{cnt !== undefined && <span data-crm-label="1" className="text-[12px] font-normal text-muted">{cnt.toLocaleString("ru-RU")}</span>}
               </Link>); })}
           </nav>
           <div className="flex-1" />
-          <div title={accessText} className={`mx-2 mb-1 flex items-center gap-2 rounded-[6px] px-2 py-[6px] text-[11px] leading-[1.3] ${boot.me.access === "readonly" ? "bg-red-tint text-red" : "text-muted"}`}><IconLock size={13} className="flex-none" />{wide && <span className="min-w-0 truncate">{accessText}</span>}</div>
-          {me && <div className={`mx-2 flex items-center gap-[10px] rounded-[6px] px-2 py-[6px] ${wide ? "" : "justify-center"}`}><span className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: me.color }}>{me.name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2)}</span>{wide && <span className="min-w-0"><span className="block truncate text-[13px] font-semibold text-ink">{me.name}</span><span className="block text-[11px] text-muted">{boot.me.isAdmin ? c.tbl.role.owner : c.tbl.role.member}</span></span>}</div>}
+          <div title={accessText} className={`mx-2 mb-1 flex h-8 items-center gap-2 overflow-hidden whitespace-nowrap rounded-[6px] px-[15px] text-[11px] leading-[1.3] ${boot.me.access === "readonly" ? "bg-red-tint text-red" : "text-muted"}`}><IconLock size={13} className="flex-none" /><span data-crm-label="1" className="min-w-0 truncate">{accessText}</span></div>
+          {me && <div className="mx-2 flex items-center gap-[10px] overflow-hidden whitespace-nowrap rounded-[6px] px-[6px] py-[6px]"><span className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: me.color }}>{me.name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2)}</span><span data-crm-label="1" className="min-w-0"><span className="block truncate text-[13px] font-semibold text-ink">{me.name}</span><span className="block text-[11px] text-muted">{boot.me.isAdmin ? c.tbl.role.owner : c.tbl.role.member}</span></span></div>}
         </aside>
 
         <div className="min-w-0 flex-1">

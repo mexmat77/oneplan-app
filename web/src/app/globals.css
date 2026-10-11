@@ -306,8 +306,11 @@ html[data-mapmode] main { padding-bottom: 0 !important; }
 /* CRM (v2, 11.10.2026): во всю ширину окна под шапкой, боковое меню слева; `data-crmmode` ставит CrmShell */
 html[data-crmmode] main { max-width: none !important; padding: 0 !important; background: #f5f6f8; }
 html[data-crmmode] body { background: #f5f6f8; }
-[data-crm-side] { width: 68px; }
+[data-crm-side] { width: 60px; transition: width .22s ease; }
 [data-crm-side][data-wide="1"] { width: 228px; }
+/* подписи меню: плавно гаснут при сворачивании (свёрнутое меню — только иконки с подсказками) */
+[data-crm-side] [data-crm-label] { transition: opacity .15s ease; }
+[data-crm-side][data-wide="0"] [data-crm-label] { opacity: 0; pointer-events: none; }
 @media (max-width: 760px) { [data-crm-side] { display: none; } [data-crm-mobnav] { display: flex !important; } }
 [data-crm-table] th { position: sticky; top: 0; z-index: 2; background: #fafbfc; border-bottom: 1px solid var(--line); }
 [data-crm-table] td { border-bottom: 1px solid var(--line); }
