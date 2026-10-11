@@ -64,7 +64,7 @@ export async function deleteTemplate(id: string): Promise<void> {
 
 // ---------- документы ----------
 function rowDoc(r: Row): DocInfo {
-  return { id: r.id as string, clientId: s(r.client_id), dealId: s(r.deal_id), title: r.title as string, kind: r.kind as string, status: r.status as DocInfo["status"], hasDocx: !!r.path_docx, hasPdf: !!r.path_pdf, hasFile: !!r.path_file, fileName: r.path_file ? String(r.path_file).split("/").pop() ?? null : null, size: (r.size as number) ?? null, templateKey: s(r.template_key), templateId: s(r.template_id), validUntil: s(r.valid_until), signedAt: s(r.signed_at), createdAt: r.created_at as string, createdBy: s(r.created_by) };
+  return { id: r.id as string, clientId: s(r.client_id), dealId: s(r.deal_id), title: r.title as string, kind: r.kind as string, status: r.status as DocInfo["status"], hasDocx: !!r.path_docx, hasPdf: !!r.path_pdf, hasFile: !!r.path_file, fileName: r.path_file ? (r.title as string) : null, size: (r.size as number) ?? null, templateKey: s(r.template_key), templateId: s(r.template_id), validUntil: s(r.valid_until), signedAt: s(r.signed_at), createdAt: r.created_at as string, createdBy: s(r.created_by) };
 }
 export async function listDocs(f: { dealId?: string; clientId?: string }): Promise<DocInfo[]> {
   const c = await crmCtx();
@@ -98,8 +98,12 @@ export async function docDefaults(dealId: string): Promise<{ values: Record<stri
     if (d.listing_id && /^[0-9a-f-]{36}$/i.test(d.listing_id as string)) {
       const { data: l } = await c.sb.from("listings").select("il, ilce, semt, area, data").eq("id", d.listing_id as string).maybeSingle();
       if (l) {
-        const il = GEO.find((g) => g.k === l.il), ilce = il?.ilces.find((x) => x.k === l.ilce), semt = ilce?.semts.find((x) => x.k === l.semt);
-        if (il) v["property.il"] = il.n.toUpperCase(); if (ilce) v["property.ilce"] = ilce.n.toUpperCase(); if (semt) v["property.mahalle"] = semt.n.toUpperCase();
+        const il = GEO.find((g) => g.k === l.il), ilce = il?.ilces.find((x) => x.k === l.ilce);
+        if (il) v["property.il"] = il.n.toUpperCase(); if (ilce) v["property.ilce"] = ilce.n.toUpperCase();
+        if (l.semt) { // имена махалле — в таблице geo_mahalle (в mock/geo.json их нет)
+          const { data: m } = await c.sb.from("geo_mahalle").select("name").eq("k", l.semt as string).maybeSingle();
+          if (m?.name) v["property.mahalle"] = String(m.name).toUpperCase();
+        }
         const ld = (l.data as Row) ?? {};
         if (ld.adaParsel && String(ld.adaParsel).includes("/")) { const [a, p] = String(ld.adaParsel).split("/"); v["property.ada"] = a.trim(); v["property.parsel"] = p.trim(); }
         if (l.area) v["property.netArea"] = String(l.area);
@@ -133,13 +137,13 @@ export async function generateDoc(inp: { dealId: string; templateId: string; tit
   const docx = renderDocx(template, prepareData(inp.values, types));
   const id = crypto.randomUUID();
   const base = `${c.ws.kind}/${c.ws.id}/deals/${inp.dealId}/${id}`;
-  const safe = inp.title.replace(/[^\p{L}\p{N} _.-]/gu, "").slice(0, 60) || "document";
-  const up = await c.sb.storage.from("crm").upload(`${base}/${safe}.docx`, docx, { contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  // ключи Storage — только ASCII: имя файла в хранилище техническое, человеческое название — при скачивании (docUrl)
+  const up = await c.sb.storage.from("crm").upload(`${base}/document.docx`, docx, { contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   if (up.error) throw new Error(up.error.message);
   let pathPdf: string | null = null;
   const pdf = await docxToPdf(docx).catch(() => null);
-  if (pdf) { const u2 = await c.sb.storage.from("crm").upload(`${base}/${safe}.pdf`, pdf, { contentType: "application/pdf" }); if (!u2.error) pathPdf = `${base}/${safe}.pdf`; }
-  const { data: row, error } = await c.sb.from("crm_docs").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: inp.dealId, template_id: templateId, template_key: templateKey, title: inp.title.trim(), kind, path_docx: `${base}/${safe}.docx`, path_pdf: pathPdf, size: docx.length, params_enc: enc(c, "crm_docs", "params", id, JSON.stringify(inp.values)), created_by: c.me.id }).select("*").single();
+  if (pdf) { const u2 = await c.sb.storage.from("crm").upload(`${base}/document.pdf`, pdf, { contentType: "application/pdf" }); if (!u2.error) pathPdf = `${base}/document.pdf`; }
+  const { data: row, error } = await c.sb.from("crm_docs").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: inp.dealId, template_id: templateId, template_key: templateKey, title: inp.title.trim(), kind, path_docx: `${base}/document.docx`, path_pdf: pathPdf, size: docx.length, params_enc: enc(c, "crm_docs", "params", id, JSON.stringify(inp.values)), created_by: c.me.id }).select("*").single();
   if (error) throw new Error(error.message);
   // запомнить в сделке продавца/объект/условия для следующих документов (без реквизитов компании и данных клиента)
   const keep: Record<string, string> = {}; for (const [k, val] of Object.entries(inp.values)) if (!k.startsWith("agency.") && !k.startsWith("buyer.") && val) keep[k] = val;
@@ -157,11 +161,11 @@ export async function uploadDoc(fd: FormData): Promise<DocInfo> {
   const { data: d } = await c.sb.from("crm_deals").select("id, client_id").eq("id", dealId).maybeSingle();
   if (!d) throw new Error("deal");
   const id = crypto.randomUUID();
-  const safe = file.name.replace(/[^\p{L}\p{N} _.-]/gu, "").slice(0, 80) || "file";
-  const p = `${c.ws.kind}/${c.ws.id}/deals/${dealId}/${id}/${safe}`;
+  const ext = (file.name.match(/\.([a-z0-9]{1,5})$/i)?.[1] ?? "bin").toLowerCase();
+  const p = `${c.ws.kind}/${c.ws.id}/deals/${dealId}/${id}/file.${ext}`; // ключ ASCII; оригинальное имя — в title/mime
   const up = await c.sb.storage.from("crm").upload(p, Buffer.from(await file.arrayBuffer()), { contentType: file.type || "application/octet-stream" });
   if (up.error) throw new Error(up.error.message);
-  const { data: row, error } = await c.sb.from("crm_docs").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: dealId, title: title || safe, kind, path_file: p, mime: file.type, size: file.size, created_by: c.me.id }).select("*").single();
+  const { data: row, error } = await c.sb.from("crm_docs").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: dealId, title: title || file.name, kind, path_file: p, mime: file.type, size: file.size, created_by: c.me.id }).select("*").single();
   if (error) throw new Error(error.message);
   return rowDoc(row as Row);
 }
@@ -172,7 +176,9 @@ export async function docUrl(id: string, which: "docx" | "pdf" | "file"): Promis
   const { data: r } = await c.sb.from("crm_docs").select("path_docx, path_pdf, path_file, title").eq("id", id).maybeSingle();
   const p = which === "docx" ? r?.path_docx : which === "pdf" ? r?.path_pdf : r?.path_file;
   if (!p) throw new Error("not-found");
-  const { data, error } = await c.sb.storage.from("crm").createSignedUrl(p as string, 600, { download: true });
+  const ext = String(p).split(".").pop() ?? "";
+  const name = `${String(r?.title ?? "document").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 80)}.${ext}`;
+  const { data, error } = await c.sb.storage.from("crm").createSignedUrl(p as string, 600, { download: name });
   if (error || !data) throw new Error(error?.message ?? "url");
   await audit(c.sb, c.ws, c.me.id, "download_doc", id, { which });
   return data.signedUrl;

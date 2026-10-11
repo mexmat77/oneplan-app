@@ -320,6 +320,18 @@
   модалки монтируются только открытыми — без setState в effect), маршруты `/crm`, `/crm/[id]`, `/dev/crm`, `/dev/crm/[id]`;
   словарь `crm` в i18n/{ru,en,tr}.json. Перевод заметок — по кнопке того, кто смотрит, с кэшем (crm_event_tr), не автоматом
   (дорого). Несколько телефонов у клиента; «кто привёл» (риэлтор/агентство/текст) — у застройщика. Тесты: tests/unit/crmCrypto.
+  ДОКУМЕНТЫ СДЕЛКИ (11.10.2026, миграция `0016_crm_docs.sql`): шаблоны DOCX с плейсхолдерами `{{group.key}}` (реестр полей и
+  встроенных шаблонов — `lib/crm/docFields.ts`; файлы `src/crm-templates/*.docx`: 2 договора купли-продажи сделаны из образцов
+  пользователя разовым скриптом scratchpad (образцы с личными данными в репозиторий НЕ попадают), 5 остальных — kira sözleşmesi,
+  yer gösterme, kapora makbuzu, teslim tutanağı, KVKK — собирает `scripts/gen-crm-templates.mjs` пакетом `docx`). Рендер —
+  `lib/crm/docs.ts`: docxtemplater с разделителями {{ }} и ПЛОСКИМ словарём «group.key» (точки парсер не разбирает), деньги →
+  17.500.000 + прописью TR/EN (`*WordsTr/*WordsEn/*En`), даты дд.мм.гггг; PDF — LibreOffice (`soffice --headless`, установлен на
+  сервере пакетом libreoffice-writer-nogui, ~0,5 с; локально на Mac нет → только DOCX). Экшены `app/crm/doc-actions.ts`:
+  реквизиты компании (crm_settings, зашифровано), свои шаблоны (bucket crm, поля по плейсхолдерам), `docDefaults` (реквизиты +
+  клиент + объект сделки из listings/geo_mahalle + прошлые значения сделки `extra_enc`), `generateDoc` (DOCX+PDF в закрытый
+  bucket `crm/<ws_kind>/<ws_id>/deals/<deal>/<doc>/document.*` — ключи Storage только ASCII, человеческое имя при скачивании),
+  `uploadDoc`, `docUrl` (signed URL 10 мин + журнал). Политики storage через `crm_obj_ok(name)` (без приведения к uuid в
+  политике — ломало другие bucket). UI — `components/crm/DocsPanel.tsx` в карточке сделки; реквизиты и шаблоны — в настройках CRM.
   Дальше (v2): бронь квартиры из сделки меняет статус в шахматке, напоминания по задачам (cron → уведомления/Telegram),
   импорт Excel, отчёты, телефония/WhatsApp.
 - Курсы валют (10.10.2026): кабинет риэлтора считает ₺ → € / $ по дневному курсу ЦБ Турции (TCMB `today.xml`, среднее

@@ -16,9 +16,9 @@ describe("crm docs", () => {
     expect(wordsEn(21)).toBe("twenty-one");
   });
   it("форматы чисел", () => { expect(fmtTr(17500000)).toBe("17.500.000"); expect(fmtEn(17500000)).toBe("17,500,000"); });
-  it("prepareData: деньги → формат + прописью, даты → дд.мм.гггг, группы всегда есть", () => {
+  it("prepareData: деньги → формат + прописью, даты → дд.мм.гггг, плоские ключи", () => {
     const d = prepareData({ "deal.price": "17500000", "deal.date": "2026-10-11", "buyer.name": "Anna" }, { "deal.price": "money", "deal.date": "date" });
-    expect(d.deal.price).toBe("17.500.000"); expect(d.deal.priceWordsTr).toBe("on yedi milyon beş yüz bin"); expect(d.deal.priceEn).toBe("17,500,000");
-    expect(d.deal.date).toBe("11.10.2026"); expect(d.buyer.name).toBe("Anna"); expect(d.seller).toEqual({});
+    expect(d["deal.price"]).toBe("17.500.000"); expect(d["deal.priceWordsTr"]).toBe("on yedi milyon beş yüz bin"); expect(d["deal.priceEn"]).toBe("17,500,000");
+    expect(d["deal.date"]).toBe("11.10.2026"); expect(d["buyer.name"]).toBe("Anna");
   });
 });

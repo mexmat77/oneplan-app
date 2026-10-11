@@ -16,7 +16,7 @@ import { btnP, btnS, fmtDate, inp, lbl, useCrm } from "./crmUi";
 
 const tplName = (t: TemplateInfo, lang: Lang) => (typeof t.name === "string" ? t.name : t.name[lang] ?? t.name.RU);
 
-export function DocsPanel({ dealId, dealKind }: { dealId: string; dealKind: string }) {
+export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; dealKind: string; onChange?: () => void }) {
   const { t, lang } = useI18n();
   const c = t.crm.docs;
   const crm = useCrm();
@@ -56,8 +56,8 @@ export function DocsPanel({ dealId, dealKind }: { dealId: string; dealKind: stri
           ))}
         </div>
       )}
-      {create?.open && <DocCreateModal dealId={dealId} dealKind={dealKind} fromDoc={create.fromDoc} onClose={() => setCreate(null)} onDone={() => { setCreate(null); load(); }} />}
-      {upload && <DocUploadModal dealId={dealId} onClose={() => setUpload(false)} onDone={() => { setUpload(false); load(); }} />}
+      {create?.open && <DocCreateModal dealId={dealId} dealKind={dealKind} fromDoc={create.fromDoc} onClose={() => setCreate(null)} onDone={() => { setCreate(null); load(); onChange?.(); }} />}
+      {upload && <DocUploadModal dealId={dealId} onClose={() => setUpload(false)} onDone={() => { setUpload(false); load(); onChange?.(); }} />}
     </div>
   );
 }

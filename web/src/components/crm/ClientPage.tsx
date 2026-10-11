@@ -129,7 +129,7 @@ function Inner({ id }: { id: string }) {
                 <div className="flex items-start justify-between gap-2"><button type="button" onClick={() => setDealM({ open: true, deal: d })} className="cursor-pointer text-left text-[13.5px] font-bold text-ink hover:text-blue-2">{d.title || "—"}</button><button type="button" onClick={() => delDeal(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></div>
                 <div className="mt-1 text-[12.5px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div>
                 <div className="mt-2"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
-                <DocsPanel dealId={d.id} dealKind={d.deal} />
+                <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
               </div>))}</div>
           )}
         </div>

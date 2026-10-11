@@ -52,18 +52,17 @@ export const fmtEn = (n: number) => Math.round(n).toLocaleString("en-US");  // 1
 const num = (v: unknown) => { const n = parseFloat(String(v ?? "").replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(",", ".")); return isFinite(n) ? n : NaN; };
 const fmtDate = (v: unknown) => { const s = String(v ?? ""); const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}.${m[1]}` : s; };
 
-/** Плоские значения формы (group.key → строка) → данные для шаблона с вычисляемыми полями и форматированием. */
-export function prepareData(values: Record<string, string>, fieldTypes: Record<string, string | undefined>): Record<string, Record<string, string>> {
-  const data: Record<string, Record<string, string>> = {};
-  const set = (k: string, v: string) => { const [g, f] = k.split("."); if (!g || !f) return; (data[g] ??= {})[f] = v; };
+/** Значения формы (group.key → строка) → данные для шаблона: деньги в формате 17.500.000 + прописью TR/EN (+ ключи *En,
+ *  *WordsTr, *WordsEn), даты дд.мм.гггг. Словарь ПЛОСКИЙ с ключами «group.key»: стандартный парсер docxtemplater ищет тег
+ *  целиком как ключ scope, точки не разбирает. */
+export function prepareData(values: Record<string, string>, fieldTypes: Record<string, string | undefined>): Record<string, string> {
+  const data: Record<string, string> = {};
   for (const [k, raw] of Object.entries(values)) {
     const t = fieldTypes[k];
-    if (t === "money") { const n = num(raw); set(k, isNaN(n) ? raw : fmtTr(n)); if (!isNaN(n)) { set(k + "WordsTr", wordsTr(n)); set(k + "WordsEn", wordsEn(n)); set(k + "En", fmtEn(n)); } }
-    else if (t === "date") set(k, fmtDate(raw));
-    else set(k, raw);
+    if (t === "money") { const n = num(raw); data[k] = isNaN(n) ? raw : fmtTr(n); if (!isNaN(n)) { data[k + "WordsTr"] = wordsTr(n); data[k + "WordsEn"] = wordsEn(n); data[k + "En"] = fmtEn(n); } }
+    else if (t === "date") data[k] = fmtDate(raw);
+    else data[k] = raw;
   }
-  // пустые группы — чтобы docxtemplater не падал на {{seller.name}} при отсутствии продавца
-  for (const g of ["agency", "buyer", "seller", "guarantor", "property", "deal", "rent"]) data[g] ??= {};
   return data;
 }
 
