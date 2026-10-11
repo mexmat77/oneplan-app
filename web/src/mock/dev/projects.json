@@ -1,0 +1,444 @@
+[
+{
+"id": 8,
+"name": "MEGAPOLIS RESIDENCE",
+"loc": "Анталья, Аксу, Алтынташ",
+"stage": "siteprep",
+"ready": 5,
+"iskan": false,
+"salesSt": "start",
+"occSt": "none",
+"sale": 181,
+"video": "https://www.youtube.com/watch?v=wsp8GAImjNc",
+"client": "SERVEROĞLU İnşaat",
+"editor": "Мехмет К.",
+"tags": [
+"cit",
+"res",
+"com"
+],
+"access": "01.06.2027",
+"mega": true,
+"cover": "megapolis-photos/web-front.jpg",
+"photos": [
+"megapolis-photos/web-front.jpg",
+"megapolis-photos/web-front-2.jpg",
+"megapolis-photos/web-front-3.jpg",
+"megapolis-photos/web-front-4.jpg",
+"megapolis-photos/web-front-5.jpg",
+"megapolis-photos/web-front-6.jpg",
+"megapolis-photos/web-front-7.jpg",
+"megapolis-photos/web-front-8.jpg",
+"megapolis-photos/web-back-1.jpg",
+"megapolis-photos/web-back-2.jpg",
+"megapolis-photos/web-back-3.jpg",
+"megapolis-photos/web-back-4.jpg",
+"megapolis-photos/web-vaziyet.jpg",
+"megapolis-photos/web-vaziyet-2.jpg"
+],
+"files": [
+{
+"n": "INFO — кадастр (Ada 15570 / Parsel 2)",
+"s": "JPG",
+"u": "megapolis-photos/info.jpg"
+},
+{
+"n": "Участок — план",
+"s": "PNG",
+"u": "megapolis-photos/plot.png"
+},
+{
+"n": "Фото фасада — оригинал 4K",
+"s": "PNG · 12 МБ",
+"u": "megapolis-photos/front.png"
+},
+{
+"n": "ZEMIN KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/ZEMIN KAT.pdf"
+},
+{
+"n": "1. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/1. KAT.pdf"
+},
+{
+"n": "2. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/2.KAT.pdf"
+},
+{
+"n": "3. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/3.KAT.pdf"
+},
+{
+"n": "4. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/4.KAT.pdf"
+},
+{
+"n": "5. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/5.KAT.pdf"
+},
+{
+"n": "6. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/6.KAT.pdf"
+},
+{
+"n": "7. KAT — план этажа",
+"s": "PDF",
+"u": "uploads/FLOOR PLANS/7.KAT.pdf"
+},
+{
+"n": "TİCARİ — прайс дюкканов",
+"s": "PDF",
+"u": "megapolis-ticari/MEGAPOLIS - PRICE LIST.pdf"
+},
+{
+"n": "TİCARİ — расположение",
+"s": "PNG",
+"u": "megapolis-ticari/LOCATION.png"
+}
+]
+},
+{
+"id": 9,
+"name": "YÜKSELEN DIAMOND",
+"loc": "Анталья, Алтынташ (Лара)",
+"stage": "facade",
+"ready": 65,
+"iskan": false,
+"salesSt": "open",
+"occSt": "none",
+"sale": 16,
+"client": "Yükselen İnşaat",
+"editor": "Мехмет К.",
+"tags": [
+"res",
+"com"
+],
+"access": "01.06.2027",
+"diamond": true,
+"cover": "diamond-photos/IMG-20250611-WA0060.jpg",
+"photos": [
+"diamond-photos/IMG-20250611-WA0060.jpg#cat=pool",
+"diamond-photos/IMG-20250611-WA0061.jpg",
+"diamond-photos/IMG-20250611-WA0062.jpg",
+"diamond-photos/IMG-20250611-WA0063.jpg",
+"diamond-photos/IMG-20250611-WA0064.jpg",
+"diamond-photos/IMG-20250611-WA0065.jpg",
+"diamond-photos/IMG-20250611-WA0066.jpg",
+"diamond-photos/IMG-20250611-WA0067.jpg",
+"diamond-photos/IMG-20250611-WA0068.jpg",
+"diamond-photos/IMG-20250611-WA0153.jpg",
+"diamond-photos/IMG-20250611-WA0159.jpg"
+],
+"files": [
+{
+"n": "Sunum — презентация",
+"s": "PDF",
+"u": "diamond-plans/sunum.pdf"
+},
+{
+"n": "Fiyat Listesi — прайс",
+"s": "JPEG",
+"u": "diamond-plans/price-list.jpeg"
+},
+{
+"n": "Vaziyet Planı — генплан",
+"s": "JPEG",
+"u": "diamond-plans/vaziyet.jpeg"
+},
+{
+"n": "Kat Planı — типовой этаж",
+"s": "JPEG",
+"u": "diamond-plans/kat-plani.jpeg"
+},
+{
+"n": "Daire planı 1+1",
+"s": "JPEG",
+"u": "diamond-plans/plan-1-1.jpeg"
+},
+{
+"n": "Daire planı 2+1",
+"s": "JPEG",
+"u": "diamond-plans/plan-2-1.jpeg"
+}
+]
+},
+{
+"id": 10,
+"name": "AKROPOLIS RESIDENCE",
+"loc": "Анталья, Аксу, Алтынташ",
+"stage": "frame",
+"ready": 45,
+"iskan": false,
+"salesSt": "open",
+"occSt": "none",
+"sale": 26,
+"live": "https://www.youtube.com/embed/wsp8GAImjNc?autoplay=1",
+"client": "SERVEROĞLU İnşaat",
+"editor": "Мехмет К.",
+"tags": [
+"cit",
+"res"
+],
+"access": "01.06.2027",
+"akro": true,
+"cover": "akropolis-photos/web-ph-1.jpg",
+"photos": [
+"akropolis-photos/web-ph-1.jpg",
+"akropolis-photos/web-ph-3.jpg",
+"akropolis-photos/web-ph-4.jpg",
+"akropolis-photos/web-ph-5.jpg",
+"akropolis-photos/web-ph-7.jpg",
+"akropolis-photos/web-ph-8.jpg",
+"akropolis-photos/web-ph-11.jpg",
+"akropolis-photos/web-ph-13.jpg#cat=social",
+"akropolis-photos/web-zemin-1.jpg#cat=social"
+],
+"files": [
+{
+"n": "AKROPOLIS — прайс-лист",
+"s": "PDF",
+"u": "akropolis-data/price.pdf"
+},
+{
+"n": "RUHSAT (15570/1) — разрешение",
+"s": "PDF",
+"u": "akropolis-data/ruhsat.pdf"
+},
+{
+"n": "INFO — кадастр (Ada 15570 / Parsel 1)",
+"s": "JPG",
+"u": "akropolis-photos/info.jpg"
+},
+{
+"n": "Участок — план",
+"s": "JPG",
+"u": "akropolis-photos/plot.jpg"
+},
+{
+"n": "A BLOK — Zemin Kat (boyama)",
+"s": "PNG",
+"u": "akropolis-photos/floor-a-zemin.png"
+},
+{
+"n": "B BLOK — 1. Kat",
+"s": "PNG",
+"u": "akropolis-photos/floor-b-1.png"
+}
+]
+},
+{
+"id": 13,
+"name": "ALLURE",
+"loc": "Анталья, Аксу, Алтынташ",
+"stage": "frame",
+"ready": 50,
+"iskan": false,
+"salesSt": "open",
+"occSt": "none",
+"sale": 126,
+"client": "ARSO GROUP",
+"editor": "Мехмет К.",
+"tags": [
+"cit",
+"res"
+],
+"access": "01.06.2027",
+"mixed": true,
+"cover": "allure/web-f1.jpg",
+"photos": [
+"allure/web-f1.jpg",
+"allure/web-f2.jpg",
+"allure/web-f3.jpg",
+"allure/web-f4.jpg",
+"allure/web-f5.jpg",
+"allure/web-i1.jpg#cat=interior",
+"allure/web-i2.jpg#cat=interior",
+"allure/web-i3.jpg#cat=interior"
+],
+"files": [
+{
+"n": "Описание проекта (RUS)",
+"s": "PDF",
+"u": "allure/desc/ALLURE описание RUS.pdf"
+},
+{
+"n": "Description (ENG)",
+"s": "PDF",
+"u": "allure/desc/ALLURE description ENG.pdf"
+},
+{
+"n": "Açıklama (TR)",
+"s": "PDF",
+"u": "allure/desc/ALLURE açıklama TR.pdf"
+},
+{
+"n": "Технические характеристики (RU)",
+"s": "PDF",
+"u": "allure/specs/ALLURE технические характеристики RU.pdf"
+},
+{
+"n": "План района Алтынташ",
+"s": "PDF",
+"u": "allure/map/ALTINTAŞ İMAR PLANI(План района Алтынташ).pdf"
+},
+{
+"n": "Нумерация квартир — A BLOK",
+"s": "JPG",
+"u": "allure/floors/ALLURE_NUMARATAJ daireler.jpg"
+},
+{
+"n": "Нумерация вилл — B–F BLOK",
+"s": "JPG",
+"u": "allure/floors/ALLURE_NUMARATAJ villalar.jpg"
+}
+]
+},
+{
+"id": 14,
+"name": "RICHMOND VILLAS",
+"loc": "Аланья, Каргыджак",
+"stage": "interior",
+"ready": 85,
+"iskan": false,
+"salesSt": "open",
+"occSt": "none",
+"sale": 7,
+"client": "Sönmez Construction",
+"editor": "Ирина А.",
+"tags": [
+"cit",
+"res"
+],
+"access": "01.06.2027",
+"villas": true,
+"rich": true,
+"cover": "richmond/web-g1.jpg",
+"photos": [
+"richmond/web-g1.jpg",
+"richmond/web-g2.jpg",
+"richmond/web-g3.jpg",
+"richmond/web-g4.jpg",
+"richmond/web-g5.jpg",
+"richmond/web-g6.jpg",
+"richmond/web-t1-out.jpg",
+"richmond/web-t4-out.jpg",
+"richmond/web-t1-in.jpg#cat=interior",
+"richmond/web-t2-in.jpg#cat=interior",
+"richmond/web-t4-in.jpg#cat=interior",
+"richmond/web-t5-in.jpg#cat=interior"
+],
+"files": [
+{
+"n": "Прайс-лист (RU)",
+"s": "PDF",
+"u": "richmond/price-ru.pdf"
+},
+{
+"n": "Price list (EN)",
+"s": "PDF",
+"u": "richmond/price-en.pdf"
+},
+{
+"n": "Fiyat listesi (TR)",
+"s": "PDF",
+"u": "richmond/price-tr.pdf"
+},
+{
+"n": "Описание проекта (RU)",
+"s": "PDF",
+"u": "richmond/desc-ru.pdf"
+},
+{
+"n": "Description (EN)",
+"s": "PDF",
+"u": "richmond/desc-en.pdf"
+},
+{
+"n": "Açıklama (TR)",
+"s": "PDF",
+"u": "richmond/desc-tr.pdf"
+},
+{
+"n": "Локация — карта",
+"s": "PNG",
+"u": "richmond/location.png"
+},
+{
+"n": "Участок — 10 478,24 м²",
+"s": "JPG",
+"u": "richmond/land.jpg"
+}
+]
+},
+{
+"id": 12,
+"name": "AVOCADO VILLAGE",
+"loc": "Аланья, Каргыджак",
+"stage": "done",
+"ready": 100,
+"iskan": true,
+"salesSt": "open",
+"occSt": "started",
+"sale": 5,
+"client": "Avocado Village",
+"editor": "Ирина А.",
+"tags": [
+"res",
+"cit"
+],
+"access": "01.06.2027",
+"villas": true,
+"hidden": true,
+"hideReason": "done",
+"cover": "avocado-photos/web-v5556-1.jpg",
+"photos": [
+"avocado-photos/web-v5556-1.jpg",
+"avocado-photos/web-v5556-2.jpg",
+"avocado-photos/web-v5556-3.jpg",
+"avocado-photos/web-v63-1.jpg#cat=interior",
+"avocado-photos/web-v63-2.jpg#cat=interior",
+"avocado-photos/web-v63-terrace.jpg",
+"avocado-photos/web-v72-1.jpg",
+"avocado-photos/web-infra-fitness.jpg#cat=social"
+],
+"files": [
+{
+"n": "Прайс Avocado Village 2025",
+"s": "PDF",
+"u": "avocado-data/price.pdf"
+},
+{
+"n": "Описание виллы 63",
+"s": "PDF",
+"u": "avocado-data/desc-63.pdf"
+},
+{
+"n": "Описание виллы 72",
+"s": "PDF",
+"u": "avocado-data/desc-72.pdf"
+},
+{
+"n": "Описание виллы 74",
+"s": "PDF",
+"u": "avocado-data/desc-74.pdf"
+},
+{
+"n": "Презентация виллы 63",
+"s": "PDF",
+"u": "avocado-data/villa-63.pdf"
+},
+{
+"n": "План посёлка с номерами",
+"s": "JPG",
+"u": "avocado-photos/web-plan.jpg"
+}
+]
+}
+]

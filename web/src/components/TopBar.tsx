@@ -1,0 +1,176 @@
+"use client";
+
+// Top bar — prototype lines 181–221 (topbar, kebab menu, notifications dropdown).
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useSyncExternalStore, type ComponentType } from "react";
+import {
+  IconApi, IconBell, IconBookmark, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+} from "@tabler/icons-react";
+import { Logo } from "./Logo";
+import { UserMenu } from "@/components/ui/UserMenu";
+import { createClient } from "@/lib/supabase/client";
+import { LangSwitch } from "./LangSwitch";
+import { NtfIcon } from "./ntf/NtfIcon";
+import { useI18n } from "@/i18n/provider";
+import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { markAllRead, useNotifications } from "@/store/ntf";
+
+type Item = { href: string; label: string; Icon: ComponentType<IconProps>; badge?: number; active: boolean };
+export type Workspace = "realtors" | "dev" | "admin";
+
+function Badge({ n }: { n?: number }) {
+  if (!n) return null;
+  return <span className="ml-[2px] inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{n}</span>;
+}
+
+// Which nav item is lit on /obj/* depends on where the object was opened from (prototype `prevScreen`).
+const noSub = () => () => {};
+const readPrev = () => { try { return sessionStorage.getItem("opl-prev-screen") || ""; } catch { return ""; } };
+function usePrevScreen(path: string) {
+  const prev = useSyncExternalStore(noSub, readPrev, () => "");
+  return path.startsWith("/obj/") ? prev : "";
+}
+
+export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, adminN = 0, chatUnread = false, workspace = "realtors", hidden = false, email, avatar, sub }: {
+  name: string; isAdmin?: boolean; favsN?: number; reqsN?: number; ntfN?: number; adminN?: number; chatUnread?: boolean; workspace?: Workspace; hidden?: boolean; email?: string; avatar?: string | null; sub?: string;
+}) {
+  const { t, lang } = useI18n();
+  const path = usePathname();
+  const router = useRouter();
+  const [menu, setMenu] = useState(false);
+  const [ntfOpen, setNtfOpen] = useState(false);
+  const { items: ntfItems } = useNotifications();
+  const prev = usePrevScreen(path);
+  const is = (p: string) => path === p || path.startsWith(p + "/");
+  useScrollLock(menu || ntfOpen);
+  useEscape(menu, () => setMenu(false));
+  useEscape(ntfOpen, () => setNtfOpen(false));
+
+  const isObj = is("/obj");
+  const items: Item[] = [
+    { href: "/catalog", label: t.nav.cat, Icon: IconGlobe, active: is("/catalog") || is("/newb") || (isObj && (!prev || prev === "catalog" || prev === "newb")) },
+    { href: "/mine", label: t.nav.mine, Icon: IconHome2, active: is("/mine") || is("/add") || (isObj && (prev === "mine" || prev === "add")) },
+    { href: "/favs", label: t.nav.favs, Icon: IconHeart, badge: favsN, active: is("/favs") || (isObj && prev === "favs") },
+    { href: "/sels", label: t.nav.sels, Icon: IconFolders, active: is("/sels") },
+    { href: "/reqs", label: t.nav.reqs, Icon: IconBookmark, badge: reqsN, active: is("/reqs") },
+  ];
+
+  // Admin workspace switcher (platform extension): realtors base · developers cabinet · administration.
+  const L = (ru: string, en: string, tr: string) => (lang === "RU" ? ru : lang === "TR" ? tr : en);
+  // `badge` у «Управления» — необработанные заявки (новые запросы доступа + заявки с главной), считает сервер (`countPendingRequests`).
+  const spaces: { key: Workspace; href: string; label: string; Icon: ComponentType<IconProps>; badge?: number }[] = [
+    { key: "realtors", href: "/catalog", label: t.common.tag, Icon: IconUsers },
+    { key: "dev", href: "/dev", label: L("Застройщики", "Developers", "Geliştiriciler"), Icon: IconBuildingCommunity },
+    { key: "admin", href: "/admin/requests", label: L("Управление", "Admin", "Yönetim"), Icon: IconSettings, badge: adminN },
+  ];
+  const devItems: Item[] = [{ href: "/dev", label: L("Проекты", "Projects", "Projeler"), Icon: IconBuildingCommunity, active: is("/dev") }];
+  const navItems = workspace === "realtors" ? items : workspace === "dev" ? devItems : [];
+  // Kebab rows — prototype order (line 3753): catalog, mine, favs, sels, reqs, api, billing, then rls for admins.
+  const kebabRows: Item[] = [
+    ...navItems,
+    { href: "/api-access", label: t.api.title, Icon: IconApi, active: is("/api-access") },
+    { href: "/billing", label: t.bil.title, Icon: IconCreditCard, active: is("/billing") },
+    ...(isAdmin && workspace === "realtors" ? [{ href: "/rls", label: t.nav.rls, Icon: IconUsers, active: is("/rls") }] : []),
+  ];
+  const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
+  const ntfTop = ntfItems.slice(0, 4);
+
+  return (
+    <>
+      <header data-topbar="1" data-hdr-hidden={hidden ? "1" : "0"} className="sticky top-0 z-100 flex min-h-[62px] flex-wrap items-center gap-[clamp(8px,2vw,16px)] gap-y-[6px] border-b border-line bg-surface px-[clamp(14px,4vw,28px)] py-2">
+        <Link href="/catalog" className="flex shrink-0 items-center gap-[9px] hover:brightness-95">
+          <Logo />
+          {!isAdmin && <span data-brand-tag="1" className="rounded-[16px] bg-blue-tint px-[9px] py-[3px] text-[10.5px] font-bold tracking-[.02em] text-blue">{t.common.tag}</span>}
+        </Link>
+        {isAdmin && (
+          <div className="flex shrink-0 gap-[2px] rounded-[9px] bg-bg-2 p-[3px] max-md:hidden">
+            {spaces.map(({ key, href, label, Icon, badge }) => (
+              <Link key={key} href={href} title={label} className={`flex h-[26px] items-center gap-[4px] rounded-[7px] px-[8px] text-[11px] font-extrabold uppercase tracking-[.04em] ${workspace === key ? "bg-surface text-blue shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>
+                <Icon size={13} /><span className="max-[1560px]:hidden">{label}</span><Badge n={badge} />
+              </Link>
+            ))}
+          </div>
+        )}
+        {navItems.map(({ href, label, Icon, badge, active }) => (
+          <Link key={href} data-nav-item="1" href={href} className={`flex shrink-0 items-center gap-[7px] rounded-[10px] px-[13px] py-[9px] text-[13.5px] font-semibold transition hover:brightness-95 max-md:hidden ${active ? "bg-ink text-white" : "text-text"}`}>
+            <Icon size={17} stroke={2} />
+            <span data-nav-label="1">{label}</span>
+            <Badge n={badge} />
+          </Link>
+        ))}
+        <div className="min-w-2 flex-1" />
+        <Link href="/chat" title={t.nav.chat} className={iconBtn}>
+          <IconMessageCircle size={18} />
+          {chatUnread && <span className="absolute -right-[3px] -top-[3px] h-[10px] w-[10px] rounded-full border-2 border-surface bg-red" />}
+        </Link>
+        <button type="button" onClick={() => setNtfOpen((v) => !v)} title={t.nav.ntf} className={iconBtn}>
+          <IconBell size={18} />
+          {ntfN > 0 && <span className="absolute -right-[6px] -top-[6px] flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] border-2 border-surface bg-red px-1 text-[10px] font-bold text-white">{ntfN}</span>}
+        </button>
+        <LangSwitch className="max-md:hidden" />
+        <UserMenu name={name} sub={sub} email={email} avatar={avatar} color="#2f5fe0" logoutLabel={t.prof.out}
+          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, { label: L("Подписка и оплата", "Subscription & billing", "Abonelik ve ödeme"), href: "/billing", icon: <IconCreditCard size={16} /> }]}
+          onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
+        <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
+          <IconDotsVertical size={18} />
+          {reqsN > 0 && <span className="absolute -right-[3px] -top-[3px] h-[10px] w-[10px] rounded-full border-2 border-surface bg-red" />}
+        </button>
+      </header>
+
+      {/* Notifications dropdown (prototype lines 209–221) */}
+      {ntfOpen && (
+        <>
+          <div className="fixed inset-0 z-190" onClick={() => setNtfOpen(false)} />
+          <div className="fixed right-4 top-[70px] z-200 w-[370px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_24px_60px_rgba(20,36,63,.18)]" style={{ animation: "opl-card .2s ease" }}>
+            <div className="flex items-center border-b border-line-2 px-4 py-[14px]">
+              <div className="flex-1 text-[14.5px] font-extrabold text-ink">{t.ntf.title}</div>
+              <button type="button" onClick={markAllRead} className="cursor-pointer text-[12px] font-semibold text-blue hover:text-blue-2">{t.ntf.mark}</button>
+            </div>
+            {ntfTop.map((n) => (
+              <div key={n.id} className="flex gap-[11px] border-b border-[#f5f7fb] px-4 py-3" style={{ background: n.unread ? "#f8faff" : "#fff" }}>
+                <div className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] text-[16px]" style={{ background: n.bg, color: n.tone }}><NtfIcon icon={n.icon} size={16} /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold leading-[1.4] text-ink">{n.tx[lang][0]}</div>
+                  <div className="mt-[2px] text-[12px] text-muted">{n.tx[lang][1]} · {n.time}</div>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => { setNtfOpen(false); router.push("/ntf"); }} className="w-full cursor-pointer p-3 text-center text-[13px] font-semibold text-blue hover:bg-bg-3">{t.ntf.all}</button>
+          </div>
+        </>
+      )}
+
+      {/* Kebab menu: 252px popover on desktop, full-screen on ≤760 (globals.css `[data-kebab-menu]`) */}
+      {menu && (
+        <>
+          <div className="fixed inset-0 z-290 bg-[rgba(10,16,28,.25)]" onClick={() => setMenu(false)} />
+          <div data-kebab-menu="1" className="fixed right-[10px] top-[60px] z-300 w-[252px] rounded-[16px] border border-line bg-surface p-2 shadow-[0_24px_60px_rgba(20,36,63,.2)]" style={{ animation: "opl-card .18s ease" }}>
+            <div className="flex items-center gap-2 px-[10px] pb-[10px] pt-1">
+              <span className="flex-1 text-[15px] font-extrabold text-ink">{t.common.menu}</span>
+              <button type="button" onClick={() => setMenu(false)} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[11px] bg-bg-2 text-[20px] text-text hover:brightness-95" aria-label={t.common.menu}><IconX size={20} /></button>
+            </div>
+            {isAdmin && (
+              <div className="mb-[6px] border-b border-line-2 pb-[6px]">
+                {spaces.map(({ key, href, label, Icon, badge }) => (
+                  <Link key={key} href={href} onClick={() => setMenu(false)} className={`flex items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold ${workspace === key ? "bg-blue-tint text-blue-2" : "text-ink"}`}><Icon size={17} /><span className="flex-1">{label}</span><Badge n={badge} /></Link>
+                ))}
+              </div>
+            )}
+            <div data-kebab-rows="1">
+              {kebabRows.map(({ href, label, Icon, badge, active }) => (
+                <Link key={href} href={href} onClick={() => setMenu(false)} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
+                  <Icon size={17} />
+                  <span className="flex-1">{label}</span>
+                  {!!badge && <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{badge}</span>}
+                </Link>
+              ))}
+            </div>
+            <div className="mx-[2px] my-[6px] border-t border-line-2" />
+            <LangSwitch stretch data-kebab-lang="1" className="mx-1 mb-[2px] mt-1 rounded-[11px] p-1" />
+          </div>
+        </>
+      )}
+    </>
+  );
+}

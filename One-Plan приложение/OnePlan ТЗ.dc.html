@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+doc-page:not(:defined){visibility:hidden}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif;color:#14243f;line-height:1.2}
+p,li,td,th,figcaption{font-family:'PT Sans',sans-serif}
+b,strong{color:#14243f}
+code{font-family:ui-monospace,monospace;background:#eef1f6;padding:1px 5px;border-radius:4px;font-size:.9em;color:#14243f}
+a{color:#4d7cfe}
+a:hover{color:#2f5fe0}
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.8in" hint-size="100%,100%">
+
+<div style="border-bottom:3px solid #4d7cfe;padding-bottom:16px;margin-bottom:8px">
+<div style="font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.14em;color:#4d7cfe;text-transform:uppercase">Техническое задание · прототип-эталон</div>
+<h1 style="font-size:34px;font-weight:800;margin:8px 0 6px;letter-spacing:-.02em">ONEPLAN — платформа управления объектами застройки</h1>
+<p style="font-size:15px;color:#5a6472;margin:0;line-height:1.5">Справочник к интерактивному прототипу <b>OnePlan v2.dc.html</b>. Описывает назначение, экраны, роли, устройство шахматки и правила поведения. Версия документа 2.0 · 21.07.2026.</p>
+</div>
+
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">Документ сопровождает рабочий прототип и служит образцом для боевой реализации. Прототип показывает <b>как должно выглядеть и работать</b>; серверную часть (база данных, сохранение, ссылки, авторизация) разработчики реализуют на своём стеке, используя прототип как эталон интерфейса и поведения.</p>
+
+<div style="background:#f0f4ff;border:1px solid #d6e0ff;border-radius:12px;padding:14px 18px;margin:16px 0;break-inside:avoid">
+<h4 style="font-size:14px;font-weight:800;margin:0 0 6px">⚠ Главное для разработчиков</h4>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759;margin:0">Прототип <b>не сохраняет данные</b> — все правки живут в памяти вкладки и сбрасываются при перезагрузке. Это ожидаемо. Файл нужно открывать <b>через локальный сервер</b> (Live Server / <code>python -m http.server</code>), а не двойным кликом (<code>file://</code>), иначе часть данных не загрузится. Задача боевой версии — добавить постоянное хранение и API.</p>
+</div>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;padding-top:6px">1. Назначение и суть</h2>
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">ONEPLAN заменяет застройщикам хаос из десятков Google-дисков единой закрытой B2B-системой. Вся информация по объекту (фото, видео, локация, документы, планировки, цены и статусы) хранится в одном месте, а клиенты и партнёры видят актуальную <b>публичную страницу по одной ссылке</b>. Застройщик управляет остатками (что продано / в брони / свободно), и это мгновенно отражается у всех, кто открыл ссылку.</p>
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">Аудитория: застройщики, агентства, риэлторы (закрытый обмен объектами) и — на публичной витрине — конечные покупатели. Ориентация на турецкий рынок (структура папок, İskan, TAPU, типы планировок вида «2+1»).</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">2. Роли и модель доступа</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Роль</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Уровень</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Права</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Супер-админ</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Платформа</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Владелец системы. Управляет всеми компаниями и их объектами, создаёт/скрывает компании, задаёт срок доступа компании, назначает сотрудников платформы.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Администратор</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Внутри своей компании: создаёт пользователей, правит реквизиты компании (видны клиентам), управляет объектами.</td></tr>
+<tr><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Редактор</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания(и)</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Наполняет объекты (планировки, фото, цены, статусы). Может иметь доступ к нескольким застройщикам (сотрудники поддержки платформы). Пользователи ему недоступны.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Менеджер</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Продажи — просмотр объектов и свои данные. Редактирование недоступно.</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Иерархия:</b> платформа → компании (застройщики) → пользователи и объекты. Сотрудник платформы (флаг «Платформа») <b>не виден</b> застройщикам в их списке команды, хотя имеет доступ к их объектам. <b>Доступ компании</b> задаётся сроком (дата или «бессрочно»); по истечении — доступ ко всем объектам компании закрывается (задел под платную модель).</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">3. Карта экранов</h2>
+<ul style="font-size:14px;line-height:1.7;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Лендинг</b> — публичная главная: презентация, для кого, форма заявки, «бесплатно на время пилота».</li>
+<li><b>Авторизация / Регистрация</b> — вход, заявка на регистрацию с фиксацией согласий (договор, KVKK).</li>
+<li><b>Объекты</b> — список объектов застройки (карточки / список), фильтры по стадии, İskan, продажам; скрытые объекты «в тумане».</li>
+<li><b>Карточка объекта</b> — редактор: разделы Основное · Фото и видео · Описание · Локация · Дневник стройки · Документы; вкладки Объект / Планировки / Экспорт-импорт / Журнал / Настройки.</li>
+<li><b>Планировки</b> — Шахматка · Список · Поэтажный план (+ редактор сетки, создание планировок, модалка квартиры).</li>
+<li><b>Настройки объекта</b> — публикация/видимость, нумерация этажей, цвета, валюта, особенности, изображения планировок по типам.</li>
+<li><b>Компании и доступы / Пользователи</b> — управление компаниями и командами.</li>
+<li><b>Профайл</b> — данные пользователя, реквизиты компании, смена пароля.</li>
+<li><b>Публичная страница объекта</b> — как видит клиент: обложка, статистика, галерея, выбор квартиры, дневник, документы, локация, LIVE и промо-видео.</li>
+<li><b>Публичная страница застройщика</b> — все проекты компании + контакты.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">4. Модель данных: помещение (unit)</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Каждая ячейка шахматки — это помещение (квартира / коммерция / вилла) со следующими полями:</p>
+<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:7px 9px;border:1px solid #14243f">Поле</th>
+<th style="text-align:left;padding:7px 9px;border:1px solid #14243f">Значение</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>uid</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Уникальный внутренний id (не меняется).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>num</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Номер помещения (виден пользователю). Пересчитывается автоматически по расположению.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>floor</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Этаж (число; 0 = цоколь/Z, отрицательные = подземные B1/B2).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>pos</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Позиция в ряду этажа (1,2,3…) — определяет колонку.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>wing</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Корпус / блок (A, B, T=коммерция…). Пусто = один корпус.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>band</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Сторона: <code>out</code> (окна наружу) / <code>ins</code> (окна во двор) — для объектов с двумя рядами на этаже.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>type</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Комнатность (1+1, 2+1, 3+1…; <code>1*</code> = коммерция).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>area</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Площадь, м².</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>price</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Цена (валюта объекта). Цена/м² считается автоматически.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>status</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">free · booked · process · sold · reserve.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>tag</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Спецтип: duplex · tduplex · triplex · terrace · и служебные.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>td</code> / <code>entry</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Для триплекса: смещение вниз (0/1/2) и этаж(и) входа.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>feats</code> / <code>ft</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Особенности (терраса, сад, вид на море…). Можно несколько.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>vl</code> / <code>vt</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Флаг «вилла» и тип виллы (для комплексов вилл).</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>w</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Ширина плитки в клетках (1–3). Квартира занимает колонки <code>pos…pos+w−1</code>.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>lx</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Устаревшее (старые импорты). Используется только как tie-break при одноразовой нормализации позиций — см. §5.</td></tr>
+</tbody>
+</table>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">5. Планировки: единый движок шахматки</h2>
+<div style="border-left:4px solid #4d7cfe;background:#f0f4ff;border-radius:8px;padding:12px 15px;margin:8px 0;break-inside:avoid">
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759;margin:0"><b>Движок один для всех объектов — без исключений.</b> Ряды = этажи (сверху вниз), колонки = позиции <code>pos</code>. Базовая клетка 132×92 px, зазор 7 px. Один и тот же код рисует просмотр, редактор и публичную страницу; любая новая механика автоматически работает везде.</p>
+</div>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Ширина плитки (растяжка):</b> квартира может занимать 1–3 клетки (<code>w</code>). В редакторе тянется за правый край: плитка следует за курсором пиксель-в-пиксель, при отпускании «дощёлкивается» до целых клеток (натянул больше половины соседней — заполняет её целиком, меньше — возвращается; анимация ~150 мс). Максимум ограничен свободными соседними клетками <b>своего ряда</b>. После ресайза клик подавляется — карточка квартиры не открывается.</li>
+<li><b>Два ряда на этаже</b> (<code>band</code>): «окна наружу» / «окна во двор» — для проектов, где на этаже два ряда квартир (пример — Megapolis, ~40 квартир на этаже). Подпись стороны — в колонке номера этажа. Занятость, растяжка ширины и выравнивание считаются в пределах своего ряда.</li>
+<li><b>Наследие:</b> сетки из старых импортов с «широкими» координатами нормализуются один раз при загрузке (пересчёт <code>pos</code> в 1,2,3… с tie-break по <code>lx</code>). Отдельного «координатного» движка нет.</li>
+</ul>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Нумерация этажей</b> настраивается на объект (данные не меняются, только отображение): <b>Схема TR</b> (B2·B1·Z·1·2…), <b>Международная</b> (B2·B1·G·1·2…), <b>Цифровая</b> (−2·−1·0·1·2…).</p>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Сегменты / чипы:</b> Все · Квартиры · Коммерция · Виллы (для смешанных комплексов). Коммерция и виллы показываются отдельными блоками. Строка статистики (Всего / Свободно / Бронь / Оформление / Продано / Резерв) кликабельна — фильтрует.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">6. Спецтипы: дуплекс, ters дуплекс, триплекс</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Многоэтажные квартиры занимают несколько рядов шахматки одной вытянутой плиткой с разделительными линиями между этажами. <b>Верхняя граница плитки выравнивается по верхней границе обычных соседних плиток.</b></p>
+<div style="border-left:4px solid #b45309;background:#fffaf3;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#b45309">Дуплекс (2 этажа, вход снизу)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Растёт <b>вверх</b>: вход на нижнем этаже, второй уровень над ним. Стандартный дуплекс на промежуточных и верхних этажах. Одна разделительная линия.</p>
+</div>
+<div style="border-left:4px solid #9a3412;background:#fff6f2;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#9a3412">Ters дуплекс (2 этажа, вход сверху)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Растёт <b>вниз</b>: вход на верхнем этаже, спуск на нижний (часто с цоколя вниз на B1). При установке автоматически появляется нижний этаж (B1).</p>
+</div>
+<div style="border-left:4px solid #0f766e;background:#f1faf9;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#0f766e">Триплекс (3 этажа)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Занимает 3 ряда, две разделительные линии. Стандартный: −1·0·1 со входом на этаже 0. Возможны нестандартные варианты — вход на любом из 3 этажей (или на нескольких сразу), с бейджем «Вход · этаж». Можно опустить триплекс на −1 или −2 уровня (B1 / B2), эти нижние этажи дорисовываются автоматически.</p>
+</div>
+<div style="border-left:4px solid #4338ca;background:#f5f4ff;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#4338ca">Многоэтажные на этажах с двумя рядами (band)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Дуплекс/триплекс растягивается к клетке <b>своего ряда</b> на этаже выше/ниже. Три случая: <b>(A)</b> клетка своего ряда свободна и промежуточный ряд свободен → цельная вытянутая плитка; <b>(C)</b> клетка своего ряда свободна, но промежуточный ряд занят → на верхнем этаже рисуется «близнец» ⧉ — пунктирная копия той же квартиры (не кликается, не редактируется, высота ряда фиксированная); <b>(бейдж)</b> клетка своего ряда занята другой квартирой → плитка остаётся одноэтажной с бейджем «Дуплекс · 2 эт.». Две квартиры не могут претендовать на одну клетку — занятость учитывает уже растянутые.</p>
+</div>
+<p style="font-size:13px;line-height:1.55;color:#3c4759"><b>Особые случаи для реализации:</b> кнопки выравнивания (влево / пирамида / вправо) <b>не должны схлопывать</b> многоэтажные квартиры в одноэтажные и не должны накладывать их друг на друга — колонки многоэтажных резервируются на всех накрытых этажах (на двухрядных — в пределах своего ряда). Кнопки выравнивания доступны у <b>всех</b> корпусов в режиме редактирования.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">7. Редактор сетки и перемещение плиток</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Перемещение работает <b>только в режиме «Редактировать сетку»</b>. В обычном просмотре клик по плитке открывает карточку квартиры.</p>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Создание планировок</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li><b>Вставка из прайса</b> — скопировать строки из Excel/Google Таблиц; колонки (№, этаж, тип, площадь, цена, статус) распознаются автоматически.</li>
+<li><b>Генерация сетки</b> — задать число этажей и квартир на этаже (можно разное по этажам); сначала строится пустая сетка, параметры каждой квартиры заполняются потом кликом.</li>
+<li>Можно <b>добавить к существующим</b> (новый корпус/блок) или заменить всё. Корпуса именуются и переименовываются; иерархия (квартиры → коммерция → виллы) сохраняется.</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Перемещение (drag &amp; drop)</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>Плитку можно перетащить на <b>пустую пунктирную ячейку</b> (слот) — она встаёт туда.</li>
+<li>Плитку можно бросить <b>прямо на другую плитку</b> — они меняются местами (принцип «пятнашек»).</li>
+<li><b>Групповое перемещение:</b> зажать мышь на пустом месте и растянуть рамку — выделятся все задетые плитки; перетаскивание любой из них двигает всю группу. Ctrl-клик — точечно добавить/убрать. На тач-экране — долгое нажатие.</li>
+<li>При перемещении номера квартир пересчитываются автоматически (в т.ч. при переносе на другой этаж).</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Правка структуры</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>Кнопки <b>Влево / Пирамида / Вправо</b> — быстрое выравнивание квартир на этажах (относятся к своему корпусу).</li>
+<li><b>+ Квартира</b> / <b>+ Этаж</b> — добавление в конкретный корпус; крестик на плитке — быстрое удаление.</li>
+<li>Масштаб <b>100 / 75 / 50%</b> — уменьшить плитки, чтобы вместить крупный проект на один экран (для чисто-вилловых объектов масштаб скрыт — неактуален).</li>
+<li>Пустоты (арки, пропуски) задаются пустыми местами в ряду.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">8. Статусы и цвета</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Статус</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Цвет по умолчанию</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Свободно</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#059669;vertical-align:middle;margin-right:7px"></span>зелёный #059669</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:7px 10px;border:1px solid #dfe3ea">Бронь</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#FBBF24;vertical-align:middle;margin-right:7px"></span>янтарный #FBBF24 (тёмный текст)</td></tr>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Оформление</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#3B82F6;vertical-align:middle;margin-right:7px"></span>синий #3B82F6</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:7px 10px;border:1px solid #dfe3ea">Продано</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#64748B;vertical-align:middle;margin-right:7px"></span>серый #64748B</td></tr>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Резерв</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#8B5CF6;vertical-align:middle;margin-right:7px"></span>фиолетовый #8B5CF6</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px;line-height:1.55;color:#3c4759">Цвета настраиваются на объект. Статус продаж объекта: Не в продаже · Старт продаж · Продажи открыты · Продано.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">9. Типы планировок</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759"><b>Автоматический тип</b> = комнатность + площадь (м²). Квартиры с одинаковыми параметрами группируются в один тип; изображение планировки привязывается к типу и показывается во всех квартирах этого типа. При изменении площади квартира автоматически переназначается/создаёт тип, «осиротевшие» типы вычищаются.</p>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Если при одинаковых параметрах планировки всё же разные (иное «нутро» или зеркальные) — создаётся <b>отдельный тип вручную</b> (Tip A / Tip A-R) и выбирается в карточке квартиры. К типу можно прикрепить несколько изображений (план, план 2-го этажа дуплекса, 3D-вид); первое — главное.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">10. Медиа, документы, публикация</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Фото и видео</b> — по категориям (Социальная часть, Паркинг, Бассейн, СПА, Детская, Интерьер, Экстерьер…), drag-and-drop загрузка, изменение порядка, клик — просмотр с листанием (стрелки клавиатуры).</li>
+<li><b>Дневник стройки</b> — датированные фото/видео-отчёты с площадки; редактирование/удаление записей.</li>
+<li><b>LIVE-трансляция</b> — отдельная ссылка (YouTube Live / веб-камера); показывается пульсирующей кнопкой LIVE, когда эфир идёт (в кабинете, на карточке застройщика и на публичной странице).</li>
+<li><b>Промо-ролик</b> — ссылка на YouTube/Vimeo; кнопка ▶ на обложке публичной страницы, открывает плеер.</li>
+<li><b>Документы</b> — загрузка файлов, доступных для скачивания по внешней ссылке. Статусы док-в: Yapı Ruhsatı, İskan (юридический статус, отдельно от стадии стройки), TAPU, DASK.</li>
+<li><b>Публикация / видимость:</b> закрытая сеть ONEPLAN (по умолчанию) или публичная витрина. Объект можно <b>скрыть по любой причине</b> (не только завершение); скрытые/завершённые показываются «в тумане» и по умолчанию свёрнуты. Скрытый объект автоматически убирается с публичной страницы застройщика.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">11. Прочее</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Мультиязычность</b> — RU / EN / TR на всех экранах. Описание объекта можно перевести ИИ и поправить вручную.</li>
+<li><b>Готовность (%)</b> — задаётся автоматически по стадии строительства, корректируется вручную. Стадии: Проект · Подготовка участка · Фундамент · Каркас · Фасад · Внутренние работы · Благоустройство · Завершено. İskan — отдельный статус (может быть получен до завершения благоустройства).</li>
+<li><b>Экспорт / импорт</b> — выгрузка шахматки и списка в Excel; импорт обновляет цену/статус/площадь по ID, не ломая структуру сетки. Рекомендация: сначала экспортировать, поправить в файле, импортировать обратно.</li>
+<li><b>PDF</b> — печать шахматки, списка и поэтажного плана (по текущим фильтрам).</li>
+<li><b>Журнал изменений</b> — кто и когда менял цены и статусы квартир (с постраничным выводом).</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">12. Командный чат</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Внутренний чат сотрудников (кабинет + мобильное приложение, единая логика).</p>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Статусы сообщений</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li><b>✓</b> отправлено (принято сервером) → <b>✓✓ серые</b> доставлено на устройство → <b>✓✓ голубые</b> прочитано. Только на своих сообщениях, в углу пузыря рядом со временем.</li>
+<li>У каждого сообщения — <b>время</b> (HH:MM) в углу пузыря; <b>дата</b> — разделитель-таблетка по центру между днями («Сегодня · 21 июля», «Вчера», далее дата). В списке чатов у последнего сообщения — время или «вчера»/дата.</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">AI-перевод: каждый пишет и читает на своём языке</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>У сообщения хранится <b>язык оригинала</b> (автоопределение при отправке). Если он ≠ языку чтения получателя — показывается перевод с подписью «🌐 AI · TR → RU».</li>
+<li><b>API:</b> LLM-провайдер — планируются <b>DeepSeek или OpenAI GPT</b> (endpoint chat/completions; промпт: «переведи, сохрани смысл и тон, верни только перевод»). Провайдер — за абстракцией, заменяемый конфигом.</li>
+<li><b>Кэш переводов</b> по ключу (язык-цель + текст) — повторно не переводить. Пока перевод грузится — оригинал с индикатором «переводится…».</li>
+<li>Тап по подписи перевода — <b>показать оригинал</b> этого сообщения (и обратно). Глобальный переключатель перевода на чат. Язык чтения по умолчанию = язык интерфейса, можно выбрать явно.</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Транспорт и безопасность</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>Реальное время — WebSocket (или управляемый сервис типа Pusher/Ably). История в БД, TLS на транспорте; сквозное шифрование не требуется (корпоративный чат, история доступна с любого устройства).</li>
+<li>Бейдж непрочитанных на иконке чата (шапка кабинета и таб-бар приложения) — тонкие цифры, кружок не перекрывает иконку.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">13. Уведомления и журнал событий</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Типы:</b> продажа, бронь, смена статуса, изменение цены, новые фото/медиа, документы, новый объект. Генерируются автоматически по действиям пользователей.</li>
+<li><b>Колокольчик</b> в шапке: дропдаун с последними 7, счётчик непрочитанных, «Отметить прочитанными», ссылка «Все уведомления».</li>
+<li><b>Страница «Все уведомления»:</b> группировка по дням (Сегодня / Вчера / Ранее), фильтры-чипы по типам, порционная подгрузка — первые 20, кнопка «Показать ещё (20) · 20 / N»; при смене фильтра лимит сбрасывается. Клик помечает прочитанным и ведёт к объекту.</li>
+<li><b>Видимость по ролям:</b> пользователь видит события только своих компаний; сотрудник платформы (супер-админ, редактор поддержки) — по всем доступным, поэтому списки обязаны быть ограничены и пагинированы.</li>
+<li>В мобильном приложении — push-уведомления (переключатель в профиле) + тот же список по дням.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">14. Дашборд</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li>Стартовый экран после входа. KPI-карточки (всего / свободно / продано / сумма по проданным), сегменты по статусам, график продаж по месяцам.</li>
+<li><b>«По объектам»:</b> первые 6 карточек, «Показать ещё (N)» / «Свернуть», счётчик «6 / N показано»; при &gt;6 объектов — поиск по названию/локации/компании. Важно: у супер-админа и редактора поддержки объектов могут быть <b>сотни</b>.</li>
+<li>Лента последних событий — 6 записей + ссылка на все уведомления.</li>
+<li>Менеджер — только просмотр; блок команды — только у администратора.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">15. Что реализовать в боевой версии</h2>
+<ol style="font-size:14px;line-height:1.7;color:#3c4759;margin:8px 0;padding-left:22px">
+<li><b>Постоянное хранение (БД + API).</b> Сейчас нет — все правки в памяти. Нужно: объекты, помещения, пользователи, компании, медиа, журнал.</li>
+<li><b>Аутентификация и роли</b> по модели §2, ограничение доступа компании по сроку.</li>
+<li><b>Публичные ссылки</b> на объект и застройщика с реальными данными и учётом видимости/публикации.</li>
+<li><b>Загрузка файлов</b> (фото/видео/документы) в хранилище; отдача по ссылке для скачивания.</li>
+<li><b>Мультиязычные поля</b> и ИИ-перевод описаний.</li>
+<li><b>Импорт/экспорт</b> Excel с сопоставлением по ID.</li>
+<li><b>Чат</b> — WebSocket, статусы доставки/прочтения, AI-перевод через DeepSeek/GPT с кэшем (§12).</li>
+<li><b>Уведомления</b> — генерация по событиям, колокольчик, страница с группировкой и пагинацией, push в приложении (§13).</li>
+</ol>
+
+<div style="border-top:2px solid #e6e9f0;margin-top:26px;padding-top:12px">
+<p style="font-size:12px;color:#8a93a2;margin:0">ONEPLAN · ТЗ v2.0 к прототипам OnePlan v2.dc.html и OnePlan App.dc.html · открывать через локальный сервер · © ONETEAM İNŞAAT LTD. ŞTİ.</p>
+</div>
+
+</x-import>
+</x-dc>
+</body>
+</html>

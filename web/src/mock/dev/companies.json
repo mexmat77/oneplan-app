@@ -1,0 +1,63 @@
+[
+{
+"id": 1,
+"name": "SERVEROĞLU İnşaat",
+"dir": "Ahmet Serveroğlu",
+"objIds": [
+8,
+10
+],
+"until": "",
+"phone": "+90 242 512 40 40",
+"mail": "info@newlevel.com.tr",
+"addr": "Alanya, Mahmutlar, Barbaros Cd. 12"
+},
+{
+"id": 2,
+"name": "Yükselen İnşaat",
+"dir": "Kemal Yükselen",
+"objIds": [
+9
+],
+"until": "2026-11-30",
+"phone": "+90 242 512 40 40",
+"mail": "info@newlevel.com.tr",
+"addr": "Alanya, Mahmutlar, Barbaros Cd. 12"
+},
+{
+"id": 3,
+"name": "ARSO GROUP",
+"dir": "Arslan Oğuz",
+"objIds": [
+13
+],
+"until": "2026-08-01",
+"phone": "+90 242 512 40 40",
+"mail": "info@newlevel.com.tr",
+"addr": "Alanya, Mahmutlar, Barbaros Cd. 12"
+},
+{
+"id": 4,
+"name": "Sönmez Construction",
+"dir": "Deniz Sönmez",
+"objIds": [
+14
+],
+"until": "2027-02-15",
+"phone": "+90 242 512 40 40",
+"mail": "info@newlevel.com.tr",
+"addr": "Alanya, Mahmutlar, Barbaros Cd. 12"
+},
+{
+"id": 5,
+"name": "Avocado Village",
+"dir": "Emre Kaya",
+"objIds": [
+12
+],
+"until": "",
+"phone": "+90 242 512 40 40",
+"mail": "info@newlevel.com.tr",
+"addr": "Alanya, Mahmutlar, Barbaros Cd. 12"
+}
+]

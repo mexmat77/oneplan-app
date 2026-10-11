@@ -1,0 +1,478 @@
+[
+  {
+    "k": "terra",
+    "n": "Terra Marin",
+    "type": "flat",
+    "cur": "TRY",
+    "geo": "Antalya · Konyaaltı · Hurma",
+    "ll": [
+      36.8672,
+      30.6402
+    ],
+    "dev": "Terra İnşaat",
+    "dlv": "12.2026",
+    "sales": "open",
+    "keys": "not",
+    "units": 96,
+    "fl": 8,
+    "bl": 2,
+    "inst": true,
+    "feats": [
+      "pool",
+      "ipool",
+      "upark",
+      "play",
+      "fit",
+      "sec",
+      "cam",
+      "sauna",
+      "hamam",
+      "gen"
+    ],
+    "plans": [
+      [
+        "1+0",
+        38,
+        4900000
+      ],
+      [
+        "1+1",
+        55,
+        6900000
+      ],
+      [
+        "2+1",
+        78,
+        9800000
+      ],
+      [
+        "3+1",
+        112,
+        14500000
+      ]
+    ],
+    "ph": [
+      {
+        "img": "/img/nb/2.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/3.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/4.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/5.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/6.jpg",
+        "cat": "soc"
+      },
+      {
+        "img": "/img/nb/7.jpg",
+        "cat": "pool"
+      },
+      {
+        "img": "/img/nb/8.jpg",
+        "cat": "spa"
+      },
+      {
+        "img": "/img/nb/9.jpg",
+        "cat": "kids"
+      },
+      {
+        "img": "/img/nb/10.jpg",
+        "cat": "park"
+      }
+    ],
+    "desc": {
+      "RU": "Комплекс из двух блоков в 900 м от моря в Hurma. Панорамные окна, потолки 3 м, закрытая территория с бассейном и спа. Рассрочка до ключей: 40% первый взнос, остаток равными платежами.",
+      "EN": "A two-block complex 900 m from the sea in Hurma. Panoramic windows, 3 m ceilings, gated grounds with a pool and spa. Interest-free plan until delivery: 40% down, the rest in equal instalments.",
+      "TR": "Hurma’da denize 900 m mesafede iki bloklu proje. Panoramik pencereler, 3 m tavan, havuzlu ve spalı kapalı site. Teslime kadar vade: %40 peşinat, kalan eşit taksit."
+    },
+    "diary": [
+      {
+        "d": "08.2026",
+        "tx": {
+          "RU": "Каркас блока A завершён, начат монтаж фасада",
+          "EN": "Block A frame complete, facade started",
+          "TR": "A blok karkas bitti, cephe başladı"
+        },
+        "img": "/img/nb/4.jpg"
+      },
+      {
+        "d": "05.2026",
+        "tx": {
+          "RU": "Залиты перекрытия 5–8 этажей, идёт кладка стен",
+          "EN": "Floors 5–8 slabs poured, walls in progress",
+          "TR": "5–8. kat döşemeleri döküldü, duvarlar örülüyor"
+        },
+        "img": "/img/nb/7.jpg"
+      },
+      {
+        "d": "02.2026",
+        "tx": {
+          "RU": "Фундамент завершён, получено разрешение на надземную часть",
+          "EN": "Foundation done, above-ground permit received",
+          "TR": "Temel bitti, üst yapı ruhsatı alındı"
+        },
+        "img": "/img/nb/10.jpg"
+      }
+    ],
+    "docs": [
+      "İnşaat ruhsatı.pdf",
+      "Kat planları.pdf",
+      "Tapu örneği.pdf",
+      "Ödeme planı.pdf"
+    ]
+  },
+  {
+    "k": "lara",
+    "n": "Lara Sky Residence",
+    "type": "flat",
+    "cur": "USD",
+    "geo": "Antalya · Muratpaşa · Lara",
+    "ll": [
+      36.858,
+      30.792
+    ],
+    "dev": "Sky Yapı",
+    "dlv": "06.2027",
+    "sales": "start",
+    "keys": "not",
+    "units": 140,
+    "fl": 12,
+    "bl": 1,
+    "inst": true,
+    "feats": [
+      "ipool",
+      "upark",
+      "fit",
+      "sec",
+      "cam",
+      "sauna",
+      "gen",
+      "ter"
+    ],
+    "plans": [
+      [
+        "1+0",
+        45,
+        120000
+      ],
+      [
+        "1+1",
+        62,
+        175000
+      ],
+      [
+        "2+1",
+        95,
+        275000
+      ],
+      [
+        "2+2",
+        110,
+        320000
+      ],
+      [
+        "3+1",
+        128,
+        395000
+      ],
+      [
+        "3.5+1",
+        150,
+        470000
+      ],
+      [
+        "4+1",
+        165,
+        550000
+      ],
+      [
+        "4.5+2",
+        195,
+        660000
+      ]
+    ],
+    "ph": [
+      {
+        "img": "/img/nb/5.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/6.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/7.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/8.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/9.jpg",
+        "cat": "soc"
+      },
+      {
+        "img": "/img/nb/10.jpg",
+        "cat": "pool"
+      },
+      {
+        "img": "/img/nb/11.jpg",
+        "cat": "spa"
+      },
+      {
+        "img": "/img/nb/12.jpg",
+        "cat": "kids"
+      },
+      {
+        "img": "/img/nb/13.jpg",
+        "cat": "park"
+      }
+    ],
+    "desc": {
+      "RU": "Башня 12 этажей на первой линии Lara. Резиденс-формат: лобби, консьерж, закрытый паркинг. Старт продаж — цены первого пула.",
+      "EN": "A 12-storey tower on the Lara seafront. Residence format: lobby, concierge, underground parking. Sales launch — first-pool prices.",
+      "TR": "Lara sahilinde 12 katlı kule. Rezidans konsepti: lobi, konsiyerj, kapalı otopark. Satış lansmanı — ilk etap fiyatları."
+    },
+    "diary": [
+      {
+        "d": "07.2026",
+        "tx": {
+          "RU": "Стройплощадка подготовлена, начато бурение свай",
+          "EN": "Site prepared, piling started",
+          "TR": "Şantiye hazır, fore kazık başladı"
+        },
+        "img": "/img/nb/6.jpg"
+      }
+    ],
+    "docs": [
+      "İnşaat ruhsatı.pdf",
+      "Kat planları.pdf",
+      "Ödeme planı.pdf"
+    ]
+  },
+  {
+    "k": "oba",
+    "n": "Oba Park Life",
+    "type": "flat",
+    "cur": "TRY",
+    "geo": "Antalya · Alanya · Oba",
+    "ll": [
+      36.551,
+      32.025
+    ],
+    "dev": "Oba Group",
+    "dlv": "03.2026",
+    "sales": "open",
+    "keys": "started",
+    "units": 64,
+    "fl": 6,
+    "bl": 2,
+    "inst": false,
+    "feats": [
+      "pool",
+      "opark",
+      "play",
+      "sec",
+      "cam",
+      "bbq",
+      "gaz"
+    ],
+    "plans": [
+      [
+        "1+1",
+        50,
+        4800000
+      ],
+      [
+        "2+1",
+        72,
+        7300000
+      ]
+    ],
+    "ph": [
+      {
+        "img": "/img/nb/8.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/9.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/10.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/11.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/12.jpg",
+        "cat": "soc"
+      },
+      {
+        "img": "/img/nb/13.jpg",
+        "cat": "pool"
+      },
+      {
+        "img": "/img/nb/14.jpg",
+        "cat": "spa"
+      },
+      {
+        "img": "/img/nb/15.jpg",
+        "cat": "kids"
+      },
+      {
+        "img": "/img/nb/16.jpg",
+        "cat": "park"
+      }
+    ],
+    "desc": {
+      "RU": "Готовый комплекс в Oba: дом сдан, идёт выдача ключей. Остались последние квартиры от застройщика по прайсу без наценки.",
+      "EN": "A completed complex in Oba: delivered, keys being handed over. Last developer units at list price.",
+      "TR": "Oba’da tamamlanmış proje: teslim edildi, anahtarlar veriliyor. Müteahhitten son daireler liste fiyatına."
+    },
+    "diary": [
+      {
+        "d": "03.2026",
+        "tx": {
+          "RU": "Получен искан, началась выдача ключей",
+          "EN": "Iskan received, key handover started",
+          "TR": "İskan alındı, anahtar teslimi başladı"
+        },
+        "img": "/img/nb/9.jpg"
+      },
+      {
+        "d": "12.2025",
+        "tx": {
+          "RU": "Благоустройство двора и бассейна завершено",
+          "EN": "Landscaping and pool finished",
+          "TR": "Peyzaj ve havuz tamamlandı"
+        },
+        "img": "/img/nb/12.jpg"
+      }
+    ],
+    "docs": [
+      "İskan belgesi.pdf",
+      "Kat planları.pdf",
+      "Tapu örneği.pdf"
+    ]
+  },
+  {
+    "k": "belek",
+    "n": "Belek Golf Homes",
+    "type": "house",
+    "cur": "EUR",
+    "geo": "Antalya · Serik · Belek",
+    "ll": [
+      36.862,
+      31.055
+    ],
+    "dev": "Golf İnşaat",
+    "dlv": "09.2027",
+    "sales": "none",
+    "keys": "not",
+    "units": 48,
+    "fl": 2,
+    "bl": 12,
+    "inst": true,
+    "feats": [
+      "pool",
+      "opark",
+      "play",
+      "fit",
+      "sec",
+      "sauna",
+      "hamam",
+      "ten",
+      "bbq"
+    ],
+    "plans": [
+      [
+        "2+1",
+        105,
+        260000
+      ],
+      [
+        "3+1",
+        150,
+        370000,
+        "villa"
+      ],
+      [
+        "4+2",
+        210,
+        580000,
+        "villa"
+      ]
+    ],
+    "ph": [
+      {
+        "img": "/img/nb/11.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/12.jpg",
+        "cat": "ext"
+      },
+      {
+        "img": "/img/nb/13.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/14.jpg",
+        "cat": "int"
+      },
+      {
+        "img": "/img/nb/15.jpg",
+        "cat": "soc"
+      },
+      {
+        "img": "/img/nb/16.jpg",
+        "cat": "pool"
+      },
+      {
+        "img": "/img/nb/17.jpg",
+        "cat": "spa"
+      },
+      {
+        "img": "/img/nb/18.jpg",
+        "cat": "kids"
+      },
+      {
+        "img": "/img/nb/19.jpg",
+        "cat": "park"
+      }
+    ],
+    "desc": {
+      "RU": "Виллы и таунхаусы у гольф-полей Belek. Продажи ещё не открыты — принимаются предварительные заявки, цены будут объявлены на старте.",
+      "EN": "Villas and townhouses by the Belek golf courses. Sales not open yet — pre-applications accepted, prices announced at launch.",
+      "TR": "Belek golf sahalarının yanında villa ve townhouse. Satış henüz açılmadı — ön talep alınıyor, fiyatlar lansmanda."
+    },
+    "diary": [
+      {
+        "d": "06.2026",
+        "tx": {
+          "RU": "Проект получил разрешение, презентация в сентябре",
+          "EN": "Permit granted, launch presentation in September",
+          "TR": "Ruhsat alındı, lansman eylülde"
+        },
+        "img": "/img/nb/13.jpg"
+      }
+    ],
+    "docs": [
+      "İnşaat ruhsatı.pdf",
+      "Proje broşürü.pdf"
+    ]
+  }
+]

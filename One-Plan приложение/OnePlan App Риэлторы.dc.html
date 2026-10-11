@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body>div,body>div>div,body>div>div>div{height:100%}
+[data-scroll]>*{flex:none}
+body{font-family:'PT Sans',sans-serif;background:#f6f8fb;color:#14243f}
+a{color:#4d7cfe;text-decoration:none}
+a:hover{color:#3a63d4}
+input,button{font-family:inherit}
+::placeholder{color:#aab1bd}
+@keyframes opRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes opFade{from{opacity:0}to{opacity:1}}
+@keyframes opSheet{from{transform:translateY(100%)}to{transform:none}}
+</style>
+</helmet>
+
+<div style="height:100%;display:flex;flex-direction:column;background:#f6f8fb;color:#14243f;font-family:'PT Sans',sans-serif;position:relative;overflow:hidden">
+
+<div style="{{ topPadStyle }}"></div>
+
+<div style="flex:none;background:#fff;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:10px;padding:8px 14px;min-height:52px">
+  <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}"><span onClick="{{ goBack }}" style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;font-size:17px"><i class="ti ti-arrow-left"></i></span></sc-if>
+  <sc-if value="{{ showLogo }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:8px;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#14243f"><span style="display:inline-flex"><span style="width:11px;height:11px;border-radius:50%;background:#4d7cfe"></span><span style="width:11px;height:11px;border-radius:50%;background:#43a047;margin-left:-4px"></span><span style="width:11px;height:11px;border-radius:50%;background:#f0ad00;margin-left:-4px"></span><span style="width:11px;height:11px;border-radius:50%;background:#e5484d;margin-left:-4px"></span></span> OnePlan</span></sc-if>
+  <sc-if value="{{ headerTitle }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex-direction:column;min-width:0"><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:16.5px;color:#14243f;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ headerTitle }}</span><sc-if value="{{ headerSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#0f9d6b;font-weight:700">{{ headerSub }}</span></sc-if></span></sc-if>
+  <span style="flex:1"></span>
+  <sc-if value="{{ showBell }}" hint-placeholder-val="{{ true }}"><span onClick="{{ goNotif }}" style="position:relative;width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;font-size:17px"><i class="ti ti-bell"></i><sc-if value="{{ notifDot }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid #f0f2f6"></span></sc-if></span></sc-if>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:16px 14px 20px;display:flex;flex-direction:column;gap:14px">
+  <div>
+    <div style="font-family:'Manrope',sans-serif;font-size:21px;font-weight:800;color:#14243f;letter-spacing:-.02em">{{ t.greeting }}, Ирина</div>
+    <div style="font-size:13px;color:#8a93a2;margin-top:2px">Compass Realty · {{ t.headerDate }}</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+    <div onClick="{{ k.onClick }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" style-hover="border-color:#c9d2e0">
+      <span style="{{ k.iconStyle }}"><i class="ti {{ k.icon }}"></i></span>
+      <span style="min-width:0">
+        <div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f;letter-spacing:-.01em;white-space:nowrap">{{ k.val }}</div>
+        <div style="font-size:11px;color:#8a93a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
+      </span>
+    </div>
+    </sc-for>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:15px 16px">
+    <div style="font-size:13px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif;margin-bottom:11px">{{ t.today }}</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ events }}" as="e" hint-placeholder-count="3">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="{{ e.iconStyle }}"><i class="ti {{ e.icon }}"></i></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;color:#14243f;line-height:1.4">{{ e.text }}</span><span style="font-size:11px;color:#9aa4b5">{{ e.time }}</span></span>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+  <div>
+    <div style="display:flex;align-items:center;margin-bottom:9px"><span style="font-size:13px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif">{{ t.newInBase }}</span><span style="flex:1"></span><span onClick="{{ goCatalogTab }}" style="font-size:12px;font-weight:700;color:#4d7cfe;cursor:pointer;padding:6px 2px">{{ t.seeAll }}</span></div>
+    <div style="display:flex;gap:10px;overflow-x:auto;margin:0 -14px;padding:0 14px 4px">
+      <sc-for list="{{ miniObjs }}" as="o" hint-placeholder-count="3">
+      <div onClick="{{ o.open }}" style="flex:none;width:168px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;overflow:hidden;cursor:pointer">
+        <div style="height:88px;background-color:#dfe6f0;background-size:cover;background-position:center;background-image:url('{{ o.img }}')"></div>
+        <div style="padding:9px 11px">
+          <div style="font-size:13px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap">{{ o.price }}</div>
+          <div style="font-size:10.5px;color:#8a93a2;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.title }}</div>
+        </div>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+  <div onClick="{{ goReqs }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px;cursor:pointer" style-hover="border-color:#c9d2e0">
+    <span style="width:38px;height:38px;border-radius:11px;background:#fff4d6;color:#9c7420;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex:none"><i class="ti ti-speakerphone"></i></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;font-family:'Manrope',sans-serif">{{ t.reqTitle }}</span><span style="font-size:11.5px;color:#8a93a2">{{ t.reqSub }}</span></span>
+    <span style="min-width:20px;height:20px;border-radius:10px;background:#e5484d;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;font-family:'Manrope',sans-serif">3</span>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="flex:none;padding:12px 14px 9px;display:flex;flex-direction:column;gap:10px;background:#f6f8fb;border-bottom:1px solid #eef1f6">
+  <div style="display:flex;gap:4px;background:#eaedf3;border-radius:11px;padding:4px">
+    <button onClick="{{ segSec }}" style="{{ segSecSt }}">{{ t.segSec }}</button>
+    <button onClick="{{ segNew }}" style="{{ segNewSt }}">{{ t.segNew }}</button>
+  </div>
+  <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:0 14px 2px;scrollbar-width:none">
+    <sc-for list="{{ filterChips }}" as="fc" hint-placeholder-count="5"><span onClick="{{ fc.onClick }}" style="{{ fc.st }}">{{ fc.l }}<sc-if value="{{ fc.caret }}" hint-placeholder-val="{{ true }}"> <i class="ti ti-chevron-down" style="font-size:11px;color:#8a93a2"></i></sc-if></span></sc-for>
+  </div>
+</div>
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:11px 14px 20px;display:flex;flex-direction:column;gap:11px">
+  <sc-if value="{{ segIsSec }}" hint-placeholder-val="{{ true }}">
+  <sc-for list="{{ listings }}" as="o" hint-placeholder-count="4">
+  <div onClick="{{ o.open }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden;cursor:pointer;animation:opRise .2s ease both" style-hover="border-color:#c9d2e0">
+    <div style="height:168px;position:relative;background-color:#dfe6f0;background-size:cover;background-position:center;background-image:url('{{ o.img }}')">
+      <sc-if value="{{ o.drop }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:10px;left:10px;background:#0f9d6b;color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:4px 9px;font-family:'Manrope',sans-serif">{{ o.drop }}</span></sc-if>
+      <span onClick="{{ o.fav }}" style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-size:17px;color:{{ o.favC }}"><i class="ti {{ o.favI }}"></i></span>
+      <span style="position:absolute;bottom:10px;right:10px;background:rgba(10,16,28,.6);color:#fff;font-size:10.5px;font-weight:600;border-radius:8px;padding:3px 8px"><i class="ti ti-photo"></i> {{ o.phN }}</span>
+    </div>
+    <div style="padding:11px 13px 13px">
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f">{{ o.price }}</span><span style="font-size:11.5px;color:#8a93a2">{{ o.eq }}</span></div>
+      <div style="font-size:13px;font-weight:700;color:#14243f;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.title }}</div>
+      <div style="font-size:11.5px;color:#8a93a2;margin-top:2px"><i class="ti ti-map-pin"></i> {{ o.geo }}</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <sc-for list="{{ o.chips }}" as="ch" hint-placeholder-count="3"><span style="font-size:10.5px;font-weight:700;color:#5a6472;background:#f0f2f6;border-radius:100px;padding:4px 10px;white-space:nowrap">{{ ch }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-for>
+  </sc-if>
+  <sc-if value="{{ segIsNew }}" hint-placeholder-val="{{ false }}">
+  <sc-for list="{{ newbCards }}" as="o" hint-placeholder-count="3">
+  <div onClick="{{ o.open }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden;cursor:pointer;animation:opRise .2s ease both" style-hover="border-color:#c9d2e0">
+    <div style="height:150px;position:relative;background-color:#dfe6f0;background-size:cover;background-position:center;background-image:url('{{ o.img }}')">
+      <span style="position:absolute;top:10px;left:10px;background:#14243f;color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:4px 9px;font-family:'Manrope',sans-serif">{{ o.dlv }}</span>
+      <span style="{{ o.salesSt }}">{{ o.salesL }}</span>
+    </div>
+    <div style="padding:11px 13px 13px">
+      <div style="font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:#14243f">{{ o.name }}</div>
+      <div style="font-size:11.5px;color:#8a93a2;margin-top:2px"><i class="ti ti-map-pin"></i> {{ o.geo }} · {{ o.dev }}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:9px">
+        <sc-for list="{{ o.plans }}" as="pl" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;font-size:12px"><span style="font-weight:800;color:#14243f;min-width:40px">{{ pl.r }}</span><span style="color:#8a93a2;flex:1">{{ pl.m2 }}</span><span style="font-weight:700;color:#3b5fd6">{{ pl.price }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-for>
+  </sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNbDetail }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto">
+  <div style="height:210px;position:relative;background:#dfe6f0;overflow:hidden">
+    <div onTouchStart="{{ nbTS }}" onTouchMove="{{ nbTM }}" onTouchEnd="{{ nbTE }}" style="position:absolute;inset:0">
+      <div data-strip="1" style="position:absolute;inset:0;display:flex;transition:transform .35s cubic-bezier(.22,.61,.36,1);transform:{{ nbShift }}">
+        <sc-for list="{{ nbPhotos }}" as="g" hint-placeholder-count="1"><div style="flex:none;width:100%;height:100%;background-size:cover;background-position:center;background-image:url('{{ g.img }}')"></div></sc-for>
+      </div>
+    </div>
+    <span style="position:absolute;bottom:10px;right:12px;background:rgba(10,16,28,.6);color:#fff;font-size:11px;font-weight:600;border-radius:8px;padding:4px 9px"><i class="ti ti-photo"></i> {{ nbPhCnt }}</span>
+  </div>
+  <div style="padding:13px 14px 24px;display:flex;flex-direction:column;gap:12px">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:'Manrope',sans-serif;font-size:20px;font-weight:800;color:#14243f">{{ nbName }}</span><span style="{{ nbSalesSt }}">{{ nbSalesL }}</span></div>
+      <div style="font-size:12px;color:#8a93a2;margin-top:3px"><i class="ti ti-map-pin"></i> {{ nbGeo }} · {{ nbDev }}</div>
+      <div style="font-size:12px;font-weight:700;color:#14243f;margin-top:3px"><i class="ti ti-key" style="color:#4d7cfe"></i> {{ nbDlv }}</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px">
+      <div style="font-size:13px;font-weight:700;font-family:'Manrope',sans-serif;margin-bottom:9px">{{ nbPlansT }}</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <sc-for list="{{ nbPlans }}" as="pl" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;font-size:12.5px"><span style="font-weight:800;color:#14243f;min-width:44px">{{ pl.r }}</span><span style="color:#8a93a2;flex:1">{{ pl.m2 }}</span><span style="font-weight:700;color:#3b5fd6">{{ pl.price }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px">
+      <div style="font-size:13px;font-weight:700;font-family:'Manrope',sans-serif;margin-bottom:8px">{{ nbUnitsT }} <span style="font-size:11px;font-weight:600;color:#8a93a2">· {{ nbUCnt }}</span></div>
+      <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -15px 7px;padding:0 15px 3px;scrollbar-width:none">
+        <sc-for list="{{ nbStChips }}" as="c" hint-placeholder-count="6"><span onClick="{{ c.onClick }}" style="{{ c.st }}"><span style="{{ c.dotSt }}"></span>{{ c.l }} <b>{{ c.n }}</b></span></sc-for>
+      </div>
+      <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -15px 4px;padding:0 15px 3px;scrollbar-width:none">
+        <sc-for list="{{ nbRmChips }}" as="c" hint-placeholder-count="4"><span onClick="{{ c.onClick }}" style="{{ c.st }}">{{ c.l }}</span></sc-for>
+      </div>
+      <sc-for list="{{ nbUnits }}" as="u" hint-placeholder-count="6">
+      <div onClick="{{ u.open }}" style="{{ u.rowSt }};cursor:pointer">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:800;color:#14243f">{{ u.tp }}</span><span style="font-size:11.5px;color:#8a93a2">{{ u.no }}</span><span style="flex:1"></span><span style="font-size:13px;font-weight:800;color:#14243f;white-space:nowrap">{{ u.price }}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8a93a2"><span>{{ u.fl }}</span><span>·</span><span>{{ u.m2 }}</span><span style="flex:1"></span><span style="{{ u.stSt }}">{{ u.stL }}</span></div>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+<div style="flex:none;background:#fff;border-top:1px solid #eef1f6;display:flex;align-items:center;gap:11px;padding:10px 14px">
+  <span style="width:38px;height:38px;border-radius:50%;background:#3b5fd6;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;font-family:'Manrope',sans-serif">{{ nbDevAv }}</span>
+  <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ nbDev }}</span><span style="font-size:11px;color:#8a93a2">{{ nbGeo }}</span></span>
+  <span style="width:42px;height:42px;border-radius:12px;background:#3b5fd6;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-phone"></i></span>
+  <span style="width:42px;height:42px;border-radius:12px;background:#22c15e;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-brand-whatsapp"></i></span>
+  <span onClick="{{ nbChat }}" style="width:42px;height:42px;border-radius:12px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-message-circle"></i></span>
+</div>
+</sc-if>
+
+<sc-if value="{{ isObjDetail }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto">
+  <div style="height:230px;position:relative;background:#dfe6f0;overflow:hidden">
+    <div onTouchStart="{{ objTS }}" onTouchMove="{{ objTM }}" onTouchEnd="{{ objTE }}" style="position:absolute;inset:0">
+      <div data-strip="1" style="position:absolute;inset:0;display:flex;transition:transform .35s cubic-bezier(.22,.61,.36,1);transform:{{ objShift }}">
+        <sc-for list="{{ objPhotos }}" as="g" hint-placeholder-count="1"><div style="flex:none;width:100%;height:100%;background-size:cover;background-position:center;background-image:url('{{ g.img }}')"></div></sc-for>
+      </div>
+    </div>
+    <span style="position:absolute;bottom:10px;right:12px;background:rgba(10,16,28,.6);color:#fff;font-size:11px;font-weight:600;border-radius:8px;padding:4px 9px"><i class="ti ti-photo"></i> {{ objPhCnt }}</span>
+    <sc-if value="{{ objDrop }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:12px;left:12px;background:#0f9d6b;color:#fff;font-size:10.5px;font-weight:800;border-radius:8px;padding:4px 10px;font-family:'Manrope',sans-serif">{{ objDrop }}</span></sc-if>
+    <span onClick="{{ objFav }}" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-size:19px;color:{{ objFavC }};box-shadow:0 4px 14px rgba(20,36,63,.18)"><i class="ti {{ objFavI }}"></i></span>
+  </div>
+  <div style="padding:13px 14px 24px;display:flex;flex-direction:column;gap:12px">
+    <div>
+      <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap"><span style="font-family:'Manrope',sans-serif;font-size:23px;font-weight:800;color:#14243f;letter-spacing:-.01em">{{ objPrice }}</span><span style="font-size:12.5px;color:#8a93a2">{{ objEq }}</span></div>
+      <div style="font-size:14.5px;font-weight:700;color:#14243f;margin-top:4px">{{ objTitle }}</div>
+      <div style="font-size:12px;color:#8a93a2;margin-top:2px"><i class="ti ti-map-pin"></i> {{ objGeo }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <sc-for list="{{ objParams }}" as="p" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e6e9f0;border-radius:12px;padding:9px 11px">
+        <span style="width:32px;height:32px;border-radius:9px;background:#eef3ff;color:#4d7cfe;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none"><i class="ti {{ p.ic }}"></i></span>
+        <span style="min-width:0"><span style="display:block;font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.04em">{{ p.k }}</span><span style="display:block;font-size:13px;font-weight:800;color:#14243f">{{ p.v }}</span></span>
+      </div>
+      </sc-for>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px">
+      <div style="font-size:13px;font-weight:700;font-family:'Manrope',sans-serif;margin-bottom:9px">{{ t.objFeats }}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ objFeats }}" as="f" hint-placeholder-count="6"><span style="font-size:11px;font-weight:700;color:#5a6472;background:#f0f2f6;border-radius:100px;padding:5px 11px;white-space:nowrap">{{ f }}</span></sc-for>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px">
+      <div style="font-size:13px;font-weight:700;font-family:'Manrope',sans-serif;margin-bottom:7px">{{ t.objDesc }}</div>
+      <div style="font-size:13px;color:#5a6472;line-height:1.55">{{ objDesc }}</div>
+    </div>
+  </div>
+</div>
+<div style="flex:none;background:#fff;border-top:1px solid #eef1f6;display:flex;align-items:center;gap:11px;padding:10px 14px">
+  <span style="width:38px;height:38px;border-radius:50%;background:#3b5fd6;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;font-family:'Manrope',sans-serif">{{ objAgentAv }}</span>
+  <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ objAgent }}</span><span style="font-size:11px;color:#8a93a2">{{ objAgentSub }}</span></span>
+  <span style="width:42px;height:42px;border-radius:12px;background:#3b5fd6;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-phone"></i></span>
+  <span style="width:42px;height:42px;border-radius:12px;background:#22c15e;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-brand-whatsapp"></i></span>
+  <span onClick="{{ objChat }}" style="width:42px;height:42px;border-radius:12px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-message-circle"></i></span>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChatList }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+  <sc-for list="{{ chatCards }}" as="c" hint-placeholder-count="4">
+  <div onClick="{{ c.open }}" style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:12px 13px;cursor:pointer" style-hover="border-color:#c9d2e0">
+    <span style="{{ c.avStyle }}"><sc-if value="{{ c.icon }}" hint-placeholder-val="{{ false }}"><i class="ti {{ c.icon }}"></i></sc-if><sc-if value="{{ c.init }}" hint-placeholder-val="{{ true }}">{{ c.init }}</sc-if></span>
+    <span style="flex:1;min-width:0">
+      <span style="display:flex;gap:6px;align-items:baseline;min-width:0"><span style="font-size:13.5px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap">{{ c.name }}</span><span style="font-size:10.5px;color:#9aa4b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.agency }}</span></span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:#6b7688;margin-top:2px;min-width:0"><sc-if value="{{ c.tick }}" hint-placeholder-val="{{ false }}"><i class="ti {{ c.tick }}" style="color:{{ c.tickC }};font-size:13px;flex:none"></i></sc-if><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.last }}</span></span>
+    </span>
+    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+      <span style="font-size:10.5px;color:#9aa4b5">{{ c.time }}</span>
+      <sc-if value="{{ c.unread }}" hint-placeholder-val="{{ false }}"><span style="min-width:18px;height:18px;border-radius:9px;background:#4d7cfe;color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-family:'Manrope',sans-serif">{{ c.unread }}</span></sc-if>
+    </span>
+  </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isThread }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+  <div ref="{{ msgsRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+    <sc-for list="{{ msgsView }}" as="m" hint-placeholder-count="4">
+    <div style="{{ m.row }}"><span style="{{ m.bub }}">{{ m.text }}<span style="{{ m.tmStyle }}">{{ m.tm }}<sc-if value="{{ m.tick }}" hint-placeholder-val="{{ false }}"><i class="ti {{ m.tick }}" style="font-size:13px;margin-left:3px;color:{{ m.tickC }}"></i></sc-if></span></span></div>
+    </sc-for>
+  </div>
+  <div style="flex:none;display:flex;gap:8px;padding:9px 12px;background:#fff;border-top:1px solid #eef1f6">
+    <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ t.msgPh }}" style="flex:1;border:1px solid #e6e9f0;border-radius:11px;padding:10px 13px;font-size:13.5px;outline:none;background:#f8fafc;min-width:0" style-focus="border-color:#4d7cfe">
+    <button onClick="{{ send }}" style="width:44px;height:44px;border-radius:11px;border:none;background:#4d7cfe;color:#fff;font-size:17px;cursor:pointer;flex:none" style-hover="background:#3a63d4"><i class="ti ti-send"></i></button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+  <sc-for list="{{ notifGroups }}" as="g" hint-placeholder-count="2">
+  <div style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#9aa4b5;padding:6px 2px 0">{{ g.label }}</div>
+  <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+  <div style="{{ n.cardStyle }}">
+    <span style="{{ n.iconStyle }}"><i class="ti {{ n.icon }}"></i></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;color:#14243f;line-height:1.4">{{ n.text }}</span><span style="font-size:11px;color:#9aa4b5">{{ n.time }}</span></span>
+    <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:8px;height:8px;border-radius:50%;background:#4d7cfe;flex:none;margin-top:5px"></span></sc-if>
+  </div>
+  </sc-for>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFavsScr }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px">
+  <sc-if value="{{ favEmpty }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;color:#8a93a2;font-size:13px;padding:44px 20px;border:1px dashed #d5dce6;border-radius:14px;background:#fff">{{ favEmptyL }}</div></sc-if>
+  <sc-for list="{{ favObjs }}" as="u" hint-placeholder-count="2">
+  <div onClick="{{ u.open }}" style="display:flex;gap:11px;align-items:center;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:10px 12px;cursor:pointer">
+    <div style="width:68px;height:54px;flex:none;border-radius:10px;background-image:{{ u.img }};background-size:cover;background-position:center"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.t }}</div>
+      <div style="font-size:11px;color:#8a93a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.geo }}</div>
+      <div style="font-size:12.5px;font-weight:800;color:#14243f;margin-top:2px">{{ u.price }}</div>
+    </div>
+    <span onClick="{{ u.del }}" style="width:34px;height:34px;flex:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#e5484d;font-size:17px;cursor:pointer"><i class="ti ti-heart-filled"></i></span>
+  </div>
+  </sc-for>
+  <sc-if value="{{ favUsShow }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9aa4b5;padding:8px 2px 0">{{ favNbT }}</div></sc-if>
+  <sc-for list="{{ favUs }}" as="u" hint-placeholder-count="1">
+  <div onClick="{{ u.open }}" style="display:flex;gap:11px;align-items:center;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:10px 12px;cursor:pointer">
+    <div style="width:68px;height:54px;flex:none;border-radius:10px;background-image:{{ u.img }};background-size:cover;background-position:center"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap">{{ u.t }}</div>
+      <div style="font-size:11px;color:#8a93a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.geo }}</div>
+      <div style="font-size:12.5px;font-weight:800;color:#14243f;margin-top:2px">{{ u.price }}</div>
+    </div>
+    <span onClick="{{ u.del }}" style="width:34px;height:34px;flex:none;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#e5484d;font-size:17px;cursor:pointer"><i class="ti ti-heart-filled"></i></span>
+  </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSubScr }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:6px 15px">
+    <sc-for list="{{ subRows }}" as="r" hint-placeholder-count="3">
+    <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f5f7fb;font-size:13px"><span style="color:#8a93a2">{{ r.k }}</span><span style="font-weight:700;color:#14243f">{{ r.v }}</span></div>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:8px">
+    <sc-for list="{{ subPkgs }}" as="p" hint-placeholder-count="3">
+    <div style="{{ p.st }}">
+      <div style="font-size:12px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif">{{ p.n }}</div>
+      <div style="font-size:13.5px;font-weight:800;color:#14243f;margin-top:3px">{{ p.p }}</div>
+      <sc-if value="{{ p.d }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:800;color:#0f9d6b;margin-top:2px">{{ p.d }}</div></sc-if>
+    </div>
+    </sc-for>
+  </div>
+  <button style="min-height:48px;border:none;border-radius:13px;background:#4d7cfe;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif"><i class="ti ti-credit-card"></i> {{ subPayL }}</button>
+  <div style="text-align:center;font-size:11px;color:#9aa4b5">{{ subNote }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRegScr }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:14px 15px">
+    <div style="font-size:12px;font-weight:800;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Antalya</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ regChips }}" as="c" hint-placeholder-count="6"><span onClick="{{ c.onClick }}" style="{{ c.st }}">{{ c.l }}<sc-if value="{{ c.on }}" hint-placeholder-val="{{ false }}"> <i class="ti ti-check" style="font-size:12px"></i></sc-if></span></sc-for>
+    </div>
+  </div>
+  <div style="font-size:11.5px;color:#9aa4b5;text-align:center;padding:0 10px">{{ regNote }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMsgrScr }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px">
+    <span style="width:38px;height:38px;border-radius:11px;background:#eef3ff;color:#4d7cfe;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none"><i class="ti ti-phone"></i></span>
+    <span style="flex:1;font-size:14px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif">{{ msgrPhone }}</span>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;overflow:hidden">
+    <sc-for list="{{ msgrRows }}" as="m" hint-placeholder-count="5">
+    <div style="display:flex;align-items:center;gap:11px;padding:12px 15px;border-bottom:1px solid #f5f7fb">
+      <span style="{{ m.avSt }}"><sc-if value="{{ m.ic }}" hint-placeholder-val="{{ true }}"><i class="ti {{ m.ic }}"></i></sc-if><sc-if value="{{ m.init }}" hint-placeholder-val="{{ false }}">{{ m.init }}</sc-if></span>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;color:#14243f">{{ m.n }}</span><span style="{{ m.stSt }}">{{ m.stL }}</span></span>
+      <span onClick="{{ m.onClick }}" style="{{ m.togSt }}"><span style="width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+    </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSecScr }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:15px;display:flex;flex-direction:column;gap:10px">
+    <div style="position:relative"><input type="{{ pwT1 }}" value="{{ pwOld }}" onInput="{{ onPwOld }}" placeholder="{{ pwOldPh }}" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:12px 42px 12px 13px;font-size:14px;outline:none" style-focus="border-color:#4d7cfe"><span onClick="{{ pwE1 }}" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#8a93a2;cursor:pointer;font-size:17px"><i class="ti {{ pwI1 }}"></i></span></div>
+    <div style="position:relative"><input type="{{ pwT2 }}" value="{{ pwNew }}" onInput="{{ onPwNew }}" placeholder="{{ pwNewPh }}" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:12px 42px 12px 13px;font-size:14px;outline:none" style-focus="border-color:#4d7cfe"><span onClick="{{ pwE2 }}" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#8a93a2;cursor:pointer;font-size:17px"><i class="ti {{ pwI2 }}"></i></span></div>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{ pwGen }}" style="flex:none;border:1px solid #e6e9f0;border-radius:11px;background:#fff;color:#14243f;font-size:12.5px;font-weight:700;padding:11px 14px;cursor:pointer"><i class="ti ti-wand"></i> {{ pwGenL }}</button>
+      <button style="flex:1;border:none;border-radius:11px;background:#4d7cfe;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif">{{ pwSaveL }}</button>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px">
+    <span style="width:38px;height:38px;border-radius:11px;background:#e4f6ee;color:#0f9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none"><i class="ti ti-shield-check"></i></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700;color:#14243f">{{ twoFAL }}</span><span style="font-size:11px;color:#9aa4b5">{{ twoFASub }}</span></span>
+    <span onClick="{{ twoFAToggle }}" style="{{ twoFASt }}"><span style="width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+  </div>
+  <div style="font-size:11.5px;color:#9aa4b5;text-align:center;padding:0 10px">{{ secEmailNote }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div data-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:16px;display:flex;align-items:center;gap:13px">
+    <span style="width:52px;height:52px;border-radius:50%;background:#14243f;color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;display:inline-flex;align-items:center;justify-content:center;flex:none">ИК</span>
+    <span style="flex:1;min-width:0">
+      <span style="display:block;font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;color:#14243f">Ирина Ковалёва</span>
+      <span style="font-size:12px;color:#8a93a2">Compass Realty · {{ t.roleRealtor }}</span>
+    </span>
+    <span style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer"><i class="ti ti-pencil"></i></span>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden">
+    <sc-for list="{{ profRows }}" as="r" hint-placeholder-count="4">
+    <div onClick="{{ r.onClick }}" style="{{ r.st }}" style-hover="background:#fafbfd">
+      <i class="ti {{ r.icon }}" style="color:{{ r.ic }};font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ r.label }}</span>
+      <sc-if value="{{ r.val }}" hint-placeholder-val="{{ false }}"><span style="{{ r.valSt }}">{{ r.val }}</span></sc-if>
+      <sc-if value="{{ r.chevron }}" hint-placeholder-val="{{ false }}"><i class="ti ti-chevron-right" style="color:#c9d2e0"></i></sc-if>
+    </div>
+    </sc-for>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #f0f2f6">
+      <i class="ti ti-language" style="color:#4d7cfe;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setLang }}</span>
+      <span style="display:inline-flex;gap:5px"><sc-for list="{{ langBtns }}" as="lb" hint-placeholder-count="3"><span onClick="{{ lb.onClick }}" style="{{ lb.st }}">{{ lb.l }}</span></sc-for></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px">
+      <i class="ti ti-bell-ringing" style="color:#f0ad00;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setPush }}</span>
+      <span onClick="{{ toggleNotif }}" style="{{ notifTogSt }}"><span style="width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+    </div>
+  </div>
+  <button style="min-height:46px;border:1px solid #f3d4d6;border-radius:13px;background:#fff;color:#e5484d;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif"><i class="ti ti-logout"></i> {{ t.logout }}</button>
+  <div style="text-align:center;font-size:11px;color:#9aa4b5">OnePlan · v1.0 · one-plan.pro</div>
+</div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{ uSheetOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ uClose }}" style="position:absolute;inset:0;z-index:60;background:rgba(10,16,28,.45);animation:opFade .15s ease"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:61;background:#fff;border-radius:18px 18px 0 0;padding:15px 16px 12px;animation:opSheet .22s ease;display:flex;flex-direction:column;max-height:86%">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;flex-wrap:wrap">
+    <span style="font-family:'Manrope',sans-serif;font-size:16.5px;font-weight:800;color:#14243f">{{ uo.tp }} · {{ uo.no }}</span>
+    <span style="{{ uo.stSt }}">{{ uo.stL }}</span>
+    <span style="flex:1"></span>
+    <span onClick="{{ uClose }}" style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;flex:none"><i class="ti ti-x"></i></span>
+  </div>
+  <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:11px">
+    <div style="height:170px;flex:none;border-radius:13px;background-color:#f0f2f6;background-size:cover;background-position:center;background-image:{{ uo.plan }};border:1px solid #eef1f6"></div>
+    <div>
+      <div style="font-family:'Manrope',sans-serif;font-size:21px;font-weight:800;color:#14243f">{{ uo.price }}</div>
+      <sc-if value="{{ uo.eq }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#8a93a2;margin-top:2px">{{ uo.eq }}</div></sc-if>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <sc-for list="{{ uo.rows }}" as="r" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;gap:9px;background:#f8f9fc;border-radius:11px;padding:9px 11px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#eef3ff;color:#4d7cfe;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:none"><i class="ti {{ r.ic }}"></i></span>
+        <span style="min-width:0"><span style="display:block;font-size:9.5px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.04em">{{ r.k }}</span><span style="display:block;font-size:12.5px;font-weight:800;color:#14243f">{{ r.v }}</span></span>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;padding-top:11px;border-top:1px solid #eef1f6;flex:none">
+    <span onClick="{{ uo.fav }}" style="{{ uo.favSt }}"><i class="ti {{ uo.favI }}"></i> {{ uo.favL }}</span>
+    <button onClick="{{ uo.req }}" style="flex:1;min-width:0;font-size:13px;font-weight:700;border:none;border-radius:11px;padding:12px;cursor:pointer;background:#4d7cfe;color:#fff;font-family:'Manrope',sans-serif;white-space:nowrap"><i class="ti ti-message-circle"></i> {{ uo.reqL }}</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ sheetClose }}" style="position:absolute;inset:0;z-index:60;background:rgba(10,16,28,.45);animation:opFade .15s ease"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:61;background:#fff;border-radius:18px 18px 0 0;padding:15px 16px 12px;animation:opSheet .22s ease;display:flex;flex-direction:column;max-height:72%">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <sc-if value="{{ gStepBack }}" hint-placeholder-val="{{ false }}"><span onClick="{{ gBack }}" style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex:none"><i class="ti ti-arrow-left"></i></span></sc-if>
+    <span style="font-family:'Manrope',sans-serif;font-size:15.5px;font-weight:800;color:#14243f;flex:1">{{ sheetTitle }}</span>
+    <span onClick="{{ sheetClose }}" style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;flex:none"><i class="ti ti-x"></i></span>
+  </div>
+  <sc-if value="{{ geoMode }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;margin-bottom:8px;flex:none">
+    <i class="ti ti-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aab1bd;font-size:15px"></i>
+    <input value="{{ gQ }}" onInput="{{ onGQ }}" placeholder="{{ gQPh }}" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:11px 13px 11px 36px;font-size:14px;outline:none;background:#f8fafc" style-focus="border-color:#4d7cfe">
+  </div>
+  <div style="flex:1;min-height:0;overflow-y:auto">
+    <sc-for list="{{ geoRows }}" as="r" hint-placeholder-count="6">
+    <sc-if value="{{ r.isHdr }}" hint-placeholder-val="{{ false }}"><div style="font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9aa4b5;padding:12px 2px 4px">{{ r.hdr }}</div></sc-if>
+    <sc-if value="{{ r.isHdr }}" hint-placeholder-val="{{ false }}"></sc-if>
+    <sc-if value="{{ r.l }}" hint-placeholder-val="{{ true }}">
+    <div onClick="{{ r.onClick }}" style="{{ r.st }}" style-hover="background:#fafbfd">
+      <span style="{{ r.ckSt }}"><i class="ti ti-check"></i></span>
+      <span style="flex:1">{{ r.l }}</span>
+      <sc-if value="{{ r.sub }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:400;color:#9aa4b5">{{ r.sub }}</span></sc-if>
+      <sc-if value="{{ r.chev }}" hint-placeholder-val="{{ false }}"><i class="ti ti-chevron-right" style="color:#c9d2e0"></i></sc-if>
+    </div>
+    </sc-if>
+    </sc-for>
+    <sc-if value="{{ gNextShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ gNext }}" style="display:flex;align-items:center;justify-content:center;gap:7px;margin:10px 0;padding:12px;border:1.5px dashed #8fb0fe;background:#eef3ff;border-radius:12px;font-size:13px;font-weight:700;color:#3b5fd6;cursor:pointer">{{ gNextL }} <i class="ti ti-chevron-right"></i></div>
+    </sc-if>
+  </div>
+  </sc-if>
+  <sc-if value="{{ geoMode }}" hint-placeholder-val="{{ false }}"></sc-if>
+  <sc-if value="{{ sheetChipsShow }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start">
+    <sc-for list="{{ sheetChips }}" as="c" hint-placeholder-count="4"><span onClick="{{ c.onClick }}" style="{{ c.st }}">{{ c.l }}</span></sc-for>
+  </div>
+  </sc-if>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:13px;padding-top:11px;border-top:1px solid #eef1f6;flex:none">
+    <button onClick="{{ sheetReset }}" style="{{ sheetResetSt }}">{{ t.reset }}</button>
+    <button onClick="{{ sheetClose }}" style="flex:none;font-size:13.5px;font-weight:700;border:none;border-radius:11px;padding:12px 22px;cursor:pointer;background:#4d7cfe;color:#fff;font-family:'Manrope',sans-serif">{{ sheetShowL }}</button>
+  </div>
+</div>
+</sc-if>
+
+<div style="flex:none;background:#fff;border-top:1px solid #eef1f6;display:flex;padding:6px 8px 2px">
+  <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
+  <span onClick="{{ tb.onClick }}" style="{{ tb.st }}">
+    <span style="position:relative;font-size:21px;line-height:1"><i class="ti {{ tb.icon }}"></i><sc-if value="{{ tb.badge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-4px;right:-10px;min-width:15px;height:15px;border-radius:8px;background:#e5484d;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;font-family:'Manrope',sans-serif">{{ tb.badge }}</span></sc-if></span>
+    <span style="font-size:9.5px;font-weight:700;font-family:'Manrope',sans-serif;white-space:nowrap">{{ tb.label }}</span>
+  </span>
+  </sc-for>
+</div>
+<div style="{{ bottomPadStyle }}"></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:874},&quot;topInset&quot;:{&quot;editor&quot;:null,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;bottomInset&quot;:{&quot;editor&quot;:null,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ru&quot;,&quot;en&quot;,&quot;tr&quot;],&quot;default&quot;:&quot;ru&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.OBJS=[
+      {id:0,img:'megapolis-photos/web-front.jpg',phs:['megapolis-photos/web-front.jpg','megapolis-photos/web-back-1.jpg','megapolis-photos/web-front-3.jpg','megapolis-photos/web-front-5.jpg'],price:5430000,old:5720000,rooms:'2+1',gross:95,net:82,floor:'3/6',title:{ru:'2+1 · Гюзелоба, 3 этаж',en:'2+1 · Güzeloba, floor 3',tr:'2+1 · Güzeloba, 3. kat'},geo:'Antalya · Muratpaşa · Güzeloba',agent:'Мехмет Далман',agency:'Coast Homes',feats:['pool','upark','sec','lift'],desc:{ru:'Просторная квартира с ремонтом, в 900 м от моря. Закрытый комплекс с бассейном и охраной. Подходит под ВНЖ.',en:'Spacious renovated flat 900 m from the sea. Gated complex with pool and security. Suitable for residence permit.',tr:'Denize 900 m, havuzlu ve güvenlikli sitede geniş, yapılı daire. Oturma iznine uygun.'}},
+      {id:1,img:'akropolis-photos/web-ph-1.jpg',phs:['akropolis-photos/web-ph-1.jpg','megapolis-photos/web-front-2.jpg','megapolis-photos/web-back-2.jpg'],price:9120000,old:0,rooms:'3+1',gross:145,net:121,floor:'5/8',title:{ru:'3+1 · Лара, вид на море',en:'3+1 · Lara, sea view',tr:'3+1 · Lara, deniz manzaralı'},geo:'Antalya · Muratpaşa · Lara',agent:'Айше Кая',agency:'Lara Estate',feats:['ipool','upark','sec','sauna','ter'],desc:{ru:'Видовая квартира на высоком этаже. Кухня отдельная, два санузла, большая терраса.',en:'High-floor flat with views. Separate kitchen, two bathrooms, large terrace.',tr:'Yüksek katta manzaralı daire. Ayrı mutfak, iki banyo, geniş teras.'}},
+      {id:2,img:'avocado-photos/web-v5556-1.jpg',phs:['avocado-photos/web-v5556-1.jpg','megapolis-photos/web-front-4.jpg'],price:14800000,old:0,rooms:'4+1',gross:210,net:178,floor:'Villa',title:{ru:'Вилла 4+1 · Авсаллар',en:'Villa 4+1 · Avsallar',tr:'Villa 4+1 · Avsallar'},geo:'Alanya · Avsallar',agent:'Ирина Ковалёва',agency:'Compass Realty',feats:['pool','opark','bbq','sec'],desc:{ru:'Отдельная вилла с участком и собственным бассейном, в 5 минутах от пляжа Инжекум.',en:'Detached villa with plot and private pool, 5 minutes from Incekum beach.',tr:'İncekum plajına 5 dk, müstakil havuzlu ve bahçeli villa.'}},
+      {id:3,img:'megapolis-photos/web-front-6.jpg',phs:['megapolis-photos/web-front-6.jpg','megapolis-photos/web-back-3.jpg'],price:3990000,old:4200000,rooms:'1+1',gross:58,net:48,floor:'2/5',title:{ru:'1+1 · Кепез, новый дом',en:'1+1 · Kepez, new building',tr:'1+1 · Kepez, yeni bina'},geo:'Antalya · Kepez · Varsak',agent:'Селин Эрдем',agency:'Nova Emlak',feats:['opark','play','lift'],desc:{ru:'Компактная квартира в новом доме 2024 года, отличный вариант под аренду.',en:'Compact flat in a 2024 building, great rental option.',tr:'2024 yapımı binada kompakt daire, kiralık için ideal.'}}
+    ];
+    this.NEWB=[
+      {id:0,img:'allure/web-f1.jpg',phs:['allure/web-f1.jpg','allure/web-f2.jpg','allure/web-i1.jpg','allure/web-f4.jpg'],name:'ALLURE',dev:'Arso İnşaat',geo:'Antalya · Aksu',dlv:'12.2026',sales:'open',cur:'₺',inst:true,plans:[['1+1',62,8400000],['2+1',95,13200000],['Villa',210,28000000]]},
+      {id:1,img:'diamond-photos/IMG-20250611-WA0060.jpg',phs:['diamond-photos/IMG-20250611-WA0060.jpg','diamond-photos/IMG-20250611-WA0062.jpg','diamond-photos/IMG-20250611-WA0064.jpg'],name:'Lara Sky Residence',dev:'Sky Yapı',geo:'Antalya · Lara',dlv:'06.2027',sales:'start',cur:'$',inst:true,plans:[['1+0',45,120000],['1+1',62,175000],['2+1',95,275000]]},
+      {id:2,img:'megapolis-photos/web-front-7.jpg',phs:['megapolis-photos/web-front-7.jpg','megapolis-photos/web-front-8.jpg','megapolis-photos/web-back-4.jpg'],name:'Terra Marin',dev:'Terra İnşaat',geo:'Antalya · Hurma',dlv:'03.2026',sales:'open',cur:'₺',inst:false,plans:[['2+1',105,12500000],['3+1',150,17800000]]}
+    ];
+    this.NEWB.forEach(p=>{p.units=[];for(let i=0;i<14;i++){const pl=p.plans[i%p.plans.length];const h=(i*7+p.id*5)%12;p.units.push({no:101+i,pl,fl:1+(i%7),gb:pl[1]+(i%3)*2,st:p.sales==='start'&&i>7?'na':h<4?'sold':h<6?'hold':h<7?'proc':h<8?'res':'free'});}});
+    this.GEO=[
+      {k:'antalya',n:'Antalya',ilces:[
+        {k:'muratpasa',n:'Muratpaşa',semts:[{k:'guzeloba',n:'Güzeloba'},{k:'lara',n:'Lara'},{k:'fener',n:'Fener'},{k:'caglayan',n:'Çağlayan'}]},
+        {k:'konyaalti',n:'Konyaaltı',semts:[{k:'liman',n:'Liman'},{k:'hurma',n:'Hurma'},{k:'uncali',n:'Uncalı'},{k:'sarisu',n:'Sarısu'}]},
+        {k:'kepez',n:'Kepez',semts:[{k:'merkez',n:'Merkez'},{k:'varsak',n:'Varsak'},{k:'santral',n:'Santral'}]},
+        {k:'alanya',n:'Alanya',semts:[{k:'mahmutlar',n:'Mahmutlar'},{k:'oba',n:'Oba'},{k:'tosmur',n:'Tosmur'},{k:'kestel',n:'Kestel'},{k:'avsallar',n:'Avsallar'}]},
+        {k:'serik',n:'Serik',semts:[{k:'belek',n:'Belek'},{k:'kadriye',n:'Kadriye'}]},
+        {k:'manavgat',n:'Manavgat',semts:[{k:'side',n:'Side'},{k:'evrenseki',n:'Evrenseki'}]},
+        {k:'kemer',n:'Kemer',semts:[{k:'goynuk',n:'Göynük'},{k:'camyuva',n:'Çamyuva'}]},
+        {k:'aksu',n:'Aksu',semts:[{k:'calkaya',n:'Çalkaya'},{k:'kundu',n:'Kundu'}]}]},
+      {k:'istanbul',n:'İstanbul',ilces:[
+        {k:'kadikoy',n:'Kadıköy',semts:[{k:'moda',n:'Moda'},{k:'fenerbahce',n:'Fenerbahçe'},{k:'goztepe',n:'Göztepe'}]},
+        {k:'besiktas',n:'Beşiktaş',semts:[{k:'levent',n:'Levent'},{k:'etiler',n:'Etiler'},{k:'bebek',n:'Bebek'}]},
+        {k:'sisli',n:'Şişli',semts:[{k:'nisantasi',n:'Nişantaşı'},{k:'mecidiyekoy',n:'Mecidiyeköy'}]},
+        {k:'beylikduzu',n:'Beylikdüzü',semts:[{k:'adnankahveci',n:'Adnan Kahveci'},{k:'yakuplu',n:'Yakuplu'}]}]},
+      {k:'ankara',n:'Ankara',ilces:[
+        {k:'cankaya',n:'Çankaya',semts:[{k:'kizilay',n:'Kızılay'},{k:'cayyolu',n:'Çayyolu'}]},
+        {k:'kecioren',n:'Keçiören',semts:[{k:'etlik',n:'Etlik'},{k:'kalaba',n:'Kalaba'}]}]},
+      {k:'izmir',n:'İzmir',ilces:[
+        {k:'konak',n:'Konak',semts:[{k:'alsancak',n:'Alsancak'},{k:'goztepe_i',n:'Göztepe'}]},
+        {k:'cesme',n:'Çeşme',semts:[{k:'ilica',n:'Ilıca'},{k:'alacati',n:'Alaçatı'}]}]},
+      {k:'mugla',n:'Muğla',ilces:[
+        {k:'bodrum',n:'Bodrum',semts:[{k:'yalikavak',n:'Yalıkavak'},{k:'gumbet',n:'Gümbet'}]},
+        {k:'fethiye',n:'Fethiye',semts:[{k:'calis',n:'Çalış'},{k:'oludeniz',n:'Ölüdeniz'}]}]},
+      {k:'mersin',n:'Mersin',ilces:[
+        {k:'yenisehir',n:'Yenişehir',semts:[{k:'pozcu',n:'Pozcu'},{k:'forum',n:'Forum'}]},
+        {k:'erdemli',n:'Erdemli',semts:[{k:'ayas',n:'Ayaş'},{k:'kizkalesi',n:'Kızkalesi'}]}]}];
+    this.ILCES={};this.IL_OF={};
+    this.GEO.forEach(il=>il.ilces.forEach(ic=>{this.ILCES[ic.k]=ic;this.IL_OF[ic.k]=il.k;}));
+    this.OBJ_GEO={0:['antalya','muratpasa','guzeloba'],1:['antalya','muratpasa','lara'],2:['antalya','alanya','avsallar'],3:['antalya','kepez','varsak']};
+    this.NB_GEO={0:['antalya','aksu','calkaya'],1:['antalya','muratpasa','lara'],2:['antalya','konyaalti','hurma']};
+    this.FEATL={pool:{ru:'Бассейн',en:'Pool',tr:'Havuz'},ipool:{ru:'Крытый бассейн',en:'Indoor pool',tr:'Kapalı havuz'},upark:{ru:'Паркинг',en:'Parking',tr:'Otopark'},opark:{ru:'Паркинг',en:'Parking',tr:'Otopark'},sec:{ru:'Охрана',en:'Security',tr:'Güvenlik'},lift:{ru:'Лифт',en:'Lift',tr:'Asansör'},sauna:{ru:'Сауна',en:'Sauna',tr:'Sauna'},ter:{ru:'Терраса',en:'Terrace',tr:'Teras'},play:{ru:'Детская площадка',en:'Playground',tr:'Oyun parkı'},bbq:{ru:'Барбекю',en:'BBQ',tr:'Barbekü'}};
+    this.CHATS=[
+      {id:'sup',name:'OnePlan Support',icon:'ti-headset',bg:'#14243f',agency:{ru:'Поддержка',en:'Support',tr:'Destek'},msgs:[{me:false,text:{ru:'Здравствуйте! Чем можем помочь?',en:'Hello! How can we help?',tr:'Merhaba! Nasıl yardımcı olabiliriz?'},tm:'09:00'}]},
+      {id:'c1',name:'Мехмет Далман',init:'МД',bg:'#7d9fdd',agency:'Coast Homes',msgs:[{me:true,text:{ru:'Добрый день! Квартира 2+1 в Гюзелоба актуальна?',en:'Hi! Is the 2+1 in Güzeloba still available?',tr:'Merhaba! Güzeloba 2+1 hâlâ satılık mı?'},tm:'12:02',tick:'read'},{me:false,text:{ru:'Да, актуальна. Могу показать завтра после 14:00.',en:'Yes, available. Can show tomorrow after 2 pm.',tr:'Evet, satılık. Yarın 14:00 sonrası gösterebilirim.'},tm:'12:10'}]},
+      {id:'c2',name:'Айше Кая',init:'АК',bg:'#c9a35b',agency:'Lara Estate',msgs:[{me:false,text:{ru:'Клиент готов на 8,9 млн, если торг — сегодня.',en:'Client ready at 8.9M if we agree today.',tr:'Müşteri bugün anlaşırsak 8,9M’ye hazır.'},tm:'11:31'}]}
+    ];
+    this.state={tab:'home',seg:'sec',obj:null,objGal:0,nb:null,nbGal:0,chat:'',draft:'',favs:[],notifOn:true,lang:'ru',msgs:{},unread:{c2:1},sheet:'',fDeal:'sale',fType:'',fRooms:[],fPrice:'',gIl:'',gIlces:[],gSemts:[],gStep:1,gQ:'',nbUSt:'free',nbURm:'',nFRooms:[],nFPrice:'',nFInst:false,nbUnit:null,nbFavU:[],profScreen:'',pwOld:'',pwNew:'',pwS1:false,pwS2:false,twoFA:false,regions:['muratpasa','konyaalti','kepez'],msgrs:{wa:true,tg:true,vb:false,max:false,wc:false}};
+    this._msgsEl=null;
+    this._msgsRef=el=>{this._msgsEl=el;};
+  }
+  componentDidMount(){this._numKb();}
+  componentDidUpdate(){if(this._msgsEl)this._msgsEl.scrollTop=this._msgsEl.scrollHeight;}
+  _numKb(){document.querySelectorAll('input').forEach(el=>{const p=(el.getAttribute('placeholder')||'').trim();if(/\d/.test(p)&&/^[+\d\s.,\/−–-]+$/.test(p)&&el.inputMode!=='numeric')el.inputMode='numeric';});}
+  _swS(e,idx,set,n){const t=e.touches[0];this._tx=t.clientX;this._ty=t.clientY;this._drag=false;this._el=e.currentTarget.querySelector('[data-strip]');this._w=e.currentTarget.clientWidth||1;this._swI=idx;this._swSet=set;this._swN=n;}
+  _swM(e){const t=e.touches[0];const dx=t.clientX-this._tx,dy=t.clientY-this._ty;if(!this._drag&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy))this._drag=true;
+    if(this._drag&&this._el){this._el.style.transition='none';this._el.style.transform='translateX(calc(-'+(this._swI*100)+'% + '+dx+'px))';}}
+  _swE(e){const el=this._el;const t=e.changedTouches[0];const dx=t.clientX-this._tx,dy=t.clientY-this._ty;
+    if(el)el.style.transition='transform .35s cubic-bezier(.22,.61,.36,1)';
+    if(this._drag&&Math.abs(dx)>Math.max(40,this._w*0.16)&&Math.abs(dx)>Math.abs(dy)*1.2){
+      if(el)el.style.transform='translateX(-'+(this._swI*100)+'%)';
+      this._swSet(Math.max(0,Math.min(this._swN-1,this._swI+(dx<0?1:-1))));
+    }else if(el&&this._drag){el.style.transform='translateX(-'+(this._swI*100)+'%)';}
+    this._drag=false;this._el=null;}
+  renderVals(){
+    const s=this.state,lang=s.lang;
+    const L=k=>typeof k==='object'?(k[lang]||k.ru):k;
+    const fmt=v=>v.toLocaleString('ru-RU')+' ₺';
+    const eq=v=>'≈ €'+(Math.round(v/48/1000)*1000).toLocaleString('ru-RU')+' · $'+(Math.round(v/43.2/1000)*1000).toLocaleString('ru-RU');
+    const T={
+      greeting:{ru:'Добрый день',en:'Good afternoon',tr:'İyi günler'},headerDate:{ru:'30 августа',en:'30 Aug',tr:'30 Ağu'},
+      today:{ru:'Сегодня',en:'Today',tr:'Bugün'},seeAll:{ru:'Все',en:'All',tr:'Tümü'},
+      newInBase:{ru:'Новое в базе',en:'New in the database',tr:'Veritabanında yeni'},
+      reqTitle:{ru:'Запросы базы',en:'Client requests',tr:'Talepler'},reqSub:{ru:'3 новых запроса в ваших районах',en:'3 new requests in your areas',tr:'Bölgenizde 3 yeni talep'},
+      segSec:{ru:'Вторичка',en:'Resale',tr:'İkinci el'},segNew:{ru:'Новостройки',en:'New builds',tr:'Yeni projeler'},
+      objFeats:{ru:'В объекте',en:'Features',tr:'Özellikler'},objDesc:{ru:'Описание',en:'Description',tr:'Açıklama'},
+      msgPh:{ru:'Сообщение…',en:'Message…',tr:'Mesaj…'},
+      setLang:{ru:'Язык интерфейса',en:'Interface language',tr:'Arayüz dili'},setPush:{ru:'Push-уведомления',en:'Push notifications',tr:'Push bildirimleri'},
+      logout:{ru:'Выйти',en:'Log out',tr:'Çıkış'},roleRealtor:{ru:'Риэлтор',en:'Realtor',tr:'Emlakçı'},
+      reset:{ru:'Сбросить',en:'Reset',tr:'Sıfırla'},
+      nav_home:{ru:'Главная',en:'Home',tr:'Ana'},nav_base:{ru:'База',en:'Base',tr:'Veri'},nav_chats:{ru:'Чаты',en:'Chats',tr:'Sohbet'},nav_notif:{ru:'Уведомления',en:'Alerts',tr:'Bildirim'},nav_profile:{ru:'Профиль',en:'Profile',tr:'Profil'},
+      h_base:{ru:'База объектов',en:'Database',tr:'Veritabanı'},h_chats:{ru:'Чат риэлторов',en:'Realtor chat',tr:'Emlakçı sohbeti'},h_notif:{ru:'Уведомления',en:'Notifications',tr:'Bildirimler'},h_profile:{ru:'Профиль',en:'Profile',tr:'Profil'}
+    };
+    const t={};Object.keys(T).forEach(k=>t[k]=L(T[k]));
+    const go=tab=>()=>this.setState({tab,obj:null,nb:null,chat:'',sheet:'',profScreen:''});
+    const isHome=s.tab==='home'&&s.obj===null&&s.nb===null;
+    const isCatalog=s.tab==='base'&&s.obj===null&&s.nb===null;
+    const isObjDetail=s.obj!==null;
+    const isNbDetail=s.nb!==null&&!isObjDetail;
+    const nb=isNbDetail?this.NEWB[s.nb]:null;
+    const isChatList=s.tab==='chats'&&!s.chat;
+    const isThread=s.tab==='chats'&&!!s.chat;
+    const isNotif=s.tab==='notif';
+    const isProfile=s.tab==='profile'&&!s.profScreen;
+    const pS=s.tab==='profile'?s.profScreen:'';
+    const isFavsScr=pS==='favs',isSubScr=pS==='sub',isRegScr=pS==='reg',isMsgrScr=pS==='msgr',isSecScr=pS==='sec';
+    const o=isObjDetail?this.OBJS[s.obj]:null;
+    const dropOf=x=>x.old?('−'+(x.old-x.price).toLocaleString('ru-RU')+' ₺'):'';
+    const unreadTotal=Object.values(s.unread).reduce((a,b)=>a+b,0);
+    const seg=(on)=>'flex:1;min-height:38px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:Manrope,sans-serif;'+(on?'background:#fff;color:#14243f;box-shadow:0 1px 3px rgba(20,36,63,.12)':'background:none;color:#6b7688');
+    const chipSt='flex:none;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#14243f;background:#fff;border:1px solid #e6e9f0;border-radius:100px;padding:8px 13px;white-space:nowrap;cursor:pointer';
+    const chat=isThread?this.CHATS.find(c=>c.id===s.chat):null;
+    const msgs=chat?[...chat.msgs,...(s.msgs[chat.id]||[])]:[];
+    const NL={open:{ru:'ПРОДАЖИ ОТКРЫТЫ',en:'ON SALE',tr:'SATIŞTA'},start:{ru:'СТАРТ ПРОДАЖ',en:'LAUNCH',tr:'LANSMAN'}};
+    return {
+      t,lang,
+      topPadStyle:'flex:none;height:'+(this.props.topInset??0)+'px;background:#fff',
+      bottomPadStyle:'flex:none;height:'+(this.props.bottomInset??0)+'px;background:#fff',
+      showBack:isObjDetail||isThread||isNbDetail||!!pS,
+      goBack:()=>this.setState(isObjDetail?{obj:null}:isNbDetail?{nb:null}:pS?{profScreen:''}:{chat:''}),
+      showLogo:isHome,showBell:!isThread&&!isObjDetail&&!isNbDetail&&!pS,notifDot:true,goNotif:go('notif'),
+      headerTitle:isObjDetail?L(o.title):isNbDetail?nb.name:isThread?(chat?chat.name:''):isFavsScr?L({ru:'Избранное',en:'Favourites',tr:'Favoriler'}):isSubScr?L({ru:'Подписка',en:'Subscription',tr:'Abonelik'}):isRegScr?L({ru:'Рабочие регионы',en:'Working areas',tr:'Bölgeler'}):isMsgrScr?L({ru:'Мессенджеры',en:'Messengers',tr:'Mesajlaşma'}):isSecScr?L({ru:'Безопасность',en:'Security',tr:'Güvenlik'}):isCatalog?t.h_base:isChatList?t.h_chats:isNotif?t.h_notif:isProfile?t.h_profile:'',
+      headerSub:isThread&&chat&&chat.id!=='sup'?(chat.agency&&typeof chat.agency==='string'?chat.agency:''):'',
+      isHome,isCatalog,isObjDetail,isNbDetail,isChatList,isThread,isNotif,isProfile,
+      isFavsScr,isSubScr,isRegScr,isMsgrScr,isSecScr,
+      favObjs:(isFavsScr?s.favs:[]).map(i=>{const x=this.OBJS[i];return{img:'url("'+x.img+'")',t:L(x.title),price:x.price.toLocaleString('ru-RU')+' ₺',geo:x.geo,
+        open:()=>this.setState({tab:'base',obj:i,objGal:0,profScreen:''}),
+        del:e=>{if(e&&e.stopPropagation)e.stopPropagation();this.setState(st=>({favs:st.favs.filter(x2=>x2!==i)}));}};}),
+      favUs:(isFavsScr?s.nbFavU:[]).map(fk=>{const i2=fk.indexOf('#');const p=this.NEWB[+fk.slice(0,i2)];const u=p&&p.units.find(x2=>x2.no===+fk.slice(i2+1));if(!u)return null;
+        return{img:'url("'+p.img+'")',t:u.pl[0]+' · №'+u.no,price:u.pl[2].toLocaleString('ru-RU')+' '+p.cur,geo:p.name+' · '+p.geo,
+        open:()=>this.setState({tab:'base',nb:p.id,nbUnit:u.no,profScreen:''}),
+        del:e=>{if(e&&e.stopPropagation)e.stopPropagation();this.setState(st=>({nbFavU:st.nbFavU.filter(x2=>x2!==fk)}));}};}).filter(Boolean),
+      favUsShow:isFavsScr&&s.nbFavU.length>0,
+      favEmpty:isFavsScr&&!s.favs.length&&!s.nbFavU.length,
+      favEmptyL:L({ru:'Пока пусто — нажимайте ♥ на объектах',en:'Empty — tap ♥ on listings',tr:'Boş — ilanlarda ♥ dokunun'}),
+      favNbT:L({ru:'Новостройки · квартиры',en:'New builds · units',tr:'Projeler · daireler'}),
+      subRows:[[L({ru:'Тариф',en:'Plan',tr:'Paket'}),'PRO · 12 '+L({ru:'мес',en:'mo',tr:'ay'})],[L({ru:'Оплачено до',en:'Paid until',tr:'Ödendi'}),'15.03.2027'],[L({ru:'Последний платёж',en:'Last payment',tr:'Son ödeme'}),'15.03.2026 · 14 400 ₺']].map(([k,v])=>({k,v})),
+      subPkgs:[{n:'3 '+L({ru:'мес',en:'mo',tr:'ay'}),p:'4 500 ₺',d:''},{n:'6 '+L({ru:'мес',en:'mo',tr:'ay'}),p:'8 100 ₺',d:'−10%'},{n:'12 '+L({ru:'мес',en:'mo',tr:'ay'}),p:'14 400 ₺',d:'−20%'}].map((p2,i2)=>({...p2,st:'flex:1;border-radius:13px;padding:12px 10px;text-align:center;cursor:pointer;border:1.5px solid '+(i2===2?'#4d7cfe;background:#eef3ff':'#e6e9f0;background:#fff')})),
+      subPayL:L({ru:'Продлить и оплатить картой',en:'Renew & pay by card',tr:'Uzat ve kartla öde'}),
+      subNote:L({ru:'Оплата откроется на сайте OnePlan (как Spotify)',en:'Payment opens on OnePlan site',tr:'Ödeme OnePlan sitesinde açılır'}),
+      regChips:(this.GEO.find(g=>g.k==='antalya')||{ilces:[]}).ilces.map(ic=>({l:ic.n,on:s.regions.includes(ic.k),
+        st:'display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border-radius:100px;padding:10px 15px;cursor:pointer;'+(s.regions.includes(ic.k)?'background:#14243f;color:#fff':'background:#f0f2f6;color:#14243f'),
+        onClick:()=>this.setState(st=>({regions:st.regions.includes(ic.k)?st.regions.filter(x2=>x2!==ic.k):[...st.regions,ic.k]}))})),
+      regNote:L({ru:'Запросы базы из этих районов будут приходить в уведомления',en:'Requests from these areas will notify you',tr:'Bu bölgelerden talepler bildirim olarak gelir'}),
+      msgrRows:[['wa','WhatsApp','ti-brand-whatsapp','#22c15e'],['tg','Telegram','ti-brand-telegram','#229ed9'],['vb','Viber','','#7360f2'],['max','MAX','','#7b4fd0'],['wc','WeChat','ti-brand-wechat','#07c160']].map(([k,n,ic,c])=>({n,ic,init:ic?'':(k==='vb'?'V':k==='max'?'M':'W'),
+        avSt:'width:38px;height:38px;border-radius:50%;background:'+c+';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:'+(ic?'18px':'13px')+';font-weight:800;flex:none',
+        on:s.msgrs[k],stL:s.msgrs[k]?L({ru:'Подключён',en:'Connected',tr:'Bağlı'}):L({ru:'Подключить',en:'Connect',tr:'Bağla'}),
+        stSt:'font-size:11.5px;font-weight:700;'+(s.msgrs[k]?'color:#0f9d6b':'color:#4d7cfe'),
+        togSt:'width:44px;height:26px;border-radius:100px;padding:2px;display:inline-flex;cursor:pointer;flex:none;transition:all .2s;'+(s.msgrs[k]?'background:#34c383;justify-content:flex-end':'background:#d5dce6;justify-content:flex-start'),
+        onClick:()=>this.setState(st=>({msgrs:{...st.msgrs,[k]:!st.msgrs[k]}}))})),
+      msgrPhone:'+90 532 481 77 20',
+      pwOld:s.pwOld,pwNew:s.pwNew,onPwOld:e=>this.setState({pwOld:e.target.value}),onPwNew:e=>this.setState({pwNew:e.target.value}),
+      pwT1:s.pwS1?'text':'password',pwT2:s.pwS2?'text':'password',
+      pwE1:()=>this.setState(st=>({pwS1:!st.pwS1})),pwE2:()=>this.setState(st=>({pwS2:!st.pwS2})),
+      pwI1:s.pwS1?'ti-eye-off':'ti-eye',pwI2:s.pwS2?'ti-eye-off':'ti-eye',
+      pwGen:()=>{const c='abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';let p2='';for(let i2=0;i2<8;i2++)p2+=c[Math.floor(Math.random()*c.length)];this.setState({pwNew:p2,pwS2:true});},
+      pwOldPh:L({ru:'Старый пароль',en:'Old password',tr:'Eski şifre'}),pwNewPh:L({ru:'Новый пароль',en:'New password',tr:'Yeni şifre'}),
+      pwGenL:L({ru:'Сгенерировать',en:'Generate',tr:'Oluştur'}),pwSaveL:L({ru:'Сменить пароль',en:'Change password',tr:'Şifreyi değiştir'}),
+      twoFA:s.twoFA,twoFAToggle:()=>this.setState(st=>({twoFA:!st.twoFA})),
+      twoFASt:'width:44px;height:26px;border-radius:100px;padding:2px;display:inline-flex;cursor:pointer;flex:none;transition:all .2s;'+(s.twoFA?'background:#34c383;justify-content:flex-end':'background:#d5dce6;justify-content:flex-start'),
+      twoFAL:L({ru:'Двухфакторная аутентификация (2FA)',en:'Two-factor authentication',tr:'İki adımlı doğrulama'}),
+      twoFASub:L({ru:'Google Authenticator / Apple Passwords',en:'Google Authenticator / Apple Passwords',tr:'Google Authenticator'}),
+      secEmailNote:L({ru:'Почта выдаётся по приглашению — сменить её может только поддержка',en:'Email is invite-issued — only support can change it',tr:'E-posta davetle verilir — sadece destek değiştirir'}),
+      kpis:[
+        {icon:'ti-building-community',iconStyle:'width:36px;height:36px;border-radius:11px;background:#e3ebfd;color:#3a63d4;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none',val:'248',label:L({ru:'Объектов в базе',en:'Listings in base',tr:'İlan sayısı'}),onClick:go('base')},
+        {icon:'ti-home-plus',iconStyle:'width:36px;height:36px;border-radius:11px;background:#e4f6ee;color:#0f9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none',val:'12',label:L({ru:'Мои объекты',en:'My listings',tr:'İlanlarım'}),onClick:go('base')},
+        {icon:'ti-heart',iconStyle:'width:36px;height:36px;border-radius:11px;background:#fde8e8;color:#e5484d;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none',val:''+(s.favs.length+s.nbFavU.length),label:L({ru:'Избранное',en:'Favourites',tr:'Favoriler'}),onClick:()=>this.setState({tab:'profile',profScreen:'favs',obj:null,nb:null})},
+        {icon:'ti-folders',iconStyle:'width:36px;height:36px;border-radius:11px;background:#fff4d6;color:#9c7420;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none',val:'6',label:L({ru:'Подборки',en:'Collections',tr:'Koleksiyonlar'}),onClick:go('base')}
+      ],
+      events:[
+        {icon:'ti-trending-down',iconStyle:'width:34px;height:34px;border-radius:10px;background:#e4f6ee;color:#0f9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',text:L({ru:'Цена снижена: 2+1 Гюзелоба · −290 000 ₺',en:'Price drop: 2+1 Güzeloba · −290 000 ₺',tr:'Fiyat düştü: 2+1 Güzeloba · −290 000 ₺'}),time:'12:40'},
+        {icon:'ti-speakerphone',iconStyle:'width:34px;height:34px;border-radius:10px;background:#fff4d6;color:#9c7420;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',text:L({ru:'Новый запрос: 3+1 в Konyaaltı до 15 млн ₺',en:'New request: 3+1 in Konyaaltı up to 15M ₺',tr:'Yeni talep: Konyaaltı 3+1, 15M ₺’ye kadar'}),time:'11:05'},
+        {icon:'ti-message',iconStyle:'width:34px;height:34px;border-radius:10px;background:#e3ebfd;color:#3a63d4;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',text:L({ru:'Айше Кая ответила в чате по 3+1 Лара',en:'Ayşe Kaya replied about 3+1 Lara',tr:'Ayşe Kaya 3+1 Lara hakkında yanıtladı'}),time:'09:32'}
+      ],
+      miniObjs:this.OBJS.slice(0,3).map((x,i)=>({img:x.img,price:fmt(x.price),title:L(x.title),open:()=>this.setState({tab:'base',obj:i,objGal:0})})),
+      goCatalogTab:go('base'),goReqs:go('notif'),
+      segSec:()=>this.setState({seg:'sec'}),segNew:()=>this.setState({seg:'new'}),
+      segSecSt:seg(s.seg==='sec'),segNewSt:seg(s.seg==='new'),
+      segIsSec:s.seg==='sec',segIsNew:s.seg==='new',
+      t_segSec:t.segSec,
+      ...(()=>{
+        const chipA=on=>chipSt+(on?';background:#14243f;border-color:#14243f;color:#fff':'');
+        const PRICES=[['p5',{ru:'до 5 млн ₺',en:'< 5M ₺',tr:'5M ₺ altı'},0,5e6],['p10',{ru:'5–10 млн ₺',en:'5–10M ₺',tr:'5–10M ₺'},5e6,1e7],['p15',{ru:'10–15 млн ₺',en:'10–15M ₺',tr:'10–15M ₺'},1e7,1.5e7],['pMax',{ru:'от 15 млн ₺',en:'> 15M ₺',tr:'15M ₺ üzeri'},1.5e7,Infinity]];
+        const isVilla=x=>x.floor==='Villa';
+        const pr=PRICES.find(p2=>p2[0]===s.fPrice);
+        const geoOk=g=>{if(!s.gIl)return true;if(g[0]!==s.gIl)return false;if(s.gIlces.length&&!s.gIlces.includes(g[1]))return false;if(s.gSemts.length&&!s.gSemts.includes(g[2]))return false;return true;};
+        const secFl=this.OBJS.filter(x=>geoOk(this.OBJ_GEO[x.id]||[])&&(s.fDeal==='sale')&&(!s.fType||(s.fType==='villa'?isVilla(x):!isVilla(x)))&&(!s.fRooms.length||s.fRooms.includes(isVilla(x)?'Villa':x.rooms))&&(!pr||(x.price>=pr[2]&&x.price<pr[3])));
+        const toTry=(v,c)=>c==='€'?v*48:c==='$'?v*43.2:v;
+        const npr=PRICES.find(p2=>p2[0]===s.nFPrice);
+        const nbFl=this.NEWB.filter(p2=>geoOk(this.NB_GEO[p2.id]||[])&&(!s.nFRooms.length||p2.plans.some(pl=>s.nFRooms.includes(pl[0])))&&(!s.nFInst||p2.inst)&&(!npr||(()=>{const mn=toTry(Math.min(...p2.plans.map(pl=>pl[2])),p2.cur);return mn>=npr[2]&&mn<npr[3];})()));
+        const foundN=s.seg==='sec'?secFl.length:nbFl.length;
+        const gIlObj=this.GEO.find(g=>g.k===s.gIl);
+        const geoLbl=!s.gIl?L({ru:'Вся Турция',en:'All Turkey',tr:'Tüm Türkiye'}):(gIlObj.n+(s.gIlces.length?' · '+s.gIlces.length:'')+(s.gSemts.length?' · '+s.gSemts.length:''));
+        const sheetTitle={geo:!s.gIl?L({ru:'Провинция (İl)',en:'Province (İl)',tr:'İl'}):s.gStep===2?L({ru:'Районы (İlçe)',en:'Districts (İlçe)',tr:'İlçe'}):L({ru:'Микрорайоны (Mahalle)',en:'Mahalle',tr:'Semt / Mahalle'}),deal:L({ru:'Тип сделки',en:'Deal',tr:'İşlem'}),type:L({ru:'Тип недвижимости',en:'Property type',tr:'Emlak tipi'}),rooms:L({ru:'Комнаты',en:'Rooms',tr:'Oda'}),price:L({ru:'Цена',en:'Price',tr:'Fiyat'}),nrooms:L({ru:'Комнаты',en:'Rooms',tr:'Oda'}),nprice:L({ru:'Цена',en:'Price',tr:'Fiyat'})}[s.sheet]||'';
+        let sheetChips=[];
+        if(s.sheet==='nrooms')sheetChips=[...new Set(this.NEWB.flatMap(p2=>p2.plans.map(pl=>pl[0])))].map(r=>({l:r,on:s.nFRooms.includes(r),cb:()=>this.setState(st=>({nFRooms:st.nFRooms.includes(r)?st.nFRooms.filter(x2=>x2!==r):[...st.nFRooms,r]}))}));
+        if(s.sheet==='nprice')sheetChips=PRICES.map(p2=>({l:L(p2[1]),on:s.nFPrice===p2[0],cb:()=>this.setState({nFPrice:s.nFPrice===p2[0]?'':p2[0]})}));
+        if(s.sheet==='deal')sheetChips=[{l:L({ru:'Купить',en:'Buy',tr:'Satılık'}),on:s.fDeal==='sale',cb:()=>this.setState({fDeal:'sale'})},{l:L({ru:'Снять',en:'Rent',tr:'Kiralık'}),on:s.fDeal==='rent',cb:()=>this.setState({fDeal:'rent'})}];
+        if(s.sheet==='type')sheetChips=[{l:L({ru:'Любой',en:'Any',tr:'Hepsi'}),on:!s.fType,cb:()=>this.setState({fType:''})},{l:L({ru:'Квартира',en:'Flat',tr:'Daire'}),on:s.fType==='flat',cb:()=>this.setState({fType:s.fType==='flat'?'':'flat'})},{l:L({ru:'Дом / вилла',en:'House / villa',tr:'Ev / villa'}),on:s.fType==='villa',cb:()=>this.setState({fType:s.fType==='villa'?'':'villa'})}];
+        if(s.sheet==='rooms')sheetChips=['1+1','2+1','3+1','4+1','Villa'].map(r=>({l:r,on:s.fRooms.includes(r),cb:()=>this.setState(st=>({fRooms:st.fRooms.includes(r)?st.fRooms.filter(x2=>x2!==r):[...st.fRooms,r]}))}));
+        if(s.sheet==='price')sheetChips=PRICES.map(p2=>({l:L(p2[1]),on:s.fPrice===p2[0],cb:()=>this.setState({fPrice:s.fPrice===p2[0]?'':p2[0]})}));
+        const q=s.gQ.trim().toLowerCase();
+        const gMatch=n=>!q||n.toLowerCase().includes(q);
+        const gIsGeo=s.sheet==='geo';
+        const gRow=(l2,on,cb,sub,chev)=>({l:l2,on,cb,sub:sub||'',chev:!!chev});
+        let geoRows=[];
+        if(gIsGeo){
+          if(!s.gIl||s.gStep===1)geoRows=this.GEO.filter(g=>gMatch(g.n)).map(g=>gRow(g.n,s.gIl===g.k,()=>this.setState({gIl:g.k,gIlces:[],gSemts:[],gStep:2,gQ:''}),g.ilces.length?g.ilces.length+' ilçe':'',true));
+          else if(s.gStep===2)geoRows=(gIlObj?gIlObj.ilces:[]).filter(ic=>gMatch(ic.n)).map(ic=>gRow(ic.n,s.gIlces.includes(ic.k),()=>this.setState(st=>({gIlces:st.gIlces.includes(ic.k)?st.gIlces.filter(x2=>x2!==ic.k):[...st.gIlces,ic.k],gSemts:st.gSemts.filter(sm=>st.gIlces.includes(ic.k)?!ic.semts.some(s2=>s2.k===sm):true)})),ic.semts.length+' mah.',false));
+          else{const src=(gIlObj?gIlObj.ilces:[]).filter(ic=>!s.gIlces.length||s.gIlces.includes(ic.k));
+            geoRows=[];src.forEach(ic=>{const sm2=ic.semts.filter(sm=>gMatch(sm.n));if(!sm2.length)return;geoRows.push({hdr:ic.n});sm2.forEach(sm=>geoRows.push(gRow(sm.n,s.gSemts.includes(sm.k),()=>this.setState(st=>({gSemts:st.gSemts.includes(sm.k)?st.gSemts.filter(x2=>x2!==sm.k):[...st.gSemts,sm.k]})))));});}
+        }
+        return{
+        geoMode:gIsGeo,geoRows:geoRows.map(r=>r.hdr?{isHdr:true,hdr:r.hdr}:{isHdr:false,l:r.l,sub:r.sub,chev:r.chev,onClick:r.cb,
+          st:'display:flex;align-items:center;gap:10px;padding:12px 6px;border-bottom:1px solid #f2f4f8;cursor:pointer;font-size:14px;font-weight:700;color:#14243f',
+          ckSt:'width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none;'+(r.on?'background:#4d7cfe;color:#fff':'border:1.5px solid #d5dce6;color:transparent')}),
+        gQ:s.gQ,onGQ:e=>this.setState({gQ:e.target.value}),
+        gQPh:L({ru:'Поиск…',en:'Search…',tr:'Ara…'}),
+        gStepBack:!!s.gIl,
+        gBack:()=>this.setState(s.gStep===3?{gStep:2,gQ:''}:s.gStep===2?{gIl:'',gIlces:[],gSemts:[],gStep:1,gQ:''}:{sheet:''}),
+        gNextShow:gIsGeo&&s.gStep===2&&!!s.gIl,
+        gNextL:L({ru:'Выбрать махалле',en:'Pick mahalle',tr:'Mahalle seç'})+(s.gIlces.length?' ('+s.gIlces.length+')':''),
+        gNext:()=>this.setState({gStep:3,gQ:''}),
+        filterChips:s.seg==='sec'?[
+          {l:geoLbl,st:chipA(!!s.gIl),caret:true,onClick:()=>this.setState({sheet:'geo',gStep:s.gIl?2:1,gQ:''})},
+          {l:L(s.fDeal==='rent'?{ru:'Снять',en:'Rent',tr:'Kiralık'}:{ru:'Купить',en:'Buy',tr:'Satılık'}),st:chipA(false),caret:true,onClick:()=>this.setState({sheet:'deal'})},
+          {l:s.fType?L(s.fType==='villa'?{ru:'Дом / вилла',en:'House',tr:'Villa'}:{ru:'Квартира',en:'Flat',tr:'Daire'}):L({ru:'Тип',en:'Type',tr:'Tip'}),st:chipA(!!s.fType),caret:true,onClick:()=>this.setState({sheet:'type'})},
+          {l:s.fRooms.length?s.fRooms.join(', '):L({ru:'Комнаты',en:'Rooms',tr:'Oda'}),st:chipA(s.fRooms.length>0),caret:true,onClick:()=>this.setState({sheet:'rooms'})},
+          {l:pr?L(pr[1]):L({ru:'Цена',en:'Price',tr:'Fiyat'}),st:chipA(!!pr),caret:true,onClick:()=>this.setState({sheet:'price'})}
+        ]:[
+          {l:geoLbl,st:chipA(!!s.gIl),caret:true,onClick:()=>this.setState({sheet:'geo',gStep:s.gIl?2:1,gQ:''})},
+          {l:s.nFRooms.length?s.nFRooms.join(', '):L({ru:'Комнаты',en:'Rooms',tr:'Oda'}),st:chipA(s.nFRooms.length>0),caret:true,onClick:()=>this.setState({sheet:'nrooms'})},
+          {l:npr?L(npr[1]):L({ru:'Цена',en:'Price',tr:'Fiyat'}),st:chipA(!!npr),caret:true,onClick:()=>this.setState({sheet:'nprice'})},
+          {l:L({ru:'Рассрочка',en:'Installments',tr:'Taksit'}),st:chipA(s.nFInst),caret:false,onClick:()=>this.setState(st=>({nFInst:!st.nFInst}))}
+        ],
+        sheetOpen:!!s.sheet,sheetTitle,sheetChipsShow:!!s.sheet&&!gIsGeo,
+        sheetChips:sheetChips.map(c=>({l:c.l,onClick:c.cb,st:'display:inline-flex;align-items:center;font-size:13px;font-weight:700;border-radius:100px;padding:10px 16px;cursor:pointer;'+(c.on?'background:#14243f;color:#fff':'background:#f0f2f6;color:#14243f')})),
+        sheetClose:()=>this.setState({sheet:''}),
+        sheetReset:()=>{const k=s.sheet;this.setState(k==='geo'?{gIl:'',gIlces:[],gSemts:[],gStep:1,gQ:''}:k==='deal'?{fDeal:'sale'}:k==='type'?{fType:''}:k==='rooms'?{fRooms:[]}:k==='nrooms'?{nFRooms:[]}:k==='nprice'?{nFPrice:''}:{fPrice:''});},
+        sheetResetSt:'flex:none;font-size:13px;font-weight:700;border:none;border-radius:11px;padding:12px 16px;cursor:pointer;font-family:Manrope,sans-serif;'+((s.sheet==='geo'?!!s.gIl:s.sheet==='type'?!!s.fType:s.sheet==='rooms'?s.fRooms.length>0:s.sheet==='nrooms'?s.nFRooms.length>0:s.sheet==='nprice'?!!s.nFPrice:s.sheet==='price'?!!s.fPrice:false)?'background:#fde8e8;color:#e5484d':'background:none;color:#aab1bd'),
+        sheetShowL:L({ru:'Показать',en:'Show',tr:'Göster'})+' '+foundN,
+        listings:secFl.map(x=>{const i=x.id;return({
+        img:x.img,phN:''+x.phs.length,price:fmt(x.price),eq:eq(x.price),title:L(x.title),geo:x.geo,drop:dropOf(x),
+        chips:[x.rooms,x.gross+' м² '+L({ru:'брутто',en:'gross',tr:'brüt'}),x.floor],
+        favI:s.favs.includes(i)?'ti-heart-filled':'ti-heart',favC:s.favs.includes(i)?'#e5484d':'#14243f',
+        fav:e=>{if(e&&e.stopPropagation)e.stopPropagation();this.setState(st=>({favs:st.favs.includes(i)?st.favs.filter(x2=>x2!==i):[...st.favs,i]}));},
+        open:()=>this.setState({obj:i,objGal:0})
+      });}),
+      newbCards:nbFl.map(p=>({
+        img:p.img,name:p.name,dev:p.dev,geo:p.geo,dlv:L({ru:'СРОК СДАЧИ ',en:'DELIVERY ',tr:'TESLİM '})+p.dlv,
+        salesL:L(NL[p.sales]),salesSt:'position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;border-radius:8px;padding:4px 9px;font-family:Manrope,sans-serif;'+(p.sales==='open'?'background:#dcf3e4;color:#1f7a44':'background:#fdf0cd;color:#9a7100'),
+        plans:p.plans.map(pl=>({r:pl[0],m2:L({ru:'от ',en:'from ',tr:'başl. '})+pl[1]+' м²',price:L({ru:'от ',en:'from ',tr:'başl. '})+pl[2].toLocaleString('ru-RU')+' '+p.cur})),
+        open:()=>this.setState({nb:p.id,nbGal:0,nbUSt:'free',nbURm:''})
+      }))};})(),
+      ...(nb?(()=>{
+        const stMap={free:{l:L({ru:'Свободно',en:'Available',tr:'Müsait'}),c:'#12996b'},hold:{l:L({ru:'Бронь',en:'Hold',tr:'Opsiyon'}),c:'#f0ad00'},proc:{l:L({ru:'Оформление',en:'Processing',tr:'Sözleşme'}),c:'#4d7cfe'},sold:{l:L({ru:'Продано',en:'Sold',tr:'Satıldı'}),c:'#6b7a90'},res:{l:L({ru:'Резерв',en:'Reserve',tr:'Rezerve'}),c:'#8b5cf6'},na:{l:'—',c:'#aab1bd'}};
+        const cnt=k=>nb.units.filter(u=>u.st===k).length;
+        const uKey=u=>u.pl[0];
+        const rooms=[...new Set(nb.units.map(uKey))];
+        const uFl=nb.units.filter(u=>(!s.nbUSt||u.st===s.nbUSt)&&(!s.nbURm||uKey(u)===s.nbURm));
+        const stChipSt=on=>'flex:none;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;border-radius:100px;padding:7px 11px;cursor:pointer;white-space:nowrap;font-family:Manrope,sans-serif;'+(on?'background:#14243f;color:#fff':'background:#f0f2f6;color:#14243f');
+        return{
+        nbStChips:[{k:'',l:L({ru:'Всего',en:'Total',tr:'Toplam'}),c:'#14243f',n:nb.units.length},...['free','hold','proc','sold','res'].map(k=>({k,l:stMap[k].l,c:stMap[k].c,n:cnt(k)}))].map(ch=>({l:ch.l,n:''+ch.n,dotSt:'width:8px;height:8px;border-radius:3px;background:'+ch.c+';flex:none',st:stChipSt(s.nbUSt===ch.k),onClick:()=>this.setState({nbUSt:s.nbUSt===ch.k?'':ch.k})})),
+        nbRmChips:rooms.map(r=>({l:r,st:stChipSt(s.nbURm===r),onClick:()=>this.setState({nbURm:s.nbURm===r?'':r})})),
+        nbUCnt:uFl.length+' / '+nb.units.length,
+        nbPhotos:nb.phs.map(p2=>({img:p2})),
+        nbShift:'translateX(-'+(s.nbGal*100)+'%)',
+        nbTS:e=>this._swS(e,s.nbGal,n2=>this.setState({nbGal:n2}),nb.phs.length),
+        nbTM:e=>this._swM(e),nbTE:e=>this._swE(e),
+        nbPhCnt:(s.nbGal+1)+' / '+nb.phs.length,
+        nbName:nb.name,nbGeo:nb.geo,nbDev:nb.dev,
+        nbDevAv:nb.dev.split(' ').map(w=>w[0]).join(''),
+        nbSalesL:L(NL[nb.sales]),
+        nbSalesSt:'font-size:10px;font-weight:800;border-radius:8px;padding:4px 9px;font-family:Manrope,sans-serif;'+(nb.sales==='open'?'background:#dcf3e4;color:#1f7a44':'background:#fdf0cd;color:#9a7100'),
+        nbDlv:L({ru:'Срок сдачи ',en:'Delivery ',tr:'Teslim '})+nb.dlv,
+        nbPlans:nb.plans.map(pl=>({r:pl[0],m2:L({ru:'от ',en:'from ',tr:'başl. '})+pl[1]+' м²',price:L({ru:'от ',en:'from ',tr:'başl. '})+pl[2].toLocaleString('ru-RU')+' '+nb.cur})),
+        nbUnits:uFl.map(u=>({no:'№'+u.no,tp:u.pl[0],fl:u.pl[0]==='Villa'?'Villa':u.fl+' '+L({ru:'эт.',en:'fl.',tr:'kat'}),m2:u.gb+' м² / '+Math.round(u.gb*0.82)+' м²',price:u.st==='sold'||u.st==='na'?'—':u.pl[2].toLocaleString('ru-RU')+' '+nb.cur,
+          stL:stMap[u.st].l,stSt:'font-size:9.5px;font-weight:800;text-transform:uppercase;border-radius:7px;padding:3px 7px;color:#fff;background:'+stMap[u.st].c+';flex:none',
+          open:()=>this.setState({nbUnit:u.no}),
+          rowSt:'display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid #f5f7fb'+(u.st==='sold'?';opacity:.55':'')})),
+        uSheetOpen:s.nbUnit!==null,
+        uClose:()=>this.setState({nbUnit:null}),
+        uo:(()=>{const u=nb.units.find(x2=>x2.no===s.nbUnit);if(!u)return{tp:'',no:'',stL:'',stSt:'',plan:'none',price:'',eq:'',rows:[],favI:'',favL:'',favSt:'',fav:()=>{},req:()=>{},reqL:''};
+          const fk=nb.id+'#'+u.no;const on=s.nbFavU.includes(fk);
+          const toTry2=(v)=>nb.cur==='€'?v*48:nb.cur==='$'?v*43.2:v;
+          const tv=toTry2(u.pl[2]);
+          return{tp:u.pl[0],no:'№'+u.no,stL:stMap[u.st].l,
+            stSt:'font-size:10px;font-weight:800;text-transform:uppercase;border-radius:8px;padding:4px 9px;color:#fff;background:'+stMap[u.st].c+';flex:none',
+            plan:'url("'+nb.phs[u.no%nb.phs.length]+'")',
+            price:u.st==='sold'||u.st==='na'?'—':u.pl[2].toLocaleString('ru-RU')+' '+nb.cur,
+            eq:u.st==='sold'||u.st==='na'?'':'≈ €'+(Math.round(tv/48/1000)*1000).toLocaleString('ru-RU')+' · $'+(Math.round(tv/43.2/1000)*1000).toLocaleString('ru-RU'),
+            rows:[
+              {ic:'ti-stairs-up',k:L({ru:'Этаж',en:'Floor',tr:'Kat'}),v:u.pl[0]==='Villa'?'Villa':''+u.fl},
+              {ic:'ti-ruler-measure',k:L({ru:'Брутто',en:'Gross',tr:'Brüt'}),v:u.gb+' м²'},
+              {ic:'ti-ruler-2',k:L({ru:'Нетто',en:'Net',tr:'Net'}),v:Math.round(u.gb*0.82)+' м²'},
+              {ic:'ti-key',k:L({ru:'Срок сдачи',en:'Delivery',tr:'Teslim'}),v:nb.dlv},
+              {ic:'ti-calendar-dollar',k:L({ru:'Рассрочка',en:'Installments',tr:'Taksit'}),v:nb.inst?L({ru:'Да',en:'Yes',tr:'Var'}):'—'},
+              {ic:'ti-building-community',k:L({ru:'Комплекс',en:'Project',tr:'Proje'}),v:nb.name}
+            ],
+            favI:on?'ti-heart-filled':'ti-heart',
+            favL:on?L({ru:'В избранном',en:'Saved',tr:'Favoride'}):L({ru:'В избранное',en:'Save',tr:'Favoriye ekle'}),
+            favSt:'flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700;border-radius:11px;padding:12px 14px;cursor:pointer;white-space:nowrap;font-family:Manrope,sans-serif;border:1.5px solid '+(on?'#e5484d;background:#fde8e8;color:#e5484d':'#e6e9f0;background:#fff;color:#14243f'),
+            fav:()=>this.setState(st=>({nbFavU:st.nbFavU.includes(fk)?st.nbFavU.filter(x2=>x2!==fk):[...st.nbFavU,fk]})),
+            reqL:L({ru:'Запросить условия',en:'Request terms',tr:'Koşulları sor'}),
+            req:()=>this.setState({nbUnit:null,nb:null,tab:'chats',chat:'sup'})};})(),
+        nbUnitsT:L({ru:'Квартиры',en:'Units',tr:'Daireler'}),
+        nbPlansT:L({ru:'Планировки и цены',en:'Plans & prices',tr:'Planlar ve fiyatlar'}),
+        nbChat:()=>this.setState({tab:'chats',chat:'sup',nb:null})};})():{}),
+      objPhotos:o?o.phs.map(p2=>({img:p2})):[],
+      objShift:'translateX(-'+(s.objGal*100)+'%)',
+      objTS:e=>this._swS(e,s.objGal,n2=>this.setState({objGal:n2}),o?o.phs.length:1),objTM:e=>this._swM(e),objTE:e=>this._swE(e),
+      objPhCnt:o?(Math.min(s.objGal+1,o.phs.length)+' / '+o.phs.length):'',
+      objPrice:o?fmt(o.price):'',objEq:o?eq(o.price):'',objTitle:o?L(o.title):'',objGeo:o?o.geo:'',objDrop:o?dropOf(o):'',
+      objFavI:o&&s.favs.includes(o.id)?'ti-heart-filled':'ti-heart',objFavC:o&&s.favs.includes(o.id)?'#e5484d':'#14243f',
+      objFav:()=>{if(!o)return;this.setState(st=>({favs:st.favs.includes(o.id)?st.favs.filter(x2=>x2!==o.id):[...st.favs,o.id]}));},
+      objParams:o?[
+        {ic:'ti-door',k:L({ru:'Комнаты',en:'Rooms',tr:'Oda'}),v:o.rooms},
+        {ic:'ti-ruler-measure',k:L({ru:'Брутто',en:'Gross',tr:'Brüt'}),v:o.gross+' м²'},
+        {ic:'ti-ruler-2',k:L({ru:'Нетто',en:'Net',tr:'Net'}),v:o.net+' м²'},
+        {ic:'ti-stairs-up',k:L({ru:'Этаж',en:'Floor',tr:'Kat'}),v:o.floor}
+      ]:[],
+      objFeats:o?o.feats.map(f=>L(this.FEATL[f]||{ru:f})):[],
+      objDesc:o?L(o.desc):'',
+      objAgentAv:o?o.agent.split(' ').map(w=>w[0]).join(''):'',
+      objAgent:o?o.agent:'',objAgentSub:o?o.agency:'',
+      objChat:()=>this.setState({tab:'chats',chat:'c1',obj:null}),
+      chatCards:this.CHATS.map(c=>({
+        name:c.name,agency:typeof c.agency==='object'?L(c.agency):c.agency,
+        init:c.init||'',icon:c.icon||'',
+        avStyle:'position:relative;width:44px;height:44px;border-radius:50%;background:'+c.bg+';color:#fff;font-size:'+(c.icon?'19px':'14px')+';font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;font-family:Manrope,sans-serif',
+        last:(()=>{const all=[...c.msgs,...(s.msgs[c.id]||[])];const m=all[all.length-1];return m?L(m.text):'';})(),
+        tick:(()=>{const all=[...c.msgs,...(s.msgs[c.id]||[])];const m=all[all.length-1];return m&&m.me?(m.tick==='read'?'ti-checks':'ti-check'):'';})(),
+        tickC:'#4d7cfe',
+        time:(()=>{const all=[...c.msgs,...(s.msgs[c.id]||[])];const m=all[all.length-1];return m?m.tm:'';})(),
+        unread:s.unread[c.id]?''+s.unread[c.id]:'',
+        open:()=>this.setState(st=>({chat:c.id,unread:{...st.unread,[c.id]:0}}))
+      })),
+      msgsRef:this._msgsRef,
+      msgsView:msgs.map(m=>({
+        row:'display:flex;'+(m.me?'justify-content:flex-end':'justify-content:flex-start'),
+        bub:'max-width:78%;font-size:13.5px;line-height:1.45;border-radius:'+(m.me?'14px 14px 4px 14px;background:#4d7cfe;color:#fff':'14px 14px 14px 4px;background:#fff;border:1px solid #e6e9f0;color:#14243f')+';padding:10px 13px',
+        text:L(m.text),tm:m.tm,
+        tmStyle:'display:block;text-align:right;font-size:9.5px;margin-top:3px;'+(m.me?'color:rgba(255,255,255,.7)':'color:#9aa4b5'),
+        tick:m.me?(m.tick==='read'?'ti-checks':'ti-check'):'',tickC:m.me?'rgba(255,255,255,.85)':'#4d7cfe'
+      })),
+      draft:s.draft,onDraft:e=>this.setState({draft:e.target.value}),
+      onKey:e=>{if(e.key==='Enter')this._send();},
+      send:()=>this._send(),
+      notifGroups:[
+        {label:L({ru:'Сегодня',en:'Today',tr:'Bugün'}),items:[
+          {icon:'ti-trending-down',iconStyle:'width:34px;height:34px;border-radius:10px;background:#e4f6ee;color:#0f9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',cardStyle:'display:flex;gap:10px;background:#fff;border:1px solid #dce7f8;border-radius:13px;padding:12px 13px',text:L({ru:'Цена снижена по объекту из избранного: 2+1 Гюзелоба · −290 000 ₺',en:'Price drop on a favourite: 2+1 Güzeloba · −290 000 ₺',tr:'Favori ilanda fiyat düştü: 2+1 Güzeloba · −290 000 ₺'}),time:'12:40',unread:true},
+          {icon:'ti-speakerphone',iconStyle:'width:34px;height:34px;border-radius:10px;background:#fff4d6;color:#9c7420;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',cardStyle:'display:flex;gap:10px;background:#fff;border:1px solid #dce7f8;border-radius:13px;padding:12px 13px',text:L({ru:'Новый запрос базы: 3+1 в Konyaaltı до 15 млн ₺',en:'New request: 3+1 in Konyaaltı up to 15M ₺',tr:'Yeni talep: Konyaaltı 3+1, 15M ₺’ye kadar'}),time:'11:05',unread:true}
+        ]},
+        {label:L({ru:'Вчера',en:'Yesterday',tr:'Dün'}),items:[
+          {icon:'ti-bookmark',iconStyle:'width:34px;height:34px;border-radius:10px;background:#e3ebfd;color:#3a63d4;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',cardStyle:'display:flex;gap:10px;background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:12px 13px',text:L({ru:'По поиску «Konyaaltı 2+1» — 2 новых объекта',en:'Saved search “Konyaaltı 2+1” — 2 new listings',tr:'“Konyaaltı 2+1” araması — 2 yeni ilan'}),time:'18:22',unread:false},
+          {icon:'ti-building-skyscraper',iconStyle:'width:34px;height:34px;border-radius:10px;background:#ede9fd;color:#6d4fd0;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none',cardStyle:'display:flex;gap:10px;background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:12px 13px',text:L({ru:'ALLURE: обновлён прайс — 4 лота сменили статус',en:'ALLURE: price list updated — 4 units changed status',tr:'ALLURE: fiyat listesi güncellendi — 4 ünite durum değiştirdi'}),time:'10:02',unread:false}
+        ]}
+      ],
+      profRows:[
+        {icon:'ti-heart',ic:'#e5484d',label:L({ru:'Избранное',en:'Favourites',tr:'Favoriler'}),val:''+(s.favs.length+s.nbFavU.length),valSt:'font-size:12.5px;font-weight:800;color:#e5484d',chevron:true,k:'favs'},
+        {icon:'ti-crown',ic:'#c9a35b',label:L({ru:'Подписка',en:'Subscription',tr:'Abonelik'}),val:L({ru:'до 15.03.2027',en:'until 15.03.2027',tr:'15.03.2027’ye kadar'}),valSt:'font-size:11px;font-weight:800;color:#0f9d6b;background:#e4f6ee;border-radius:100px;padding:4px 10px;font-family:Manrope,sans-serif',chevron:true,k:'sub'},
+        {icon:'ti-map-pin',ic:'#4d7cfe',label:L({ru:'Мои рабочие регионы',en:'My working areas',tr:'Çalışma bölgelerim'}),val:'Antalya · '+s.regions.length,valSt:'font-size:12.5px;color:#8a93a2',chevron:true,k:'reg'},
+        {icon:'ti-brand-whatsapp',ic:'#22c15e',label:L({ru:'Мессенджеры',en:'Messengers',tr:'Mesajlaşma'}),val:Object.values(s.msgrs).filter(Boolean).length+' '+L({ru:'подкл.',en:'on',tr:'bağlı'}),valSt:'font-size:12.5px;color:#8a93a2',chevron:true,k:'msgr'},
+        {icon:'ti-shield-lock',ic:'#8a93a2',label:L({ru:'Безопасность',en:'Security',tr:'Güvenlik'}),val:s.twoFA?'2FA ✓':'',valSt:'font-size:11.5px;font-weight:700;color:#0f9d6b',chevron:true,k:'sec'},
+        {icon:'ti-lifebuoy',ic:'#8a93a2',label:L({ru:'Поддержка',en:'Support',tr:'Destek'}),val:'',valSt:'',chevron:true,k:'chat'}
+      ].map((r,i2,arr)=>({...r,st:'display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer'+(i2<arr.length-1?';border-bottom:1px solid #f0f2f6':''),
+        onClick:r.k==='chat'?()=>this.setState({tab:'chats',chat:'sup'}):()=>this.setState({profScreen:r.k})})),
+      langBtns:['RU','EN','TR'].map(l2=>({l:l2,onClick:()=>this.setState({lang:l2.toLowerCase()}),st:'font-size:11px;font-weight:800;border-radius:8px;padding:6px 9px;cursor:pointer;font-family:Manrope,sans-serif;'+(lang===l2.toLowerCase()?'background:#14243f;color:#fff':'background:#f0f2f6;color:#5a6472')})),
+      toggleNotif:()=>this.setState(st=>({notifOn:!st.notifOn})),
+      notifTogSt:'width:44px;height:26px;border-radius:100px;padding:2px;display:inline-flex;cursor:pointer;transition:all .2s;flex:none;'+(s.notifOn?'background:#34c383;justify-content:flex-end':'background:#d5dce6;justify-content:flex-start'),
+      tabs:[
+        {key:'home',icon:'ti-home',label:t.nav_home},
+        {key:'base',icon:'ti-building-community',label:t.nav_base},
+        {key:'chats',icon:'ti-message-circle',label:t.nav_chats,badge:unreadTotal?''+unreadTotal:''},
+        {key:'notif',icon:'ti-bell',label:t.nav_notif,badge:'2'},
+        {key:'profile',icon:'ti-user',label:t.nav_profile}
+      ].map(tb=>({...tb,onClick:go(tb.key),st:'flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 7px;cursor:pointer;border-radius:10px;'+(s.tab===tb.key?'color:#4d7cfe':'color:#9aa4b5')}))
+    };
+  }
+  _send(){
+    const s=this.state;if(!s.draft.trim()||!s.chat)return;
+    const tm=new Date().toTimeString().slice(0,5);
+    this.setState(st=>({msgs:{...st.msgs,[st.chat]:[...(st.msgs[st.chat]||[]),{me:true,text:st.draft.trim(),tm,tick:'sent'}]},draft:''}));
+    setTimeout(()=>this.setState(st=>{const arr=(st.msgs[st.chat]||[]).map(m=>({...m,tick:'read'}));return {msgs:{...st.msgs,[st.chat]:arr}};}),1200);
+  }
+}
+</script>
+</body>
+</html>

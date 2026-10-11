@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:#f7f8fb;color:#1b2942}
+a{color:#4d7cfe;text-decoration:none}
+a:hover{color:#3a63d4}
+input,select,textarea,button{font-family:inherit}
+::placeholder{color:#aab1bd}
+@keyframes opl-bg{from{opacity:0}to{opacity:1}}
+@keyframes opl-card{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#14243f,#1e3a63)">
+  <div style="position:absolute;inset:0;background:rgba(14,23,42,.55)"></div>
+  <div style="position:relative;background:#fff;border-radius:18px;padding:34px;width:380px;max-width:92vw;box-shadow:0 30px 80px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:16px"><sc-for list="{{ langBtns }}" as="lb" hint-placeholder-count="3"><span onClick="{{ lb.onClick }}" style="{{ lb.style }}">{{ lb.label }}</span></sc-for></div>
+    <div style="display:flex;align-items:center;gap:9px;justify-content:center;font-weight:800;font-size:22px;color:#14243f;margin-bottom:4px"><span style="display:inline-flex"><span style="width:12px;height:12px;border-radius:50%;background:#4d7cfe"></span><span style="width:12px;height:12px;border-radius:50%;background:#43a047;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#f0ad00;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#e5484d;margin-left:-5px"></span></span> OnePlan</div>
+    <div style="text-align:center;font-size:15px;font-weight:600;color:#6b7688;margin-bottom:22px">{{ t.login_sub }}</div>
+    <div style="margin-bottom:14px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.login_email }}</label><input type="email" value="admin@oneplan.pro" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:12px 13px;font-size:14px;outline:none" style-focus="border-color:#4d7cfe"></div>
+    <div style="margin-bottom:6px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.login_pass }}</label><input type="password" value="password" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:12px 13px;font-size:14px;outline:none" style-focus="border-color:#4d7cfe"></div>
+    <div style="text-align:right;margin-bottom:16px"><span style="font-size:13px;color:#4d7cfe;cursor:pointer">{{ t.login_forgot }}</span></div>
+    <button onClick="{{ login }}" style="width:100%;background:#4d7cfe;color:#fff;border:none;border-radius:11px;padding:13px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#3a63d4">{{ t.login_enter }}</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh">
+  <div style="background:#fff;border-bottom:1px solid #e6e9f0;padding:0 clamp(14px,4vw,28px);height:62px;display:flex;align-items:center;gap:clamp(14px,3vw,30px);position:sticky;top:0;z-index:50;overflow-x:auto">
+    <div onClick="{{ goObjects }}" style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;color:#14243f;cursor:pointer;flex:none"><span style="display:inline-flex"><span style="width:12px;height:12px;border-radius:50%;background:#4d7cfe"></span><span style="width:12px;height:12px;border-radius:50%;background:#43a047;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#f0ad00;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#e5484d;margin-left:-5px"></span></span> OnePlan</div>
+    <div onClick="{{ goObjects }}" style="{{ navObjStyle }}"><i class="ti ti-building-community"></i> {{ t.nav_objects }}</div>
+    <div onClick="{{ goUsers }}" style="{{ navUsersStyle }}"><i class="ti ti-users"></i> {{ t.nav_users }}</div>
+    <div style="flex:1;min-width:8px"></div>
+    <div style="display:flex;gap:4px;flex:none;background:#f0f2f6;border-radius:9px;padding:3px"><sc-for list="{{ langBtns }}" as="lb" hint-placeholder-count="3"><span onClick="{{ lb.onClick }}" style="{{ lb.navStyle }}">{{ lb.label }}</span></sc-for></div>
+    <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:9px;cursor:pointer;flex:none"><div style="width:34px;height:34px;border-radius:50%;background:#e7eaf0;display:flex;align-items:center;justify-content:center;color:#8a93a2"><i class="ti ti-user"></i></div><div><div style="font-size:14px;font-weight:600;line-height:1.15">Admin</div><div style="font-size:12px;color:#6b7688">{{ t.role_admin }}</div></div></div>
+  </div>
+
+  <sc-if value="{{ isObject }}" hint-placeholder-val="{{ false }}">
+  <div style="background:#fff;border-bottom:1px solid #e6e9f0;padding:0 clamp(14px,4vw,28px);display:flex;gap:clamp(14px,2vw,24px);height:50px;align-items:center;position:sticky;top:62px;z-index:49;overflow-x:auto">
+    <span onClick="{{ backToObjects }}" style="display:inline-flex;align-items:center;gap:6px;color:#6b7688;font-size:13px;cursor:pointer;flex:none"><i class="ti ti-arrow-left"></i> {{ t.back_objects }}</span>
+    <sc-for list="{{ subtabsView }}" as="tab" hint-placeholder-count="6"><a onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.label }}</a></sc-for>
+  </div>
+  </sc-if>
+
+  <main style="padding:clamp(16px,3vw,26px) clamp(14px,4vw,28px) 60px;max-width:1500px;margin:0 auto">
+
+    <sc-if value="{{ isObjects }}" hint-placeholder-val="{{ true }}">
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;margin-bottom:6px;letter-spacing:-.02em">{{ t.obj_title }}</h1>
+    <div style="font-size:13px;color:#6b7688;margin-bottom:18px">{{ t.obj_sub }} · {{ objCount }}</div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div style="position:relative"><select style="appearance:none;-webkit-appearance:none;padding:9px 30px 9px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option>{{ t.f_all_clients }}</option><option>New Level İnşaat</option><option>Aina Yapı</option></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div>
+      <div style="position:relative"><select style="appearance:none;-webkit-appearance:none;padding:9px 30px 9px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option>{{ t.f_all_stages }}</option><sc-for list="{{ stageOptions }}" as="o" hint-placeholder-count="3"><option>{{ o.label }}</option></sc-for></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div>
+      <div style="flex:1;min-width:8px"></div>
+      <button onClick="{{ openAdd }}" style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:7px" style-hover="background:#1e3454"><i class="ti ti-plus"></i> {{ t.btn_add_object }}</button>
+    </div>
+    <div style="overflow-x:auto;border:1px solid #e6e9f0;border-radius:14px;background:#fff">
+      <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:820px">
+        <thead><tr>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_id }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_name }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_loc }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_stage }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_sale }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_purpose }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_client }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_editor }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0;white-space:nowrap">{{ t.th_access }}</th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ projectsView }}" as="p" hint-placeholder-count="7">
+          <tr onClick="{{ p.open }}" style="cursor:pointer" style-hover="background:#f8faff">
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;color:#8a93a2">{{ p.id }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;font-weight:700;color:#14243f">{{ p.name }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ p.loc }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ p.stageLabel }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px"><span style="color:#4d7cfe;font-weight:600">{{ p.saleLabel }}</span></td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;white-space:nowrap"><sc-for list="{{ p.tagsView }}" as="tg" hint-placeholder-count="1"><span style="{{ tg.style }}">{{ tg.label }}</span></sc-for></td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ p.client }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ p.editor }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;white-space:nowrap">{{ p.access }}</td>
+          </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isTabMain }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;color:#6b7688;margin-bottom:6px">{{ t.obj_title }} / {{ obj.name }}</div>
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em">{{ obj.name }}</h1>
+    <div style="margin:8px 0 18px;display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ objTags }}" as="tg" hint-placeholder-count="2"><span style="{{ tg.style }}">{{ tg.label }}</span></sc-for></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.main_info }}</h3>
+        <div style="margin-bottom:14px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_name }}</label><input value="{{ obj.name }}" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe" style-focus="border-color:#4d7cfe"></div>
+        <div style="margin-bottom:14px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_stage }}</label><div style="position:relative"><select defaultValue="{{ obj.stage }}" style="width:100%;appearance:none;-webkit-appearance:none;padding:11px 30px 11px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fbfcfe;cursor:pointer"><sc-for list="{{ stageOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div></div>
+        <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_purpose }}</label><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ purposeView }}" as="pp" hint-placeholder-count="3"><span style="{{ pp.style }}">{{ pp.label }}</span></sc-for></div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.loc_title }}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_lng }}</label><input value="32.0669" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_lat }}</label><input value="36.5516" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div></div>
+        <div style="margin-bottom:12px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_addr }}</label><input value="{{ obj.loc }}" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div>
+        <div style="height:120px;border-radius:10px;background:linear-gradient(135deg,#e8eef7,#dde6f2);position:relative"><i class="ti ti-map-pin-filled" style="position:absolute;top:40%;left:50%;transform:translate(-50%,-100%);color:#4d7cfe;font-size:32px"></i></div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px;margin-bottom:18px">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.gallery }}</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center"><sc-for list="{{ galCatsView }}" as="c" hint-placeholder-count="7"><span onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</span></sc-for><div style="flex:1"></div><button style="font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-plus"></i> {{ t.btn_add_photo }}</button></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"><sc-for list="{{ galImages }}" as="src" hint-placeholder-count="6"><div style="aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#eee"><img src="{{ src }}" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div></sc-for></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.progress }}</h3>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed #e6e9f0"><span style="font-size:13px;color:#6b7688;width:110px;flex:none">{{ t.prog1_date }}</span><span style="font-size:14px">{{ t.prog1 }} · <a style="color:#4d7cfe"><i class="ti ti-video"></i> {{ t.live }}</a></span></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed #e6e9f0"><span style="font-size:13px;color:#6b7688;width:110px;flex:none">{{ t.prog2_date }}</span><span style="font-size:14px">{{ t.prog2 }}</span></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0"><span style="font-size:13px;color:#6b7688;width:110px;flex:none">{{ t.prog3_date }}</span><span style="font-size:14px">{{ t.prog3 }}</span></div>
+        <button style="font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#1b2942;display:inline-flex;align-items:center;gap:6px;margin-top:12px"><i class="ti ti-plus"></i> {{ t.btn_add_stage }}</button>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.desc }} · <span style="font-weight:400;color:#6b7688">{{ t.lang_word }}</span></h3>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><sc-for list="{{ descLangs }}" as="l" hint-placeholder-count="4"><span onClick="{{ l.onClick }}" style="{{ l.style }}">{{ l.label }}</span></sc-for></div>
+        <textarea style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe;resize:vertical;min-height:96px">{{ descText }}</textarea>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.pres }}</h3>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><sc-for list="{{ presLangs }}" as="l" hint-placeholder-count="3"><span onClick="{{ l.onClick }}" style="{{ l.style }}">{{ l.label }}</span></sc-for></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid #e6e9f0;border-radius:10px;margin-bottom:8px"><div style="width:36px;height:36px;border-radius:9px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center"><i class="ti ti-file-type-pdf"></i></div><div style="flex:1"><div style="font-weight:600;font-size:14px">{{ t.pres_file }}</div><div style="font-size:12px;color:#6b7688">PDF / JPEG / Word</div></div><span style="font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;background:#e4f6ee;color:#0f9d6b;cursor:pointer">{{ t.btn_download }}</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid #e6e9f0;border-radius:10px"><div style="width:36px;height:36px;border-radius:9px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center"><i class="ti ti-map-2"></i></div><div style="flex:1"><div style="font-weight:600;font-size:14px">{{ t.masterplan }}</div><div style="font-size:12px;color:#6b7688">{{ t.masterplan_fmt }}</div></div><span style="font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;background:#e4f6ee;color:#0f9d6b;cursor:pointer">{{ t.btn_open }}</span></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.docs }} 🇹🇷</h3>
+        <sc-for list="{{ docsTr }}" as="d" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid #e6e9f0;border-radius:10px;margin-bottom:8px"><div style="width:36px;height:36px;border-radius:9px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-file-text"></i></div><div style="flex:1"><div style="font-weight:600;font-size:14px">{{ d.title }}</div><div style="font-size:12px;color:#6b7688">{{ d.sub }}</div></div><span style="{{ d.statusStyle }}">{{ d.statusLabel }}</span></div></sc-for>
+        <button style="font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#1b2942;display:inline-flex;align-items:center;gap:6px;margin-top:6px"><i class="ti ti-plus"></i> {{ t.btn_add_doc }}</button>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px;display:flex;gap:10px;flex-wrap:wrap"><button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-device-floppy"></i> {{ t.btn_update }}</button><button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #e5484d;background:#e5484d;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-trash"></i> {{ t.btn_delete_obj }}</button></div>
+    </sc-if>
+
+    <sc-if value="{{ isTabPlans }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;color:#6b7688;margin-bottom:6px">{{ obj.name }} / {{ t.plans_title }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px">
+      <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em;margin:0">{{ t.plans_title }}</h1>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ schemeView }}" as="v" hint-placeholder-count="3"><button onClick="{{ v.onClick }}" style="{{ v.style }}"><i class="ti {{ v.icon }}"></i> {{ v.label }}</button></sc-for></div>
+    </div>
+
+    <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px">
+      <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.f_block }}</label><div style="position:relative"><select style="appearance:none;-webkit-appearance:none;padding:10px 30px 10px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option>{{ t.block_a }}</option><option>{{ t.block_b }}</option></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div></div>
+      <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.f_rooms }}</label><div style="position:relative"><select onChange="{{ onFRoom }}" style="appearance:none;-webkit-appearance:none;padding:10px 30px 10px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option value="">{{ t.opt_all }}</option><option value="1+1">1+1</option><option value="2+1">2+1</option><option value="3+1">3+1</option><option value="1*">{{ t.rooms_commercial }}</option></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div></div>
+      <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.f_area }}</label><div style="display:flex;align-items:center;gap:6px"><input type="number" placeholder="45" onChange="{{ onAMin }}" style="width:76px;border:1px solid #e6e9f0;border-radius:10px;padding:10px;font-size:14px;outline:none;background:#fff"><span>–</span><input type="number" placeholder="221" onChange="{{ onAMax }}" style="width:76px;border:1px solid #e6e9f0;border-radius:10px;padding:10px;font-size:14px;outline:none;background:#fff"></div></div>
+      <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.f_price }}</label><div style="display:flex;align-items:center;gap:6px"><input type="number" placeholder="0" onChange="{{ onPMin }}" style="width:90px;border:1px solid #e6e9f0;border-radius:10px;padding:10px;font-size:14px;outline:none;background:#fff"><span>–</span><input type="number" placeholder="600000" onChange="{{ onPMax }}" style="width:90px;border:1px solid #e6e9f0;border-radius:10px;padding:10px;font-size:14px;outline:none;background:#fff"></div></div>
+      <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.f_status }}</label><div style="position:relative"><select onChange="{{ onFSt }}" style="appearance:none;-webkit-appearance:none;padding:10px 30px 10px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option value="">{{ t.opt_all }}</option><sc-for list="{{ statusOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div></div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSchemeBoard }}" hint-placeholder-val="{{ true }}">
+    <sc-if value="{{ isMega }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"><sc-for list="{{ megaInfo }}" as="m" hint-placeholder-count="5"><div style="flex:1;min-width:120px;background:#fff;border:1px solid #e6e9f0;border-radius:12px;padding:12px 14px"><div style="font-size:12px;color:#6b7688;margin-bottom:3px">{{ m.label }}</div><div style="font-size:19px;font-weight:800;color:#14243f">{{ m.value }}</div></div></sc-for></div>
+    <sc-for list="{{ megaBlocksV }}" as="bl" hint-placeholder-count="1">
+    <div style="margin-bottom:22px">
+      <div style="font-size:15px;font-weight:800;color:#14243f;letter-spacing:.04em;margin-bottom:10px;padding:6px 12px;background:#14243f;color:#fff;border-radius:8px;display:inline-block">{{ bl.name }}</div>
+      <div style="overflow-x:auto;padding-bottom:6px"><div style="min-width:900px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ bl.floors }}" as="f" hint-placeholder-count="8">
+        <div style="display:flex;gap:10px;align-items:stretch">
+          <div style="width:52px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#eef0f4;border-radius:9px;padding:4px"><span style="font-size:17px;font-weight:800;color:#14243f">{{ f.label }}</span><span style="font-size:10px;color:#8a93a2">{{ f.floorSuffix }}</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ f.bands }}" as="band" hint-placeholder-count="2">
+            <div style="display:flex;gap:7px;align-items:stretch">
+              <div style="width:64px;flex:none;display:flex;align-items:center;font-size:10px;font-weight:700;color:#aab1bd;text-transform:uppercase;letter-spacing:.03em;line-height:1.2">{{ band.side }}</div>
+              <sc-for list="{{ band.cells }}" as="c" hint-placeholder-count="6">
+                <sc-if value="{{ c.isSold }}" hint-placeholder-val="{{ false }}"><div onClick="{{ c.open }}" style="{{ c.soldStyle }}"><sc-if value="{{ c.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="{{ c.badge.style }}">{{ c.badge.label }}</span></sc-if><span style="font-size:13px">№{{ c.num }}</span><span style="font-size:11px;opacity:.85">{{ c.typeLabel }} · {{ c.area }} м²</span><span style="font-size:12px;font-weight:700">{{ t.sold_word }}</span></div></sc-if>
+                <sc-if value="{{ c.notSold }}" hint-placeholder-val="{{ true }}"><div onClick="{{ c.open }}" style="{{ c.style }}" style-hover="transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,36,63,.16)">
+                  <sc-if value="{{ c.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="{{ c.badge.style }}">{{ c.badge.label }}</span></sc-if>
+                  <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600"><span>{{ c.typeLabel }}</span><span>№{{ c.num }}</span></div>
+                  <div style="font-size:17px;font-weight:800">{{ c.priceLabel }}</div>
+                  <div style="font-size:11px;opacity:.9">{{ c.area }} м²</div>
+                </div></sc-if>
+              </sc-for>
+            </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-for>
+      </div></div>
+    </div>
+    </sc-for>
+    <div style="margin-top:6px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:14px 20px;display:flex;gap:22px;align-items:center;flex-wrap:wrap;width:fit-content;max-width:100%">
+      <sc-for list="{{ megaLegend }}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="min-width:28px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;padding:0 7px;color:#fff;background:{{ l.bg }}">{{ l.count }}</span> {{ l.label }}</span></sc-for>
+    </div>
+    </sc-if>
+    <sc-if value="{{ isRegularBoard }}" hint-placeholder-val="{{ true }}">
+    <div style="overflow-x:auto;padding-bottom:6px">
+      <div style="min-width:900px">
+        <sc-for list="{{ board }}" as="row" hint-placeholder-count="8">
+        <div style="display:flex;gap:9px;margin-bottom:9px">
+          <div style="width:32px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#aab1bd;background:#eef0f4;border-radius:8px">{{ row.floor }}</div>
+          <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="7">
+            <sc-if value="{{ cell.isSold }}" hint-placeholder-val="{{ false }}"><div onClick="{{ cell.open }}" style="{{ cell.soldStyle }}">{{ t.sold_word }}</div></sc-if>
+            <sc-if value="{{ cell.notSold }}" hint-placeholder-val="{{ true }}"><div onClick="{{ cell.open }}" style="{{ cell.style }}" style-hover="transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,36,63,.16)">
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600"><span>{{ cell.typeLabel }}</span><span>{{ cell.num }}</span></div>
+              <div style="font-size:19px;font-weight:800">{{ cell.priceLabel }}</div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.9"><span>{{ cell.area }} м²</span><sc-if value="{{ cell.showPerM2 }}" hint-placeholder-val="{{ true }}"><span>{{ cell.perM2 }}</span></sc-if></div>
+            </div></sc-if>
+          </sc-for>
+          <div style="width:32px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#aab1bd;background:#eef0f4;border-radius:8px">{{ row.floor }}</div>
+        </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="margin-top:20px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:14px 20px;display:flex;gap:22px;align-items:center;flex-wrap:wrap;width:fit-content;max-width:100%">
+      <sc-for list="{{ legend }}" as="l" hint-placeholder-count="6"><span style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="min-width:28px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;padding:0 7px;color:#fff;background:{{ l.bg }}">{{ l.count }}</span> {{ l.label }}</span></sc-for>
+    </div>
+    </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isSchemeList }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <sc-for list="{{ listVariantView }}" as="v" hint-placeholder-count="2"><button onClick="{{ v.onClick }}" style="{{ v.style }}"><i class="ti {{ v.icon }}"></i> {{ v.label }}</button></sc-for>
+      <div style="flex:1"></div>
+      <span style="font-size:13px;color:#6b7688">{{ listCount }} {{ t.units_count }}</span>
+    </div>
+    <sc-if value="{{ isListTable }}" hint-placeholder-val="{{ true }}">
+    <div style="overflow-x:auto;border:1px solid #e6e9f0;border-radius:14px;background:#fff">
+      <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:680px">
+        <thead><tr>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_num }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_floor }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_type }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_areaShort }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_price }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_pricem2 }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.f_status }}</th>
+        </tr></thead>
+        <tbody><sc-for list="{{ listUnits }}" as="u" hint-placeholder-count="12">
+          <tr onClick="{{ u.open }}" style="cursor:pointer" style-hover="background:#f8faff">
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;font-weight:700;color:#14243f">{{ u.num }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ u.floor }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ u.typeLabel }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;white-space:nowrap">{{ u.area }} м²</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;font-weight:700;white-space:nowrap">{{ u.priceLabel }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;color:#6b7688;white-space:nowrap"><sc-if value="{{ u.showPerM2 }}" hint-placeholder-val="{{ true }}">{{ u.perM2 }}</sc-if></td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px"><span style="{{ u.statusStyle }}">{{ u.statusLabel }}</span></td>
+          </tr>
+        </sc-for></tbody>
+      </table>
+    </div>
+    </sc-if>
+    <sc-if value="{{ isListCards }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+      <sc-for list="{{ listUnits }}" as="u" hint-placeholder-count="8">
+      <div onClick="{{ u.open }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:16px;cursor:pointer" style-hover="box-shadow:0 8px 22px rgba(20,36,63,.1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:17px;font-weight:800;color:#14243f">№ {{ u.num }}</span><span style="{{ u.statusStyle }}">{{ u.statusLabel }}</span></div>
+        <div style="font-size:13px;color:#6b7688;margin-bottom:12px">{{ u.typeLabel }} · {{ t.word_floor }} {{ u.floor }}</div>
+        <div style="font-size:21px;font-weight:800;color:#14243f">{{ u.priceLabel }}</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7688;margin-top:6px"><span>{{ u.area }} м²</span><sc-if value="{{ u.showPerM2 }}" hint-placeholder-val="{{ true }}"><span>{{ u.perM2 }}</span></sc-if></div>
+      </div>
+      </sc-for>
+    </div>
+    </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isSchemeFloor }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-upload"></i> {{ t.fp_add_floor }}</button>
+      <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#1b2942;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-pencil"></i> {{ t.fp_trace }}</button>
+      <span style="font-size:12px;color:#6b7688;flex:1;min-width:200px">{{ t.fp_hint }}</span>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px;display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:none;width:150px">
+        <div style="background:#eef3ff;border:1px solid #d4e0ff;border-radius:11px;padding:12px;margin-bottom:8px;text-align:center;cursor:pointer"><b>{{ t.house }} 1</b><div style="color:#4d7cfe;font-size:13px;margin-top:2px">{{ t.active }}</div></div>
+        <div style="background:#fff;border:1px solid #e6e9f0;border-radius:11px;padding:12px;margin-bottom:14px;text-align:center;cursor:pointer;color:#6b7688"><b>{{ t.house }} 2</b><div style="font-size:13px;margin-top:2px">58 {{ t.free_suffix }}</div></div>
+        <div style="font-size:12px;color:#6b7688;text-align:center;margin-bottom:6px">{{ t.floor_word }}</div>
+        <div style="display:flex;flex-direction:column;gap:5px;max-height:360px;overflow:auto"><sc-for list="{{ floorButtons }}" as="b" hint-placeholder-count="8"><button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button></sc-for></div>
+      </div>
+      <div style="flex:1;min-width:280px;position:relative;border:1px solid #e6e9f0;border-radius:12px;background:#fbfcfe;overflow:hidden">
+        {{ floorSvg }}
+        <sc-if value="{{ fpCardShow }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:16px;right:16px;background:#fff;border:1px solid #e6e9f0;border-radius:12px;box-shadow:0 10px 30px rgba(20,36,63,.16);padding:14px 16px;width:210px">
+          <div style="font-size:17px;font-weight:800;color:#14243f">{{ t.apt }}{{ fpCard.num }}</div>
+          <div style="font-size:13px;color:#6b7688;margin:2px 0 12px">{{ fpCard.sub }}</div>
+          <div style="font-size:13px;color:#9aa1ac;text-decoration:line-through">{{ fpCard.oldPrice }}</div>
+          <div style="font-size:21px;font-weight:800;color:#e5484d">{{ fpCard.price }}</div>
+          <div style="{{ fpCard.statusStyle }}"><span style="{{ fpCard.dotStyle }}"></span>{{ fpCard.statusLabel }}</div>
+          <button onClick="{{ fpCard.open }}" style="width:100%;justify-content:center;font-size:13px;font-weight:600;border-radius:9px;padding:9px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff;display:flex;align-items:center;margin-top:12px">{{ t.open_card }}</button>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isTabGrid }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;color:#6b7688;margin-bottom:6px">{{ obj.name }} / {{ t.tab_grid }}</div>
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em">{{ t.grid_title }}</h1>
+    <div style="font-size:13px;color:#6b7688;margin-bottom:18px;max-width:760px">{{ t.grid_desc }}</div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap"><h3 style="font-size:16px;font-weight:700;margin:0;color:#14243f">{{ t.sections }}</h3><button style="font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-plus"></i> {{ t.btn_add_section }}</button></div>
+      <div style="border:1px solid #e6e9f0;border-radius:12px;padding:16px;background:#fafbfd">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap"><input value="{{ t.block_a }}" style="flex:1;max-width:220px;border:1px solid #e6e9f0;border-radius:9px;padding:9px 12px;font-size:14px;outline:none;background:#fff"><button style="font-size:13px;font-weight:600;border-radius:9px;padding:8px 11px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#1b2942"><i class="ti ti-pencil"></i></button><button style="font-size:13px;font-weight:600;border-radius:9px;padding:8px 11px;cursor:pointer;border:1px solid #e5484d;background:#e5484d;color:#fff"><i class="ti ti-trash"></i></button></div>
+        <textarea value="{{ gridText }}" onChange="{{ onGridText }}" style="width:100%;min-height:130px;font-family:ui-monospace,monospace;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fff;resize:vertical"></textarea>
+        <div style="font-size:12px;color:#6b7688;margin:5px 0 14px">{{ t.grid_ex }}</div>
+        <div style="font-size:13px;color:#6b7688;margin-bottom:8px">{{ t.grid_preview }}</div>
+        <div style="display:flex;flex-direction:column;gap:5px;overflow-x:auto"><sc-for list="{{ gridPreview }}" as="row" hint-placeholder-count="4"><div style="display:flex;gap:5px;align-items:center"><span style="width:26px;font-size:12px;color:#aab1bd;text-align:center;flex:none">{{ row.floor }}</span><sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="7"><div style="{{ c.style }}">{{ c.n }}</div></sc-for></div></sc-for></div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isTabIO }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;color:#6b7688;margin-bottom:6px">{{ obj.name }} / {{ t.tab_io }}</div>
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em;margin-bottom:18px">{{ t.io_title }}</h1>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px;max-width:720px">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#14243f">{{ t.io_import }}</h3>
+      <p style="color:#6b7688;font-size:14px;margin-bottom:12px">{{ t.io_import_desc }}</p>
+      <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-upload"></i> {{ t.io_import_btn }}</button>
+      <h3 style="font-size:16px;font-weight:700;margin:26px 0 12px;color:#14243f">{{ t.io_export }}</h3>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <div style="position:relative"><select style="appearance:none;-webkit-appearance:none;padding:10px 30px 10px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option>USD ($)</option><option>EUR (€)</option><option>TRY (₺)</option></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div>
+        <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-download"></i> {{ t.io_export_btn }}</button>
+      </div>
+      <div style="font-size:13px;color:#6b7688">{{ t.io_fields }}</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isTabSet }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:13px;color:#6b7688;margin-bottom:6px">{{ obj.name }} / {{ t.tab_set }}</div>
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em;margin-bottom:18px">{{ t.set_title }}</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#14243f">{{ t.set_colors }}</h3>
+        <p style="color:#6b7688;font-size:13px;margin-bottom:10px">{{ t.set_colors_desc }}</p>
+        <sc-for list="{{ colorRows }}" as="c" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #e6e9f0"><input type="color" value="{{ c.value }}" onChange="{{ c.onChange }}" style="width:44px;height:34px;border:1px solid #e6e9f0;border-radius:8px;background:none;cursor:pointer;flex:none"><span style="flex:1;font-size:14px;font-weight:600">{{ c.label }}</span></div></sc-for>
+        <button onClick="{{ applyColors }}" style="font-size:13px;font-weight:600;border-radius:9px;padding:8px 12px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff;display:inline-flex;align-items:center;gap:6px;margin-top:12px"><i class="ti ti-check"></i> {{ t.set_apply }}</button>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#14243f">{{ t.set_feats }}</h3>
+        <p style="color:#6b7688;font-size:13px;margin-bottom:12px">{{ t.set_feats_desc }}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ featChips }}" as="f" hint-placeholder-count="6"><span style="display:inline-flex;align-items:center;gap:7px;background:#f0f2f6;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600">{{ f.label }} <span onClick="{{ f.remove }}" style="cursor:pointer;color:#9aa1ac">&times;</span></span></sc-for></div>
+        <div style="display:flex;gap:8px;margin-top:12px"><input value="{{ newFeat }}" onChange="{{ onNewFeat }}" placeholder="{{ t.set_new_feat }}" style="flex:1;padding:9px 12px;border:1px solid #e6e9f0;border-radius:9px;font-size:14px;outline:none;background:#fbfcfe"><button onClick="{{ addFeat }}" style="font-size:13px;font-weight:600;border-radius:9px;padding:8px 14px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff">{{ t.btn_add }}</button></div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px"><h3 style="font-size:16px;font-weight:700;margin-bottom:8px;color:#14243f">{{ t.set_plans }}</h3><p style="color:#6b7688;font-size:14px">{{ t.set_plans_desc }}</p><button style="font-size:13px;font-weight:600;border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:6px;margin-top:10px"><i class="ti ti-photo-plus"></i> {{ t.set_plans_btn }}</button></div>
+    </sc-if>
+
+    <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}">
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em;margin-bottom:6px">{{ t.users_title }}</h1>
+    <div style="font-size:13px;color:#6b7688;margin-bottom:18px">{{ t.users_sub }} · {{ userCount }}</div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div style="position:relative"><select onChange="{{ onURole }}" style="appearance:none;-webkit-appearance:none;padding:9px 30px 9px 12px;border:1px solid #e6e9f0;border-radius:10px;font-size:14px;background:#fff;cursor:pointer"><option value="all">{{ t.f_all_roles }}</option><option value="admin">{{ t.role_admins }}</option><option value="editor">{{ t.role_editors }}</option><option value="client">{{ t.role_clients }}</option></select><i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div>
+      <div style="flex:1;min-width:8px"></div>
+      <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #14243f;background:#14243f;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-plus"></i> {{ t.btn_add_user }}</button>
+    </div>
+    <div style="overflow-x:auto;border:1px solid #e6e9f0;border-radius:14px;background:#fff">
+      <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:820px">
+        <thead><tr>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_id }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_role }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_fio }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_mail }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_objcount }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_access }}</th>
+          <th style="text-align:left;font-size:13px;color:#6b7688;font-weight:600;padding:13px 15px;background:#fafbfd;border-bottom:1px solid #e6e9f0">{{ t.th_company }}</th>
+        </tr></thead>
+        <tbody><sc-for list="{{ usersView }}" as="u" hint-placeholder-count="5">
+          <tr style="cursor:pointer" style-hover="background:#f8faff">
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;color:#8a93a2">{{ u.id }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px"><span style="{{ u.roleStyle }}">{{ u.roleLabel }}</span></td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;font-weight:700;color:#14243f">{{ u.fio }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ u.mail }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ u.objects }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px;white-space:nowrap">{{ u.access }}</td>
+            <td style="padding:13px 15px;border-bottom:1px solid #e6e9f0;font-size:14px">{{ u.company }}</td>
+          </tr>
+        </sc-for></tbody>
+      </table>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+    <h1 style="font-size:28px;font-weight:800;color:#14243f;letter-spacing:-.02em;margin-bottom:6px">{{ t.prof_title }}</h1>
+    <div style="font-size:13px;color:#6b7688;margin-bottom:18px">{{ t.prof_sub }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.prof_data }}</h3>
+        <div style="margin-bottom:14px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_role }}</label><input value="{{ t.role_admin }}" disabled style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#f0f2f6;color:#8a93a2"></div>
+        <div style="margin-bottom:14px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_fio }}</label><input value="Иван Админов" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div>
+        <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_email }}</label><input value="admin@oneplan.pro" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.prof_company }} <span style="font-weight:400;color:#6b7688;font-size:13px">{{ t.prof_forclients }}</span></h3>
+        <div style="margin-bottom:12px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_org }}</label><input placeholder="New Level İnşaat Ltd. Şti." style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px"><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_director }}</label><input style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_tax }}</label><input style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_bik }}</label><input style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div><div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_iban }}</label><input style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div></div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px;max-width:520px;margin-bottom:18px">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:#14243f">{{ t.prof_pass }}</h3>
+      <div style="margin-bottom:8px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:6px">{{ t.fld_newpass }}</label><input type="password" style="width:100%;border:1px solid #e6e9f0;border-radius:10px;padding:11px 12px;font-size:14px;outline:none;background:#fbfcfe"></div>
+      <div style="font-size:12px;color:#6b7688">{{ t.pass_hint }}</div>
+      <button style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff;display:inline-flex;align-items:center;gap:7px;margin-top:14px"><i class="ti ti-lock"></i> {{ t.btn_save_pass }}</button>
+    </div>
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:22px"><button onClick="{{ logout }}" style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #e5484d;background:#e5484d;color:#fff;display:inline-flex;align-items:center;gap:7px"><i class="ti ti-logout"></i> {{ t.btn_logout }}</button></div>
+    </sc-if>
+
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAddObject }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:120;background:#f7f8fb;display:flex;flex-direction:column;animation:opl-bg .2s ease">
+  <div style="background:#fff;border-bottom:1px solid #e6e9f0;padding:14px clamp(16px,4vw,32px);display:flex;align-items:center;gap:16px;flex-none;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px">
+      <div style="width:38px;height:38px;border-radius:11px;background:#4d7cfe;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-building-plus"></i></div>
+      <div><div style="font-size:18px;font-weight:800;color:#14243f;line-height:1.1">{{ t.wz.title }}</div><div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#0f9d6b;background:#e4f6ee;padding:2px 8px;border-radius:20px;margin-top:3px;white-space:nowrap"><i class="ti ti-cloud-off"></i> {{ t.wz.migrate }}</div></div>
+    </div>
+    <div style="font-size:13px;color:#6b7688;flex:none">{{ t.wz.step }} {{ addStepNum }} {{ t.wz.of }} {{ addTotal }}</div>
+    <button onClick="{{ closeAdd }}" style="border:1px solid #e6e9f0;background:#fff;border-radius:10px;width:38px;height:38px;font-size:20px;color:#8a93a2;cursor:pointer;flex:none" style-hover="background:#f5f6f9">&times;</button>
+  </div>
+  <div style="height:4px;background:#eef0f4;flex-none"><div style="height:100%;background:#4d7cfe;width:{{ addPct }}%;transition:width .3s ease"></div></div>
+
+  <div style="flex:1;overflow-y:auto"><div style="max-width:1100px;margin:0 auto;padding:clamp(18px,3vw,30px) clamp(16px,4vw,32px);display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+    <div style="width:250px;flex:none;min-width:210px">
+      <sc-for list="{{ addSteps }}" as="st" hint-placeholder-count="6">
+      <div onClick="{{ st.onClick }}" style="{{ st.rowStyle }}">
+        <div style="{{ st.dotStyle }}"><i class="ti {{ st.icon }}"></i></div>
+        <div><div style="{{ st.labelStyle }}">{{ st.label }}</div><sc-if value="{{ st.hasFolder }}" hint-placeholder-val="{{ true }}"><div style="{{ st.folderStyle }}"><i class="ti ti-folder"></i> {{ st.folder }}</div></sc-if></div>
+      </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:1;min-width:300px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap"><h2 style="font-size:23px;font-weight:800;color:#14243f;margin:0;letter-spacing:-.02em">{{ addTitle }}</h2><sc-if value="{{ addHasFolder }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#6b7688;background:#eef0f4;padding:4px 10px;border-radius:20px;white-space:nowrap"><i class="ti ti-folder"></i> {{ t.wz.replaces }} {{ addFolder }}</span></sc-if></div>
+
+      <sc-if value="{{ isAddInfo }}" hint-placeholder-val="{{ true }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">{{ t.wz.info_hint }}</p>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:24px">
+        <div style="margin-bottom:16px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:7px">{{ t.fld_name }}</label><input placeholder="MEGAPOLIS RESIDENCE" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:13px 14px;font-size:15px;outline:none;background:#fbfcfe" style-focus="border-color:#4d7cfe"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:16px">
+          <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:7px">{{ t.fld_stage }}</label><div style="position:relative"><select style="width:100%;appearance:none;-webkit-appearance:none;padding:13px 30px 13px 14px;border:1px solid #e6e9f0;border-radius:11px;font-size:15px;background:#fbfcfe;cursor:pointer"><sc-for list="{{ stageOptions }}" as="o" hint-placeholder-count="3"><option>{{ o.label }}</option></sc-for></select><i class="ti ti-chevron-down" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#9aa1ac;pointer-events:none"></i></div></div>
+          <div><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:7px">{{ t.fld_addr }}</label><input placeholder="Аланья, Махмутлар" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:13px 14px;font-size:15px;outline:none;background:#fbfcfe"></div>
+        </div>
+        <label style="font-size:13px;color:#6b7688;display:block;margin-bottom:8px">{{ t.fld_purpose }}</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ purposeView }}" as="pp" hint-placeholder-count="3"><span style="font-size:13px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#6b7688">{{ pp.label }}</span></sc-for></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddMedia }}" hint-placeholder-val="{{ false }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">PHOTO · VIDEO</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+        <div><label style="font-size:13px;font-weight:600;color:#14243f;display:block;margin-bottom:8px"><i class="ti ti-photo"></i> {{ t.gallery }}</label>
+          <div style="border:2px dashed #cdd5e2;border-radius:16px;padding:32px 20px;text-align:center;background:#fbfcfe;cursor:pointer" style-hover="border-color:#4d7cfe;background:#f5f8ff"><div style="width:52px;height:52px;border-radius:14px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px"><i class="ti ti-cloud-upload"></i></div><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.drop_photos }}</div><div style="font-size:12px;color:#8a93a2;margin-top:4px">{{ t.wz.drop_photos_sub }}</div></div></div>
+        <div><label style="font-size:13px;font-weight:600;color:#14243f;display:block;margin-bottom:8px"><i class="ti ti-video"></i> Video</label>
+          <div style="border:2px dashed #cdd5e2;border-radius:16px;padding:32px 20px;text-align:center;background:#fbfcfe;cursor:pointer" style-hover="border-color:#4d7cfe;background:#f5f8ff"><div style="width:52px;height:52px;border-radius:14px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px"><i class="ti ti-brand-youtube"></i></div><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.drop_video }}</div><div style="font-size:12px;color:#8a93a2;margin-top:4px">{{ t.wz.drop_video_sub }}</div></div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddPlans }}" hint-placeholder-val="{{ false }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">{{ t.wz.plans_hint }}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+        <div><label style="font-size:13px;font-weight:600;color:#14243f;display:block;margin-bottom:8px"><i class="ti ti-stack-2"></i> FLOOR PLANS</label>
+          <div style="border:2px dashed #cdd5e2;border-radius:16px;padding:32px 20px;text-align:center;background:#fbfcfe;cursor:pointer" style-hover="border-color:#4d7cfe;background:#f5f8ff"><div style="width:52px;height:52px;border-radius:14px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px"><i class="ti ti-layout-grid"></i></div><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.drop_plans }}</div><div style="font-size:12px;color:#8a93a2;margin-top:4px">{{ t.wz.drop_plans_sub }}</div></div></div>
+        <div><label style="font-size:13px;font-weight:600;color:#14243f;display:block;margin-bottom:8px"><i class="ti ti-vector"></i> LAYOUTS</label>
+          <div style="border:2px dashed #cdd5e2;border-radius:16px;padding:32px 20px;text-align:center;background:#fbfcfe;cursor:pointer" style-hover="border-color:#4d7cfe;background:#f5f8ff"><div style="width:52px;height:52px;border-radius:14px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px"><i class="ti ti-home-2"></i></div><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.drop_layouts }}</div><div style="font-size:12px;color:#8a93a2;margin-top:4px">{{ t.wz.drop_layouts_sub }}</div></div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddDocs }}" hint-placeholder-val="{{ false }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">{{ t.wz.docs_hint }}</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:16px 18px;cursor:pointer" style-hover="border-color:#4d7cfe"><div style="width:44px;height:44px;border-radius:12px;background:#eef3ff;color:#4d7cfe;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-file-type-pdf"></i></div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.cat_present }}</div><div style="font-size:12px;color:#8a93a2">{{ t.wz.cat_present_sub }} · CATALOG</div></div><span style="font-size:13px;font-weight:600;color:#4d7cfe;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-upload"></i></span></div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:16px 18px;cursor:pointer" style-hover="border-color:#4d7cfe"><div style="width:44px;height:44px;border-radius:12px;background:#fdf3e6;color:#b45309;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-certificate"></i></div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.cat_ruhsat }}</div><div style="font-size:12px;color:#8a93a2">{{ t.wz.cat_ruhsat_sub }} · RUHSAT</div></div><span style="font-size:13px;font-weight:600;color:#4d7cfe;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-upload"></i></span></div>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:16px 18px;cursor:pointer" style-hover="border-color:#4d7cfe"><div style="width:44px;height:44px;border-radius:12px;background:#e4f6ee;color:#0f9d6b;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-table"></i></div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.cat_price }}</div><div style="font-size:12px;color:#8a93a2">{{ t.wz.cat_price_sub }} · PRICE LIST</div></div><span style="font-size:13px;font-weight:600;color:#4d7cfe;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-upload"></i></span></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isAddComm }}" hint-placeholder-val="{{ false }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">{{ t.wz.comm_hint }}</p>
+      <div style="font-size:15px;font-weight:600;color:#14243f;margin-bottom:12px">{{ t.wz.comm_q }}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+        <div onClick="{{ setCommYes }}" style="{{ commYesStyle }}"><div style="width:40px;height:40px;border-radius:11px;background:#fdf3e6;color:#b45309;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-building-store"></i></div><span style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.comm_yes }}</span></div>
+        <div onClick="{{ setCommNo }}" style="{{ commNoStyle }}"><div style="width:40px;height:40px;border-radius:11px;background:#eef0f4;color:#8a93a2;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none"><i class="ti ti-home"></i></div><span style="font-size:15px;font-weight:600;color:#14243f">{{ t.wz.comm_no }}</span></div>
+      </div>
+      <sc-if value="{{ addComm }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:20px;max-width:340px"><label style="font-size:13px;color:#6b7688;display:block;margin-bottom:7px">{{ t.wz.comm_count }}</label><input type="number" placeholder="12" style="width:100%;border:1px solid #e6e9f0;border-radius:11px;padding:12px 14px;font-size:15px;outline:none;background:#fbfcfe"></div>
+      </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isAddDone }}" hint-placeholder-val="{{ false }}">
+      <p style="color:#6b7688;font-size:14px;margin-bottom:20px">{{ t.wz.review_sub }}</p>
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:22px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:#e4f6ee;color:#0f9d6b;display:flex;align-items:center;justify-content:center;font-size:22px"><i class="ti ti-checks"></i></div><div style="font-size:18px;font-weight:800;color:#14243f">{{ t.wz.review_title }}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+          <sc-for list="{{ reviewItems }}" as="r" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid #e6e9f0;border-radius:12px"><i class="ti ti-circle-check-filled" style="color:#0f9d6b;font-size:20px"></i><div><div style="font-size:14px;font-weight:600;color:#14243f">{{ r.label }}</div><div style="font-size:11px;color:#aab1bd"><i class="ti ti-folder"></i> {{ r.folder }}</div></div></div></sc-for>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </div></div>
+
+  <div style="background:#fff;border-top:1px solid #e6e9f0;padding:14px clamp(16px,4vw,32px);display:flex;gap:12px;align-items:center;flex-none">
+    <button onClick="{{ closeAdd }}" style="font-size:14px;font-weight:600;border-radius:11px;padding:12px 18px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#6b7688">{{ t.wz.cancel }}</button>
+    <div style="flex:1"></div>
+    <sc-if value="{{ isAddNotFirst }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addBack }}" style="font-size:14px;font-weight:600;border-radius:11px;padding:12px 18px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#14243f;display:inline-flex;align-items:center;gap:7px" style-hover="background:#f5f6f9"><i class="ti ti-arrow-left"></i> {{ t.wz.back }}</button></sc-if>
+    <sc-if value="{{ isAddLast }}" hint-placeholder-val="{{ false }}"><button onClick="{{ createObject }}" style="font-size:14px;font-weight:700;border-radius:11px;padding:12px 22px;cursor:pointer;border:1px solid #0f9d6b;background:#0f9d6b;color:#fff;display:inline-flex;align-items:center;gap:7px" white-space:nowrap" style-hover="background:#0c8a5e"><i class="ti ti-check"></i> {{ t.wz.create }}</button></sc-if>
+    <sc-if value="{{ isAddNotLast }}" hint-placeholder-val="{{ true }}"><button onClick="{{ addNext }}" style="font-size:14px;font-weight:700;border-radius:11px;padding:12px 22px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff;display:inline-flex;align-items:center;gap:7px" white-space:nowrap" style-hover="background:#3a63d4">{{ t.wz.next }} <i class="ti ti-arrow-right"></i></button></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;animation:opl-bg .2s ease">
+  <div onClick="{{ stop }}" style="background:#fff;border-radius:16px;width:640px;max-width:96vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:opl-card .2s ease">
+    <div style="padding:18px 22px;border-bottom:1px solid #e6e9f0;display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:20px;font-weight:800;color:#14243f">№ {{ modal.num }}</div><div style="font-size:13px;color:#6b7688;margin-top:2px">{{ modal.sub }}</div></div>
+      <button onClick="{{ closeModal }}" style="border:none;background:none;font-size:22px;color:#b7bcc6;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div style="padding:20px 22px;overflow-y:auto">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px">
+        <div style="aspect-ratio:1;background:#f3f5f8;border:1px solid #e6e9f0;border-radius:12px;overflow:hidden"><img src="{{ planImg }}" style="width:100%;height:100%;object-fit:cover"></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e6e9f0;font-size:14px"><span style="color:#6b7688">{{ t.m_type }}</span><span>{{ modal.typeLabel }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e6e9f0;font-size:14px"><span style="color:#6b7688">{{ t.m_area }}</span><span>{{ modal.area }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e6e9f0;font-size:14px"><span style="color:#6b7688">{{ t.m_price }}</span><span style="font-weight:700">{{ modal.priceLabel }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e6e9f0;font-size:14px"><span style="color:#6b7688">{{ t.m_pricem2 }}</span><span>{{ modal.perM2 }}</span></div>
+          <label style="font-size:12px;font-weight:600;color:#6b7688;display:block;margin:14px 0 8px">{{ t.m_status }}</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><sc-for list="{{ statusBtns }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.onClick }}" style="{{ b.style }}"><span style="{{ b.dotStyle }}"></span>{{ b.label }}</button></sc-for></div>
+        </div>
+      </div>
+      <label style="font-size:12px;font-weight:600;color:#6b7688;display:block;margin:16px 0 8px">{{ t.m_feats }}</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ modalFeats }}" as="f" hint-placeholder-count="6"><span onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</span></sc-for></div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #e6e9f0;display:flex;gap:10px;justify-content:flex-end"><button onClick="{{ closeModal }}" style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #e6e9f0;background:#fff;color:#1b2942">{{ t.m_cancel }}</button><button onClick="{{ saveUnit }}" style="font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid #4d7cfe;background:#4d7cfe;color:#fff">{{ t.m_save }}</button></div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:840},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;RU&quot;,&quot;EN&quot;,&quot;TR&quot;],&quot;default&quot;:&quot;RU&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Язык&quot;},&quot;currency&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;USD&quot;,&quot;EUR&quot;,&quot;TRY&quot;],&quot;default&quot;:&quot;USD&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;startScheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;board&quot;,&quot;list&quot;,&quot;floor&quot;],&quot;default&quot;:&quot;board&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Планировки&quot;},&quot;showPricePerM2&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Планировки&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.PROJECTS=[
+      {id:1,name:'NEW LEVEL PANORAMA',loc:'Аланья, Джикджилли',stage:'construction',sale:64,client:'New Level İnşaat',editor:'Мехмет К.',tags:['cit','res'],access:'01.06.2027'},
+      {id:2,name:'NEW LEVEL KLEOPATRA 1&2',loc:'Аланья, Клеопатра',stage:'done',sale:12,client:'New Level İnşaat',editor:'Ирина А.',tags:['cit'],access:'01.06.2027'},
+      {id:3,name:'AINA GARDEN OBA',loc:'Аланья, Оба',stage:'construction',sale:88,client:'Aina Yapı',editor:'Ольга Д.',tags:['res'],access:'12.03.2027'},
+      {id:4,name:'NEW LEVEL VILLAS INCEKUM',loc:'Инджекум',stage:'foundation',sale:9,client:'New Level İnşaat',editor:'Мехмет К.',tags:['cit'],access:'01.06.2027'},
+      {id:5,name:'CITY ALANYA CENTER',loc:'Аланья, центр',stage:'construction',sale:120,client:'New Level İnşaat',editor:'Ирина А.',tags:['cit','res','com'],access:'01.06.2027'},
+      {id:6,name:'AKROPORA KONAKLI',loc:'Конаклы',stage:'construction',sale:54,client:'New Level İnşaat',editor:'Ольга Д.',tags:['res'],access:'01.06.2027'},
+      {id:7,name:'PREMIUM AVSALLAR',loc:'Авсаллар',stage:'done',sale:7,client:'New Level İnşaat',editor:'Мехмет К.',tags:['cit'],access:'01.06.2027'},
+      {id:8,name:'MEGAPOLIS RESIDENCE',loc:'Аланья, Махмутлар',stage:'construction',sale:181,client:'New Level İnşaat',editor:'Мехмет К.',tags:['cit','res','com'],access:'01.06.2027',mega:true}
+    ];
+    this.MEGA_INFO=[['plot','36 000 м²'],['units','406'],['sea','5 км'],['install','50%'],['tapu','100%']];
+    this.USERS=[
+      {id:101,role:'admin',fio:'Иван Админов',mail:'admin@oneplan.pro',objects:'—',access:'—',company:'—'},
+      {id:102,role:'editor',fio:'Мехмет Кая',mail:'mehmet@oneplan.pro',objects:4,access:'—',company:'—'},
+      {id:103,role:'editor',fio:'Ирина Алиева',mail:'irina@oneplan.pro',objects:3,access:'—',company:'—'},
+      {id:104,role:'client',fio:'New Level (директор)',mail:'sales@newlevel.com.tr',objects:6,access:'01.06.2027',company:'New Level İnşaat Ltd.'},
+      {id:105,role:'client',fio:'Aina Yapı (директор)',mail:'info@ainayapi.com',objects:1,access:'12.03.2027',company:'Aina Yapı A.Ş.'}
+    ];
+    this.TAGCOLOR={cit:['#7b4fd0','#efe7fb'],res:['#0284c7','#e0f2fe'],com:['#b45309','#fef3c7']};
+    this.ROLECOLOR={admin:['#e5484d','#fdecef'],editor:['#4d7cfe','#eef3ff'],client:['#43a047','#e4f6ee']};
+    this.STORDER=['free','booked','process','sold','reserve'];
+    this.GALKEYS=['all','interior','exterior','social','spa','kids','video'];
+    this.GAL={
+      all:['photo-1545324418-cc1a3fa10c00','photo-1512917774080-9991f1c4c750','photo-1600585154340-be6161a56a0c','photo-1571003123894-1f0594d2b5d9','photo-1600607687939-ce8a6c25118c','photo-1596464716127-f2a82984de30'],
+      interior:['photo-1600585154340-be6161a56a0c','photo-1600566753190-17f0baa2a6c3'],
+      exterior:['photo-1545324418-cc1a3fa10c00','photo-1512917774080-9991f1c4c750'],
+      social:['photo-1600607687939-ce8a6c25118c'],
+      spa:['photo-1571003123894-1f0594d2b5d9','photo-1540541338287-41700207dee6'],
+      kids:['photo-1596464716127-f2a82984de30'],
+      video:['photo-1600585154340-be6161a56a0c']
+    };
+    this.LAYOUT=['1+1','2+1','2+1','3+1','2+1','1+1','1*'];
+    this.AREA={'1+1':[52,60],'2+1':[85,110],'3+1':[120,145],'1*':[40,70]};
+    this.FLOOR_BASE=[1,8,15,22,29,36,43,50];
+    this.nf=new Intl.NumberFormat('ru-RU');
+    this.I18N=this.buildI18N();
+    this.state={
+      authed:true, screen:'objects', tab:'main', lang:props.lang||'RU',
+      scheme:props.startScheme||'board', listVariant:'table',
+      objId:1, galCat:'all', descLang:'RU', presLang:'RU',
+      fRoom:'', fSt:'', aMin:'', aMax:'', pMin:'', pMax:'',
+      colors:{free:'#43a047',booked:'#f0ad00',process:'#4d7cfe',sold:'#9aa1ac',reserve:'#8e63d6'},
+      features:['Вид на море','Первая линия','Угловая','Терраса','С мебелью','Под гражданство'],
+      newFeat:'', fCur:3, uRole:'all', megaCell:null,
+      addOpen:false, addStep:0, addComm:false,
+      gridText:'1 2 3 4 5 6 7\n8 9 10 11 12 13 14\n15 16 17 18 19 1*\n22 23 24 25 26 27 28',
+      units:[], modalNum:null, mStatus:null, mFeats:[], fpCardNum:null
+    };
+    this.state.units=this.genUnits();
+  }
+  buildI18N(){
+    return {
+      RU:{ login_sub:'Платформа застройщиков',login_email:'Электронная почта',login_pass:'Пароль',login_forgot:'Забыли пароль?',login_enter:'Войти',
+        nav_objects:'Объекты',nav_users:'Пользователи',role_admin:'Администратор',back_objects:'К объектам',
+        tab_main:'Объект',tab_plans:'Планировки',tab_grid:'Сетка',tab_io:'Экспорт-импорт',tab_fp:'Поэтажный план',tab_set:'Настройки',
+        obj_title:'Объекты',obj_sub:'Список объектов застройки',f_all_clients:'Все клиенты',f_all_stages:'Все стадии',btn_add_object:'Добавить объект',
+        th_id:'ID',th_name:'Название',th_loc:'Локация',th_stage:'Стадия',th_sale:'В продаже',th_purpose:'Назначение',th_client:'Клиент',th_editor:'Редактор',th_access:'Доступ до',
+        stages:{foundation:'Котлован',construction:'Строится',done:'Сдан'},
+        tags:{cit:'Гражданство',res:'Под ВНЖ',com:'Коммерция'},
+        purpose:{cit:'Под гражданство',res:'Под ВНЖ',com:'Коммерция'},
+        status:{free:'Свободно',booked:'Бронь',process:'Оформление',sold:'Продано',reserve:'Резерв'},
+        cats:{all:'Все',interior:'Интерьер',exterior:'Экстерьер',social:'Социальная часть',spa:'Спа',kids:'Детская комната',video:'Видео'},
+        docstatus:{ok:'Получен',wait:'Оформляется',soon:'К сдаче'},
+        roles:{admin:'Администратор',editor:'Редактор',client:'Клиент'},
+        main_info:'Основная информация',fld_name:'Название КП или ЖК',fld_stage:'Стадия строительства',fld_purpose:'Назначение (Турция)',
+        loc_title:'Локация',fld_lng:'Долгота',fld_lat:'Широта',fld_addr:'Адрес',gallery:'Галерея',btn_add_photo:'Добавить фото',
+        progress:'Ход строительства',prog1_date:'Июнь 2026',prog1:'Фасадные работы блока A',live:'LIVE-камера',prog2_date:'Март 2026',prog2:'Монолит завершён (8 этажей)',prog3_date:'Окт 2025',prog3:'Фундаментная плита',btn_add_stage:'Добавить этап / LIVE',
+        desc:'Описание',lang_word:'язык',pres:'Презентация · генплан',pres_file:'Презентация',masterplan:'Генплан',masterplan_fmt:'PDF / изображение',btn_download:'Скачать',btn_open:'Открыть',
+        docs:'Документы',btn_add_doc:'Добавить документ',btn_update:'Обновить',btn_delete_obj:'Удалить объект',
+        docsub:{yapi:'Разрешение на строительство',iskan:'Акт ввода',tapu:'Предв. титул',dask:'Страхование от землетрясений'},
+        plans_title:'Планировки',scheme_board:'Шахматка',scheme_list:'Список',scheme_floor:'Поэтажный план',
+        f_block:'Корпус',f_rooms:'Комнаты',f_area:'Площадь, м²',f_price:'Стоимость',f_status:'Статус',opt_all:'Все',rooms_commercial:'Коммерция',block_a:'Блок A',block_b:'Блок B',
+        legend_total:'Всего',sold_word:'Продано',lv_table:'Таблица',lv_cards:'Карточки',units_count:'квартир',
+        th_num:'№',th_floor:'Этаж',th_type:'Тип',th_areaShort:'Площадь',th_price:'Цена',th_pricem2:'Цена/м²',
+        fp_add_floor:'Добавить план этажа',fp_trace:'Режим обводки',fp_hint:'Квартиры выделены на плане и подсвечены статусом — клик открывает карточку. В режиме обводки области рисуются поверх вашего чертежа.',
+        house:'Дом',active:'Активен',free_suffix:'свободно',floor_word:'Этаж',apt:'Квартира №',open_card:'Открыть карточку',word_floor:'этаж',word_commercial:'коммерция',
+        grid_title:'Сетка объекта',grid_desc:'Каркас шахматки: секции, этажи, номера помещений. Номера через пробел, новая строка — новый этаж. «1*» — коммерческое помещение.',sections:'Секции',btn_add_section:'Добавить секцию',
+        grid_ex:'Пример: «15 16 17 18 19 1*» — на этаже 1* коммерческое помещение. Объединение ячеек — в режиме редактирования.',grid_preview:'Предпросмотр сетки:',
+        io_title:'Экспорт-импорт данных',io_import:'Импорт',io_import_desc:'Загрузите CSV — данные по помещениям обновятся массово.',io_import_btn:'Импорт данных (.CSV)',io_export:'Экспорт',io_export_btn:'Экспорт данных (.CSV)',io_fields:'Поля в файле: ID Объекта · Секция · Номер помещения · Статус · Этаж · Площадь · Кол-во комнат · Стоимость · Валюта · Особенности',
+        set_title:'Настройки',set_colors:'Цвета шахматки',set_colors_desc:'Своя цветовая гамма статусов для этого объекта.',set_apply:'Применить и открыть шахматку',set_feats:'Особенности квартир',set_feats_desc:'Метки для каталога. Привязываются к квартирам в модалке планировки.',set_new_feat:'Новая особенность',btn_add:'Добавить',set_plans:'Изображения планировок',set_plans_desc:'Загрузка планировок с привязкой к квартирам (+ дозагрузка изображений для многоэтажных квартир / вилл).',set_plans_btn:'Загрузить планировки',
+        users_title:'Пользователи',users_sub:'Только для администраторов',f_all_roles:'Все роли',role_admins:'Администраторы',role_editors:'Редакторы',role_clients:'Клиенты',btn_add_user:'Добавить пользователя',th_role:'Роль',th_fio:'ФИО',th_mail:'Почта (логин)',th_objcount:'Объектов',th_company:'Компания',
+        prof_title:'Профайл',prof_sub:'Ваши данные и безопасность',prof_data:'Данные',fld_role:'Роль',fld_fio:'ФИО',fld_email:'Почта',prof_company:'Реквизиты компании',prof_forclients:'— для Клиентов',fld_org:'Название и форма организации',fld_director:'ФИО директора',fld_tax:'ИНН / Vergi No',fld_bik:'БИК банка',fld_iban:'Счёт / IBAN',prof_pass:'Изменение пароля',fld_newpass:'Новый пароль',pass_hint:'Минимум 6 знаков: латиница, минимум одна цифра, заглавная, строчная и символ.',btn_save_pass:'Сохранить пароль',btn_logout:'Выйти из платформы',
+        m_type:'Тип',m_area:'Площадь',m_price:'Цена',m_pricem2:'Цена за м²',m_status:'Статус продажи',m_feats:'Особенности квартиры',m_cancel:'Отмена',m_save:'Сохранить',
+        svg_lift:'лифт / лестница',svg_avenue:'Курортный проспект',
+        mega_plot:'Площадь участка',mega_units:'Квартир',mega_sea:'До моря',mega_install:'Рассрочка',mega_tapu:'Стоимость в ТАПУ',
+        band_out:'Внешний фасад',band_in:'Внутренний двор',ground:'Цоколь',floor_short:'эт.',block:'Блок',
+        badge_terrace:'Терраса',badge_duplex:'Дуплекс · 2 эт.',badge_kapici:'Служебная',more_units:'ещё',
+        wz:{title:'Новый объект',step:'Шаг',of:'из',back:'Назад',next:'Далее',create:'Создать объект',cancel:'Отмена',replaces:'заменяет папку',migrate:'Замена Google Drive',optional:'необязательно',
+          s_info:'Основное',s_media:'Фото и видео',s_plans:'Планировки',s_docs:'Каталог и документы',s_comm:'Коммерция',s_done:'Проверка',
+          info_hint:'Название, стадия, назначение и расположение объекта.',
+          drop_photos:'Перетащите фотографии',drop_photos_sub:'или нажмите · JPG, PNG, HEIC до 20 МБ',
+          drop_video:'Ссылки на видео или файлы',drop_video_sub:'YouTube, Vimeo, MP4 — облёты, ролики, LIVE',
+          plans_hint:'Планы этажей и планировки квартир — из них соберётся шахматка.',
+          drop_plans:'Планы этажей',drop_plans_sub:'PDF, PNG, DWG — по одному на этаж/секцию',
+          drop_layouts:'Планировки квартир',drop_layouts_sub:'PNG, JPG — привяжутся к типам и номерам',
+          docs_hint:'Материалы для клиентов и юридические документы.',
+          cat_present:'Презентация / каталог',cat_present_sub:'PDF, PPTX, Word',
+          cat_ruhsat:'Разрешение (Ruhsat)',cat_ruhsat_sub:'PDF — Yapı Ruhsatı, İskan',
+          cat_price:'Прайс-лист',cat_price_sub:'CSV, XLSX, PDF — импорт в шахматку',
+          comm_q:'В объекте есть коммерческие помещения?',comm_hint:'Магазины, офисы, кафе на первых этажах (папка TİCARİ).',
+          comm_yes:'Да, есть коммерция',comm_no:'Нет, только жильё',comm_count:'Кол-во коммерческих помещений',
+          review_title:'Почти готово',review_sub:'Всё, что раньше лежало в папках Google Drive, теперь собрано в одном объекте.',
+          filled:'заполнено',create_done:'Объект создан'} },
+      EN:{ login_sub:'Developer platform',login_email:'Email',login_pass:'Password',login_forgot:'Forgot password?',login_enter:'Sign in',
+        nav_objects:'Projects',nav_users:'Users',role_admin:'Administrator',back_objects:'Back to projects',
+        tab_main:'Overview',tab_plans:'Units',tab_grid:'Grid',tab_io:'Import & export',tab_fp:'Floor plan',tab_set:'Settings',
+        obj_title:'Projects',obj_sub:'List of developments',f_all_clients:'All clients',f_all_stages:'All stages',btn_add_object:'Add project',
+        th_id:'ID',th_name:'Name',th_loc:'Location',th_stage:'Stage',th_sale:'For sale',th_purpose:'Purpose',th_client:'Client',th_editor:'Editor',th_access:'Access until',
+        stages:{foundation:'Foundation',construction:'Under construction',done:'Completed'},
+        tags:{cit:'Citizenship',res:'Residence',com:'Commercial'},
+        purpose:{cit:'For citizenship',res:'For residence',com:'Commercial'},
+        status:{free:'Available',booked:'Reserved',process:'Processing',sold:'Sold',reserve:'On hold'},
+        cats:{all:'All',interior:'Interior',exterior:'Exterior',social:'Amenities',spa:'Spa',kids:'Kids room',video:'Video'},
+        docstatus:{ok:'Received',wait:'In progress',soon:'Pending'},
+        roles:{admin:'Administrator',editor:'Editor',client:'Client'},
+        main_info:'General information',fld_name:'Complex name',fld_stage:'Construction stage',fld_purpose:'Purpose (Turkey)',
+        loc_title:'Location',fld_lng:'Longitude',fld_lat:'Latitude',fld_addr:'Address',gallery:'Gallery',btn_add_photo:'Add photo',
+        progress:'Construction progress',prog1_date:'June 2026',prog1:'Facade works, block A',live:'LIVE camera',prog2_date:'March 2026',prog2:'Structure completed (8 floors)',prog3_date:'Oct 2025',prog3:'Foundation slab',btn_add_stage:'Add stage / LIVE',
+        desc:'Description',lang_word:'language',pres:'Presentation · master plan',pres_file:'Presentation',masterplan:'Master plan',masterplan_fmt:'PDF / image',btn_download:'Download',btn_open:'Open',
+        docs:'Documents',btn_add_doc:'Add document',btn_update:'Save',btn_delete_obj:'Delete project',
+        docsub:{yapi:'Building permit',iskan:'Occupancy permit',tapu:'Preliminary title',dask:'Earthquake insurance'},
+        plans_title:'Units',scheme_board:'Board',scheme_list:'List',scheme_floor:'Floor plan',
+        f_block:'Block',f_rooms:'Rooms',f_area:'Area, m²',f_price:'Price',f_status:'Status',opt_all:'All',rooms_commercial:'Commercial',block_a:'Block A',block_b:'Block B',
+        legend_total:'Total',sold_word:'Sold',lv_table:'Table',lv_cards:'Cards',units_count:'units',
+        th_num:'№',th_floor:'Floor',th_type:'Type',th_areaShort:'Area',th_price:'Price',th_pricem2:'Price/m²',
+        fp_add_floor:'Add floor plan',fp_trace:'Trace mode',fp_hint:'Units are marked on the plan and colored by status — click to open the card. In trace mode you draw areas over your drawing.',
+        house:'Building',active:'Active',free_suffix:'available',floor_word:'Floor',apt:'Unit №',open_card:'Open card',word_floor:'floor',word_commercial:'commercial',
+        grid_title:'Project grid',grid_desc:'Grid framework: sections, floors, unit numbers. Numbers separated by spaces, a new line is a new floor. "1*" is a commercial unit.',sections:'Sections',btn_add_section:'Add section',
+        grid_ex:'Example: "15 16 17 18 19 1*" — 1* is a commercial unit on the floor. Cell merging is in edit mode.',grid_preview:'Grid preview:',
+        io_title:'Import & export data',io_import:'Import',io_import_desc:'Upload a CSV — unit data will be bulk-updated.',io_import_btn:'Import data (.CSV)',io_export:'Export',io_export_btn:'Export data (.CSV)',io_fields:'Fields in the file: Project ID · Section · Unit number · Status · Floor · Area · Rooms · Price · Currency · Features',
+        set_title:'Settings',set_colors:'Board colors',set_colors_desc:'Custom status colors for this project.',set_apply:'Apply and open the board',set_feats:'Unit features',set_feats_desc:'Catalog labels. Assigned to units in the unit dialog.',set_new_feat:'New feature',btn_add:'Add',set_plans:'Layout images',set_plans_desc:'Upload layouts linked to units (+ extra images for duplex units / villas).',set_plans_btn:'Upload layouts',
+        users_title:'Users',users_sub:'Administrators only',f_all_roles:'All roles',role_admins:'Administrators',role_editors:'Editors',role_clients:'Clients',btn_add_user:'Add user',th_role:'Role',th_fio:'Full name',th_mail:'Email (login)',th_objcount:'Projects',th_company:'Company',
+        prof_title:'Profile',prof_sub:'Your details and security',prof_data:'Details',fld_role:'Role',fld_fio:'Full name',fld_email:'Email',prof_company:'Company details',prof_forclients:'— for Clients',fld_org:'Company name and type',fld_director:'Director name',fld_tax:'Tax ID / Vergi No',fld_bik:'Bank code',fld_iban:'Account / IBAN',prof_pass:'Change password',fld_newpass:'New password',pass_hint:'At least 6 characters: latin letters, one digit, uppercase, lowercase and a symbol.',btn_save_pass:'Save password',btn_logout:'Sign out',
+        m_type:'Type',m_area:'Area',m_price:'Price',m_pricem2:'Price per m²',m_status:'Sale status',m_feats:'Unit features',m_cancel:'Cancel',m_save:'Save',
+        svg_lift:'lift / stairs',svg_avenue:'Resort avenue',
+        mega_plot:'Plot area',mega_units:'Units',mega_sea:'To the sea',mega_install:'Instalment',mega_tapu:'Value in TAPU',
+        band_out:'Outside facade',band_in:'Inner courtyard',ground:'Ground',floor_short:'fl.',block:'Block',
+        badge_terrace:'Terrace',badge_duplex:'Duplex · 2 floors',badge_kapici:'Service',more_units:'more',
+        wz:{title:'New project',step:'Step',of:'of',back:'Back',next:'Next',create:'Create project',cancel:'Cancel',replaces:'replaces folder',migrate:'Replaces Google Drive',optional:'optional',
+          s_info:'Basics',s_media:'Photo & video',s_plans:'Floor plans',s_docs:'Catalog & documents',s_comm:'Commercial',s_done:'Review',
+          info_hint:'Name, stage, purpose and location of the project.',
+          drop_photos:'Drop photos here',drop_photos_sub:'or click · JPG, PNG, HEIC up to 20 MB',
+          drop_video:'Video links or files',drop_video_sub:'YouTube, Vimeo, MP4 — flythroughs, clips, LIVE',
+          plans_hint:'Floor plans and unit layouts — the board is built from them.',
+          drop_plans:'Floor plans',drop_plans_sub:'PDF, PNG, DWG — one per floor / section',
+          drop_layouts:'Unit layouts',drop_layouts_sub:'PNG, JPG — linked to types and numbers',
+          docs_hint:'Materials for clients and legal documents.',
+          cat_present:'Presentation / catalog',cat_present_sub:'PDF, PPTX, Word',
+          cat_ruhsat:'Permit (Ruhsat)',cat_ruhsat_sub:'PDF — Yapı Ruhsatı, İskan',
+          cat_price:'Price list',cat_price_sub:'CSV, XLSX, PDF — import into the board',
+          comm_q:'Does the project have commercial units?',comm_hint:'Shops, offices, cafes on the ground floors (TİCARİ folder).',
+          comm_yes:'Yes, there is commercial',comm_no:'No, residential only',comm_count:'Number of commercial units',
+          review_title:'Almost done',review_sub:'Everything that used to live in Google Drive folders is now in a single project.',
+          filled:'filled',create_done:'Project created'} },
+      TR:{ login_sub:'Geliştirici paneli',login_email:'E-posta',login_pass:'Şifre',login_forgot:'Şifrenizi mi unuttunuz?',login_enter:'Giriş yap',
+        nav_objects:'Projeler',nav_users:'Kullanıcılar',role_admin:'Yönetici',back_objects:'Projelere dön',
+        tab_main:'Genel',tab_plans:'Daireler',tab_grid:'Izgara',tab_io:'İçe/Dışa aktar',tab_fp:'Kat planı',tab_set:'Ayarlar',
+        obj_title:'Projeler',obj_sub:'Projelerin listesi',f_all_clients:'Tüm müşteriler',f_all_stages:'Tüm aşamalar',btn_add_object:'Proje ekle',
+        th_id:'ID',th_name:'Ad',th_loc:'Konum',th_stage:'Aşama',th_sale:'Satışta',th_purpose:'Amaç',th_client:'Müşteri',th_editor:'Editör',th_access:'Erişim',
+        stages:{foundation:'Temel',construction:'İnşaat halinde',done:'Teslim edildi'},
+        tags:{cit:'Vatandaşlık',res:'İkamet',com:'Ticari'},
+        purpose:{cit:'Vatandaşlık için',res:'İkamet için',com:'Ticari'},
+        status:{free:'Müsait',booked:'Rezerve',process:'İşlemde',sold:'Satıldı',reserve:'Beklemede'},
+        cats:{all:'Tümü',interior:'İç mekan',exterior:'Dış mekan',social:'Sosyal alan',spa:'Spa',kids:'Çocuk odası',video:'Video'},
+        docstatus:{ok:'Alındı',wait:'İşlemde',soon:'Beklemede'},
+        roles:{admin:'Yönetici',editor:'Editör',client:'Müşteri'},
+        main_info:'Genel bilgiler',fld_name:'Site adı',fld_stage:'İnşaat aşaması',fld_purpose:'Amaç (Türkiye)',
+        loc_title:'Konum',fld_lng:'Boylam',fld_lat:'Enlem',fld_addr:'Adres',gallery:'Galeri',btn_add_photo:'Fotoğraf ekle',
+        progress:'İnşaat durumu',prog1_date:'Haziran 2026',prog1:'A blok cephe işleri',live:'CANLI kamera',prog2_date:'Mart 2026',prog2:'Kaba yapı tamamlandı (8 kat)',prog3_date:'Eki 2025',prog3:'Temel betonu',btn_add_stage:'Aşama / CANLI ekle',
+        desc:'Açıklama',lang_word:'dil',pres:'Sunum · vaziyet planı',pres_file:'Sunum',masterplan:'Vaziyet planı',masterplan_fmt:'PDF / görsel',btn_download:'İndir',btn_open:'Aç',
+        docs:'Belgeler',btn_add_doc:'Belge ekle',btn_update:'Güncelle',btn_delete_obj:'Projeyi sil',
+        docsub:{yapi:'İnşaat ruhsatı',iskan:'İskan belgesi',tapu:'Ön tapu',dask:'Deprem sigortası'},
+        plans_title:'Daireler',scheme_board:'Şema',scheme_list:'Liste',scheme_floor:'Kat planı',
+        f_block:'Blok',f_rooms:'Oda',f_area:'Alan, m²',f_price:'Fiyat',f_status:'Durum',opt_all:'Tümü',rooms_commercial:'Ticari',block_a:'A Blok',block_b:'B Blok',
+        legend_total:'Toplam',sold_word:'Satıldı',lv_table:'Tablo',lv_cards:'Kartlar',units_count:'daire',
+        th_num:'№',th_floor:'Kat',th_type:'Tip',th_areaShort:'Alan',th_price:'Fiyat',th_pricem2:'Fiyat/m²',
+        fp_add_floor:'Kat planı ekle',fp_trace:'Çizim modu',fp_hint:'Daireler planda işaretli ve duruma göre renkli — tıklayınca kart açılır. Çizim modunda alanları planınızın üzerine çizersiniz.',
+        house:'Bina',active:'Aktif',free_suffix:'müsait',floor_word:'Kat',apt:'Daire №',open_card:'Kartı aç',word_floor:'kat',word_commercial:'ticari',
+        grid_title:'Proje ızgarası',grid_desc:'Izgara iskeleti: bloklar, katlar, daire numaraları. Numaralar boşlukla, yeni satır yeni kat. "1*" ticari birim.',sections:'Bloklar',btn_add_section:'Blok ekle',
+        grid_ex:'Örnek: "15 16 17 18 19 1*" — katta 1* ticari birim. Hücre birleştirme düzenleme modunda.',grid_preview:'Izgara önizleme:',
+        io_title:'Veri içe/dışa aktarma',io_import:'İçe aktar',io_import_desc:'CSV yükleyin — daire verileri toplu güncellenir.',io_import_btn:'Veri içe aktar (.CSV)',io_export:'Dışa aktar',io_export_btn:'Veri dışa aktar (.CSV)',io_fields:'Dosyadaki alanlar: Proje ID · Blok · Daire no · Durum · Kat · Alan · Oda · Fiyat · Para birimi · Özellikler',
+        set_title:'Ayarlar',set_colors:'Şema renkleri',set_colors_desc:'Bu proje için özel durum renkleri.',set_apply:'Uygula ve şemayı aç',set_feats:'Daire özellikleri',set_feats_desc:'Katalog etiketleri. Daire penceresinde atanır.',set_new_feat:'Yeni özellik',btn_add:'Ekle',set_plans:'Plan görselleri',set_plans_desc:'Dairelere bağlı planları yükleyin (+ dubleks / villalar için ek görseller).',set_plans_btn:'Planları yükle',
+        users_title:'Kullanıcılar',users_sub:'Yalnızca yöneticiler',f_all_roles:'Tüm roller',role_admins:'Yöneticiler',role_editors:'Editörler',role_clients:'Müşteriler',btn_add_user:'Kullanıcı ekle',th_role:'Rol',th_fio:'Ad soyad',th_mail:'E-posta (giriş)',th_objcount:'Proje',th_company:'Şirket',
+        prof_title:'Profil',prof_sub:'Bilgileriniz ve güvenlik',prof_data:'Bilgiler',fld_role:'Rol',fld_fio:'Ad soyad',fld_email:'E-posta',prof_company:'Şirket bilgileri',prof_forclients:'— Müşteriler için',fld_org:'Şirket adı ve türü',fld_director:'Yönetici adı',fld_tax:'Vergi No',fld_bik:'Banka kodu',fld_iban:'Hesap / IBAN',prof_pass:'Şifre değiştir',fld_newpass:'Yeni şifre',pass_hint:'En az 6 karakter: latin harf, bir rakam, büyük, küçük harf ve sembol.',btn_save_pass:'Şifreyi kaydet',btn_logout:'Çıkış yap',
+        m_type:'Tip',m_area:'Alan',m_price:'Fiyat',m_pricem2:'m² fiyatı',m_status:'Satış durumu',m_feats:'Daire özellikleri',m_cancel:'İptal',m_save:'Kaydet',
+        svg_lift:'asansör / merdiven',svg_avenue:'Sahil caddesi',
+        mega_plot:'Arsa alanı',mega_units:'Daire',mega_sea:'Denize',mega_install:'Taksit',mega_tapu:'TAPU değeri',
+        band_out:'Dış cephe',band_in:'İç bahçe',ground:'Zemin',floor_short:'kat',block:'Blok',
+        badge_terrace:'Teras',badge_duplex:'Dubleks · 2 kat',badge_kapici:'Hizmet',more_units:'daha',
+        wz:{title:'Yeni proje',step:'Adım',of:'/',back:'Geri',next:'İleri',create:'Proje oluştur',cancel:'İptal',replaces:'klasörünün yerine',migrate:'Google Drive yerine',optional:'isteğe bağlı',
+          s_info:'Genel',s_media:'Fotoğraf & video',s_plans:'Kat planları',s_docs:'Katalog & belgeler',s_comm:'Ticari',s_done:'Kontrol',
+          info_hint:'Projenin adı, aşaması, amacı ve konumu.',
+          drop_photos:'Fotoğrafları buraya bırakın',drop_photos_sub:'veya tıklayın · JPG, PNG, HEIC 20 MB’a kadar',
+          drop_video:'Video bağlantıları veya dosyalar',drop_video_sub:'YouTube, Vimeo, MP4 — turlar, klipler, CANLI',
+          plans_hint:'Kat planları ve daire planları — şema bunlardan oluşur.',
+          drop_plans:'Kat planları',drop_plans_sub:'PDF, PNG, DWG — kat/blok başına bir tane',
+          drop_layouts:'Daire planları',drop_layouts_sub:'PNG, JPG — tip ve numaralara bağlanır',
+          docs_hint:'Müşteri materyalleri ve yasal belgeler.',
+          cat_present:'Sunum / katalog',cat_present_sub:'PDF, PPTX, Word',
+          cat_ruhsat:'Ruhsat',cat_ruhsat_sub:'PDF — Yapı Ruhsatı, İskan',
+          cat_price:'Fiyat listesi',cat_price_sub:'CSV, XLSX, PDF — şemaya aktarım',
+          comm_q:'Projede ticari birim var mı?',comm_hint:'Zemin katlarda dükkan, ofis, kafe (TİCARİ klasörü).',
+          comm_yes:'Evet, ticari var',comm_no:'Hayır, sadece konut',comm_count:'Ticari birim sayısı',
+          review_title:'Neredeyse tamam',review_sub:'Eskiden Google Drive klasörlerinde olan her şey artık tek bir projede.',
+          filled:'dolduruldu',create_done:'Proje oluşturuldu'} }
+    };
+  }
+  genUnits(){
+    const units=[]; let x=7; const r=()=>{x=(x*1103515245+12345)&0x7fffffff;return x/0x7fffffff;};
+    for(let f=0;f<=7;f++)for(let p=0;p<7;p++){
+      const type=this.LAYOUT[p]; const a=this.AREA[type]; const area=Math.round(a[0]+(a[1]-a[0])*r());
+      const price=Math.round(area*(3400+600*r())/1000)*1000;
+      let st='free'; const xx=r(), high=f/7;
+      if(xx<0.03) st='reserve';
+      else if(xx<0.03+0.4*high) st='sold';
+      else if(xx<0.03+0.4*high+0.05) st='booked';
+      else if(xx<0.03+0.4*high+0.08) st='process';
+      units.push({num:this.FLOOR_BASE[f]+p,floor:f,pos:p,type,area,price,status:st,feats:[]});
+    }
+    return units;
+  }
+  megaBlocks(){
+    if(this._mega) return this._mega;
+    const u=(n,t,a,p,tag)=>({n,t,a,p,tag:tag||null});
+    const S='SOLD';
+    // Block A — этажи сверху вниз, каждая с лентами OUTSIDE (внешний фасад) и INSIDE (двор)
+    const A={name:'A',floors:[
+      {label:'7',out:[u(105,'3+1',105,350500),u(106,'2+1',102,334400),u(107,'2+1',102,334400),u(108,'2+1',93,336400)],
+        ins:[u(168,'2+1',108,355600),u(169,'2+1',108,355600),u(190,'2+1',111,365200),u(191,'2+1',111,S)]},
+      {label:'6',out:[u(89,'2+1',93,303600),u(90,'2+1',87,S),u(91,'1+1',47,172100),u(92,'1+1',47,S,'terrace')],
+        ins:[u(146,'1+1',61,S,'terrace'),u(147,'1+1',61,S,'terrace'),u(166,'2+1',66,S),u(167,'2+1',105,344000),u(188,'3+1',108,355600)]},
+      {label:'5',out:[u(84,'2+1',98,330400),u(85,'2+1',124,409900),u(86,'2+1',61,S),u(87,'2+1',81,S),u(88,'2+1',103,S)],
+        ins:[u(131,'1+1',47,S,'terrace'),u(132,'2+1',77,S,'terrace'),u(160,'2+1',109,389700),u(161,'1+1',77,S,'terrace'),u(189,'2+1',87,S)]},
+      {label:'4',out:[u(61,'2+1',102,334400),u(62,'2+1',98,336400),u(63,'3+1',118,S),u(64,'3+1',159,495600,'duplex'),u(65,'2+1',89,391900),u(66,'2+1',83,336400)],
+        ins:[u(112,'1+1',47,S,'terrace'),u(113,'1+1',108,S,'terrace'),u(134,'2+1',88,278000),u(135,'2+1',129,422800),u(162,'2+1',105,343900),u(163,'3+1',108,S)]},
+      {label:'3',out:[u(41,'1+1',55,181500),u(45,'1+1',51,S),u(64,'1+1',51,S,'kapici'),u(65,'1+1',47,S),u(66,'1+1',47,S),u(67,'1+1',49,S),u(68,'1+1',49,163700),u(69,'1+1',49,163700),u(70,'1+1',49,163700)],
+        ins:[u(103,'1+1',47,S),u(104,'1+1',47,S),u(129,'2+1',127,416400),u(130,'2+1',102,336400),u(131,'1+1',47,172100),u(138,'2+1',66,S)]},
+      {label:'2',out:[u(24,'1+1',55,S,'kapici'),u(25,'1+1',52,171600),u(26,'1+1',52,171600),u(27,'1+1',52,171600),u(28,'1+1',52,171600),u(29,'1+1',52,171600),u(30,'1+1',52,171600),u(31,'1+1',52,171600)],
+        ins:[u(81,'3+1',108,362400),u(82,'2+1',87,282400),u(83,'2+1',66,S),u(101,'3+1',214,706200,'duplex'),u(108,'2+1',88,285600),u(109,'3+1',111,370300),u(110,'3+1',111,370300)]},
+      {label:'1',out:[u(7,'1+1',65,S),u(8,'2+1',87,S),u(11,'2+1',83,265600),u(14,'2+1',83,265600),u(15,'2+1',83,265600),u(16,'2+1',83,265600),u(17,'2+1',83,265600),u(18,'2+1',83,265600),u(21,'2+1',83,S)],
+        ins:[u(48,'1+1',48,158400),u(72,'2+1',72,222800),u(73,'1+1',49,163700),u(78,'1+1',49,S),u(79,'1+1',49,S)]},
+      {label:'G',ground:true,out:[u(1,'1+1',61,195200),u(2,'1+1',61,181500),u(4,'1+1',55,S),u(5,'1+1',45,S),u(6,'1+1',48,S)],
+        ins:[u(101,'3+1',214,706200,'duplex'),u(102,'3+1',221,729300,'duplex'),u(3,'1+1',72,237600,'kapici'),u(9,'1+1',66,237600),u(10,'2+1',87,278400)]}
+    ]};
+    this._mega=[A];
+    return this._mega;
+  }
+  T(){return this.I18N[this.state.lang]||this.I18N.RU;}
+  curInfo(){const c=this.props.currency||'USD';return {rate:{USD:1,EUR:0.92,TRY:32}[c],sym:{USD:'$',EUR:'€',TRY:'₺'}[c]};}
+  money(v){const {rate,sym}=this.curInfo();return this.nf.format(Math.round(v*rate))+' '+sym;}
+  perM2(price,area){const {rate,sym}=this.curInfo();return this.nf.format(Math.round(price*rate/area))+' '+sym+'/м²';}
+  dstat(t){const m={ok:['#e4f6ee','#0f9d6b'],wait:['#fdf3d7','#b7791f'],soon:['#eef1f5','#8a93a2']}[t];return 'font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;flex:none;background:'+m[0]+';color:'+m[1];}
+  openObject(id){this.setState({screen:'object',tab:'main',objId:id,fpCardNum:null});}
+  openUnit(n){const u=this.state.units.find(x=>x.num===n);if(!u)return;this.setState({modalNum:n,mStatus:u.status,mFeats:[...u.feats]});}
+  toggleMFeat(f){this.setState(st=>({mFeats:st.mFeats.includes(f)?st.mFeats.filter(x=>x!==f):[...st.mFeats,f]}));}
+  saveUnit(){this.setState(st=>({units:st.units.map(u=>u.num===st.modalNum?{...u,status:st.mStatus,feats:[...st.mFeats]}:u),modalNum:null}));}
+  addFeat(){const v=this.state.newFeat.trim();if(v)this.setState(st=>({features:[...st.features,v],newFeat:''}));}
+  openFp(n){this.setState({fpCardNum:n});}
+  buildFloor(){
+    const s=this.state, f=s.fCur, h=React.createElement, L=this.T();
+    const units=s.units.filter(u=>u.floor===f).sort((a,b)=>a.pos-b.pos);
+    const mid=Math.ceil(units.length/2), rows=[units.slice(0,mid),units.slice(mid)];
+    const plates=[];
+    rows.forEach((list,ri)=>{
+      const x0=120,x1=980,g=10,n=Math.max(1,list.length),w=(x1-x0-g*(n-1))/n;
+      const y=ri===0?110:330, ph=170;
+      list.forEach((u,i)=>{
+        const x=x0+i*(w+g), col=s.colors[u.status], sold=u.status==='sold';
+        const cx=x+w/2, cy=y+ph/2;
+        plates.push(h('g',{key:u.num,style:{cursor:'pointer'},onClick:()=>this.openFp(u.num)},
+          h('rect',{x,y,width:w,height:ph,rx:6,fill:col,fillOpacity:sold?0.4:0.13,stroke:col,strokeWidth:2}),
+          h('line',{x1:x+w*0.55,y1:y,x2:x+w*0.55,y2:y+ph,stroke:col,strokeOpacity:0.3}),
+          h('line',{x1:x,y1:y+ph*0.5,x2:x+w*0.55,y2:y+ph*0.5,stroke:col,strokeOpacity:0.3}),
+          h('circle',{cx,cy:cy-16,r:13,fill:col}),
+          h('circle',{cx,cy:cy-16,r:4.5,fill:'#fff'}),
+          h('text',{x:cx,y:cy+14,textAnchor:'middle',fontSize:13,fontWeight:700,fill:'#1b2942'},'№'+u.num),
+          h('text',{x:cx,y:cy+32,textAnchor:'middle',fontSize:11,fill:'#5c6675'},(u.type==='1*'?L.word_commercial:u.type)+' · '+u.area+' м²')
+        ));
+      });
+    });
+    return h('svg',{viewBox:'0 0 1100 560',style:{width:'100%',display:'block'}},
+      h('rect',{x:60,y:70,width:980,height:450,rx:14,fill:'#fbfcfe',stroke:'#e6e9f0'}),
+      h('text',{x:46,y:300,fill:'#aab1bd',fontSize:12,transform:'rotate(-90 46 300)'},L.svg_avenue),
+      h('rect',{x:500,y:250,width:100,height:60,rx:6,fill:'#eef0f4',stroke:'#c8cfda'}),
+      h('text',{x:550,y:285,textAnchor:'middle',fontSize:10,fill:'#aab1bd'},L.svg_lift),
+      ...plates
+    );
+  }
+  renderVals(){
+    const s=this.state, L=this.T();
+    const showPerM2=this.props.showPricePerM2!==false;
+    const isObject=s.screen==='object';
+    const objNavOn=s.screen==='objects'||s.screen==='object';
+    const nav=(on)=>'display:flex;align-items:center;gap:7px;font-size:15px;cursor:pointer;padding:6px 0;flex:none;white-space:nowrap;border-bottom:2px solid '+(on?'#4d7cfe':'transparent')+';color:'+(on?'#14243f':'#1b2942')+';font-weight:'+(on?600:400);
+    const obj=this.PROJECTS.find(p=>p.id===s.objId)||this.PROJECTS[0];
+    const tagV=key=>({label:L.tags[key],style:'font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;margin-right:4px;background:'+this.TAGCOLOR[key][1]+';color:'+this.TAGCOLOR[key][0]});
+
+    const langBtns=['RU','EN','TR'].map(lg=>({label:lg,onClick:()=>this.setState({lang:lg}),
+      style:'font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;color:'+(s.lang===lg?'#4d7cfe':'#8a93a2'),
+      navStyle:'font-size:12px;font-weight:700;padding:5px 9px;border-radius:7px;cursor:pointer;background:'+(s.lang===lg?'#fff':'transparent')+';color:'+(s.lang===lg?'#14243f':'#8a93a2')+';box-shadow:'+(s.lang===lg?'0 1px 2px rgba(20,36,63,.12)':'none')}));
+
+    const stBase='font-size:15px;cursor:pointer;padding:3px 0;white-space:nowrap;flex:none;border-bottom:2px solid ';
+    const subtabsView=[['main',L.tab_main],['plans',L.tab_plans],['grid',L.tab_grid],['io',L.tab_io],['fp',L.tab_fp],['set',L.tab_set]].map(a=>({label:a[1],onClick:()=>this.setState({tab:a[0]}),style:stBase+(s.tab===a[0]?'#4d7cfe':'transparent')+';color:'+(s.tab===a[0]?'#14243f':'#1b2942')+';font-weight:'+(s.tab===a[0]?600:400)}));
+
+    const amin=+s.aMin||0,amax=+s.aMax||1e9,pmin=+s.pMin||0,pmax=+s.pMax||1e12;
+    const pass=u=>(!s.fRoom||u.type===s.fRoom)&&(!s.fSt||u.status===s.fSt)&&u.area>=amin&&u.area<=amax&&u.price>=pmin&&u.price<=pmax;
+    const cellBase=';border-radius:11px;padding:11px 13px;color:#fff;cursor:pointer;min-height:84px;flex:1;min-width:170px;display:flex;flex-direction:column;justify-content:space-between';
+    const board=[];
+    for(let f=7;f>=0;f--){
+      const cells=s.units.filter(u=>u.floor===f).sort((a,b)=>a.pos-b.pos).map(u=>{
+        const ok=pass(u),col=s.colors[u.status],sold=u.status==='sold',dim=ok?1:0.28;
+        return {num:u.num,isSold:sold,notSold:!sold,typeLabel:u.type==='1*'?L.rooms_commercial:u.type,priceLabel:this.money(u.price),area:u.area,perM2:this.perM2(u.price,u.area),showPerM2,open:()=>this.openUnit(u.num),
+          style:'background:'+col+';opacity:'+dim+cellBase,
+          soldStyle:'background:'+col+';opacity:'+dim+';border-radius:11px;min-height:84px;flex:1;min-width:170px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px'};
+      });
+      board.push({floor:f,cells});
+    }
+    const cnt={free:0,booked:0,process:0,sold:0,reserve:0}; s.units.forEach(u=>cnt[u.status]++);
+    const legend=[{label:L.legend_total,count:s.units.length,bg:'#14243f'}].concat(this.STORDER.map(k=>({label:L.status[k],count:cnt[k],bg:s.colors[k]})));
+
+    // ---- MEGAPOLIS mosaic board ----
+    const isMega=obj.mega===true;
+    const megaMoney=v=>'€ '+this.nf.format(v);
+    const tagMeta={terrace:['badge_terrace','#0284c7'],duplex:['badge_duplex','#b45309'],kapici:['badge_kapici','#6b7688']};
+    const passM=c=>{const sold=c.p==='SOLD';const st=sold?'sold':'free';return (!s.fRoom||c.t===s.fRoom)&&(!s.fSt||st===s.fSt)&&c.a>=amin&&c.a<=amax&&(sold||(c.p>=pmin&&c.p<=pmax));};
+    let megaInfo=[],megaBlocksV=[],megaLegend=[];
+    if(isMega){
+      megaInfo=this.MEGA_INFO.map(x=>({label:L['mega_'+x[0]],value:x[1]}));
+      let cFree=0,cSold=0,cDup=0,cTer=0;
+      const mcell=(c,fl)=>{
+        const sold=c.p==='SOLD', ok=passM(c), dim=ok?1:0.26;
+        if(sold)cSold++;else cFree++; if(c.tag==='duplex')cDup++; if(c.tag==='terrace')cTer++;
+        const col=sold?s.colors.sold:s.colors.free;
+        const badge=c.tag?{label:L[tagMeta[c.tag][0]],style:'align-self:flex-start;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.9);color:'+tagMeta[c.tag][1]}:null;
+        const ring=c.tag==='duplex'?'outline:2px solid #b45309;outline-offset:2px;':'';
+        return {num:c.n,typeLabel:c.t,area:c.a,isSold:sold,notSold:!sold,priceLabel:sold?'':megaMoney(c.p),
+          badge,hasBadge:!!badge,
+          open:()=>this.setState({megaCell:{...c,fl}}),
+          style:ring+'background:'+col+';opacity:'+dim+';border-radius:11px;padding:10px 12px;color:#fff;cursor:pointer;min-height:92px;flex:1;min-width:148px;display:flex;flex-direction:column;gap:4px;justify-content:space-between',
+          soldStyle:ring+'background:'+col+';opacity:'+dim+';border-radius:11px;min-height:92px;flex:1;min-width:148px;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:700'};
+      };
+      megaBlocksV=this.megaBlocks().map(bl=>({name:L.block+' '+bl.name,floors:bl.floors.map(f=>({
+        label:f.ground?L.ground:f.label,floorSuffix:f.ground?'':L.floor_short,
+        bands:[{side:L.band_out,cells:f.out.map(c=>mcell(c,f.ground?L.ground:f.label))},{side:L.band_in,cells:f.ins.map(c=>mcell(c,f.ground?L.ground:f.label))}]
+      }))}));
+      megaLegend=[{label:L.status.free,count:cFree,bg:s.colors.free},{label:L.status.sold,count:cSold,bg:s.colors.sold},{label:L.badge_duplex,count:cDup,bg:'#b45309'},{label:L.badge_terrace,count:cTer,bg:'#0284c7'}];
+    }
+
+    let listUnits;
+    if(isMega){
+      const flat=[];
+      this.megaBlocks().forEach(bl=>bl.floors.forEach(f=>{const fl=f.ground?L.ground:f.label;['out','ins'].forEach(band=>f[band].forEach(c=>flat.push({...c,fl})));}));
+      listUnits=flat.filter(c=>{const sold=c.p==='SOLD';const st=sold?'sold':'free';return (!s.fRoom||c.t===s.fRoom)&&(!s.fSt||st===s.fSt)&&c.a>=amin&&c.a<=amax&&(sold||(c.p>=pmin&&c.p<=pmax));}).map(c=>{
+        const sold=c.p==='SOLD',col=sold?s.colors.sold:s.colors.free;
+        return {num:c.n,floor:c.fl,typeLabel:c.t,area:c.a,priceLabel:sold?'—':'€ '+this.nf.format(c.p),perM2:sold?'—':'€ '+this.nf.format(Math.round(c.p/c.a)),showPerM2,statusLabel:sold?L.status.sold:L.status.free,
+          statusStyle:'font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;color:#fff;white-space:nowrap;background:'+col,
+          open:()=>this.setState({megaCell:{...c}})};
+      });
+    } else listUnits=s.units.filter(pass).sort((a,b)=>b.floor-a.floor||a.pos-b.pos).map(u=>{
+      const col=s.colors[u.status];
+      return {num:u.num,floor:u.floor,typeLabel:u.type==='1*'?L.rooms_commercial:u.type,area:u.area,priceLabel:this.money(u.price),perM2:this.perM2(u.price,u.area),showPerM2,statusLabel:L.status[u.status],
+        statusStyle:'font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;color:#fff;white-space:nowrap;background:'+col,
+        open:()=>this.openUnit(u.num)};
+    });
+    const lv=(on)=>'font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid '+(on?'#4d7cfe;background:#eef3ff;color:#4d7cfe':'#e6e9f0;background:#fff;color:#6b7688');
+    const listVariantView=[['table',L.lv_table,'ti-table'],['cards',L.lv_cards,'ti-layout-grid']].map(a=>({label:a[1],icon:a[2],onClick:()=>this.setState({listVariant:a[0]}),style:lv(s.listVariant===a[0])}));
+
+    const sc=(on)=>'font-size:14px;font-weight:600;padding:9px 16px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;border:1px solid '+(on?'#14243f;background:#14243f;color:#fff':'#e6e9f0;background:#fff;color:#1b2942');
+    const schemeDefs=isMega?[['board',L.scheme_board,'ti-layout-grid'],['list',L.scheme_list,'ti-list']]:[['board',L.scheme_board,'ti-layout-grid'],['list',L.scheme_list,'ti-list'],['floor',L.scheme_floor,'ti-stack-2']];
+    const scheme=isMega&&s.scheme==='floor'?'board':s.scheme;
+    const schemeView=schemeDefs.map(a=>({label:a[1],icon:a[2],onClick:()=>this.setState({scheme:a[0]}),style:sc(scheme===a[0])}));
+
+    const glines=s.gridText.split('\n').filter(l=>l.trim());
+    const gridPreview=glines.map((l,i)=>({floor:glines.length-i,cells:l.trim().split(/\s+/).map(n=>({n,style:'width:40px;height:32px;border-radius:6px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none;background:'+(n.includes('*')?'#b45309':'#4d7cfe')}))}));
+
+    const colorRows=this.STORDER.map(k=>({label:L.status[k],value:s.colors[k],onChange:(e)=>{const v=e.target.value;this.setState(st=>({colors:{...st.colors,[k]:v}}));}}));
+    const featChips=s.features.map((f,i)=>({label:f,remove:()=>this.setState(st=>({features:st.features.filter((_,j)=>j!==i)}))}));
+
+    const usersView=this.USERS.filter(u=>s.uRole==='all'||u.role===s.uRole).map(u=>({...u,roleLabel:L.roles[u.role],roleStyle:'font-size:12px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap;background:'+this.ROLECOLOR[u.role][1]+';color:'+this.ROLECOLOR[u.role][0]}));
+    const projectsView=this.PROJECTS.map(p=>({...p,stageLabel:L.stages[p.stage],saleLabel:p.sale+' →',open:()=>this.openObject(p.id),tagsView:p.tags.map(tagV)}));
+    const stageOptions=[['foundation'],['construction'],['done']].map(a=>({value:a[0],label:L.stages[a[0]]}));
+
+    const galCatsView=this.GALKEYS.map(c=>({label:L.cats[c],onClick:()=>this.setState({galCat:c}),style:'font-size:13px;font-weight:600;padding:8px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;border:1px solid '+(c===s.galCat?'#14243f;background:#14243f;color:#fff':'#e6e9f0;background:#fff;color:#6b7688')}));
+    const galImages=this.GAL[s.galCat].map(id=>'https://images.unsplash.com/'+id+'?w=300&h=225&fit=crop');
+    const langChip=(cur,l)=>'font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;cursor:pointer;border:1px solid '+(l===cur?'#4d7cfe;background:#eef3ff;color:#4d7cfe':'#e6e9f0;background:#fff;color:#6b7688');
+    const descLangs=['RU','EN','TR','AR'].map(l=>({label:l,style:langChip(s.descLang,l),onClick:()=>this.setState({descLang:l})}));
+    const presLangs=['RU','EN','TR'].map(l=>({label:l,style:langChip(s.presLang,l),onClick:()=>this.setState({presLang:l})}));
+    const descMap={RU:'Клубный комплекс у моря с бассейнами и SPA, ландшафтным парком и подземным паркингом. 5 минут до пляжа.',EN:'A seafront club residence with pools and SPA, landscaped park and underground parking. 5 min to the beach.',TR:'Deniz kenarında havuzlu, SPA, peyzajlı park ve kapalı otoparklı site. Plaja 5 dakika.',AR:'مجمع سكني فاخر قرب البحر مع مسابح وسبا وحديقة ومواقف تحت الأرض. 5 دقائق إلى الشاطئ.'};
+    const purp=(on)=>'font-size:12px;font-weight:600;padding:6px 11px;border-radius:18px;cursor:pointer;border:1px solid '+(on?'#4d7cfe;background:#eef3ff;color:#4d7cfe':'#e6e9f0;background:#fff;color:#6b7688');
+    const purposeView=['cit','res','com'].map(k=>({label:L.purpose[k],style:purp(obj.tags.includes(k))}));
+    const docsTr=[['Yapı Ruhsatı','yapi','ok'],['İskan','iskan','soon'],['Tapu · Kat İrtifakı','tapu','wait'],['DASK','dask','soon']].map(d=>({title:d[0],sub:L.docsub[d[1]],statusLabel:L.docstatus[d[2]],statusStyle:this.dstat(d[2])}));
+
+    const floorButtons=[7,6,5,4,3,2,1,0].map(f=>({label:f,onClick:()=>this.setState({fCur:f,fpCardNum:null}),style:'width:100%;text-align:center;font-size:14px;font-weight:600;padding:8px;border-radius:9px;cursor:pointer;border:1px solid '+(f===s.fCur?'#14243f;background:#14243f;color:#fff':'#e6e9f0;background:#fff;color:#6b7688')}));
+    let fpCard=null; const fu=s.units.find(u=>u.num===s.fpCardNum);
+    if(fu){const old=Math.round(fu.price*1.12/1000)*1000;fpCard={num:fu.num,sub:(fu.type==='1*'?L.word_commercial:fu.type)+' · '+fu.area+' м² · '+L.word_floor+' '+fu.floor,oldPrice:this.money(old),price:this.money(fu.price),statusLabel:L.status[fu.status],statusStyle:'margin-top:8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:'+s.colors[fu.status],dotStyle:'width:9px;height:9px;border-radius:3px;background:'+s.colors[fu.status],open:()=>this.openUnit(fu.num)};}
+
+    let modal=null,statusBtns=[],modalFeats=[];
+    const mu=s.units.find(u=>u.num===s.modalNum);
+    if(mu){
+      modal={num:mu.num,sub:obj.name+' · '+L.word_floor+' '+mu.floor+' · '+(mu.type==='1*'?L.word_commercial:mu.type),typeLabel:mu.type==='1*'?L.rooms_commercial:mu.type,area:mu.area+' м²',priceLabel:this.money(mu.price),perM2:this.perM2(mu.price,mu.area)};
+      statusBtns=this.STORDER.map(k=>({label:L.status[k],onClick:()=>this.setState({mStatus:k}),dotStyle:'width:10px;height:10px;border-radius:3px;flex:none;background:'+s.colors[k],style:'border:'+(k===s.mStatus?'2px solid '+s.colors[k]:'1px solid #e6e9f0')+';background:#fff;font-size:13px;font-weight:600;padding:9px;border-radius:9px;cursor:pointer;color:'+(k===s.mStatus?'#14243f':'#6b7688')+';display:flex;align-items:center;justify-content:center;gap:6px'}));
+      modalFeats=s.features.map(f=>({label:f,onClick:()=>this.toggleMFeat(f),style:'font-size:12px;font-weight:600;padding:6px 11px;border-radius:18px;cursor:pointer;border:1px solid '+(s.mFeats.includes(f)?'#4d7cfe;background:#eef3ff;color:#4d7cfe':'#e6e9f0;background:#fff;color:#6b7688')}));
+    } else if(s.megaCell){
+      const c=s.megaCell, sold=c.p==='SOLD', tagTxt=c.tag?' · '+L[tagMeta[c.tag][0]]:'';
+      modal={num:c.n,sub:'MEGAPOLIS · '+L.block+' A · '+c.fl+' '+L.floor_short+tagTxt,typeLabel:c.t,area:c.a+' м²',priceLabel:sold?L.sold_word:'€ '+this.nf.format(c.p),perM2:sold?'—':'€ '+this.nf.format(Math.round(c.p/c.a))+'/м²'};
+      const st=sold?'sold':'free';
+      statusBtns=['free','sold'].map(k=>({label:L.status[k],onClick:()=>this.setState(prev=>({megaCell:{...prev.megaCell,p:k==='sold'?'SOLD':(prev.megaCell.p==='SOLD'?200000:prev.megaCell.p)}})),dotStyle:'width:10px;height:10px;border-radius:3px;flex:none;background:'+s.colors[k],style:'border:'+(k===st?'2px solid '+s.colors[k]:'1px solid #e6e9f0')+';background:#fff;font-size:13px;font-weight:600;padding:9px;border-radius:9px;cursor:pointer;color:'+(k===st?'#14243f':'#6b7688')+';display:flex;align-items:center;justify-content:center;gap:6px'}));
+      modalFeats=s.features.map(f=>({label:f,onClick:()=>this.toggleMFeat(f),style:'font-size:12px;font-weight:600;padding:6px 11px;border-radius:18px;cursor:pointer;border:1px solid '+(s.mFeats.includes(f)?'#4d7cfe;background:#eef3ff;color:#4d7cfe':'#e6e9f0;background:#fff;color:#6b7688')}));
+    }
+
+    // ---- Wizard «Новый объект» ----
+    const wzMeta=[['info','ti-info-circle','INFO'],['media','ti-photo','PHOTO · VIDEO'],['plans','ti-stack-2','FLOOR PLANS · LAYOUTS'],['docs','ti-files','CATALOG · RUHSAT · PRICE LIST'],['comm','ti-building-store','TİCARİ · КОММЕРЦИЯ'],['done','ti-circle-check','']];
+    const WZ=L.wz;
+    const addSteps=wzMeta.map((m,i)=>{
+      const active=i===s.addStep, done=i<s.addStep;
+      const bg=active?'#4d7cfe':done?'#e4f6ee':'#eef0f4', fg=active?'#fff':done?'#0f9d6b':'#8a93a2';
+      return {label:WZ['s_'+m[0]],folder:m[2],hasFolder:!!m[2],icon:done?'ti-check':m[1],index:i,
+        onClick:()=>this.setState({addStep:i}),
+        rowStyle:'display:flex;align-items:flex-start;gap:12px;padding:11px 12px;border-radius:12px;cursor:pointer;background:'+(active?'#eef3ff':'transparent'),
+        dotStyle:'width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px;background:'+bg+';color:'+fg,
+        labelStyle:'font-size:14px;font-weight:'+(active?700:600)+';color:'+(active?'#14243f':'#5c6675'),
+        folderStyle:'font-size:11px;color:#aab1bd;margin-top:2px'};
+    });
+    const addTotal=wzMeta.length;
+    const addPct=Math.round(s.addStep/(addTotal-1)*100);
+    const curMeta=wzMeta[s.addStep];
+    const reviewItems=wzMeta.slice(0,5).map(m=>({label:WZ['s_'+m[0]],folder:m[2]}));
+
+    return {
+      t:L, langBtns,
+      openAdd:()=>this.setState({addOpen:true,addStep:0}), closeAdd:()=>this.setState({addOpen:false}),
+      addBack:()=>this.setState(st=>({addStep:Math.max(0,st.addStep-1)})),
+      addNext:()=>this.setState(st=>({addStep:Math.min(addTotal-1,st.addStep+1)})),
+      createObject:()=>this.setState({addOpen:false,screen:'objects'}),
+      isAddObject:s.addOpen, addSteps, addPct, addStepNum:s.addStep+1, addTotal,
+      addTitle:WZ['s_'+curMeta[0]], addFolder:curMeta[2], addHasFolder:!!curMeta[2],
+      isAddInfo:s.addStep===0, isAddMedia:s.addStep===1, isAddPlans:s.addStep===2, isAddDocs:s.addStep===3, isAddComm:s.addStep===4, isAddDone:s.addStep===5,
+      isAddFirst:s.addStep===0, isAddNotFirst:s.addStep>0, isAddLast:s.addStep===addTotal-1, isAddNotLast:s.addStep<addTotal-1,
+      addComm:s.addComm, setCommYes:()=>this.setState({addComm:true}), setCommNo:()=>this.setState({addComm:false}),
+      commYesStyle:'flex:1;min-width:180px;border:2px solid '+(s.addComm?'#4d7cfe':'#e6e9f0')+';background:'+(s.addComm?'#eef3ff':'#fff')+';border-radius:14px;padding:18px;cursor:pointer;display:flex;align-items:center;gap:12px',
+      commNoStyle:'flex:1;min-width:180px;border:2px solid '+(!s.addComm?'#4d7cfe':'#e6e9f0')+';background:'+(!s.addComm?'#eef3ff':'#fff')+';border-radius:14px;padding:18px;cursor:pointer;display:flex;align-items:center;gap:12px',
+      reviewItems,
+      showLogin:!s.authed, showApp:s.authed,
+      login:()=>this.setState({authed:true,screen:'objects'}),
+      logout:()=>this.setState({authed:false}),
+      goObjects:()=>this.setState({screen:'objects'}), goUsers:()=>this.setState({screen:'users'}), goProfile:()=>this.setState({screen:'profile'}),
+      navObjStyle:nav(objNavOn), navUsersStyle:nav(s.screen==='users'),
+      isObject, backToObjects:()=>this.setState({screen:'objects'}), subtabsView,
+      isObjects:s.screen==='objects', isUsers:s.screen==='users', isProfile:s.screen==='profile',
+      isTabMain:isObject&&s.tab==='main', isTabPlans:isObject&&s.tab==='plans', isTabGrid:isObject&&s.tab==='grid', isTabIO:isObject&&s.tab==='io', isTabFp:isObject&&s.tab==='fp', isTabSet:isObject&&s.tab==='set',
+      projectsView, objCount:this.PROJECTS.length, stageOptions,
+      obj, objTags:obj.tags.map(tagV), purposeView, galCatsView, galImages, descLangs, presLangs, descText:descMap[s.descLang], docsTr,
+      schemeView, isSchemeBoard:scheme==='board', isSchemeList:scheme==='list', isSchemeFloor:scheme==='floor',
+      board, legend, showFilters:scheme!=='floor',
+      isMega, isRegularBoard:!isMega, megaInfo, megaBlocksV, megaLegend,
+      onFRoom:(e)=>this.setState({fRoom:e.target.value}), onFSt:(e)=>this.setState({fSt:e.target.value}),
+      onAMin:(e)=>this.setState({aMin:e.target.value}), onAMax:(e)=>this.setState({aMax:e.target.value}),
+      onPMin:(e)=>this.setState({pMin:e.target.value}), onPMax:(e)=>this.setState({pMax:e.target.value}),
+      statusOptions:this.STORDER.map(k=>({value:k,label:L.status[k]})),
+      listVariantView, isListTable:s.listVariant==='table', isListCards:s.listVariant==='cards', listUnits, listCount:listUnits.length, showPerM2,
+      floorButtons, floorSvg:this.buildFloor(), fpCard, fpCardShow:!!fpCard,
+      gridText:s.gridText, onGridText:(e)=>this.setState({gridText:e.target.value}), gridPreview,
+      colorRows, applyColors:()=>this.setState({tab:'plans',scheme:'board'}),
+      featChips, newFeat:s.newFeat, onNewFeat:(e)=>this.setState({newFeat:e.target.value}), addFeat:()=>this.addFeat(),
+      uRole:s.uRole, onURole:(e)=>this.setState({uRole:e.target.value}), usersView, userCount:this.USERS.length,
+      modalOpen:!!modal, modal, statusBtns, modalFeats, stop:(e)=>e.stopPropagation(), closeModal:()=>this.setState({modalNum:null,megaCell:null}), saveUnit:()=>{if(this.state.megaCell)this.setState({megaCell:null});else this.saveUnit();},
+      planImg:'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&h=400&fit=crop'
+    };
+  }
+}
+</script>
+</body>
+</html>

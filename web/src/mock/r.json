@@ -1,0 +1,171 @@
+{
+  "me": {
+    "name": "Alexander Morozov",
+    "ag": "AM Estate",
+    "color": "#4d7cfe",
+    "phone": "+90 532 555 10 20",
+    "city": {
+      "RU": "Анталия",
+      "EN": "Antalya",
+      "TR": "Antalya"
+    },
+    "langs": "RU · EN",
+    "online": true,
+    "objs": 3,
+    "sels": 4,
+    "likes": 5,
+    "la": {
+      "RU": "сейчас",
+      "EN": "now",
+      "TR": "şimdi"
+    }
+  },
+  "r1": {
+    "name": "Mehmet Kaya",
+    "ag": "Kaya Emlak",
+    "color": "#0f9d6b",
+    "phone": "+90 533 210 44 87",
+    "city": {
+      "RU": "Анталия",
+      "EN": "Antalya",
+      "TR": "Antalya"
+    },
+    "langs": "TR · EN",
+    "online": true,
+    "objs": 2,
+    "sels": 7,
+    "likes": 12,
+    "la": {
+      "RU": "сейчас",
+      "EN": "now",
+      "TR": "şimdi"
+    }
+  },
+  "r2": {
+    "name": "Olga Demidova",
+    "ag": "Demi Homes",
+    "color": "#e5484d",
+    "phone": "+90 542 118 30 05",
+    "city": {
+      "RU": "Аланья",
+      "EN": "Alanya",
+      "TR": "Alanya"
+    },
+    "langs": "RU · EN",
+    "online": false,
+    "objs": 2,
+    "sels": 11,
+    "likes": 19,
+    "la": {
+      "RU": "2 ч назад",
+      "EN": "2 h ago",
+      "TR": "2 sa önce"
+    }
+  },
+  "r3": {
+    "name": "Ahmet Çelik",
+    "ag": "Çelik Invest",
+    "color": "#f0ad00",
+    "phone": "+90 531 707 90 12",
+    "city": {
+      "RU": "Анталия",
+      "EN": "Antalya",
+      "TR": "Antalya"
+    },
+    "langs": "TR",
+    "online": false,
+    "objs": 2,
+    "sels": 3,
+    "likes": 4,
+    "la": {
+      "RU": "вчера",
+      "EN": "yesterday",
+      "TR": "dün"
+    }
+  },
+  "r4": {
+    "name": "Irina Alieva",
+    "ag": "Alanya Life",
+    "color": "#7b4fd0",
+    "phone": "+90 545 660 21 90",
+    "city": {
+      "RU": "Аланья",
+      "EN": "Alanya",
+      "TR": "Alanya"
+    },
+    "langs": "RU · TR",
+    "online": true,
+    "objs": 2,
+    "sels": 9,
+    "likes": 15,
+    "la": {
+      "RU": "сейчас",
+      "EN": "now",
+      "TR": "şimdi"
+    }
+  },
+  "r5": {
+    "name": "David Miller",
+    "ag": "Miller & Co",
+    "color": "#14243f",
+    "phone": "+90 549 302 77 41",
+    "city": {
+      "RU": "Белек",
+      "EN": "Belek",
+      "TR": "Belek"
+    },
+    "langs": "EN",
+    "online": false,
+    "objs": 1,
+    "sels": 2,
+    "likes": 1,
+    "la": {
+      "RU": "3 дня назад",
+      "EN": "3 days ago",
+      "TR": "3 gün önce"
+    }
+  },
+  "r6": {
+    "name": "Sergey Novikov",
+    "ag": "—",
+    "color": "#8a93a2",
+    "phone": "—",
+    "city": {
+      "RU": "Анталия",
+      "EN": "Antalya",
+      "TR": "Antalya"
+    },
+    "langs": "RU",
+    "online": false,
+    "objs": 0,
+    "sels": 0,
+    "likes": 0,
+    "la": {
+      "RU": "—",
+      "EN": "—",
+      "TR": "—"
+    },
+    "pending": true
+  },
+  "r7": {
+    "name": "Elif Aydın",
+    "ag": "Alanya Life",
+    "color": "#0e9aa7",
+    "phone": "+90 537 414 82 36",
+    "city": {
+      "RU": "Аланья",
+      "EN": "Alanya",
+      "TR": "Alanya"
+    },
+    "langs": "TR · EN",
+    "online": false,
+    "objs": 0,
+    "sels": 3,
+    "likes": 6,
+    "la": {
+      "RU": "2 ч назад",
+      "EN": "2 h ago",
+      "TR": "2 sa önce"
+    }
+  }
+}

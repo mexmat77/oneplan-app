@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style data-omelette-print-defaults>
+@media print {
+  @page { margin: 0.5in; }
+  h1, h2, h3, h4, h5, h6 { break-after: avoid; }
+  figure, table, pre, blockquote, img, svg, tr, [class~="card" i] { break-inside: avoid; }
+  img, svg { max-width: 100%; }
+  p { orphans: 3; widows: 3; }
+}
+</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+doc-page:not(:defined){visibility:hidden}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif;color:#14243f;line-height:1.2}
+p,li,td,th,figcaption{font-family:'PT Sans',sans-serif}
+b,strong{color:#14243f}
+code{font-family:ui-monospace,monospace;background:#eef1f6;padding:1px 5px;border-radius:4px;font-size:.9em;color:#14243f}
+a{color:#4d7cfe}
+a:hover{color:#2f5fe0}
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.8in" hint-size="100%,100%">
+
+<div style="border-bottom:3px solid #4d7cfe;padding-bottom:16px;margin-bottom:8px">
+<div style="font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.14em;color:#4d7cfe;text-transform:uppercase">Техническое задание · прототип-эталон</div>
+<h1 style="font-size:34px;font-weight:800;margin:8px 0 6px;letter-spacing:-.02em">ONEPLAN — платформа управления объектами застройки</h1>
+<p style="font-size:15px;color:#5a6472;margin:0;line-height:1.5">Справочник к интерактивному прототипу <b>OnePlan v2.dc.html</b>. Описывает назначение, экраны, роли, устройство шахматки и правила поведения. Версия документа 1.0 · 15.07.2026.</p>
+</div>
+
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">Документ сопровождает рабочий прототип и служит образцом для боевой реализации. Прототип показывает <b>как должно выглядеть и работать</b>; серверную часть (база данных, сохранение, ссылки, авторизация) разработчики реализуют на своём стеке, используя прототип как эталон интерфейса и поведения.</p>
+
+<div style="background:#f0f4ff;border:1px solid #d6e0ff;border-radius:12px;padding:14px 18px;margin:16px 0;break-inside:avoid">
+<h4 style="font-size:14px;font-weight:800;margin:0 0 6px">⚠ Главное для разработчиков</h4>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759;margin:0">Прототип <b>не сохраняет данные</b> — все правки живут в памяти вкладки и сбрасываются при перезагрузке. Это ожидаемо. Файл нужно открывать <b>через локальный сервер</b> (Live Server / <code>python -m http.server</code>), а не двойным кликом (<code>file://</code>), иначе часть данных не загрузится. Задача боевой версии — добавить постоянное хранение и API.</p>
+</div>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;padding-top:6px">1. Назначение и суть</h2>
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">ONEPLAN заменяет застройщикам хаос из десятков Google-дисков единой закрытой B2B-системой. Вся информация по объекту (фото, видео, локация, документы, планировки, цены и статусы) хранится в одном месте, а клиенты и партнёры видят актуальную <b>публичную страницу по одной ссылке</b>. Застройщик управляет остатками (что продано / в брони / свободно), и это мгновенно отражается у всех, кто открыл ссылку.</p>
+<p style="font-size:14.5px;line-height:1.6;color:#3c4759">Аудитория: застройщики, агентства, риэлторы (закрытый обмен объектами) и — на публичной витрине — конечные покупатели. Ориентация на турецкий рынок (структура папок, İskan, TAPU, типы планировок вида «2+1»).</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">2. Роли и модель доступа</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Роль</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Уровень</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Права</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Супер-админ</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Платформа</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Владелец системы. Управляет всеми компаниями и их объектами, создаёт/скрывает компании, задаёт срок доступа компании, назначает сотрудников платформы.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Администратор</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Внутри своей компании: создаёт пользователей, правит реквизиты компании (видны клиентам), управляет объектами.</td></tr>
+<tr><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Редактор</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания(и)</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Наполняет объекты (планировки, фото, цены, статусы). Может иметь доступ к нескольким застройщикам (сотрудники поддержки платформы). Пользователи ему недоступны.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:8px 10px;border:1px solid #dfe3ea"><b>Менеджер</b></td><td style="padding:8px 10px;border:1px solid #dfe3ea">Компания</td><td style="padding:8px 10px;border:1px solid #dfe3ea">Продажи — просмотр объектов и свои данные. Редактирование недоступно.</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Иерархия:</b> платформа → компании (застройщики) → пользователи и объекты. Сотрудник платформы (флаг «Платформа») <b>не виден</b> застройщикам в их списке команды, хотя имеет доступ к их объектам. <b>Доступ компании</b> задаётся сроком (дата или «бессрочно»); по истечении — доступ ко всем объектам компании закрывается (задел под платную модель).</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">3. Карта экранов</h2>
+<ul style="font-size:14px;line-height:1.7;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Лендинг</b> — публичная главная: презентация, для кого, форма заявки, «бесплатно на время пилота».</li>
+<li><b>Авторизация / Регистрация</b> — вход, заявка на регистрацию с фиксацией согласий (договор, KVKK).</li>
+<li><b>Объекты</b> — список объектов застройки (карточки / список), фильтры по стадии, İskan, продажам; скрытые объекты «в тумане».</li>
+<li><b>Карточка объекта</b> — редактор: разделы Основное · Фото и видео · Описание · Локация · Дневник стройки · Документы; вкладки Объект / Планировки / Экспорт-импорт / Журнал / Настройки.</li>
+<li><b>Планировки</b> — Шахматка · Список · Поэтажный план (+ редактор сетки, создание планировок, модалка квартиры).</li>
+<li><b>Настройки объекта</b> — публикация/видимость, нумерация этажей, цвета, валюта, особенности, изображения планировок по типам.</li>
+<li><b>Компании и доступы / Пользователи</b> — управление компаниями и командами.</li>
+<li><b>Профайл</b> — данные пользователя, реквизиты компании, смена пароля.</li>
+<li><b>Публичная страница объекта</b> — как видит клиент: обложка, статистика, галерея, выбор квартиры, дневник, документы, локация, LIVE и промо-видео.</li>
+<li><b>Публичная страница застройщика</b> — все проекты компании + контакты.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">4. Модель данных: помещение (unit)</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Каждая ячейка шахматки — это помещение (квартира / коммерция / вилла) со следующими полями:</p>
+<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:7px 9px;border:1px solid #14243f">Поле</th>
+<th style="text-align:left;padding:7px 9px;border:1px solid #14243f">Значение</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>uid</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Уникальный внутренний id (не меняется).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>num</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Номер помещения (виден пользователю). Пересчитывается автоматически по расположению.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>floor</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Этаж (число; 0 = цоколь/Z, отрицательные = подземные B1/B2).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>pos</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Позиция в ряду этажа (1,2,3…) — определяет колонку.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>wing</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Корпус / блок (A, B, T=коммерция…). Пусто = один корпус.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>band</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Сторона: <code>out</code> (окна наружу) / <code>ins</code> (окна во двор) — для объектов с двумя рядами на этаже.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>type</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Комнатность (1+1, 2+1, 3+1…; <code>1*</code> = коммерция).</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>area</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Площадь, м².</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>price</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Цена (валюта объекта). Цена/м² считается автоматически.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>status</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">free · booked · process · sold · reserve.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>tag</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Спецтип: duplex · tduplex · triplex · terrace · и служебные.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>td</code> / <code>entry</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Для триплекса: смещение вниз (0/1/2) и этаж(и) входа.</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>feats</code> / <code>ft</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Особенности (терраса, сад, вид на море…). Можно несколько.</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>vl</code> / <code>vt</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Флаг «вилла» и тип виллы (для комплексов вилл).</td></tr>
+<tr><td style="padding:6px 9px;border:1px solid #dfe3ea"><code>lx</code></td><td style="padding:6px 9px;border:1px solid #dfe3ea">Абсолютная X-координата (только для мозаичных досок — см. §5).</td></tr>
+</tbody>
+</table>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">5. Планировки: два типа доски</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Шахматка строится двумя способами. Тип выбирается автоматически по данным объекта:</p>
+<div style="border:1px solid #dfe3ea;border-radius:10px;padding:12px 15px;margin:8px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 5px">А. Сеточная (flex) — основной механизм</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Ряды = этажи (сверху вниз), колонки = позиции. Все плитки одного размера (132px). Используется для сгенерированных сеток и большинства объектов. <b>Именно здесь работает редактор</b> (перемещение, добавление, слоты).</p>
+</div>
+<div style="border:1px solid #dfe3ea;border-radius:10px;padding:12px 15px;margin:8px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 5px">Б. Мозаичная (координатная)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Плитки позиционируются по абсолютной X-координате (<code>lx</code>) — для сложных реальных прайсов (Megapolis, Akropolis), где на этажах разное число квартир и они не выстраиваются в ровную решётку.</p>
+</div>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Нумерация этажей</b> настраивается на объект (данные не меняются, только отображение): <b>Схема TR</b> (B2·B1·Z·1·2…), <b>Международная</b> (B2·B1·G·1·2…), <b>Цифровая</b> (−2·−1·0·1·2…).</p>
+<p style="font-size:13.5px;line-height:1.55;color:#3c4759"><b>Сегменты / чипы:</b> Все · Квартиры · Коммерция · Виллы (для смешанных комплексов). Коммерция и виллы показываются отдельными блоками. Строка статистики (Всего / Свободно / Бронь / Оформление / Продано / Резерв) кликабельна — фильтрует.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">6. Спецтипы: дуплекс, ters дуплекс, триплекс</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Многоэтажные квартиры занимают несколько рядов шахматки одной вытянутой плиткой с разделительными линиями между этажами. <b>Верхняя граница плитки выравнивается по верхней границе обычных соседних плиток.</b></p>
+<div style="border-left:4px solid #b45309;background:#fffaf3;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#b45309">Дуплекс (2 этажа, вход снизу)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Растёт <b>вверх</b>: вход на нижнем этаже, второй уровень над ним. Стандартный дуплекс на промежуточных и верхних этажах. Одна разделительная линия.</p>
+</div>
+<div style="border-left:4px solid #9a3412;background:#fff6f2;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#9a3412">Ters дуплекс (2 этажа, вход сверху)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Растёт <b>вниз</b>: вход на верхнем этаже, спуск на нижний (часто с цоколя вниз на B1). При установке автоматически появляется нижний этаж (B1).</p>
+</div>
+<div style="border-left:4px solid #0f766e;background:#f1faf9;border-radius:8px;padding:12px 15px;margin:10px 0;break-inside:avoid">
+<h4 style="font-size:14.5px;font-weight:800;margin:0 0 4px;color:#0f766e">Триплекс (3 этажа)</h4>
+<p style="font-size:13px;line-height:1.55;color:#3c4759;margin:0">Занимает 3 ряда, две разделительные линии. Стандартный: −1·0·1 со входом на этаже 0. Возможны нестандартные варианты — вход на любом из 3 этажей (или на нескольких сразу), с бейджем «Вход · этаж». Можно опустить триплекс на −1 или −2 уровня (B1 / B2), эти нижние этажи дорисовываются автоматически.</p>
+</div>
+<p style="font-size:13px;line-height:1.55;color:#3c4759"><b>Особые случаи для реализации:</b> кнопки выравнивания (влево / пирамида / вправо) <b>не должны схлопывать</b> многоэтажные квартиры в одноэтажные и не должны накладывать их друг на друга — колонки многоэтажных резервируются на всех накрытых этажах.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">7. Редактор сетки и перемещение плиток</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Перемещение работает <b>только в режиме «Редактировать сетку»</b>. В обычном просмотре клик по плитке открывает карточку квартиры.</p>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Создание планировок</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li><b>Вставка из прайса</b> — скопировать строки из Excel/Google Таблиц; колонки (№, этаж, тип, площадь, цена, статус) распознаются автоматически.</li>
+<li><b>Генерация сетки</b> — задать число этажей и квартир на этаже (можно разное по этажам); сначала строится пустая сетка, параметры каждой квартиры заполняются потом кликом.</li>
+<li>Можно <b>добавить к существующим</b> (новый корпус/блок) или заменить всё. Корпуса именуются и переименовываются; иерархия (квартиры → коммерция → виллы) сохраняется.</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Перемещение (drag &amp; drop)</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>Плитку можно перетащить на <b>пустую пунктирную ячейку</b> (слот) — она встаёт туда.</li>
+<li>Плитку можно бросить <b>прямо на другую плитку</b> — они меняются местами (принцип «пятнашек»).</li>
+<li><b>Групповое перемещение:</b> зажать мышь на пустом месте и растянуть рамку — выделятся все задетые плитки; перетаскивание любой из них двигает всю группу. Ctrl-клик — точечно добавить/убрать. На тач-экране — долгое нажатие.</li>
+<li>При перемещении номера квартир пересчитываются автоматически (в т.ч. при переносе на другой этаж).</li>
+</ul>
+<h4 style="font-size:15px;font-weight:700;margin:14px 0 5px">Правка структуры</h4>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:4px 0;padding-left:22px">
+<li>Кнопки <b>Влево / Пирамида / Вправо</b> — быстрое выравнивание квартир на этажах (относятся к своему корпусу).</li>
+<li><b>+ Квартира</b> / <b>+ Этаж</b> — добавление в конкретный корпус; крестик на плитке — быстрое удаление.</li>
+<li>Масштаб <b>100 / 75 / 50%</b> — уменьшить плитки, чтобы вместить крупный проект на один экран (для чисто-вилловых объектов масштаб скрыт — неактуален).</li>
+<li>Пустоты (арки, пропуски) задаются пустыми местами в ряду.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">8. Статусы и цвета</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+<thead><tr style="background:#14243f;color:#fff">
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Статус</th>
+<th style="text-align:left;padding:8px 10px;border:1px solid #14243f">Цвет по умолчанию</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Свободно</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#059669;vertical-align:middle;margin-right:7px"></span>зелёный #059669</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:7px 10px;border:1px solid #dfe3ea">Бронь</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#FBBF24;vertical-align:middle;margin-right:7px"></span>янтарный #FBBF24 (тёмный текст)</td></tr>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Оформление</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#3B82F6;vertical-align:middle;margin-right:7px"></span>синий #3B82F6</td></tr>
+<tr style="background:#f7f9fc"><td style="padding:7px 10px;border:1px solid #dfe3ea">Продано</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#64748B;vertical-align:middle;margin-right:7px"></span>серый #64748B</td></tr>
+<tr><td style="padding:7px 10px;border:1px solid #dfe3ea">Резерв</td><td style="padding:7px 10px;border:1px solid #dfe3ea"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#8B5CF6;vertical-align:middle;margin-right:7px"></span>фиолетовый #8B5CF6</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px;line-height:1.55;color:#3c4759">Цвета настраиваются на объект. Статус продаж объекта: Не в продаже · Старт продаж · Продажи открыты · Продано.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">9. Типы планировок</h2>
+<p style="font-size:14px;line-height:1.6;color:#3c4759"><b>Автоматический тип</b> = комнатность + площадь (м²). Квартиры с одинаковыми параметрами группируются в один тип; изображение планировки привязывается к типу и показывается во всех квартирах этого типа. При изменении площади квартира автоматически переназначается/создаёт тип, «осиротевшие» типы вычищаются.</p>
+<p style="font-size:14px;line-height:1.6;color:#3c4759">Если при одинаковых параметрах планировки всё же разные (иное «нутро» или зеркальные) — создаётся <b>отдельный тип вручную</b> (Tip A / Tip A-R) и выбирается в карточке квартиры. К типу можно прикрепить несколько изображений (план, план 2-го этажа дуплекса, 3D-вид); первое — главное.</p>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">10. Медиа, документы, публикация</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Фото и видео</b> — по категориям (Социальная часть, Паркинг, Бассейн, СПА, Детская, Интерьер, Экстерьер…), drag-and-drop загрузка, изменение порядка, клик — просмотр с листанием (стрелки клавиатуры).</li>
+<li><b>Дневник стройки</b> — датированные фото/видео-отчёты с площадки; редактирование/удаление записей.</li>
+<li><b>LIVE-трансляция</b> — отдельная ссылка (YouTube Live / веб-камера); показывается пульсирующей кнопкой LIVE, когда эфир идёт (в кабинете, на карточке застройщика и на публичной странице).</li>
+<li><b>Промо-ролик</b> — ссылка на YouTube/Vimeo; кнопка ▶ на обложке публичной страницы, открывает плеер.</li>
+<li><b>Документы</b> — загрузка файлов, доступных для скачивания по внешней ссылке. Статусы док-в: Yapı Ruhsatı, İskan (юридический статус, отдельно от стадии стройки), TAPU, DASK.</li>
+<li><b>Публикация / видимость:</b> закрытая сеть ONEPLAN (по умолчанию) или публичная витрина. Объект можно <b>скрыть по любой причине</b> (не только завершение); скрытые/завершённые показываются «в тумане» и по умолчанию свёрнуты. Скрытый объект автоматически убирается с публичной страницы застройщика.</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px">11. Прочее</h2>
+<ul style="font-size:13.5px;line-height:1.65;color:#3c4759;margin:6px 0;padding-left:22px">
+<li><b>Мультиязычность</b> — RU / EN / TR на всех экранах. Описание объекта можно перевести ИИ и поправить вручную.</li>
+<li><b>Готовность (%)</b> — задаётся автоматически по стадии строительства, корректируется вручную. Стадии: Проект · Подготовка участка · Фундамент · Каркас · Фасад · Внутренние работы · Благоустройство · Завершено. İskan — отдельный статус (может быть получен до завершения благоустройства).</li>
+<li><b>Экспорт / импорт</b> — выгрузка шахматки и списка в Excel; импорт обновляет цену/статус/площадь по ID, не ломая структуру сетки. Рекомендация: сначала экспортировать, поправить в файле, импортировать обратно.</li>
+<li><b>PDF</b> — печать шахматки, списка и поэтажного плана (по текущим фильтрам).</li>
+<li><b>Журнал изменений</b> — кто и когда менял цены и статусы квартир (с постраничным выводом).</li>
+</ul>
+
+<h2 style="font-size:22px;font-weight:800;margin:26px 0 10px;break-before:page">12. Что реализовать в боевой версии</h2>
+<ol style="font-size:14px;line-height:1.7;color:#3c4759;margin:8px 0;padding-left:22px">
+<li><b>Постоянное хранение (БД + API).</b> Сейчас нет — все правки в памяти. Нужно: объекты, помещения, пользователи, компании, медиа, журнал.</li>
+<li><b>Аутентификация и роли</b> по модели §2, ограничение доступа компании по сроку.</li>
+<li><b>Публичные ссылки</b> на объект и застройщика с реальными данными и учётом видимости/публикации.</li>
+<li><b>Загрузка файлов</b> (фото/видео/документы) в хранилище; отдача по ссылке для скачивания.</li>
+<li><b>Мультиязычные поля</b> и ИИ-перевод описаний.</li>
+<li><b>Импорт/экспорт</b> Excel с сопоставлением по ID.</li>
+</ol>
+
+<div style="border-top:2px solid #e6e9f0;margin-top:26px;padding-top:12px">
+<p style="font-size:12px;color:#8a93a2;margin:0">ONEPLAN · ТЗ к прототипу OnePlan v2.dc.html · открывать через локальный сервер · © ONETEAM İNŞAAT LTD. ŞTİ.</p>
+</div>
+
+</x-import>
+</x-dc>
+<script>
+(async () => {
+  if (!document.title || !document.title.trim()) document.title = "OnePlan ТЗ";
+  // rAF raced with a short timeout: inside a cross-origin iframe (PrintMode),
+  // rAF can be throttled or paused even while the tab is focused, which would
+  // hang the scroll loop and never reach print(). Same pattern as
+  // buildExportSettleScript (export/shared.ts).
+  var raf = function () {
+    return Promise.race([
+      new Promise(function (r) { requestAnimationFrame(r); }),
+      new Promise(function (r) { setTimeout(r, 50); }),
+    ]);
+  };
+  var t0 = performance.now();
+  var mark = function (phase) {
+    var ms = Math.round(performance.now() - t0);
+    console.info('[autoprint]', phase, ms + 'ms');
+    try { parent.postMessage({ __omelette_autoprint: { phase: phase, ms: ms } }, '*'); } catch (e) {}
+  };
+  mark('start');
+  // Prepend so page-supplied @page / break rules (deck-stage's margin:0,
+  // author CSS) keep source-order precedence over the baseline.
+  const baseCss = document.createElement('style');
+  baseCss.textContent = "@media print {\n  figure, table { break-inside: avoid; }\n  *, *::before, *::after {\n    print-color-adjust: exact; -webkit-print-color-adjust: exact;\n    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;\n    animation-delay: -99s !important; animation-duration: .001s !important;\n    animation-iteration-count: 1 !important; animation-fill-mode: both !important;\n    animation-play-state: running !important; transition-duration: 0s !important;\n  }\n}";
+  document.head.prepend(baseCss);
+  if (document.readyState === 'loading') {
+    await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
+  }
+  let ds = document.querySelector('deck-stage');
+  // whenDefined never resolves when nothing registers the element, so only
+  // await it when a <deck-stage> tag exists (and race a timeout regardless).
+  if (ds && !customElements.get('deck-stage')) {
+    try {
+      await Promise.race([
+        customElements.whenDefined('deck-stage'),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+    ds = document.querySelector('deck-stage');
+  }
+  // dc-runtime assigns window.DCLogic at init and mounts into #dc-root on
+  // DOMContentLoaded; settle on that subtree so React has rendered before
+  // print(). Non-DC pages fall through to weighing body.
+  const isDc = !ds && 'DCLogic' in window;
+  const settleRoot = ds || (isDc ? document.getElementById('dc-root') : null) || document.body;
+  if (settleRoot) {
+    // Weigh only content children — skip script/style/template so inline
+    // Babel/CSS doesn't register as stable "content" before the framework
+    // has mounted anything.
+    const MEDIA = 'img,svg,canvas,video,picture,iframe,embed,object';
+    const weigh = () => {
+      let text = 0, media = 0;
+      for (const c of settleRoot.children) {
+        const t = c.tagName;
+        if (t === 'SCRIPT' || t === 'STYLE' || t === 'TEMPLATE') continue;
+        text += (c.textContent || '').trim().length;
+        media += c.querySelectorAll(MEDIA).length + (c.matches(MEDIA) ? 1 : 0);
+      }
+      return text + media * 100;
+    };
+    // "Non-zero and stable" alone is not sufficient to mean rendered: generic
+    // body can carry a static shell while async main content is pending, and
+    // #dc-root can carry the root DC's static text while child refs are still
+    // .sc-placeholder boxes. Gate generic on readyState 'complete', and never
+    // accept stability while a dc-runtime placeholder is present.
+    const isGeneric = settleRoot === document.body;
+    // A placeholder whose fetch failed (.sc-placeholder-error inside) keeps
+    // .sc-placeholder forever — don't wait on it. JS loop, not :has(), so an
+    // engine without :has() support can't throw out of the while and skip
+    // print() entirely.
+    var pendingPlaceholders = function () {
+      var all = settleRoot.querySelectorAll('.sc-placeholder'), n = 0;
+      for (var i = 0; i < all.length; i++)
+        if (!all[i].querySelector('.sc-placeholder-error')) n++;
+      return n;
+    };
+    const deadline = Date.now() + 15000;
+    let last = -1, stable = 0;
+    while (Date.now() < deadline) {
+      const n = weigh();
+      const ready =
+        (!isGeneric || document.readyState === 'complete') &&
+        pendingPlaceholders() === 0;
+      if (n > 0 && n === last && ready) { if (++stable >= 2) break; } else { stable = 0; }
+      last = n;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  mark('settle-done' + (settleRoot ? ' (errs=' + settleRoot.querySelectorAll('.sc-placeholder-error').length + ' pending=' + pendingPlaceholders() + ')' : ''));
+  // Project support.js may predate runtime default-seeding; push via bridge.
+  if (isDc && window.__dcSetProps && window.__dcRootName) {
+    try {
+      const dpEl = document.querySelector('script[data-dc-script]');
+      const meta = JSON.parse((dpEl && dpEl.getAttribute('data-props')) || '{}');
+      const bag = {};
+      for (const k in meta)
+        if (k[0] !== '$' && meta[k] && meta[k].default !== undefined)
+          bag[k] = meta[k].default;
+      if (Object.keys(bag).length) {
+        window.__dcSetProps(window.__dcRootName(), bag);
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    } catch (e) {}
+  }
+  // Reveal content gated on scroll or visibility before printing. Lazy <img>,
+  // IntersectionObserver fade-ins, and collapsed <details> don't render while
+  // off-screen, so a long page would print with them blank or closed. Open
+  // every <details>, force native-lazy images eager, and scroll the document
+  // through its full height to trip lazy-load + IO; then wait (bounded) for the
+  // newly-triggered images. Inert for deck-stage (slides aren't scroll-gated).
+  try {
+    for (const d of document.querySelectorAll('details')) d.open = true;
+    for (const img of document.querySelectorAll('img[loading="lazy"]'))
+      img.loading = 'eager';
+    const scroller = document.scrollingElement || document.documentElement;
+    const full = Math.max(scroller.scrollHeight, document.body.scrollHeight);
+    const step = window.innerHeight || 800;
+    var scrollDeadline = Date.now() + 4000;
+    for (let y = 0; y <= full && Date.now() < scrollDeadline; y += step) {
+      window.scrollTo(0, y);
+      await raf();
+    }
+    window.scrollTo(0, 0);
+    await Promise.race([
+      Promise.all(
+        [...document.images].map((img) =>
+          img.complete
+            ? null
+            : new Promise((res) => {
+                img.addEventListener('load', res, { once: true });
+                img.addEventListener('error', res, { once: true });
+              })
+        )
+      ),
+      new Promise((r) => setTimeout(r, 4000)),
+    ]);
+  } catch (e) {}
+  mark('scroll-done');
+  try { await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 3000))]); } catch (e) {}
+  mark('fonts-done');
+  // Jump every animation to its end state so print() never captures a slide
+  // mid-entrance. Ordering matters: the 0s-transition style must be live
+  // BEFORE data-deck-active is set so attribute-keyed transitions don't
+  // start a (now-0s) run from the pre-active base.
+  const st = document.createElement('style');
+  st.textContent = '*,*::before,*::after{animation-delay:-99s !important;animation-duration:.001s !important;animation-iteration-count:1 !important;animation-fill-mode:both !important;animation-play-state:running !important;transition-duration:0s !important}';
+  document.head.appendChild(st);
+  for (const d of document.querySelectorAll('deck-stage')) {
+    for (const c of d.children) {
+      const t = c.tagName;
+      if (t === 'SCRIPT' || t === 'STYLE' || t === 'TEMPLATE') continue;
+      c.setAttribute('data-deck-active', '');
+    }
+  }
+  // Re-append deck-stage's @page last so no author @page can add a margin and
+  // spill each full-bleed slide onto two sheets. Backstop for old copies.
+  if (ds) {
+    let pg = document.getElementById('deck-stage-print-page');
+    if (!pg) {
+      pg = document.createElement('style');
+      pg.textContent = '@page{size:' + (+ds.getAttribute('width') || 1920) +
+        'px ' + (+ds.getAttribute('height') || 1080) + 'px;margin:0}';
+    }
+    document.body.appendChild(pg);
+  }
+  try {
+    const sweep = () => {
+      for (const a of document.getAnimations()) {
+        try { a.finish(); } catch (e) {
+          try { a.currentTime = (a.effect && a.effect.getComputedTiming().duration) || 0; a.pause(); } catch (e2) {}
+        }
+      }
+    };
+    sweep();
+    await raf();
+    sweep();
+    await raf();
+  } catch (e) {}
+  // A document that owns its print CSS (the doc-page starter injects the
+  // meta at runtime; hand-rolled print designs author it) gets no automatic
+  // page geometry and keeps its forced breaks: strip the injected default
+  // @page — write time cannot see a runtime-injected meta — skip the frame
+  // override below, and skip the fakepage-flattening further down. What
+  // still applies: the print baseline and break-hygiene defaults (no @page
+  // in either; low specificity, so the document's own print CSS wins) and
+  // the break-inside relaxation on >page elements (avoid on those cannot
+  // be honored whoever authored it).
+  var ownsPrint = !!document.querySelector('meta[name="omelette-owns-print" i]');
+  if (ownsPrint) {
+    var dst = document.querySelector('style[data-omelette-print-defaults]');
+    if (dst && dst.textContent) {
+      dst.textContent = dst.textContent.replace(/@page\b[^{}]*\{[^}]*\}/, '');
+    }
+  }
+  // Size the PDF page to the rendered design unless the file opted into
+  // standard paper via @page{size:letter|A4|…} or declared print ownership
+  // via the meta above. Decks own their own @page.
+  // Wrappers (body, …) lose padding+margin so the frame sits at (0,0); the
+  // frame itself loses only margin — its padding is INSIDE the measured
+  // rect and must stay, or content shifts and leaves a gap at bottom/right.
+  var __m = null;
+  try { __m = (() => {
+  var STAMP = true;
+  var docEl = document.documentElement;
+  var doc = { width: docEl.scrollWidth, height: docEl.scrollHeight };
+  // Name-presence check, case-insensitive — the same contract as the
+  // instant-PDF path's runtime check in deck-stage-export.ts. The name is
+  // a string literal here because that file interpolates this script into
+  // its print script, so importing a shared constant from it would be a
+  // cycle; measure.test.ts pins the literal so the two cannot drift apart
+  // silently.
+  var ownsPrint = !!document.querySelector('meta[name="omelette-owns-print" i]');
+
+  var ds = document.querySelector('deck-stage');
+  if (ds) {
+    var dw = Number(ds.getAttribute('width')) || 1920;
+    var dh = Number(ds.getAttribute('height')) || 1080;
+    var n = typeof ds.length === 'number' ? ds.length : ds.children.length;
+    var idx = typeof ds.index === 'number' ? ds.index : 0;
+    var frames = [];
+    for (var i = 0; i < n; i++) frames.push({ left: 0, top: 0, width: dw, height: dh });
+    return { kind: 'deck', source: 'declared', doc: doc, frames: frames,
+      authored: frames.map(function(){return{width:true,height:true}}),
+      deck: { width: dw, height: dh, slideCount: n, index: idx },
+      signals: { paperPage: false, pxPage: false, ownsPrint: ownsPrint } };
+  }
+
+  // Declared kind: a doc-page tag names the kind outright, so no signal
+  // heuristics run (like the deck branch above, signals report false —
+  // they describe inferred classifications only). The tag alone is not
+  // trusted: the element must have upgraded (shadowRoot present), so a
+  // leftover tag whose script was deleted falls through to the heuristics
+  // that handle plain markup.
+  var stageSx = window.scrollX || 0, stageSy = window.scrollY || 0;
+  var dp = document.querySelector('doc-page');
+  if (dp && dp.shadowRoot) {
+    // Crop to the sheet, not the host — the desk around it is screen-only
+    // chrome that must not land in PNG exports.
+    var sheet = dp.shadowRoot.querySelector('.sheet');
+    var sr = (sheet || dp).getBoundingClientRect();
+    return { kind: 'paper-doc', source: 'declared', doc: doc,
+      frames: [{ left: sr.left + stageSx, top: sr.top + stageSy,
+        width: sr.width, height: sr.height }],
+      authored: [{ width: false, height: false }],
+      signals: { paperPage: false, pxPage: false, ownsPrint: ownsPrint } };
+  }
+  var paperPage = false, pxPage = false;
+  var eachRule = function (fn) {
+    for (var s = 0; s < document.styleSheets.length; s++) {
+      var rs; try { rs = document.styleSheets[s].cssRules; } catch (e) { continue; }
+      for (var r = 0; r < rs.length; r++) {
+        fn(rs[r]);
+        if (rs[r].cssRules) for (var n = 0; n < rs[r].cssRules.length; n++) fn(rs[r].cssRules[n]);
+      }
+    }
+  };
+  eachRule(function (r) {
+    if (r.type !== 6) return;
+    var m = /\bsize\s*:\s*([^;}]+)/i.exec(r.cssText || '');
+    if (!m) return;
+    if (/\b(letter|a[3-5]|legal|ledger)\b/i.test(m[1])) paperPage = true;
+    if (/\d+(?:\.\d+)?px\b/i.test(m[1])) pxPage = true;
+  });
+  var signals = { paperPage: paperPage, pxPage: pxPage, ownsPrint: ownsPrint };
+
+  var pxVal = function (v) {
+    var m = /^(\d+(?:\.\d+)?)px$/.exec(v || ''); return m ? +m[1] : 0;
+  };
+  var authoredPx = function (el, prop) {
+    if (pxVal(el.style[prop])) return true;
+    var attr = el.getAttribute(prop);
+    if (attr && /^\d+$/.test(attr)) return true;
+    var hit = false;
+    eachRule(function (r) {
+      if (hit || r.type !== 1 || !r.style) return;
+      try { if (el.matches(r.selectorText) && pxVal(r.style[prop])) hit = true; } catch (e) {}
+    });
+    return hit;
+  };
+
+  var el = document.body, rootPxW = false;
+  for (;;) {
+    var kids = [];
+    for (var c = 0; c < el.children.length; c++) {
+      var t = el.children[c].tagName;
+      if (t !== 'SCRIPT' && t !== 'STYLE' && t !== 'TEMPLATE') kids.push(el.children[c]);
+    }
+    if (kids.length !== 1 || !(kids[0] instanceof HTMLElement)) break;
+    if (STAMP) el.setAttribute('data-om-frame-wrap', '');
+    el = kids[0];
+    rootPxW = authoredPx(el, 'width');
+    if (rootPxW) break;
+  }
+  if (!rootPxW) rootPxW = authoredPx(el, 'width');
+
+  // @page{size:letter} alone is a flowing doc; with a px-width root it's a
+  // fixed sheet pretending to be paper — fall through and size to render.
+  if (paperPage && !rootPxW) {
+    return { kind: 'paper-doc', source: 'inferred', doc: doc, signals: signals,
+      frames: [{ left: 0, top: 0, width: doc.width, height: doc.height }],
+      authored: [{ width: false, height: false }] };
+  }
+
+  var sx = window.scrollX || 0, sy = window.scrollY || 0;
+  var rectOf = function (e) {
+    var r = e.getBoundingClientRect();
+    var oy; try { oy = getComputedStyle(e).overflowY; } catch (err) {}
+    var h = oy === 'visible' ? Math.max(r.height, e.scrollHeight || 0) : r.height;
+    return { left: r.left + sx, top: r.top + sy, width: r.width, height: h };
+  };
+
+  // Multi-frame: off unless the page opts in via data-om-multi-frame on the
+  // stop element — the explicit opt-in is what guards against card grids
+  // and pricing tables that match the geometry but aren't separate
+  // canvases. Two ways to name the frames, explicit first:
+  // 1. Descendants marked data-om-frame-export (the social-frames starter
+  //    marks each asset frame; shells/panels around them are presentation,
+  //    so nesting is expected). Document order.
+  // 2. Fallback, no marked descendants: direct children with an authored px
+  //    width AND height (the original geometry heuristic).
+  // Frames may be different sizes (a gallery mixes 1080×1920 stories with
+  // 728×90 banners); data-om-frame-label rides along for export filenames.
+  if (el.hasAttribute('data-om-multi-frame')) {
+    var visOk = function (e) {
+      var cs; try { cs = getComputedStyle(e); } catch (err) { return false; }
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.position !== 'fixed';
+    };
+    // A frame's crop is its VISUAL box — never the scrollHeight-inflated
+    // rect that rectOf computes for page roots. Shadow-DOM hover controls
+    // (image-slot's Replace bar parks 29px below its host) and similar
+    // escaping UI contribute scrollable overflow to the frame, and the
+    // inflated height both squashes the nominal-size resize and drags
+    // content below the frame into the crop. Zoom-independent; bit every
+    // slot-bearing frame.
+    var frameRectOf = function (e) {
+      var r = e.getBoundingClientRect();
+      return { left: r.left + sx, top: r.top + sy, width: r.width, height: r.height };
+    };
+    var pushCand = function (list, e) {
+      if (!visOk(e)) return;
+      var rc = frameRectOf(e);
+      if (rc.width < 2 || rc.height < 2) return;
+      var lbl = e.getAttribute('data-om-frame-label');
+      if (lbl) rc.label = lbl;
+      list.push(rc);
+    };
+    var cands = [];
+    var marked = el.querySelectorAll('[data-om-frame-export]');
+    if (marked.length) {
+      for (var mk = 0; mk < marked.length; mk++) pushCand(cands, marked[mk]);
+    } else {
+      for (var k = 0; k < el.children.length; k++) {
+        var ch = el.children[k];
+        if (!authoredPx(ch, 'width') || !authoredPx(ch, 'height')) continue;
+        pushCand(cands, ch);
+      }
+    }
+    if (cands.length >= 2) {
+      return { kind: 'multi-frame', source: 'inferred', doc: doc, signals: signals,
+        frames: cands, authored: cands.map(function(){return{width:true,height:true}}) };
+    }
+  }
+
+  if (STAMP) el.setAttribute('data-om-frame', '');
+  return { kind: 'single-canvas', source: 'inferred', doc: doc, signals: signals,
+    frames: [rectOf(el)],
+    authored: [{ width: rootPxW, height: authoredPx(el, 'height') }] };
+})(); } catch (e) {}
+  var frame = null;
+  if (!ownsPrint && __m && __m.kind === 'single-canvas') {
+    var f = __m.frames && __m.frames[0];
+    if (f && f.width >= 200 && f.height >= 200) {
+      frame = f;
+      var fst = document.createElement('style');
+      fst.textContent = '@media print{@page{size:' + Math.ceil(f.width) + 'px ' +
+        Math.ceil(f.height) + 'px;margin:0}' +
+        'html,body,[data-om-frame-wrap]{padding:0!important;margin:0!important;background:none!important}' +
+        '[data-om-frame]{margin:0!important}}';
+      document.body.appendChild(fst);
+    }
+  }
+  // Relax break-inside on oversized elements. An element taller than a
+  // printable page can't honor break-inside: avoid — browsers either overflow
+  // it or push it whole to the next page, leaving a blank gap, then break it
+  // anyway at an arbitrary point. After the final layout (content revealed,
+  // animations jumped), find elements taller than a page that still compute
+  // break-inside: avoid and reset them to auto, so the browser breaks them at
+  // their children's boundaries instead (children keep their own avoid). PAGE_PX
+  // is a conservative portrait estimate at 96 CSS px/in — Letter/A4 usable
+  // height minus our 0.5in margins — so only clearly-oversized elements are
+  // touched and under-page elements still stay whole. Skipped for decks (slides
+  // are sized to the page) and for fixed-size canvases (frame set, or an author
+  // px-based @page) — runs as before for flowing docs on letter/A4.
+  try {
+    if (!ds && !frame && !(__m && __m.signals && __m.signals.pxPage)) {
+      const PAGE_PX = 1024;
+      // Our print defaults add a real @page margin only when the source has
+      // no @page of its own; computed style can't tell us (it reports screen
+      // media), so read the injected rule directly.
+      const defaults = document.querySelector('style[data-omelette-print-defaults]');
+      const pageInset = /@page\s*\{[^}]*margin/.test(defaults ? defaults.textContent || '' : '');
+      const SEL = 'section,article,figure,table,pre,blockquote,[class~="card" i],[class~="page" i],[class~="sheet" i]';
+      for (const el of document.body.querySelectorAll(SEL)) {
+        if (el instanceof HTMLElement && el.offsetHeight > PAGE_PX) {
+          el.setAttribute('data-om-oversized', '');
+          // Fake-paged docs simulate sheets with over-tall break-after:page
+          // boxes; honoring the break spills half-blank pages and ends a
+          // colored box mid-sheet. Flow them, and (only when we own the page
+          // inset) drop the redundant padding/background via the rule below.
+          const cs = getComputedStyle(el);
+          // An owns-print doc's forced breaks are intentional sheet
+          // boundaries, never fake-paged simulation — don't strip them.
+          // The break-inside relaxation above still applies: avoid on a
+          // >page element is impossible to honor whoever authored it.
+          if (
+            !ownsPrint &&
+            (cs.breakAfter === 'page' || cs.pageBreakAfter === 'always')
+          ) {
+            el.setAttribute('data-om-fakepage', '');
+          }
+        }
+      }
+      const ost = document.createElement('style');
+      ost.textContent = '@media print{' +
+        '[data-om-oversized]{break-inside:auto !important;page-break-inside:auto !important}' +
+        '[data-om-fakepage]{break-after:auto !important;page-break-after:auto !important}' +
+        (pageInset ? '[data-om-fakepage]{padding:0 !important;background:none !important}' : '') +
+        '}';
+      document.head.appendChild(ost);
+    }
+  } catch (e) {}
+  // macOS Preview renders Skia-PDF Luminosity soft-masks as opaque grey boxes;
+  // swap the CSS that triggers them for Preview-safe forms.
+  try {
+    for (const el of document.body.querySelectorAll('*')) {
+      const cs = getComputedStyle(el);
+
+      if (cs.boxShadow !== 'none' && cs.filter === 'none') {
+        const outs = [], kept = [];
+        for (const s of cs.boxShadow.split(/,(?![^(]*[)])/)) {
+          const t = s.trim();
+          const m = t.match(/^(rgba?[(][^)]+[)]) (-?[0-9.]+px) (-?[0-9.]+px) ([0-9.]+px) -?[0-9.]+px$/);
+          if (m && parseFloat(m[4]) > 0) outs.push('drop-shadow(' + m[2] + ' ' + m[3] + ' ' + m[4] + ' ' + m[1] + ')');
+          else kept.push(t);
+        }
+        if (outs.length) {
+          el.style.setProperty('filter', outs.join(' '), 'important');
+          el.style.setProperty('box-shadow', kept.join(', ') || 'none', 'important');
+        }
+      }
+
+      const mask = cs.maskImage && cs.maskImage !== 'none' ? cs.maskImage : cs.webkitMaskImage;
+      if (mask && mask !== 'none' && cs.filter === 'none') el.style.setProperty('filter', 'opacity(1)', 'important');
+    }
+  } catch (e) {}
+  mark('print-calling');
+  setTimeout(() => { try { window.print(); } catch (e) {} }, 200);
+})();
+</script>
+</body>
+</html>

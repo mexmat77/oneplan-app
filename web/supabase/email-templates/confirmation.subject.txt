@@ -1,0 +1,1 @@
+{{ if eq .Data.lang "RU" }}Подтвердите почту для OnePlan{{ else if eq .Data.lang "TR" }}OnePlan için e-postanızı onaylayın{{ else if eq .Data.lang "EN" }}Confirm your e-mail for OnePlan{{ else }}Подтвердите почту для OnePlan · Confirm your e-mail for OnePlan · OnePlan için e-postanızı onaylayın{{ end }}

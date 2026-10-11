@@ -1,0 +1,1 @@
+{{ if eq .Data.lang "RU" }}Сброс пароля OnePlan{{ else if eq .Data.lang "TR" }}OnePlan şifre sıfırlama{{ else if eq .Data.lang "EN" }}Reset your OnePlan password{{ else }}Сброс пароля OnePlan · Reset your OnePlan password · OnePlan şifre sıfırlama{{ end }}

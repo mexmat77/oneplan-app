@@ -1,0 +1,30 @@
+[
+{
+"id": 1,
+"name": "Ahmet Yılmaz",
+"init": "AY",
+"color": "#4d7cfe",
+"role": "admin"
+},
+{
+"id": 2,
+"name": "Elif Demir",
+"init": "ED",
+"color": "#0f9d6b",
+"role": "editor"
+},
+{
+"id": 3,
+"name": "Мария Ковач",
+"init": "МК",
+"color": "#d98a1e",
+"role": "client"
+},
+{
+"id": 4,
+"name": "Can Öztürk",
+"init": "CÖ",
+"color": "#7b4fd0",
+"role": "client"
+}
+]

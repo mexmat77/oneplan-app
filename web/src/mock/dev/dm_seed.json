@@ -1,0 +1,82 @@
+{
+"1": [
+{
+"who": 1,
+"text": "Günaydın! Bugün MEGAPOLIS'te saat 14:00'te sunum var, gelecek misin?",
+"mins": 180,
+"lang": "TR"
+},
+{
+"who": "me",
+"text": "Да, подъеду к 13:45.",
+"mins": 172,
+"st": "read",
+"lang": "RU"
+}
+],
+"2": [
+{
+"who": 2,
+"text": "A-104 dairesini sattım 🎉 müşteri Almanya'dan.",
+"mins": 150,
+"lang": "TR"
+},
+{
+"who": "me",
+"text": "Огонь! Поставил статус «Продано».",
+"mins": 148,
+"st": "read",
+"lang": "RU"
+},
+{
+"who": 2,
+"text": "Teşekkürler 🙏 ödeme bu hafta.",
+"mins": 140,
+"lang": "TR"
+}
+],
+"3": [
+{
+"who": 3,
+"text": "DIAMOND №12 rezervasyonunu güncelledim.",
+"mins": 120,
+"lang": "TR"
+},
+{
+"who": "me",
+"text": "Вижу, принял.",
+"mins": 118,
+"st": "read",
+"lang": "RU"
+}
+],
+"4": [
+{
+"who": 4,
+"text": "B blok fiyat listesi güncel mi?",
+"mins": 60,
+"lang": "TR"
+},
+{
+"who": "me",
+"text": "Да, только обновил — смотри шахматку.",
+"mins": 58,
+"st": "delivered",
+"lang": "RU"
+},
+{
+"who": 4,
+"text": "Anlaşıldı, teşekkürler 👍",
+"mins": 55,
+"lang": "TR"
+}
+],
+"0": [
+{
+"who": 0,
+"text": "Здравствуйте! Это поддержка OnePlan. Пишите по любым вопросам: объекты, шахматка, доступы сотрудников, публикация — поможем.",
+"mins": 1440,
+"lang": "RU"
+}
+]
+}

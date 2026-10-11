@@ -1,0 +1,32 @@
+# OnePlan — корень репозитория: CLAUDE.md, docs/, web/ (приложение), прототип (только html/js).
+.DS_Store
+._*
+Thumbs.db
+
+# Секреты и личные файлы — НИКОГДА в git
+web/.env.local
+web/.env*.local
+*.env
+.env
+*.docx
+~$*
+*.pem
+*.key
+
+# Сборка и зависимости
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+web/coverage/
+web/*.tsbuildinfo
+web/next-env.d.ts
+npm-debug.log*
+
+# Прототип Claude Design: в git только сами страницы и рантайм, медиа (4 ГБ) остаются локально
+One-Plan приложение/*
+!One-Plan приложение/*.html
+!One-Plan приложение/*.js
+!One-Plan приложение/*.jsx
+!One-Plan приложение/*.css
+One-Plan приложение/.thumbnail

@@ -1,0 +1,37 @@
+{
+"sold": [
+"ti-check",
+"#0f9d6b",
+"#e4f6ee"
+],
+"booked": [
+"ti-clock-hour-4",
+"#d98a1e",
+"#fdf2e4"
+],
+"price": [
+"ti-tag",
+"#4d7cfe",
+"#eef3ff"
+],
+"status": [
+"ti-refresh",
+"#7b4fd0",
+"#f2ecfb"
+],
+"media": [
+"ti-photo",
+"#0284c7",
+"#e5f3fb"
+],
+"doc": [
+"ti-file",
+"#64748b",
+"#eef1f5"
+],
+"newobj": [
+"ti-building-plus",
+"#e5484d",
+"#fdecef"
+]
+}

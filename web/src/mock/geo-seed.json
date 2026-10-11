@@ -1,0 +1,1052 @@
+[
+ {
+  "k": "adana",
+  "n": "Adana",
+  "ilces": [
+   {
+    "k": "seyhan",
+    "n": "Seyhan",
+    "semts": [
+     {
+      "k": "kurtulus-seyhan",
+      "n": "Kurtuluş",
+      "ll": [
+       36.99986,
+       35.31955
+      ],
+      "x": true
+     },
+     {
+      "k": "resatbey",
+      "n": "Reşatbey",
+      "ll": [
+       36.99651,
+       35.33172
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "cukurova",
+    "n": "Çukurova",
+    "semts": [
+     {
+      "k": "karslilar",
+      "n": "Karslılar",
+      "ll": [
+       37.06114,
+       35.29576
+      ],
+      "x": true
+     },
+     {
+      "k": "belediyeevleri",
+      "n": "Belediye Evleri",
+      "ll": [
+       37.04642,
+       35.26379
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "ankara",
+  "n": "Ankara",
+  "ilces": [
+   {
+    "k": "cankaya",
+    "n": "Çankaya",
+    "semts": [
+     {
+      "k": "kizilay",
+      "n": "Kızılay",
+      "ll": [
+       39.92292,
+       32.85226
+      ],
+      "x": true
+     },
+     {
+      "k": "cayyolu",
+      "n": "Çayyolu",
+      "ll": [
+       39.88414,
+       32.69655
+      ],
+      "x": true
+     },
+     {
+      "k": "bahcelievler",
+      "n": "Bahçelievler",
+      "ll": [
+       39.92847,
+       32.82671
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "kecioren",
+    "n": "Keçiören",
+    "semts": [
+     {
+      "k": "etlik",
+      "n": "Etlik",
+      "ll": [
+       39.98072,
+       32.8299
+      ],
+      "x": true
+     },
+     {
+      "k": "kalaba",
+      "n": "Kalaba",
+      "ll": [
+       39.97479,
+       32.86487
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "yenimahalle",
+    "n": "Yenimahalle",
+    "semts": [
+     {
+      "k": "batikent",
+      "n": "Batıkent",
+      "ll": [
+       39.96996,
+       32.71686
+      ],
+      "x": false
+     },
+     {
+      "k": "demetevler",
+      "n": "Demetevler",
+      "ll": [
+       39.96709,
+       32.78269
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "antalya",
+  "n": "Antalya",
+  "ilces": [
+   {
+    "k": "muratpasa",
+    "n": "Muratpaşa",
+    "semts": [
+     {
+      "k": "guzeloba",
+      "n": "Güzeloba",
+      "ll": [
+       36.86002,
+       30.82636
+      ],
+      "x": true
+     },
+     {
+      "k": "sirinyali-muratpasa",
+      "n": "Şirinyalı",
+      "ll": [
+       36.85753,
+       30.73702
+      ],
+      "x": true
+     },
+     {
+      "k": "fener",
+      "n": "Fener",
+      "ll": [
+       36.85118,
+       30.75547
+      ],
+      "x": true
+     },
+     {
+      "k": "caglayan",
+      "n": "Çağlayan",
+      "ll": [
+       36.85096,
+       30.77251
+      ],
+      "x": true
+     },
+     {
+      "k": "yesilbahce-muratpasa",
+      "n": "Yeşilbahçe",
+      "ll": [
+       36.86926,
+       30.72245
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "konyaalti",
+    "n": "Konyaaltı",
+    "semts": [
+     {
+      "k": "liman",
+      "n": "Liman",
+      "ll": [
+       36.80777,
+       30.58116
+      ],
+      "x": true
+     },
+     {
+      "k": "hurma",
+      "n": "Hurma",
+      "ll": [
+       36.85755,
+       30.60592
+      ],
+      "x": true
+     },
+     {
+      "k": "uncali",
+      "n": "Uncalı",
+      "ll": [
+       36.88302,
+       30.62545
+      ],
+      "x": true
+     },
+     {
+      "k": "sarisu",
+      "n": "Sarısu",
+      "ll": [
+       36.84241,
+       30.58929
+      ],
+      "x": true
+     },
+     {
+      "k": "arapsuyu",
+      "n": "Arapsuyu",
+      "ll": [
+       36.87855,
+       30.65343
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "kepez",
+    "n": "Kepez",
+    "semts": [
+     {
+      "k": "goksu-kepez",
+      "n": "Göksu",
+      "ll": [
+       36.91387,
+       30.75409
+      ],
+      "x": true
+     },
+     {
+      "k": "varsak",
+      "n": "Varsak",
+      "ll": [
+       36.99022,
+       30.71657
+      ],
+      "x": false
+     },
+     {
+      "k": "santral",
+      "n": "Santral",
+      "ll": [
+       36.93947,
+       30.63078
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "alanya",
+    "n": "Alanya",
+    "semts": [
+     {
+      "k": "mahmutlar",
+      "n": "Mahmutlar",
+      "ll": [
+       36.49024,
+       32.09901
+      ],
+      "x": false
+     },
+     {
+      "k": "oba",
+      "n": "Oba",
+      "ll": [
+       36.55216,
+       32.05724
+      ],
+      "x": true
+     },
+     {
+      "k": "tosmur",
+      "n": "Tosmur",
+      "ll": [
+       36.53009,
+       32.05344
+      ],
+      "x": true
+     },
+     {
+      "k": "kestel",
+      "n": "Kestel",
+      "ll": [
+       36.50733,
+       32.07844
+      ],
+      "x": false
+     },
+     {
+      "k": "cikcilli",
+      "n": "Cikcilli",
+      "ll": [
+       36.55136,
+       32.03099
+      ],
+      "x": true
+     },
+     {
+      "k": "avsallar",
+      "n": "Avsallar",
+      "ll": [
+       36.62338,
+       31.7679
+      ],
+      "x": false
+     },
+     {
+      "k": "kargicak-alanya",
+      "n": "Kargıcak",
+      "ll": [
+       36.46101,
+       32.12534
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "serik",
+    "n": "Serik",
+    "semts": [
+     {
+      "k": "belek",
+      "n": "Belek",
+      "ll": [
+       36.85394,
+       31.08222
+      ],
+      "x": true
+     },
+     {
+      "k": "kadriye",
+      "n": "Kadriye",
+      "ll": [
+       36.87655,
+       31.00272
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "manavgat",
+    "n": "Manavgat",
+    "semts": [
+     {
+      "k": "side",
+      "n": "Side",
+      "ll": [
+       36.76644,
+       31.38922
+      ],
+      "x": false
+     },
+     {
+      "k": "evrenseki",
+      "n": "Evrenseki",
+      "ll": [
+       36.84042,
+       31.35576
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "kemer",
+    "n": "Kemer",
+    "semts": [
+     {
+      "k": "goynuk",
+      "n": "Göynük",
+      "ll": [
+       36.67012,
+       30.54809
+      ],
+      "x": false
+     },
+     {
+      "k": "camyuva",
+      "n": "Çamyuva",
+      "ll": [
+       36.55591,
+       30.56232
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "aksu",
+    "n": "Aksu",
+    "semts": [
+     {
+      "k": "calkaya",
+      "n": "Çalkaya",
+      "ll": [
+       36.92057,
+       30.87216
+      ],
+      "x": true
+     },
+     {
+      "k": "kundu",
+      "n": "Kundu",
+      "ll": [
+       36.87731,
+       30.90769
+      ],
+      "x": true
+     },
+     {
+      "k": "altintas-aksu",
+      "n": "Altıntaş",
+      "ll": [
+       36.89047,
+       30.82606
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "dosemealti",
+    "n": "Döşemealtı",
+    "semts": [
+     {
+      "k": "yesilbayir",
+      "n": "Yeşilbayır",
+      "ll": [
+       36.98988,
+       30.60028
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "kumluca",
+    "n": "Kumluca",
+    "semts": [
+     {
+      "k": "mavikent",
+      "n": "Mavikent",
+      "ll": [
+       36.31446,
+       30.34781
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "gazipasa",
+    "n": "Gazipaşa",
+    "semts": [
+     {
+      "k": "pazarci",
+      "n": "Pazarcı",
+      "ll": [
+       36.26744,
+       32.29047
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "aydin",
+  "n": "Aydın",
+  "ilces": [
+   {
+    "k": "kusadasi",
+    "n": "Kuşadası",
+    "semts": [
+     {
+      "k": "turkmen-kusadasi",
+      "n": "Türkmen",
+      "ll": [
+       37.87382,
+       27.26462
+      ],
+      "x": true
+     },
+     {
+      "k": "davutlar",
+      "n": "Davutlar",
+      "ll": [
+       37.74229,
+       27.27002
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "didim",
+    "n": "Didim",
+    "semts": [
+     {
+      "k": "altinkum",
+      "n": "Altınkum",
+      "ll": [
+       37.35662,
+       27.27851
+      ],
+      "x": false
+     },
+     {
+      "k": "efeler-didim",
+      "n": "Efeler",
+      "ll": [
+       37.37444,
+       27.26394
+      ],
+      "x": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "bursa",
+  "n": "Bursa",
+  "ilces": [
+   {
+    "k": "nilufer",
+    "n": "Nilüfer",
+    "semts": [
+     {
+      "k": "gorukle",
+      "n": "Görükle",
+      "ll": [
+       40.24942,
+       28.86038
+      ],
+      "x": true
+     },
+     {
+      "k": "ozluce",
+      "n": "Özlüce",
+      "ll": [
+       40.23791,
+       28.90034
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "osmangazi",
+    "n": "Osmangazi",
+    "semts": [
+     {
+      "k": "demirtas",
+      "n": "Demirtaş",
+      "ll": [
+       40.27213,
+       29.0942
+      ],
+      "x": false
+     },
+     {
+      "k": "zafer-osmangazi",
+      "n": "Zafer",
+      "ll": [
+       40.19747,
+       29.08242
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "istanbul",
+  "n": "İstanbul",
+  "ilces": [
+   {
+    "k": "kadikoy",
+    "n": "Kadıköy",
+    "semts": [
+     {
+      "k": "moda",
+      "n": "Moda",
+      "ll": [
+       40.98117,
+       29.02547
+      ],
+      "x": false
+     },
+     {
+      "k": "fenerbahce",
+      "n": "Fenerbahçe",
+      "ll": [
+       40.96955,
+       29.03755
+      ],
+      "x": false
+     },
+     {
+      "k": "goztepe",
+      "n": "Göztepe",
+      "ll": [
+       40.97806,
+       29.06092
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "besiktas",
+    "n": "Beşiktaş",
+    "semts": [
+     {
+      "k": "levent",
+      "n": "Levent",
+      "ll": [
+       41.08084,
+       29.01752
+      ],
+      "x": true
+     },
+     {
+      "k": "etiler",
+      "n": "Etiler",
+      "ll": [
+       41.0828,
+       29.03584
+      ],
+      "x": true
+     },
+     {
+      "k": "bebek",
+      "n": "Bebek",
+      "ll": [
+       41.07896,
+       29.04573
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "sisli",
+    "n": "Şişli",
+    "semts": [
+     {
+      "k": "nisantasi",
+      "n": "Nişantaşı",
+      "ll": [
+       41.05169,
+       28.9917
+      ],
+      "x": false
+     },
+     {
+      "k": "mecidiyekoy",
+      "n": "Mecidiyeköy",
+      "ll": [
+       41.07173,
+       28.99545
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "uskudar",
+    "n": "Üsküdar",
+    "semts": [
+     {
+      "k": "kuzguncuk",
+      "n": "Kuzguncuk",
+      "ll": [
+       41.03419,
+       29.03422
+      ],
+      "x": true
+     },
+     {
+      "k": "cengelkoy",
+      "n": "Çengelköy",
+      "ll": [
+       41.05155,
+       29.06032
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "beylikduzu",
+    "n": "Beylikdüzü",
+    "semts": [
+     {
+      "k": "adnankahveci",
+      "n": "Adnan Kahveci",
+      "ll": [
+       40.99878,
+       28.62595
+      ],
+      "x": true
+     },
+     {
+      "k": "yakuplu",
+      "n": "Yakuplu",
+      "ll": [
+       40.98683,
+       28.68137
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "izmir",
+  "n": "İzmir",
+  "ilces": [
+   {
+    "k": "konak",
+    "n": "Konak",
+    "semts": [
+     {
+      "k": "alsancak",
+      "n": "Alsancak",
+      "ll": [
+       38.43895,
+       27.14342
+      ],
+      "x": true
+     },
+     {
+      "k": "goztepe-konak",
+      "n": "Göztepe",
+      "ll": [
+       38.39876,
+       27.0922
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "karsiyaka",
+    "n": "Karşıyaka",
+    "semts": [
+     {
+      "k": "bostanli",
+      "n": "Bostanlı",
+      "ll": [
+       38.45729,
+       27.09621
+      ],
+      "x": true
+     },
+     {
+      "k": "mavisehir",
+      "n": "Mavişehir",
+      "ll": [
+       38.4688,
+       27.07598
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "bornova",
+    "n": "Bornova",
+    "semts": [
+     {
+      "k": "kazimdirik",
+      "n": "Kazımdirik",
+      "ll": [
+       38.45422,
+       27.20868
+      ],
+      "x": true
+     },
+     {
+      "k": "evka3",
+      "n": "Evka 3",
+      "ll": [
+       38.46811,
+       27.25156
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "cesme",
+    "n": "Çeşme",
+    "semts": [
+     {
+      "k": "ilica",
+      "n": "Ilıca",
+      "ll": [
+       38.30789,
+       26.35626
+      ],
+      "x": true
+     },
+     {
+      "k": "alacati",
+      "n": "Alaçatı",
+      "ll": [
+       38.28476,
+       26.37452
+      ],
+      "x": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "mersin",
+  "n": "Mersin",
+  "ilces": [
+   {
+    "k": "yenisehir",
+    "n": "Yenişehir",
+    "semts": [
+     {
+      "k": "guvenevler-yenisehir",
+      "n": "Güvenevler",
+      "ll": [
+       36.78846,
+       34.58735
+      ],
+      "x": true
+     },
+     {
+      "k": "limonluk",
+      "n": "Limonluk",
+      "ll": [
+       36.79961,
+       34.59428
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "mezitli",
+    "n": "Mezitli",
+    "semts": [
+     {
+      "k": "menderes-mezitli",
+      "n": "Menderes",
+      "ll": [
+       36.7375,
+       34.5234
+      ],
+      "x": true
+     },
+     {
+      "k": "viransehir",
+      "n": "Viranşehir",
+      "ll": [
+       36.74441,
+       34.54053
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "erdemli",
+    "n": "Erdemli",
+    "semts": [
+     {
+      "k": "ayas",
+      "n": "Ayaş",
+      "ll": [
+       36.49891,
+       34.18554
+      ],
+      "x": false
+     },
+     {
+      "k": "kizkalesi",
+      "n": "Kızkalesi",
+      "ll": [
+       36.46172,
+       34.14397
+      ],
+      "x": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "mugla",
+  "n": "Muğla",
+  "ilces": [
+   {
+    "k": "bodrum",
+    "n": "Bodrum",
+    "semts": [
+     {
+      "k": "yalikavak",
+      "n": "Yalıkavak",
+      "ll": [
+       37.10562,
+       27.29306
+      ],
+      "x": false
+     },
+     {
+      "k": "gumbet",
+      "n": "Gümbet",
+      "ll": [
+       37.03319,
+       27.40497
+      ],
+      "x": false
+     },
+     {
+      "k": "turgutreis",
+      "n": "Turgutreis",
+      "ll": [
+       37.00577,
+       27.25783
+      ],
+      "x": false
+     }
+    ]
+   },
+   {
+    "k": "fethiye",
+    "n": "Fethiye",
+    "semts": [
+     {
+      "k": "akarca-fethiye",
+      "n": "Akarca",
+      "ll": [
+       36.6519,
+       29.11846
+      ],
+      "x": true
+     },
+     {
+      "k": "oludeniz",
+      "n": "Ölüdeniz",
+      "ll": [
+       36.5582,
+       29.13394
+      ],
+      "x": true
+     }
+    ]
+   },
+   {
+    "k": "marmaris",
+    "n": "Marmaris",
+    "semts": [
+     {
+      "k": "icmeler",
+      "n": "İçmeler",
+      "ll": [
+       36.80133,
+       28.23136
+      ],
+      "x": false
+     },
+     {
+      "k": "armutalan",
+      "n": "Armutalan",
+      "ll": [
+       36.85569,
+       28.2484
+      ],
+      "x": false
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "k": "trabzon",
+  "n": "Trabzon",
+  "ilces": [
+   {
+    "k": "ortahisar",
+    "n": "Ortahisar",
+    "semts": [
+     {
+      "k": "boztepe-ortahisar",
+      "n": "Boztepe",
+      "ll": [
+       40.99436,
+       39.72737
+      ],
+      "x": true
+     },
+     {
+      "k": "kalkinma",
+      "n": "Kalkınma",
+      "ll": [
+       41.00025,
+       39.76352
+      ],
+      "x": true
+     }
+    ]
+   }
+  ]
+ }
+]

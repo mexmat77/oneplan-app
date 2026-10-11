@@ -1,0 +1,1 @@
+{{ if eq .Data.lang "RU" }}Вход в OnePlan{{ else if eq .Data.lang "TR" }}OnePlan'a giriş{{ else if eq .Data.lang "EN" }}Sign in to OnePlan{{ else }}Вход в OnePlan · Sign in to OnePlan · OnePlan'a giriş{{ end }}

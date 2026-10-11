@@ -1,0 +1,16 @@
+/* Лендинг one-plan.pro — глобальные стили прототипа «OnePlan Главная.dc.html» (строки 14–26), ограниченные корнем `.lp-root`,
+   чтобы не задевать приложение. Шрифты: Manrope (заголовки, кнопки) и PT Sans (текст, поля) — `next/font` в `app/page.tsx`. */
+.lp-root, .lp-root * { box-sizing: border-box; margin: 0; padding: 0; }
+.lp-root { font-family: var(--font-lp-pt), "PT Sans", sans-serif; background: #fff; color: #14243f; }
+.lp-root h1, .lp-root h2, .lp-root h3, .lp-root h4, .lp-root button { font-family: var(--font-lp-manrope), "Manrope", sans-serif; }
+.lp-root input { font-family: var(--font-lp-pt), "PT Sans", sans-serif; }
+.lp-root a { color: #4d7cfe; text-decoration: none; }
+.lp-root a:hover { color: #3a63d4; }
+.lp-root ::selection { background: rgba(77, 124, 254, .2); }
+/* иконка: как глиф webfont — размер от font-size, высота строки 1 */
+.lp-ti { display: inline-flex; line-height: 1; font-style: normal; vertical-align: -0.125em; }
+.lp-ti svg { display: block; width: 1em; height: 1em; }
+@keyframes opCell { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes opRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes opBlink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+@keyframes opPulse { 0% { box-shadow: 0 0 0 0 rgba(240, 173, 0, .5); } 100% { box-shadow: 0 0 0 8px rgba(240, 173, 0, 0); } }

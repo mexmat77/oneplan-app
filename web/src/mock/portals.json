@@ -1,0 +1,29 @@
+[
+  {
+    "k": "sah",
+    "name": "Sahibinden",
+    "bg": "#f0ad00"
+  },
+  {
+    "k": "hep",
+    "name": "Hepsiemlak",
+    "bg": "#e5484d"
+  },
+  {
+    "k": "eml",
+    "name": "Emlakjet",
+    "bg": "#4d7cfe"
+  },
+  {
+    "k": "akd",
+    "name": "Akdeniz.ru",
+    "bg": "#fff",
+    "akd": true
+  },
+  {
+    "k": "ot",
+    "name": "One-team.ru",
+    "bg": "#fff",
+    "op": true
+  }
+]

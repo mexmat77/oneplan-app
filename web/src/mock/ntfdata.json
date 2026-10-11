@@ -1,0 +1,232 @@
+[
+  {
+    "id": "nfp",
+    "icon": "ti-heart-down",
+    "tone": "#0f9d6b",
+    "bg": "#e4f6ee",
+    "day": "today",
+    "time": "16:05",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Цена снижена в избранном",
+        "«3+1 Лиман с бассейном» подешевел на 480 000 ₺ — теперь 8 640 000 ₺."
+      ],
+      "EN": [
+        "Price drop in favourites",
+        "“3+1 Liman with pool” is down 480 000 ₺ — now 8 640 000 ₺."
+      ],
+      "TR": [
+        "Favorilerde fiyat düştü",
+        "“Havuzlu 3+1 Liman” 480 000 ₺ düştü — şimdi 8 640 000 ₺."
+      ]
+    }
+  },
+  {
+    "id": "nfs",
+    "icon": "ti-heart-exclamation",
+    "tone": "#e5484d",
+    "bg": "#fdecec",
+    "day": "today",
+    "time": "11:20",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Объект из избранного зарезервирован",
+        "«2+1 Гюзелоба, 3 этаж» перешёл в статус «Резерв» — уточните у владельца."
+      ],
+      "EN": [
+        "Favourite listing reserved",
+        "“2+1 Güzeloba, 3rd floor” moved to “Reserved” — check with the owner."
+      ],
+      "TR": [
+        "Favori ilan rezerve edildi",
+        "“2+1 Güzeloba, 3. kat” “Rezerve” durumuna geçti — sahibiyle teyit edin."
+      ]
+    }
+  },
+  {
+    "id": "nq",
+    "icon": "ti-home-search",
+    "tone": "#c98d00",
+    "bg": "#fdf5df",
+    "day": "today",
+    "time": "15:40",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Под ваш объект есть запрос",
+        "Mehmet Kaya ищет 2+1 в Alanya до 6 500 000 ₺ — подходит «2+1 с видом на море». Откройте Поиски → Запросы базы"
+      ],
+      "EN": [
+        "There is a request matching your listing",
+        "Mehmet Kaya is looking for a 2+1 in Alanya up to 6,500,000 ₺ — matches your listing. Open Searches → Base requests"
+      ],
+      "TR": [
+        "İlanınıza uygun bir talep var",
+        "Mehmet Kaya, Alanya’da 6.500.000 ₺’ye kadar 2+1 arıyor — ilanınızla eşleşiyor. Aramalar → Talepler"
+      ]
+    }
+  },
+  {
+    "id": "n0",
+    "icon": "ti-target-arrow",
+    "tone": "#4d7cfe",
+    "bg": "#eef3ff",
+    "day": "today",
+    "time": "15:02",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "2 новых объекта по поиску «Анна · у моря»",
+        "3+1 Лиман · 8,64 млн ₺, 2+1 Оба · 5,71 млн ₺"
+      ],
+      "EN": [
+        "2 new matches for “Anna · by the sea”",
+        "3+1 Liman · ₺8.64M, 2+1 Oba · ₺5.71M"
+      ],
+      "TR": [
+        "“Anna · denize yakın” araması için 2 yeni ilan",
+        "3+1 Liman · 8,64M ₺, Oba 2+1 · 5,71M ₺"
+      ]
+    }
+  },
+  {
+    "id": "n1",
+    "icon": "ti-eye",
+    "tone": "#0f9d6b",
+    "bg": "#e4f6ee",
+    "day": "today",
+    "time": "14:20",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Анна открыла подборку «У моря»",
+        "5 объектов · 2-й просмотр"
+      ],
+      "EN": [
+        "Anna opened the “By the sea” collection",
+        "5 listings · 2nd view"
+      ],
+      "TR": [
+        "Anna “Denize yakın” koleksiyonunu açtı",
+        "5 ilan · 2. görüntüleme"
+      ]
+    }
+  },
+  {
+    "id": "n2",
+    "icon": "ti-heart",
+    "tone": "#e5484d",
+    "bg": "#fdecec",
+    "day": "today",
+    "time": "14:22",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Анне понравились 3 объекта",
+        "3+1 Лиман, 2+1 Махмутлар, пентхаус Лара"
+      ],
+      "EN": [
+        "Anna liked 3 listings",
+        "3+1 Liman, 2+1 Mahmutlar, Lara penthouse"
+      ],
+      "TR": [
+        "Anna 3 ilanı beğendi",
+        "3+1 Liman, 2+1 Mahmutlar, Lara çatı dubleksi"
+      ]
+    }
+  },
+  {
+    "id": "n3",
+    "icon": "ti-message-circle",
+    "tone": "#4d7cfe",
+    "bg": "#eef3ff",
+    "day": "today",
+    "time": "10:31",
+    "unread": true,
+    "tx": {
+      "RU": [
+        "Mehmet Kaya написал в чате",
+        "Клиент хочет посмотреть в пятницу…"
+      ],
+      "EN": [
+        "Mehmet Kaya sent a message",
+        "My client wants a viewing on Friday…"
+      ],
+      "TR": [
+        "Mehmet Kaya mesaj gönderdi",
+        "Müşterim cuma günü görmek istiyor…"
+      ]
+    }
+  },
+  {
+    "id": "n4",
+    "icon": "ti-home-plus",
+    "tone": "#7b4fd0",
+    "bg": "#efe7fb",
+    "day": "today",
+    "time": "09:05",
+    "unread": false,
+    "tx": {
+      "RU": [
+        "Новый объект в базе",
+        "Irina Alieva: 2+1 Оба с видом · 5 710 000 ₺"
+      ],
+      "EN": [
+        "New listing in the database",
+        "Irina Alieva: 2+1 Oba with view · ₺5,710,000"
+      ],
+      "TR": [
+        "Veritabanında yeni ilan",
+        "Irina Alieva: Oba manzaralı 2+1 · 5.710.000 ₺"
+      ]
+    }
+  },
+  {
+    "id": "n5",
+    "icon": "ti-user-plus",
+    "tone": "#f0ad00",
+    "bg": "#fdf5df",
+    "day": "yest",
+    "time": "18:40",
+    "unread": false,
+    "tx": {
+      "RU": [
+        "Заявка на вступление",
+        "Sergey Novikov ждёт подтверждения"
+      ],
+      "EN": [
+        "Membership application",
+        "Sergey Novikov awaits approval"
+      ],
+      "TR": [
+        "Üyelik başvurusu",
+        "Sergey Novikov onay bekliyor"
+      ]
+    }
+  },
+  {
+    "id": "n6",
+    "icon": "ti-link",
+    "tone": "#0f9d6b",
+    "bg": "#e4f6ee",
+    "day": "yest",
+    "time": "12:02",
+    "unread": false,
+    "tx": {
+      "RU": [
+        "Ссылка-подборка отправлена",
+        "Igor Braun · 6 объектов"
+      ],
+      "EN": [
+        "Collection link sent",
+        "Igor Braun · 6 listings"
+      ],
+      "TR": [
+        "Koleksiyon bağlantısı gönderildi",
+        "Igor Braun · 6 ilan"
+      ]
+    }
+  }
+]

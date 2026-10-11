@@ -1,0 +1,66 @@
+[
+  {
+    "id": "b1",
+    "by": "r1",
+    "deal": "sale",
+    "type": "flat",
+    "rooms": "2+1",
+    "il": "antalya",
+    "geo": "Antalya · Alanya · Oba",
+    "max": 6500000,
+    "days": 21,
+    "c": {
+      "RU": "Клиент с наличными, готов выйти на сделку за неделю. Этаж не первый.",
+      "EN": "Cash buyer, ready to close within a week. Not a ground floor.",
+      "TR": "Nakit müşteri, bir hafta içinde kapanışa hazır. Giriş katı olmasın."
+    }
+  },
+  {
+    "id": "b2",
+    "by": "r2",
+    "deal": "rent",
+    "type": "flat",
+    "rooms": "1+1",
+    "il": "antalya",
+    "geo": "Antalya · Muratpaşa · Lara",
+    "max": 35000,
+    "days": 12,
+    "c": {
+      "RU": "Семейная пара на год, с мебелью. Депозит в две аренды — не проблема.",
+      "EN": "A couple for one year, furnished. Two-month deposit is fine.",
+      "TR": "Bir yıllığına çift, eşyalı. İki kira depozito sorun değil."
+    }
+  },
+  {
+    "id": "b3",
+    "by": "r5",
+    "deal": "sale",
+    "type": "house",
+    "rooms": "4+1",
+    "il": "antalya",
+    "geo": "Antalya · Konyaaltı",
+    "max": 25000000,
+    "days": 28,
+    "c": {
+      "RU": "Вилла с бассейном под ПМЖ, рассмотрим Hurma и Liman.",
+      "EN": "A villa with a pool for relocation, Hurma and Liman preferred.",
+      "TR": "Yerleşim için havuzlu villa, Hurma ve Liman öncelikli."
+    }
+  },
+  {
+    "id": "b4",
+    "by": "r2",
+    "deal": "sale",
+    "type": "flat",
+    "rooms": "3+1",
+    "il": "istanbul",
+    "geo": "İstanbul · Kadıköy · Moda",
+    "max": 18000000,
+    "days": 9,
+    "c": {
+      "RU": "Инвестор под аренду, важна близость к метро.",
+      "EN": "An investor for rental income, metro proximity matters.",
+      "TR": "Kira getirisi için yatırımcı, metroya yakınlık önemli."
+    }
+  }
+]

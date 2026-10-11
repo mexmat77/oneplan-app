@@ -1,0 +1,112 @@
+[
+{
+"id": 1,
+"type": "sold",
+"who": 2,
+"obj": "MEGAPOLIS RESIDENCE",
+"unit": "A-104",
+"mins": 8
+},
+{
+"id": 2,
+"type": "booked",
+"who": 3,
+"obj": "YÜKSELEN DIAMOND",
+"unit": "12",
+"mins": 41
+},
+{
+"id": 3,
+"type": "price",
+"who": 1,
+"obj": "MEGAPOLIS RESIDENCE",
+"unit": "B-203",
+"extra": "2 350 000 €",
+"mins": 126
+},
+{
+"id": 4,
+"type": "status",
+"who": 4,
+"obj": "ALLURE",
+"unit": "7",
+"extra": "process",
+"mins": 190
+},
+{
+"id": 5,
+"type": "media",
+"who": 2,
+"obj": "AKROPOLIS RESIDENCE",
+"mins": 305
+},
+{
+"id": 14,
+"type": "doc",
+"who": 3,
+"obj": "YÜKSELEN DIAMOND",
+"mins": 520
+},
+{
+"id": 6,
+"type": "newobj",
+"who": 1,
+"obj": "AVOCADO VILLAGE",
+"mins": 1440
+},
+{
+"id": 7,
+"type": "sold",
+"who": 3,
+"obj": "ALLURE",
+"unit": "3",
+"mins": 1580
+},
+{
+"id": 8,
+"type": "price",
+"who": 1,
+"obj": "AKROPOLIS RESIDENCE",
+"unit": "C-11",
+"extra": "1 180 000 €",
+"mins": 1720
+},
+{
+"id": 9,
+"type": "booked",
+"who": 2,
+"obj": "MEGAPOLIS RESIDENCE",
+"unit": "A-220",
+"mins": 1990
+},
+{
+"id": 10,
+"type": "status",
+"who": 4,
+"obj": "AVOCADO VILLAGE",
+"unit": "5",
+"extra": "sold",
+"mins": 2300
+},
+{
+"id": 11,
+"type": "media",
+"who": 1,
+"obj": "ALLURE",
+"mins": 3100
+},
+{
+"id": 12,
+"type": "doc",
+"who": 2,
+"obj": "MEGAPOLIS RESIDENCE",
+"mins": 4200
+},
+{
+"id": 13,
+"type": "newobj",
+"who": 3,
+"obj": "SEA PEARL RESIDENCE",
+"mins": 5600
+}
+]

@@ -1,0 +1,14 @@
+{
+"admin": [
+"#e5484d",
+"#fdecef"
+],
+"editor": [
+"#4d7cfe",
+"#eef3ff"
+],
+"client": [
+"#43a047",
+"#e4f6ee"
+]
+}

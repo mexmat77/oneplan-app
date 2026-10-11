@@ -1,0 +1,294 @@
+[
+{
+"id": "uyelik",
+"icon": "ti-file-certificate",
+"title": "ONEPLAN Üyelik ve Kullanım Sözleşmesi",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "1. Taraflar",
+"p": [
+"Bu sözleşme, yukarıda ticari bilgileri belirtilen ONETEAM İNŞAAT LTD. ŞTİ. (\"ONEPLAN\" / \"Operatör\") ile platforma üye olan gerçek veya tüzel kişi (\"Üye\") arasında elektronik ortamda kurulur.",
+"Üye, kayıt sırasında bu sözleşmeyi ve Kullanım Koşulları'nı aktif olarak onaylayarak taraf olur."
+]
+},
+{
+"h": "2. Hizmetin Tanımı",
+"p": [
+"ONEPLAN, yalnızca kayıtlı ve onaylanmış profesyonel kullanıcıların erişebildiği kapalı bir B2B gayrimenkul portföy ve yönetim sistemidir.",
+"ONEPLAN bir kamuya açık ilan sitesi veya yayın organı değildir. Kapalı ağdaki kayıtların arama motorlarınca dizinlenmemesi esastır."
+]
+},
+{
+"h": "3. Üyelik ve Yetki Beyanı",
+"p": [
+"Kurumsal üyelikte sözleşmeyi kabul eden kişi, ilgili işletme adına kabul etmeye yetkili olduğunu beyan eder.",
+"Operatör, yüksek güvenlik gerektiren durumlarda yetki teyidi (Yetki Belgesi, imza sirküleri vb.) talep edebilir."
+]
+},
+{
+"h": "4. Ücretlendirme",
+"p": [
+"ONEPLAN, tanıtım ve pilot kullanım dönemi kapsamında geçici olarak ücretsiz sunulmaktadır. Ücretsiz kullanım kazanılmış veya süresiz bir hak teşkil etmez. Kullanıcı açıkça ücretli paketi kabul etmedikçe herhangi bir ücret tahakkuk ettirilmez."
+]
+},
+{
+"h": "5. Sorumluluk",
+"p": [
+"İçeriği ekleyen Üye, eklediği bilgi, görsel ve belgelerden sorumludur. Operatör, içeriği inceleme, geçici gizleme ve kaldırma hakkını saklı tutar.",
+"Operatörün sorumluluğu Türk hukukunun emredici hükümleri çerçevesinde makul biçimde sınırlanır; mutlak sorumsuzluk iddia edilmez."
+]
+},
+{
+"h": "6. Yürürlük ve Değişiklik",
+"p": [
+"Operatör, sözleşmenin esaslı değişikliklerinde güncel metni girişte Üye'ye sunar ve zorunlu şartlar kabul edilene kadar kullanımı sınırlayabilir. Önceki kabul kayıtları silinmez."
+]
+}
+]
+},
+{
+"id": "kosullar",
+"icon": "ti-list-check",
+"title": "Kullanım Koşulları",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "1. Erişim",
+"p": [
+"Platform yalnızca profesyonel kullanıma yöneliktir. Hesap paylaşımı, devri ve yetkisiz erişim yasaktır."
+]
+},
+{
+"h": "2. Yasak Davranışlar",
+"p": [
+"Veri tabanının toplu kopyalanması, scraping, kapalı portföyün izinsiz yayımlanması, kişilerin izinsiz pazarlama amacıyla rahatsız edilmesi ve sistem kısıtlarının aşılması yasaktır."
+]
+},
+{
+"h": "3. Hesap Güvenliği",
+"p": [
+"Üye, giriş bilgilerinin gizliliğinden sorumludur. Şüpheli erişimde Operatör hesabı geçici olarak askıya alabilir."
+]
+},
+{
+"h": "4. Hizmet Sürekliliği",
+"p": [
+"Operatör bakım, geliştirme veya güvenlik nedeniyle hizmeti geçici olarak durdurabilir; kesintisizlik garanti edilmez."
+]
+}
+]
+},
+{
+"id": "gizlilik",
+"icon": "ti-lock",
+"title": "Gizlilik Politikası",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Amaç",
+"p": [
+"Bu politika, ONEPLAN'ın hangi verileri hangi amaçla işlediğini genel olarak açıklar. Ayrıntılı yasal bilgilendirme KVKK Aydınlatma Metni'nde yer alır."
+]
+},
+{
+"h": "Toplanan Veriler",
+"p": [
+"Kullanıcı ve şirket temsilcisi bilgileri, çalışan bilgileri, IP ve işlem kayıtları, taşınmaz bilgileri, görseller ve talep/mesajlar."
+]
+},
+{
+"h": "Paylaşım",
+"p": [
+"Veriler, hizmetin gereği ve hukuki yükümlülükler çerçevesinde işlenir. Gizli portföy kayıtlarında malik kimlik ve iletişim bilgileri diğer üyelere gösterilmez."
+]
+}
+]
+},
+{
+"id": "kvkk",
+"icon": "ti-shield-lock",
+"title": "KVKK Aydınlatma Metni",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Veri Sorumlusu",
+"p": [
+"Veri sorumlusu: ONETEAM İNŞAAT LTD. ŞTİ.. MERSİS: 0643079375300001. Adres: Hurma Mah. 286 Sk. Via Maris-1 F Blok Sit. No: 6F İç Kapı No: 27, Konyaaltı / ANTALYA. Başvuru: kvkk@one-team.pro"
+]
+},
+{
+"h": "İşleme Amaçları",
+"p": [
+"Üyelik sözleşmesinin kurulması ve ifası, platform hizmetlerinin sunulması, güvenlik ve kayıt tutma, hukuki yükümlülüklerin yerine getirilmesi."
+]
+},
+{
+"h": "Hukuki Sebepler",
+"p": [
+"İşleme; sözleşmenin ifası, hukuki yükümlülük, meşru menfaat dengesi ve yalnızca gerçekten gerekli hallerde açık rıza sebeplerine dayanır. Aydınlatma, açık rıza anlamına gelmez."
+]
+},
+{
+"h": "Haklarınız",
+"p": [
+"İlgili kişi, KVKK kapsamındaki haklarını (bilgi talebi, düzeltme, silme, itiraz vb.) kvkk@one-team.pro üzerinden kullanabilir."
+]
+},
+{
+"h": "Yurt Dışı Aktarım",
+"p": [
+"Barındırma, e-posta, analitik gibi hizmetlerde yurt dışı aktarım söz konusu olabilir. İlgili aktarımların hukuki temeli ayrıca değerlendirilir."
+]
+}
+]
+},
+{
+"id": "cerez",
+"icon": "ti-cookie",
+"title": "Çerez Politikası",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Çerez Türleri",
+"p": [
+"ONEPLAN yalnızca giriş yapılarak kullanılan kapalı bir sistemdir ve yalnızca oturum ve güvenlik için gerekli zorunlu çerezleri kullanır. Reklam veya izleme çerezi kullanılmaz."
+]
+},
+{
+"h": "Rıza",
+"p": [
+"Zorunlu çerezler oturum ve güvenlik için gereklidir; bunlar olmadan platforma giriş yapılamaz. Ayrı bir onay gerektiren reklam veya analitik çerezi bulunmadığından çerez onay penceresi gösterilmez."
+]
+}
+]
+},
+{
+"id": "icerik",
+"icon": "ti-clipboard-check",
+"title": "İçerik ve Taşınmaz Kayıt Kuralları",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Beyanlar",
+"p": [
+"Üye; taşınmaz bilgisini ekleme ve yetkili kullanıcılarla paylaşma hakkına sahip olduğunu, yüklediği görsel/plan/belgeleri kullanma hakkını, ve bilgilerin gerçeğe uygun olduğunu beyan eder."
+]
+},
+{
+"h": "Kapalı Ağ vs Kamuya Açık Yayım",
+"p": [
+"Taşınmazın kapalı ağa eklenmesi, otomatik olarak kamuya açık ilan sayılmaz. Kamuya açık yayım için ayrı yetki beyanı ve uygulanabilir EİDS şartları aranır."
+]
+},
+{
+"h": "Gizlilik Seviyeleri",
+"p": [
+"Gizli portföyde tam adres, daire no, malik adı ve kimlik/tapu gibi belgeler diğer üyelere gösterilmez."
+]
+}
+]
+},
+{
+"id": "sikayet",
+"icon": "ti-flag",
+"title": "Şikâyet ve İçerik Kaldırma Prosedürü",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Bildirim",
+"p": [
+"Her kayıtta \"İçeriği Şikâyet Et\" seçeneği bulunur. Şikâyetler kategorilere ayrılır ve yönetim kuyruğuna düşer."
+]
+},
+{
+"h": "İnceleme",
+"p": [
+"Operatör; içeriği geçici gizleyebilir, belge talep edebilir ve sonuçta içeriği koruma, düzeltme, sınırlama veya kaldırma kararı verebilir. Süreç kayıt altına alınır."
+]
+},
+{
+"h": "Hukuki Bildirim",
+"p": [
+"Yasal bildirimler için: hukuk@one-team.pro"
+]
+}
+]
+},
+{
+"id": "veri",
+"icon": "ti-server-cog",
+"title": "Kişisel Veri İşleme ve Güvenlik Protokolü",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Rollerin Belirlenmesi",
+"p": [
+"ONEPLAN bazı işlemlerde veri sorumlusu, bazı işlemlerde acente/geliştirici adına veri işleyen olabilir; bazı hallerde taraflar bağımsız veri sorumlusudur."
+]
+},
+{
+"h": "Kapsam",
+"p": [
+"Protokol; işleme amacı, veri kategorileri, süre, gizlilik, teknik ve idari tedbirler, alt işleyenler, yurt dışı aktarım, ihlal bildirimi ve verilerin iadesi/silinmesini kapsar."
+]
+},
+{
+"h": "Güvenlik",
+"p": [
+"Mutlak güvenlik veya hiç ihlal olmayacağı taahhüt edilmez; makul teknik ve idari tedbirler uygulanır."
+]
+}
+]
+},
+{
+"id": "saklama",
+"icon": "ti-archive",
+"title": "Veri Saklama ve İmha Politikası",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Saklama",
+"p": [
+"Veriler yalnızca ilgili amaç ve mevzuatın gerektirdiği süre boyunca saklanır. Zorunlu muhasebe ve ispat kayıtları ilgili süre boyunca tutulur."
+]
+},
+{
+"h": "İmha",
+"p": [
+"Süre sonunda veriler silinir, yok edilir veya anonim hale getirilir. Sözleşme kabul kayıtları ve hukuken gerekli loglar, meşru sebep varsa talep üzerine hemen silinmeyebilir."
+]
+}
+]
+},
+{
+"id": "ileti",
+"icon": "ti-mail-cog",
+"title": "Ticari Elektronik İleti Tercihleri",
+"ver": "v1.0",
+"upd": "15.07.2026",
+"body": [
+{
+"h": "Onay",
+"p": [
+"Kampanya, yeni özellik ve ticari duyuruların gönderimi yalnızca kullanıcının açık ve ayrı onayı ile yapılır. Bu onay üyelik için zorunlu değildir."
+]
+},
+{
+"h": "Ret Hakkı",
+"p": [
+"Kullanıcı, ticari iletileri dilediği zaman reddedebilir. Güvenlik, hesap ve sözleşme ifasına ilişkin sistem bildirimleri bu kapsamda değildir."
+]
+}
+]
+}
+]

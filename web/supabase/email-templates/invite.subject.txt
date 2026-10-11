@@ -1,0 +1,1 @@
+{{ if eq .Data.lang "RU" }}Приглашение в OnePlan{{ else if eq .Data.lang "TR" }}OnePlan'a davet{{ else if eq .Data.lang "EN" }}Invitation to OnePlan{{ else }}Приглашение в OnePlan · Invitation to OnePlan · OnePlan'a davet{{ end }}

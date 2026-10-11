@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'PT Sans',sans-serif;background:#f6f8fb;color:#14243f}
+a{color:#4d7cfe;text-decoration:none}
+a:hover{color:#3a63d4}
+input,button{font-family:inherit}
+::placeholder{color:#aab1bd}
+@keyframes opRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes opFade{from{opacity:0}to{opacity:1}}
+@keyframes opSheet{from{transform:translateY(100%)}to{transform:none}}
+@keyframes opBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+</style>
+</helmet>
+
+<div style="height:100%;display:flex;flex-direction:column;background:#f6f8fb;color:#14243f;font-family:'PT Sans',sans-serif;position:relative;overflow:hidden">
+
+<div style="{{ topPadStyle }}"></div>
+
+<div style="flex:none;background:#fff;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:10px;padding:8px 14px;min-height:52px">
+  <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}"><span onClick="{{ goBack }}" style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;font-size:17px"><i class="ti ti-arrow-left"></i></span></sc-if>
+  <sc-if value="{{ showLogo }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:8px;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#14243f"><span style="display:inline-flex"><span style="width:11px;height:11px;border-radius:50%;background:#4d7cfe"></span><span style="width:11px;height:11px;border-radius:50%;background:#43a047;margin-left:-4px"></span><span style="width:11px;height:11px;border-radius:50%;background:#f0ad00;margin-left:-4px"></span><span style="width:11px;height:11px;border-radius:50%;background:#e5484d;margin-left:-4px"></span></span> OnePlan</span></sc-if>
+  <sc-if value="{{ headerTitle }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex-direction:column;min-width:0"><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:16.5px;color:#14243f;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ headerTitle }}</span><sc-if value="{{ headerSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#0f9d6b;font-weight:700">{{ headerSub }}</span></sc-if></span></sc-if>
+  <span style="flex:1"></span>
+  <sc-if value="{{ showBell }}" hint-placeholder-val="{{ true }}"><span onClick="{{ goNotif }}" style="position:relative;width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#14243f;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;font-size:17px"><i class="ti ti-bell"></i><sc-if value="{{ notifDot }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid #f0f2f6"></span></sc-if></span></sc-if>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:16px 14px 20px;display:flex;flex-direction:column;gap:14px">
+  <div>
+    <div style="font-family:'Manrope',sans-serif;font-size:21px;font-weight:800;color:#14243f;letter-spacing:-.02em">{{ t.greeting }}, Mehmet</div>
+    <div style="font-size:13px;color:#8a93a2;margin-top:2px">New Level İnşaat · {{ t.headerDate }}</div>
+  </div>
+  <div style="display:flex;gap:4px;background:#eaedf3;border-radius:11px;padding:4px">
+    <button onClick="{{ roleMgr }}" style="{{ roleMgrStyle }}">{{ t.roleMgr }}</button>
+    <button onClick="{{ roleOwn }}" style="{{ roleOwnStyle }}">{{ t.roleOwn }}</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+      <span style="{{ k.iconStyle }}"><i class="ti {{ k.icon }}"></i></span>
+      <span style="min-width:0">
+        <div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f;letter-spacing:-.01em;white-space:nowrap">{{ k.val }}</div>
+        <div style="font-size:11px;color:#8a93a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
+        <sc-if value="{{ k.hint }}" hint-placeholder-val="{{ false }}"><div style="font-size:9.5px;color:#b3bcc9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.hint }}</div></sc-if>
+      </span>
+    </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:15px 16px;animation:opRise .25s ease both">
+    <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif">{{ t.revTitle }}</span><span style="flex:1"></span><span style="font-size:11px;color:#8a93a2">2026</span></div>
+    <div style="font-family:'Manrope',sans-serif;font-size:24px;font-weight:800;color:#14243f;margin:4px 0 2px">{{ revNumber }}</div>
+    <div style="{{ growthStyle }}"><i class="ti {{ growthIcon }}"></i> {{ revMonthLabel }} · {{ growthText }}</div>
+    <div style="display:flex;gap:7px;align-items:flex-end;height:64px;margin-top:12px">
+      <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6"><span onClick="{{ b.onClick }}" style="{{ b.st }}" style-hover="filter:brightness(1.05)"></span></sc-for>
+    </div>
+    <div style="display:flex;gap:7px;margin-top:5px">
+      <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6"><span onClick="{{ b.onClick }}" style="{{ b.labelSt }}">{{ b.m }}</span></sc-for>
+    </div>
+  </div>
+  </sc-if>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:15px 16px">
+    <div style="font-size:13px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif;margin-bottom:11px">{{ t.today }}</div>
+    <sc-if value="{{ todayEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 10px 10px;text-align:center">
+      <span style="width:40px;height:40px;border-radius:50%;background:#f0f4fa;color:#9aa4b5;display:inline-flex;align-items:center;justify-content:center;font-size:19px"><i class="ti ti-sun"></i></span>
+      <span style="font-size:12.5px;color:#8a93a2;line-height:1.45;max-width:230px">{{ t.todayEmptyText }}</span>
+    </div>
+    </sc-if>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ events }}" as="e" hint-placeholder-count="3">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="{{ e.iconStyle }}"><i class="ti {{ e.icon }}"></i></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;color:#14243f;line-height:1.4">{{ e.text }}</span><span style="font-size:11px;color:#9aa4b5">{{ e.time }}</span></span>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+  <div>
+    <div style="display:flex;align-items:center;margin-bottom:9px"><span style="font-size:13px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif">{{ t.myObjects }}</span><span style="flex:1"></span><span onClick="{{ goObjectsTab }}" style="font-size:12px;font-weight:700;color:#4d7cfe;cursor:pointer;padding:6px 2px">{{ t.seeAll }}</span></div>
+    <div style="display:flex;gap:10px;overflow-x:auto;margin:0 -14px;padding:0 14px 4px">
+      <sc-for list="{{ miniObjs }}" as="o" hint-placeholder-count="3">
+      <div onClick="{{ o.open }}" style="flex:none;width:150px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;overflow:hidden;cursor:pointer">
+        <div style="height:80px;background:#dfe6f0"><img src="{{ o.img }}" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div style="padding:9px 11px">
+          <div style="font-size:12px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.name }}</div>
+          <div style="font-size:10.5px;color:#8a93a2;margin-top:1px">{{ o.free }} {{ t.freeLow }}</div>
+        </div>
+      </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isObjList }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px">
+  <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e6e9f0;border-radius:11px;padding:11px 13px;font-size:13px;color:#9aa4b5"><i class="ti ti-search"></i> {{ t.searchPh }}</div>
+  <sc-for list="{{ objCards }}" as="o" hint-placeholder-count="3">
+  <div onClick="{{ o.open }}" style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden;cursor:pointer" style-hover="border-color:#c9d2e0">
+    <div style="height:130px;position:relative;background:#dfe6f0">
+      <img src="{{ o.img }}" style="width:100%;height:100%;object-fit:cover;display:block">
+      <span style="{{ o.stageChip }}">{{ o.stage }}</span>
+    </div>
+    <div style="padding:12px 14px 14px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ o.name }}</span>
+        <span style="flex:1"></span>
+        <sc-for list="{{ o.tags }}" as="tg" hint-placeholder-count="2"><span style="font-size:9.5px;font-weight:700;background:#f0f2f6;color:#5a6472;border-radius:100px;padding:3px 8px;white-space:nowrap">{{ tg }}</span></sc-for>
+      </div>
+      <div style="font-size:12px;color:#8a93a2;margin-top:2px"><i class="ti ti-map-pin"></i> {{ o.loc }} · {{ o.total }} {{ t.units }}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#5a6472;margin-top:11px"><span>{{ t.soldL }}</span><span style="font-weight:700">{{ o.soldPct }}%</span></div>
+      <div style="height:5px;border-radius:3px;background:#eef1f6;margin-top:4px"><div style="{{ o.soldBar }}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#5a6472;margin-top:9px"><span>{{ t.readyL }}</span><span style="font-weight:700;color:#0f9d6b">{{ o.ready }}%</span></div>
+      <div style="height:5px;border-radius:3px;background:#eef1f6;margin-top:4px"><div style="{{ o.readyBar }}"></div></div>
+    </div>
+  </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isObjDetail }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto">
+  <div style="height:140px;position:relative;background:#dfe6f0">
+    <img src="{{ objImg }}" style="width:100%;height:100%;object-fit:cover;display:block">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(14,23,42,.7))"></div>
+    <div style="position:absolute;left:14px;right:14px;bottom:10px;color:#fff">
+      <div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.01em">{{ objName }}</div>
+      <div style="font-size:11.5px;opacity:.85">{{ objMeta }}</div>
+    </div>
+  </div>
+  <div style="padding:12px 14px 22px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;gap:4px;background:#eaedf3;border-radius:11px;padding:4px">
+      <button onClick="{{ tabBoard }}" style="{{ tabBoardSt }}">{{ t.tabBoard }}</button>
+      <button onClick="{{ tabDocs }}" style="{{ tabDocsSt }}">{{ t.tabDocs }}</button>
+      <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}"><button onClick="{{ tabPub }}" style="{{ tabPubSt }}">{{ t.tabPub }}</button></sc-if>
+    </div>
+
+    <sc-if value="{{ devBoard }}" hint-placeholder-val="{{ true }}">
+    <div style="font-size:10px;color:#9aa4b5;font-weight:700;padding:0 2px">{{ t.dtHint }}</div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+      <sc-for list="{{ typeChips }}" as="tc" hint-placeholder-count="5"><span onClick="{{ tc.onClick }}" style="{{ tc.st }}">{{ tc.l }}</span></sc-for>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+      <sc-for list="{{ statusChips }}" as="sc" hint-placeholder-count="6"><span onClick="{{ sc.onClick }}" style="{{ sc.st }}"><sc-if value="{{ sc.dot }}" hint-placeholder-val="{{ false }}"><span style="{{ sc.dot }}"></span></sc-if>{{ sc.l }} · {{ sc.n }}</span></sc-for>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center">
+      <span style="font-size:10px;color:#9aa4b5;font-weight:700">{{ t.floorsWord }}:</span>
+      <sc-for list="{{ schemeChips }}" as="fc" hint-placeholder-count="3"><span onClick="{{ fc.onClick }}" style="{{ fc.st }}">{{ fc.l }}</span></sc-for>
+      <span style="flex:1"></span>
+      <sc-for list="{{ tileChips }}" as="ic" hint-placeholder-count="2"><span onClick="{{ ic.onClick }}" style="{{ ic.st }}">{{ ic.l }}</span></sc-for>
+    </div>
+    <div style="display:flex;gap:4px;background:#eaedf3;border-radius:11px;padding:4px">
+      <button onClick="{{ viewGrid }}" style="{{ vGridSt }}"><i class="ti ti-layout-grid"></i> {{ t.vGrid }}</button>
+      <button onClick="{{ viewList }}" style="{{ vListSt }}"><i class="ti ti-list"></i> {{ t.vList }}</button>
+    </div>
+    <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:12px 7px 12px 5px;animation:opRise .2s ease both">
+      <div style="overflow-x:auto;padding-bottom:3px">
+        <div style="{{ gridStyle }}">
+          <sc-for list="{{ floorLabels }}" as="fl" hint-placeholder-count="9"><span style="{{ fl.st }}">{{ fl.l }}</span></sc-for>
+          <sc-for list="{{ gridCells }}" as="c" hint-placeholder-count="24">
+          <span onClick="{{ c.onClick }}" style="{{ c.st }}" style-hover="filter:brightness(.97)">
+            <sc-if value="{{ c.tag }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:2px;right:3px;font-size:7px;font-weight:800;color:#14243f;background:rgba(255,255,255,.8);border-radius:4px;padding:0 3px;line-height:1.45">{{ c.tag }}</span></sc-if>
+            <span style="font-size:9.5px;color:#8a93a2;line-height:1.1;font-weight:700">№{{ c.no }}</span>
+            <span style="font-size:13px;font-weight:800;color:#14243f;line-height:1.05">{{ c.type }}</span>
+            <span style="font-size:9.5px;color:#5a6472;line-height:1.1">{{ c.m2 }}</span>
+          </span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#8a93a2;margin-top:11px"><i class="ti ti-hand-click" style="color:#4d7cfe"></i> {{ t.boardHint }}</div>
+    </div>
+    </sc-if>
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:7px;animation:opRise .2s ease both">
+      <sc-for list="{{ listItems }}" as="u" hint-placeholder-count="8">
+      <div onClick="{{ u.onClick }}" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e6e9f0;border-radius:12px;padding:10px 12px;cursor:pointer" style-hover="border-color:#c9d2e0">
+        <span style="{{ u.bar }}"></span>
+        <span style="flex:none;width:46px;font-size:12px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif">№{{ u.no }}</span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:12.5px;font-weight:700;color:#14243f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.type }}{{ u.kindL }}</span><span style="font-size:10.5px;color:#8a93a2">{{ u.floorL }} · {{ u.m2 }} m²</span></span>
+        <span style="flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:12.5px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap">{{ u.price }}</span><span style="{{ u.chip }}">{{ u.stL }}</span></span>
+      </div>
+      </sc-for>
+      <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;font-size:12px;color:#9aa4b5;padding:22px 0">{{ t.nothingFound }}</div></sc-if>
+    </div>
+    </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ devDocs }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:9px;animation:opRise .25s ease both">
+      <sc-for list="{{ docs }}" as="d" hint-placeholder-count="5">
+      <div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:11px 13px">
+        <span style="{{ d.iconStyle }}"><i class="ti {{ d.i }}"></i></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700;color:#14243f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.n }}</span><span style="font-size:11px;color:#9aa4b5">{{ d.m }}</span></span>
+        <span style="width:36px;height:36px;border-radius:10px;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer"><i class="ti ti-download"></i></span>
+      </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ devPub }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:12px;animation:opRise .25s ease both">
+      <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:15px 16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif">{{ t.pubTitle }}</span><span style="font-size:11.5px;color:#8a93a2">{{ t.pubSub }}</span></span>
+          <span onClick="{{ togglePub }}" style="{{ pubTogSt }}"><span style="width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;background:#f4f6f9;border:1px dashed #c9d2e0;border-radius:11px;padding:10px 12px;margin-top:13px">
+          <i class="ti ti-link" style="color:#4d7cfe;flex:none"></i>
+          <span style="flex:1;min-width:0;font-size:12.5px;color:#14243f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ objLink }}</span>
+          <span onClick="{{ copyLink }}" style="font-size:11.5px;font-weight:700;color:#4d7cfe;cursor:pointer;flex:none;padding:4px 2px">{{ copyLabel }}</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:11px">
+          <button style="flex:1;min-height:44px;border:none;border-radius:11px;background:#25d366;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Manrope',sans-serif"><i class="ti ti-brand-whatsapp" style="font-size:16px"></i> WhatsApp</button>
+          <button style="flex:1;min-height:44px;border:1px solid #d5dce6;border-radius:11px;background:#fff;color:#14243f;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Manrope',sans-serif"><i class="ti ti-share-2" style="font-size:15px"></i> {{ t.share }}</button>
+          <button style="width:44px;min-height:44px;border:1px solid #d5dce6;border-radius:11px;background:#fff;color:#14243f;font-size:18px;cursor:pointer;flex:none"><i class="ti ti-qrcode"></i></button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
+        <div style="background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:12px 6px;text-align:center"><div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f">1 245</div><div style="font-size:10.5px;color:#8a93a2">{{ t.stViews }}</div></div>
+        <div style="background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:12px 6px;text-align:center"><div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f">27</div><div style="font-size:10.5px;color:#8a93a2">{{ t.stReq }}</div></div>
+        <div style="background:#fff;border:1px solid #e6e9f0;border-radius:13px;padding:12px 6px;text-align:center"><div style="font-family:'Manrope',sans-serif;font-size:17px;font-weight:800;color:#14243f">12</div><div style="font-size:10.5px;color:#8a93a2">{{ t.stLeads }}</div></div>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChatList }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+  <sc-for list="{{ chatCards }}" as="c" hint-placeholder-count="3">
+  <div onClick="{{ c.open }}" style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #e6e9f0;border-radius:14px;padding:12px 13px;cursor:pointer" style-hover="border-color:#c9d2e0">
+    <span style="{{ c.avStyle }}">{{ c.init }}<sc-if value="{{ c.online }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#34c383;border:2px solid #fff"></span></sc-if></span>
+    <span style="flex:1;min-width:0">
+      <span style="display:flex;gap:6px;align-items:baseline;min-width:0"><span style="font-size:13.5px;font-weight:800;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap">{{ c.name }}</span><span style="font-size:10.5px;color:#9aa4b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.agency }}</span></span>
+      <span style="display:block;font-size:12px;color:#6b7688;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">{{ c.last }}</span>
+    </span>
+    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+      <span style="font-size:10.5px;color:#9aa4b5">{{ c.time }}</span>
+      <sc-if value="{{ c.unread }}" hint-placeholder-val="{{ false }}"><span style="min-width:18px;height:18px;border-radius:9px;background:#4d7cfe;color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-family:'Manrope',sans-serif">{{ c.unread }}</span></sc-if>
+    </span>
+  </div>
+  </sc-for>
+  <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8a93a2;padding:6px 4px"><i class="ti ti-users" style="color:#c9a35b"></i> {{ t.chatCaption }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isThread }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+  <div style="flex:none;display:flex;align-items:center;gap:8px;padding:7px 14px;background:#f4f8ff;border-bottom:1px solid #e6edfb">
+    <i class="ti ti-sparkles" style="color:#4d7cfe;font-size:14px;flex:none"></i>
+    <span style="flex:1;font-size:11.5px;font-weight:700;color:#3a63d4">{{ t.aiTr }}</span>
+    <span onClick="{{ toggleAiTr }}" style="{{ aiTrTogSt }}"><span style="width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+  </div>
+  <div ref="{{ msgsRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+    <div style="align-self:center;font-size:10px;font-weight:700;color:#8a93a2;background:#eaedf3;border-radius:100px;padding:4px 12px;margin-bottom:2px">{{ t.dayToday }} · {{ t.headerDate }}</div>
+    <sc-for list="{{ msgsView }}" as="m" hint-placeholder-count="4">
+    <div style="{{ m.row }}"><span style="{{ m.bub }}">{{ m.text }}<sc-if value="{{ m.trCap }}" hint-placeholder-val="{{ false }}"><span onClick="{{ m.toggleOrig }}" style="display:block;font-size:9.5px;color:#8fa0bd;margin-top:3px;cursor:pointer;user-select:none"><i class="ti ti-sparkles" style="font-size:9px"></i> {{ m.trCap }}</span></sc-if><span style="{{ m.tmStyle }}">{{ m.tm }}<sc-if value="{{ m.tick }}" hint-placeholder-val="{{ false }}"><span style="{{ m.tickStyle }}">{{ m.tick }}</span></sc-if></span></span></div>
+    </sc-for>
+    <sc-if value="{{ typing }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex"><span style="display:inline-flex;gap:4px;background:#fff;border:1px solid #e6e9f0;border-radius:14px 14px 14px 4px;padding:12px 13px"><span style="width:6px;height:6px;border-radius:50%;background:#8a93a2;animation:opBlink 1s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:#8a93a2;animation:opBlink 1s infinite;animation-delay:.2s"></span><span style="width:6px;height:6px;border-radius:50%;background:#8a93a2;animation:opBlink 1s infinite;animation-delay:.4s"></span></span></div>
+    </sc-if>
+  </div>
+  <div style="flex:none;display:flex;gap:8px;padding:9px 12px;background:#fff;border-top:1px solid #eef1f6">
+    <input value="{{ draft }}" onInput="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="{{ t.msgPh }}" style="flex:1;border:1px solid #e6e9f0;border-radius:11px;padding:10px 13px;font-size:13.5px;outline:none;background:#f8fafc;min-width:0" style-focus="border-color:#4d7cfe">
+    <button onClick="{{ send }}" style="width:44px;height:44px;border-radius:11px;border:none;background:#4d7cfe;color:#fff;font-size:17px;cursor:pointer;flex:none" style-hover="background:#3a63d4"><i class="ti ti-send"></i></button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+  <sc-for list="{{ notifGroups }}" as="g" hint-placeholder-count="2">
+  <div style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#9aa4b5;padding:6px 2px 0">{{ g.label }}</div>
+  <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+  <div style="{{ n.cardStyle }}">
+    <span style="{{ n.iconStyle }}"><i class="ti {{ n.icon }}"></i></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:13px;color:#14243f;line-height:1.4">{{ n.text }}</span><span style="font-size:11px;color:#9aa4b5">{{ n.time }}</span></span>
+    <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:8px;height:8px;border-radius:50%;background:#4d7cfe;flex:none;margin-top:5px"></span></sc-if>
+  </div>
+  </sc-for>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px">
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;padding:16px;display:flex;align-items:center;gap:13px">
+    <span style="width:52px;height:52px;border-radius:50%;background:#14243f;color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;display:inline-flex;align-items:center;justify-content:center;flex:none">MA</span>
+    <span style="flex:1;min-width:0">
+      <span style="display:block;font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;color:#14243f">Mehmet Aydın</span>
+      <span style="font-size:12px;color:#8a93a2">New Level İnşaat · {{ roleLabel }}</span>
+    </span>
+    <span style="width:36px;height:36px;border-radius:11px;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer"><i class="ti ti-pencil"></i></span>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #f0f2f6">
+      <i class="ti ti-language" style="color:#4d7cfe;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setLang }}</span>
+      <span style="display:inline-flex;gap:5px"><sc-for list="{{ langBtns }}" as="lb" hint-placeholder-count="3"><span onClick="{{ lb.onClick }}" style="{{ lb.st }}">{{ lb.l }}</span></sc-for></span>
+    </div>
+    <div style="padding:9px 15px 12px;font-size:11.5px;color:#8a93a2;line-height:1.45;border-bottom:1px solid #f0f2f6">{{ t.setLangHint }}</div>
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #f0f2f6">
+      <i class="ti ti-bell-ringing" style="color:#f0ad00;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setPush }}</span>
+      <span onClick="{{ toggleNotif }}" style="{{ notifTogSt }}"><span style="width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px">
+      <i class="ti ti-sun" style="color:#0f9d6b;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setTheme }}</span>
+      <span style="font-size:12.5px;color:#8a93a2">{{ t.themeLight }}</span>
+      <i class="ti ti-chevron-right" style="color:#c9d2e0"></i>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid #e6e9f0;border-radius:16px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #f0f2f6">
+      <i class="ti ti-building" style="color:#4d7cfe;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setCompany }}</span>
+      <span style="font-size:12.5px;color:#8a93a2">New Level İnşaat</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid #f0f2f6">
+      <i class="ti ti-crown" style="color:#c9a35b;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setTariff }}</span>
+      <span style="font-size:11px;font-weight:800;color:#9c7420;background:rgba(201,163,91,.18);border-radius:100px;padding:4px 10px;font-family:'Manrope',sans-serif">{{ t.tariffVal }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 15px">
+      <i class="ti ti-lifebuoy" style="color:#8a93a2;font-size:18px;flex:none"></i>
+      <span style="flex:1;font-size:13.5px;font-weight:700">{{ t.setSupport }}</span>
+      <i class="ti ti-chevron-right" style="color:#c9d2e0"></i>
+    </div>
+  </div>
+  <button style="min-height:46px;border:1px solid #f3d4d6;border-radius:13px;background:#fff;color:#e5484d;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif"><i class="ti ti-logout"></i> {{ t.logout }}</button>
+  <div style="text-align:center;font-size:11px;color:#9aa4b5">OnePlan · v1.0 · one-plan.pro</div>
+</div>
+</sc-if>
+
+</div>
+
+<div style="flex:none;background:#fff;border-top:1px solid #eef1f6;display:flex;padding:6px 8px 2px">
+  <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
+  <span onClick="{{ tb.onClick }}" style="{{ tb.st }}">
+    <span style="position:relative;font-size:21px;line-height:1"><i class="ti {{ tb.icon }}"></i><sc-if value="{{ tb.badge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-4px;right:-10px;min-width:15px;height:15px;border-radius:8px;background:#e5484d;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;font-family:'Manrope',sans-serif">{{ tb.badge }}</span></sc-if></span>
+    <span style="font-size:9.5px;font-weight:700;font-family:'Manrope',sans-serif;white-space:nowrap">{{ tb.label }}</span>
+  </span>
+  </sc-for>
+</div>
+<div style="{{ bottomPadStyle }}"></div>
+
+<sc-if value="{{ showSheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;justify-content:flex-end">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(14,23,42,.45);animation:opFade .2s ease both"></div>
+  <div style="position:relative;background:#fff;border-radius:22px 22px 0 0;animation:opSheet .3s cubic-bezier(.3,1,.4,1) both;max-height:84%;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;justify-content:center;padding:9px 0 2px;flex:none"><span style="width:38px;height:4.5px;border-radius:3px;background:#dfe4ec"></span></div>
+    <div style="overflow-y:auto;padding:8px 18px 14px;display:flex;flex-direction:column;gap:13px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:'Manrope',sans-serif;font-size:20px;font-weight:800;color:#14243f">№ {{ selNo }}</span>
+        <span style="{{ selChip }}">{{ selStatusL }}</span>
+        <span style="flex:1"></span>
+        <span onClick="{{ closeSheet }}" style="width:34px;height:34px;border-radius:50%;background:#f0f2f6;color:#5a6472;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><i class="ti ti-x"></i></span>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <sc-for list="{{ selChips }}" as="sch" hint-placeholder-count="4"><span style="font-size:11.5px;font-weight:700;color:#5a6472;background:#f0f2f6;border-radius:100px;padding:5px 12px;white-space:nowrap">{{ sch }}</span></sc-for>
+      </div>
+      <div style="height:150px;border-radius:13px;overflow:hidden;border:1px solid #eef1f6;background:#fafbfd;flex:none"><img src="{{ selPlan }}" style="width:100%;height:100%;object-fit:contain;display:block"></div>
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Manrope',sans-serif;font-size:23px;font-weight:800;color:#14243f">{{ selPrice }}</span><span style="font-size:12px;color:#8a93a2">{{ selPerM2 }} / m²</span></div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">{{ t.sheetChange }}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <sc-for list="{{ statusBtns }}" as="s" hint-placeholder-count="4"><button onClick="{{ s.onClick }}" style="{{ s.st }}"><span style="{{ s.dot }}"></span> {{ s.l }}</button></sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8a93a2;background:#f4f6f9;border-radius:10px;padding:10px 12px"><i class="ti ti-history" style="color:#4d7cfe;flex:none"></i> {{ selHist }}</div>
+      <div style="{{ sheetPadStyle }}"></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:874},&quot;topInset&quot;:{&quot;editor&quot;:null,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;bottomInset&quot;:{&quot;editor&quot;:null,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;currency&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;€&quot;,&quot;$&quot;,&quot;₺&quot;],&quot;default&quot;:&quot;€&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;startRole&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;manager&quot;,&quot;owner&quot;],&quot;default&quot;:&quot;manager&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ru&quot;,&quot;en&quot;,&quot;tr&quot;],&quot;default&quot;:&quot;ru&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;emptyToday&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Данные&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const M2 = { '1+1': 52, '2+1': 73, '3+1': 96, '4+1': 142, '5+1': 188 };
+    const hm = (x, m) => ((x % m) + m) % m;
+    const mk = (seed, minFloor, maxFloor, cols, base) => {
+      const units = [];
+      for (let c = 0; c < cols; c++) {
+        let f = minFloor;
+        const garden = ((c + seed) % 4 === 0);
+        while (f <= maxFloor) {
+          const above = maxFloor - f;
+          let kind = 'flat', type, h = 1;
+          if (seed === 1 && c === 0 && f === 0) { kind = 'triplex'; h = 3; type = '5+1'; }
+          else if (seed === 1 && c === 1 && f === -1) { kind = 'ters2'; h = 2; type = '3+1'; }
+          else if (seed === 1 && c === 2 && f === -2) { kind = 'triplex'; h = 3; type = '5+1'; }
+          else if (f < 1) { f += 1; continue; }
+          else if (f === 1 && garden && maxFloor >= 2) { kind = 'duplex'; h = 2; type = '3+1'; }
+          else if (above === 2 && ((c + seed) % 5 === 0)) { kind = 'triplex'; h = 3; type = '5+1'; }
+          else if (above === 1 && ((c + seed) % 3 === 1)) { kind = 'duplex'; h = 2; type = '4+1'; }
+          else { kind = 'flat'; h = 1; type = ['1+1','2+1','3+1','2+1','1+1','3+1','2+1'][hm(c * 2 + f + seed, 7)]; }
+          if (f + h - 1 > maxFloor) h = maxFloor - f + 1;
+          const m2 = (M2[type] || 70) + hm(c * 7 + f * 3 + seed, 9) - 4;
+          const r = hm(f * 13 + c * 7 + seed * 5, 10);
+          let st;
+          if (f <= 2) st = r < 7 ? 'sold' : (r < 9 ? 'proc' : 'free');
+          else if (f >= maxFloor - 1) st = r < 6 ? 'free' : (r < 8 ? 'res' : 'hold');
+          else st = ['free','sold','res','free','proc','sold','free','hold','res','free'][r];
+          const fl = f > 0 ? '' + f : (f === 0 ? 'Z' : 'B' + (-f));
+          units.push({ col: c, floorStart: f, floorEnd: f + h - 1, h, kind, type, m2, price: m2 * base, st, no: fl + String(c + 1).padStart(2, '0'), histKey: null });
+          f += h;
+        }
+      }
+      return { cols, minFloor, maxFloor, units };
+    };
+    this.objects = [
+      { id: 0, name: 'MEGAPOLIS RESIDENCE', loc: 'Antalya · Altıntaş', img: 'megapolis-photos/web-front.jpg', stageKey: 'build', stageBg: '#fff4d6', stageC: '#9c7420', ready: 68, tags: ['TAPU','VNJ'], block: { ru: 'Блок B', en: 'Block B', tr: 'B Blok' }, board: mk(1, -2, 9, 16, 2600), link: 'one-plan.pro/megapolis' },
+      { id: 1, name: 'AKROPOLIS', loc: 'Alanya · Oba', img: 'akropolis-photos/web-ph-1.jpg', stageKey: 'done', stageBg: '#e4f6ee', stageC: '#0f9d6b', ready: 100, tags: ['TAPU','İskan'], block: { ru: 'Блок A', en: 'Block A', tr: 'A Blok' }, board: mk(2, 1, 7, 10, 2100), link: 'one-plan.pro/akropolis' },
+      { id: 2, name: 'AVOCADO VILLAGE', loc: 'Alanya · Avsallar', img: 'avocado-photos/web-v5556-1.jpg', stageKey: 'start', stageBg: '#e3ebfd', stageC: '#3a63d4', ready: 22, tags: ['VNJ'], block: { ru: 'Виллы', en: 'Villas', tr: 'Villalar' }, board: mk(3, 1, 5, 6, 3400), link: 'one-plan.pro/avocado' },
+    ];
+    this.ST = {
+      free: { c: '#34c383', tint: '#e4f6ee', deep: '#0f9d6b' },
+      res:  { c: '#f0ad00', tint: '#fff4d6', deep: '#9c7420' },
+      proc: { c: '#4d7cfe', tint: '#e3ebfd', deep: '#3a63d4' },
+      sold: { c: '#cfd6e0', tint: '#f0f2f6', deep: '#5a6472' },
+      hold: { c: '#8b5cf6', tint: '#ede9fd', deep: '#6d4fd0' },
+    };
+    this.STL = {
+      free: { ru: 'Свободна', en: 'Available', tr: 'Müsait' },
+      res:  { ru: 'Бронь', en: 'Reserved', tr: 'Rezerve' },
+      proc: { ru: 'Оформление', en: 'Processing', tr: 'İşlemde' },
+      sold: { ru: 'Продана', en: 'Sold', tr: 'Satıldı' },
+      hold: { ru: 'Резерв', en: 'Blocked', tr: 'Bloke' },
+    };
+    this.STPL = {
+      free: { ru: 'Свободно', en: 'Available', tr: 'Müsait' },
+      res:  { ru: 'Брони', en: 'Reserved', tr: 'Rezerve' },
+      proc: { ru: 'Оформление', en: 'Processing', tr: 'İşlemde' },
+      sold: { ru: 'Продано', en: 'Sold', tr: 'Satıldı' },
+      hold: { ru: 'Резерв', en: 'Blocked', tr: 'Bloke' },
+    };
+    this.KINDL = { duplex: { ru: 'Дуплекс', en: 'Duplex', tr: 'Dubleks' }, triplex: { ru: 'Триплекс', en: 'Triplex', tr: 'Tripleks' }, ters2: { ru: 'Терс-дуплекс', en: 'Reverse duplex', tr: 'Ters dubleks' } };
+    this.STAGEL = {
+      build: { ru: 'Строится', en: 'Under construction', tr: 'İnşaatta' },
+      done:  { ru: 'Сдан · İskan', en: 'Delivered · İskan', tr: 'Teslim · İskan' },
+      start: { ru: 'Старт продаж', en: 'Sales launch', tr: 'Satış başladı' },
+    };
+    this.MON = { ru: ['Фев','Мар','Апр','Май','Июн','Июл'], en: ['Feb','Mar','Apr','May','Jun','Jul'], tr: ['Şub','Mar','Nis','May','Haz','Tem'] };
+    this.REV = [720000, 985000, 840000, 1150000, 1072000, 1265000];
+    this.DOCS = [
+      { i: 'ti-file-type-pdf', bg: '#fde8e8', c: '#e5484d', n: { ru: 'Прайс-лист · июль 2026', en: 'Price list · July 2026', tr: 'Fiyat listesi · Temmuz 2026' }, m: 'PDF · 2,4 MB' },
+      { i: 'ti-layout-2', bg: '#e3ebfd', c: '#3a63d4', n: { ru: 'Планировки этажей', en: 'Floor plans', tr: 'Kat planları' }, m: 'JPEG · 8' },
+      { i: 'ti-file-text', bg: '#e3ebfd', c: '#3a63d4', n: { ru: 'Шаблон договора', en: 'Contract template', tr: 'Sözleşme şablonu' }, m: 'DOCX · 340 KB' },
+      { i: 'ti-map-2', bg: '#e4f6ee', c: '#0f9d6b', n: { ru: 'Vaziyet · генплан', en: 'Vaziyet · site plan', tr: 'Vaziyet planı' }, m: 'JPEG · 1,8 MB' },
+      { i: 'ti-presentation', bg: '#fff4d6', c: '#9c7420', n: { ru: 'Презентация объекта', en: 'Project presentation', tr: 'Proje sunumu' }, m: 'PDF · 12 MB' },
+    ];
+    this.EVENTS = [
+      { i: 'ti-calendar-event', bg: '#fff4d6', c: '#9c7420', text: { ru: 'Бронь № 507 · MEGAPOLIS · Selin Erdem', en: 'Reservation #507 · MEGAPOLIS · Selin Erdem', tr: 'Rezervasyon #507 · MEGAPOLIS · Selin Erdem' }, time: '12:40' },
+      { i: 'ti-circle-check', bg: '#e4f6ee', c: '#0f9d6b', text: { ru: '№ 205 · AKROPOLIS — продана', en: '#205 · AKROPOLIS — sold', tr: '#205 · AKROPOLIS — satıldı' }, time: '11:05' },
+      { i: 'ti-message', bg: '#e3ebfd', c: '#3a63d4', text: { ru: 'Новый вопрос по AVOCADO VILLAGE', en: 'New question about AVOCADO VILLAGE', tr: 'AVOCADO VILLAGE hakkında yeni soru' }, time: '09:32' },
+    ];
+    this.NOTIFS = [
+      { i: 'ti-calendar-event', bg: '#fff4d6', c: '#9c7420', fresh: true, day: 0, text: { ru: 'Selin поставила бронь на № 507 · MEGAPOLIS', en: 'Selin reserved #507 · MEGAPOLIS', tr: 'Selin #507 rezerve etti · MEGAPOLIS' }, time: { ru: '12:40', en: '12:40', tr: '12:40' } },
+      { i: 'ti-circle-check', bg: '#e4f6ee', c: '#0f9d6b', fresh: true, day: 0, text: { ru: '№ 205 · AKROPOLIS переведена в «Продана»', en: '#205 · AKROPOLIS moved to Sold', tr: '#205 · AKROPOLIS Satıldı durumuna alındı' }, time: { ru: '11:05', en: '11:05', tr: '11:05' } },
+      { i: 'ti-file-pencil', bg: '#e3ebfd', c: '#3a63d4', fresh: false, day: 1, text: { ru: 'AVOCADO VILLAGE: 3 квартиры переведены в «Оформление»', en: 'AVOCADO VILLAGE: 3 units moved to Processing', tr: 'AVOCADO VILLAGE: 3 daire İşleme alındı' }, time: { ru: '18:22', en: '18:22', tr: '18:22' } },
+      { i: 'ti-file-text', bg: '#eef1f6', c: '#14243f', fresh: false, day: 1, text: { ru: 'Прайс-лист MEGAPOLIS обновлён', en: 'MEGAPOLIS price list updated', tr: 'MEGAPOLIS fiyat listesi güncellendi' }, time: { ru: '10:02', en: '10:02', tr: '10:02' } },
+      { i: 'ti-building', bg: '#e4f6ee', c: '#0f9d6b', fresh: false, day: 2, text: { ru: 'AKROPOLIS: получен İskan, статус объекта обновлён', en: 'AKROPOLIS: İskan received, project status updated', tr: 'AKROPOLIS: İskan alındı, proje durumu güncellendi' }, time: { ru: '12 июля', en: 'Jul 12', tr: '12 Tem' } },
+    ];
+    this.L = {
+      greeting: { ru: 'Добрый день', en: 'Good afternoon', tr: 'İyi günler' },
+      headerDate: { ru: '17 июля', en: '17 Jul', tr: '17 Tem' },
+      roleMgr: { ru: 'Редактор', en: 'Editor', tr: 'Editör' },
+      roleOwn: { ru: 'Менеджер', en: 'Manager', tr: 'Yönetici' },
+      roleFullMgr: { ru: 'Редактор · ведёт объекты', en: 'Editor · manages projects', tr: 'Editör · projeleri yönetir' },
+      roleFullOwn: { ru: 'Менеджер · только просмотр', en: 'Manager · view only', tr: 'Yönetici · yalnızca görüntüleme' },
+      kFree: { ru: 'Свободно', en: 'Available', tr: 'Müsait' },
+      kRes: { ru: 'Брони', en: 'Reserved', tr: 'Rezerve' },
+      kProc: { ru: 'В оформлении', en: 'Processing', tr: 'İşlemde' },
+      kSold: { ru: 'Продано', en: 'Sold', tr: 'Satıldı' },
+      kRev: { ru: 'Выручка · июль', en: 'Revenue · July', tr: 'Gelir · Temmuz' },
+      kDeals: { ru: 'Сделок · июль', en: 'Deals · July', tr: 'Satış · Temmuz' },
+      kAvg: { ru: 'Средняя цена m²', en: 'Avg. price m²', tr: 'Ort. m² fiyatı' },
+      kCycle: { ru: 'Ср. срок сделки', en: 'Avg. deal time', tr: 'Ort. satış süresi' },
+      kCycleHint: { ru: 'от брони до договора', en: 'reservation → contract', tr: 'rezervasyondan sözleşmeye' },
+      cycleUnit: { ru: 'дн', en: 'd', tr: 'gün' },
+      revTitle: { ru: 'Выручка по месяцам', en: 'Revenue by month', tr: 'Aylara göre gelir' },
+      revVs: { ru: 'к', en: 'vs', tr: '·' },
+      today: { ru: 'Сегодня', en: 'Today', tr: 'Bugün' },
+      todayEmptyText: { ru: 'Пока тихо — новые брони, продажи и вопросы появятся здесь', en: 'Quiet so far — new reservations, sales and questions will appear here', tr: 'Şimdilik sakin — yeni rezervasyonlar, satışlar ve sorular burada görünecek' },
+      myObjects: { ru: 'Мои объекты', en: 'My projects', tr: 'Projelerim' },
+      seeAll: { ru: 'Все', en: 'All', tr: 'Tümü' },
+      freeLow: { ru: 'свободно', en: 'available', tr: 'müsait' },
+      searchPh: { ru: 'Поиск по объектам', en: 'Search projects', tr: 'Proje ara' },
+      units: { ru: 'юнитов', en: 'units', tr: 'ünite' },
+      soldL: { ru: 'Продано', en: 'Sold', tr: 'Satıldı' },
+      readyL: { ru: 'Готовность', en: 'Completion', tr: 'Tamamlanma' },
+      tabBoard: { ru: 'Шахматка', en: 'Grid', tr: 'Blok şeması' },
+      tabDocs: { ru: 'Документы', en: 'Documents', tr: 'Belgeler' },
+      tabPub: { ru: 'Публикация', en: 'Publish', tr: 'Yayın' },
+      dtHint: { ru: 'D — дуплекс · T — триплекс · TD — терс-дуплекс (вниз, к 0 и −1 этажам)', en: 'D — duplex · T — triplex · TD — reverse duplex (down to floors 0 / −1)', tr: 'D — dubleks · T — tripleks · TD — ters dubleks (0 / −1 katlara iner)' },
+      vGrid: { ru: 'Сетка', en: 'Grid', tr: 'Izgara' },
+      vList: { ru: 'Список', en: 'List', tr: 'Liste' },
+      fAll: { ru: 'Все', en: 'All', tr: 'Tümü' },
+      boardHint: { ru: 'Нажмите на квартиру — карточка со статусом, ценой и планом', en: 'Tap a unit — card with status, price and floor plan', tr: 'Bir daireye dokunun — durum, fiyat ve plan kartı' },
+      nothingFound: { ru: 'Ничего не найдено по фильтрам', en: 'Nothing matches the filters', tr: 'Filtreye uygun sonuç yok' },
+      floorsWord: { ru: 'Этажи', en: 'Floors', tr: 'Katlar' },
+      pubTitle: { ru: 'Публичная страница', en: 'Public page', tr: 'Herkese açık sayfa' },
+      pubSub: { ru: 'Ссылка для клиентов и партнёров', en: 'Link for clients and partners', tr: 'Müşteriler ve iş ortakları için bağlantı' },
+      share: { ru: 'Поделиться', en: 'Share', tr: 'Paylaş' },
+      stViews: { ru: 'Просмотры', en: 'Views', tr: 'Görüntüleme' },
+      stReq: { ru: 'Обращений', en: 'Inquiries', tr: 'Talep' },
+      stLeads: { ru: 'Заявок', en: 'Leads', tr: 'Başvuru' },
+      chatCaption: { ru: 'Обсуждайте статусы, брони и документы с командой продаж', en: 'Discuss statuses, reservations and documents with the sales team', tr: 'Durumları, rezervasyonları ve belgeleri satış ekibiyle görüşün' },
+      msgPh: { ru: 'Сообщение…', en: 'Message…', tr: 'Mesaj…' },
+      setLang: { ru: 'Язык интерфейса', en: 'Interface language', tr: 'Arayüz dili' },
+      setLangHint: { ru: 'Определяется автоматически по языку системы. Здесь можно выбрать вручную.', en: 'Detected automatically from your system language. You can override it here.', tr: 'Sistem diline göre otomatik belirlenir. Buradan elle değiştirebilirsiniz.' },
+      setPush: { ru: 'Push-уведомления', en: 'Push notifications', tr: 'Push bildirimleri' },
+      setTheme: { ru: 'Тема', en: 'Theme', tr: 'Tema' },
+      themeLight: { ru: 'Светлая', en: 'Light', tr: 'Açık' },
+      setCompany: { ru: 'Компания', en: 'Company', tr: 'Şirket' },
+      setTariff: { ru: 'Тариф', en: 'Plan', tr: 'Plan' },
+      tariffVal: { ru: 'PRO · до 10 объектов', en: 'PRO · up to 10 projects', tr: 'PRO · 10 projeye kadar' },
+      setSupport: { ru: 'Поддержка', en: 'Support', tr: 'Destek' },
+      logout: { ru: 'Выйти', en: 'Log out', tr: 'Çıkış' },
+      nav_home: { ru: 'Главная', en: 'Home', tr: 'Ana' },
+      nav_objects: { ru: 'Объекты', en: 'Projects', tr: 'Projeler' },
+      nav_chats: { ru: 'Чаты', en: 'Chats', tr: 'Sohbet' },
+      nav_notif: { ru: 'Уведомления', en: 'Alerts', tr: 'Bildirim' },
+      nav_profile: { ru: 'Профиль', en: 'Profile', tr: 'Profil' },
+      h_objects: { ru: 'Объекты', en: 'Projects', tr: 'Projeler' },
+      h_chats: { ru: 'Чаты', en: 'Chats', tr: 'Sohbet' },
+      h_notif: { ru: 'Уведомления', en: 'Notifications', tr: 'Bildirimler' },
+      h_profile: { ru: 'Профиль', en: 'Profile', tr: 'Profil' },
+      online: { ru: 'в сети', en: 'online', tr: 'çevrimiçi' },
+      sheetChange: { ru: 'Изменить статус', en: 'Change status', tr: 'Durumu değiştir' },
+      floorOne: { ru: 'этаж', en: 'floor', tr: 'kat' },
+      floorsMany: { ru: 'этажи', en: 'floors', tr: 'katlar' },
+      floorAb: { ru: 'эт.', en: 'fl.', tr: 'kat' },
+      histNone: { ru: 'Статус не менялся за последние 30 дней', en: 'Status unchanged in the last 30 days', tr: 'Son 30 günde durum değişmedi' },
+      histPre: { ru: 'Статус изменён на', en: 'Status changed to', tr: 'Durum değişti:' },
+      justNow: { ru: 'только что', en: 'just now', tr: 'az önce' },
+      autoReply: { ru: 'Принято! Отвечу в течение часа.', en: 'Got it! I will reply within an hour.', tr: 'Anlaşıldı! Bir saat içinde yanıtlarım.' },
+      aiTr: { ru: 'AI-перевод сообщений', en: 'AI message translation', tr: 'AI mesaj çevirisi' },
+      trOrigTap: { ru: 'оригинал', en: 'original', tr: 'orijinal' },
+      trOrigOn: { ru: 'оригинал · показать перевод', en: 'original · show translation', tr: 'orijinal · çeviriyi göster' },
+      dayToday: { ru: 'Сегодня', en: 'Today', tr: 'Bugün' },
+      dayYest: { ru: 'Вчера', en: 'Yesterday', tr: 'Dün' },
+      dayEarlier: { ru: 'Ранее', en: 'Earlier', tr: 'Daha önce' },
+    };
+    this.CHATS_BASE = [
+      { name: 'Selin Erdem', init: 'SE', bg: '#7d9fdd', online: true, agency: { ru: 'Менеджер · MEGAPOLIS', en: 'Manager · MEGAPOLIS', tr: 'Yönetici · MEGAPOLIS' },
+        msgs: [ { me: 0, t: { ru: 'Клиент готов брать 2+1 в блоке B. Ставим бронь на № 507?', en: 'Client will take a 2+1 in block B. Reserve #507?', tr: 'Müşteri B blokta 2+1 alacak. #507 rezerve edelim mi?' } }, { me: 1, t: { ru: 'Да, ставь бронь. Договор подготовлю сегодня', en: 'Yes, reserve it. I will prepare the contract today', tr: 'Evet, rezerve et. Sözleşmeyi bugün hazırlarım' } }, { me: 0, t: { ru: 'Отлично, перевожу в «Бронь»', en: 'Great, moving it to Reserved', tr: 'Harika, Rezerve durumuna alıyorum' } } ] },
+      { name: 'Anna Kim', init: 'AK', bg: '#c9a35b', online: true, agency: { ru: 'Менеджер · AVOCADO', en: 'Manager · AVOCADO', tr: 'Yönetici · AVOCADO' },
+        msgs: [ { me: 0, t: { ru: 'По вилле 63 m² внесли задаток, перевожу в «Оформление»', en: 'Deposit received for the 63 m² villa, moving to Processing', tr: '63 m² villa için kapora alındı, İşleme alıyorum' } }, { me: 1, t: { ru: 'Принято, İskan по объекту ждём в августе', en: 'Noted, İskan for the project is expected in August', tr: 'Tamam, projenin İskanı Ağustosta bekleniyor' } } ] },
+      { name: 'Kürşat Demir', init: 'KD', bg: '#8b5cf6', online: false, agency: { ru: 'Редактор · AKROPOLIS', en: 'Editor · AKROPOLIS', tr: 'Editör · AKROPOLIS' },
+        msgs: [ { me: 1, t: { ru: 'Прайс на июль обновил, проверьте цены по MEGAPOLIS', en: 'Updated the July price list, please check MEGAPOLIS prices', tr: 'Temmuz fiyat listesini güncelledim, MEGAPOLIS fiyatlarını kontrol edin' } }, { me: 0, t: { ru: 'Проверил, всё верно. Спасибо!', en: 'Checked, all correct. Thanks!', tr: 'Kontrol ettim, hepsi doğru. Teşekkürler!' } } ] },
+    ];
+    this.msgsRef = React.createRef();
+    this.state = {
+      tab: 'home', objId: null, objTab: 'board', chatId: null, sel: null,
+      role: props.startRole === 'owner' ? 'owner' : 'manager',
+      lang: ['ru','en','tr'].includes(props.lang) ? props.lang : 'ru',
+      notifOn: true, pubOn: true, copied: false, draft: '', typing: false, notifSeen: false, rev: 0,
+      boardView: 'grid', boardType: null, boardStatus: null, selMonth: 5,
+      chatUnread: [2, 1, 0], chatExtra: [[], [], []],
+    };
+  }
+  componentDidUpdate() { const el = this.msgsRef.current; if (el) el.scrollTop = el.scrollHeight; }
+  dispNo(u) { return (this.state.floorScheme || 'num') === 'g' ? u.no.replace(/^Z/, 'G') : u.no; }
+  fmtShort(v) {
+    const cur = this.props.currency ?? '€';
+    const k = { '€': 1, '$': 1.06, '₺': 36.5 }[cur] || 1, x = v * k;
+    return cur + (x >= 1e6 ? (x / 1e6).toFixed(1) + 'M' : Math.round(x / 1e3) + 'K');
+  }
+  fmt(v) {
+    const cur = this.props.currency ?? '€';
+    const k = { '€': 1, '$': 1.06, '₺': 36.5 }[cur] || 1;
+    return cur + ' ' + (Math.round(v * k / 500) * 500).toLocaleString('ru-RU');
+  }
+  counts(board) {
+    const n = { free: 0, res: 0, proc: 0, sold: 0, hold: 0, total: 0 };
+    board.units.forEach(u => { n[u.st]++; n.total++; });
+    return n;
+  }
+  setStatus(u, key) { u.st = key; u.histKey = key; this.setState(s => ({ rev: s.rev + 1 })); }
+  renderVals() {
+    const S = this.state, ST = this.ST, lang = S.lang;
+    const tr = (dict, k) => (dict[k] || {})[lang] || (dict[k] || {}).ru || '';
+    const t = {}; Object.keys(this.L).forEach(k => t[k] = this.L[k][lang]);
+    const top = Number(this.props.topInset ?? 0) || 0, bottom = Number(this.props.bottomInset ?? 0) || 0;
+    const isHome = S.tab === 'home', isObjList = S.tab === 'objects' && S.objId === null, isObjDetail = S.tab === 'objects' && S.objId !== null;
+    const isChatList = S.tab === 'chats' && S.chatId === null, isThread = S.tab === 'chats' && S.chatId !== null;
+    const isNotif = S.tab === 'notif', isProfile = S.tab === 'profile';
+    const obj = isObjDetail ? this.objects[S.objId] : null;
+    const chat = isThread ? this.CHATS_BASE[S.chatId] : null;
+    const all = { free: 0, res: 0, proc: 0, sold: 0, hold: 0 };
+    this.objects.forEach(o => { const n = this.counts(o.board); Object.keys(all).forEach(k => all[k] += n[k]); });
+    const chatUnreadTotal = S.chatUnread.reduce((a, b) => a + b, 0);
+    let headerTitle = '', headerSub = '', showBack = false, showLogo = false, showBell = false;
+    if (isHome) { showLogo = true; showBell = true; }
+    else if (isObjList) { headerTitle = t.h_objects; showBell = true; }
+    else if (isObjDetail) { showBack = true; headerTitle = obj.name; }
+    else if (isChatList) { headerTitle = t.h_chats; showBell = true; }
+    else if (isThread) { showBack = true; headerTitle = chat.name; headerSub = chat.online ? t.online : ''; }
+    else if (isNotif) headerTitle = t.h_notif;
+    else if (isProfile) headerTitle = t.h_profile;
+    const seg = a => "flex:1;min-height:38px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;" + (a ? 'background:#fff;color:#14243f;box-shadow:0 1px 4px rgba(20,36,63,.14)' : 'background:transparent;color:#6b7688');
+    const kico = (bg, c) => 'width:32px;height:32px;border-radius:9px;background:' + bg + ';color:' + c + ';display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none';
+    const kpis = S.role === 'manager' ? [
+      { icon: 'ti-key', iconStyle: kico('#e4f6ee', '#0f9d6b'), val: all.free, label: t.kFree },
+      { icon: 'ti-clock', iconStyle: kico('#fff4d6', '#9c7420'), val: all.res, label: t.kRes },
+      { icon: 'ti-file-pencil', iconStyle: kico('#e3ebfd', '#3a63d4'), val: all.proc, label: t.kProc },
+      { icon: 'ti-circle-check', iconStyle: kico('#eef1f6', '#14243f'), val: all.sold, label: t.kSold },
+    ] : [
+      { icon: 'ti-cash', iconStyle: kico('#e4f6ee', '#0f9d6b'), val: this.fmt(1265000), label: t.kRev },
+      { icon: 'ti-circle-check', iconStyle: kico('#eef1f6', '#14243f'), val: 18, label: t.kDeals },
+      { icon: 'ti-chart-bar', iconStyle: kico('#e3ebfd', '#3a63d4'), val: this.fmt(2480), label: t.kAvg },
+      { icon: 'ti-clock-hour-4', iconStyle: kico('#fff4d6', '#9c7420'), val: '14 ' + t.cycleUnit, label: t.kCycle, hint: t.kCycleHint },
+    ];
+    const maxV = Math.max.apply(null, this.REV);
+    const bars = this.REV.map((v, i) => ({
+      m: this.MON[lang][i],
+      onClick: () => this.setState({ selMonth: i }),
+      st: 'flex:1;border-radius:5px 5px 2px 2px;cursor:pointer;height:' + Math.round(v / maxV * 100) + '%;background:' + (i === S.selMonth ? '#4d7cfe' : '#dbe4f5'),
+      labelSt: 'flex:1;text-align:center;font-size:9.5px;cursor:pointer;font-weight:' + (i === S.selMonth ? '800' : '400') + ';color:' + (i === S.selMonth ? '#4d7cfe' : '#9aa4b5'),
+    }));
+    const si = S.selMonth;
+    let growthText = '', growthIcon = 'ti-minus', growthColor = '#8a93a2';
+    if (si > 0) { const pct = Math.round((this.REV[si] - this.REV[si - 1]) / this.REV[si - 1] * 100); growthIcon = pct >= 0 ? 'ti-trending-up' : 'ti-trending-down'; growthColor = pct >= 0 ? '#0f9d6b' : '#e5484d'; growthText = (pct >= 0 ? '+' : '') + pct + '% ' + t.revVs + ' ' + this.MON[lang][si - 1]; }
+    else growthText = t.today ? '—' : '—';
+    const openObj = id => () => this.setState({ tab: 'objects', objId: id, objTab: 'board', boardType: null, boardStatus: null, boardView: 'grid' });
+    const miniObjs = this.objects.map(o => ({ img: o.img, name: o.name, free: this.counts(o.board).free, open: openObj(o.id) }));
+    const todayEmpty = !!this.props.emptyToday;
+    const events = todayEmpty ? [] : this.EVENTS.map(e => ({ icon: e.i, iconStyle: kico(e.bg, e.c), text: e.text[lang], time: e.time }));
+    const objCards = this.objects.map(o => {
+      const n = this.counts(o.board), pct = Math.round(n.sold / n.total * 100);
+      return { img: o.img, name: o.name, loc: o.loc, stage: this.STAGEL[o.stageKey][lang], tags: o.tags, total: n.total, ready: o.ready, soldPct: pct, open: openObj(o.id),
+        stageChip: 'position:absolute;left:10px;top:10px;font-size:10px;font-weight:800;border-radius:100px;padding:4px 10px;background:' + o.stageBg + ';color:' + o.stageC + ";font-family:'Manrope',sans-serif",
+        soldBar: 'height:100%;border-radius:3px;background:#14243f;width:' + pct + '%',
+        readyBar: 'height:100%;border-radius:3px;background:#34c383;width:' + o.ready + '%' };
+    });
+    let legend = [], floorLabels = [], gridCells = [], listItems = [], gridStyle = '', typeChips = [], statusChips = [], schemeChips = [], tileChips = [], docs = [], objName = '', objImg = '', objMeta = '', objLink = '', listEmpty = false;
+    if (obj) {
+      const n = this.counts(obj.board), cols = obj.board.cols, maxFloor = obj.board.maxFloor, minFloor = obj.board.minFloor ?? 1, units = obj.board.units;
+      objName = obj.name; objImg = obj.img; objLink = obj.link;
+      objMeta = obj.loc + ' · ' + obj.block[lang] + ' · ' + n.total + ' ' + t.units;
+      const match = u => (!S.boardType || u.type === S.boardType) && (!S.boardStatus || u.st === S.boardStatus);
+      const chip = (active, color) => 'display:inline-flex;align-items:center;gap:5px;flex:none;font-size:11px;font-weight:700;border-radius:100px;padding:6px 12px;cursor:pointer;white-space:nowrap;' + (active ? 'background:' + (color || '#14243f') + ';color:#fff' : 'background:#f0f2f6;color:#5a6472');
+      const typesPresent = ['1+1','2+1','3+1','4+1','5+1'].filter(ty => units.some(u => u.type === ty));
+      typeChips = [{ l: t.fAll, onClick: () => this.setState({ boardType: null }), st: chip(S.boardType === null) }].concat(typesPresent.map(ty => ({ l: ty, onClick: () => this.setState({ boardType: S.boardType === ty ? null : ty }), st: chip(S.boardType === ty, '#4d7cfe') })));
+      statusChips = [{ l: t.fAll, n: n.total, dot: '', onClick: () => this.setState({ boardStatus: null }), st: chip(S.boardStatus === null) }].concat(['free','res','proc','sold','hold'].map(k => ({ l: this.STPL[k][lang], n: n[k], dot: 'width:8px;height:8px;border-radius:3px;background:' + ST[k].c, onClick: () => this.setState({ boardStatus: S.boardStatus === k ? null : k }), st: chip(S.boardStatus === k, ST[k].deep) })));
+      const scheme = S.floorScheme || 'num', tileInfo = S.tileInfo || 'm2';
+      const flL = f => f > 0 ? '' + f : (scheme === 'num' ? '' + f : (f === 0 ? (scheme === 'g' ? 'G' : 'Z') : 'B' + (-f)));
+      gridStyle = 'display:grid;grid-template-columns:' + (scheme === 'num' ? 17 : 21) + 'px repeat(' + cols + ',64px);gap:5px;grid-auto-rows:58px';
+      for (let f = maxFloor; f >= minFloor; f--) floorLabels.push({ l: flL(f), st: 'grid-column:1;grid-row:' + (maxFloor - f + 1) + ';display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-size:9px;font-weight:700;color:' + (f < 1 ? '#4d7cfe' : '#9aa4b5') + ';position:sticky;left:0;background:#fff;z-index:2' });
+      schemeChips = [{ k: 'num', l: '0 · −1 · −2' }, { k: 'z', l: 'Z · B1 · B2' }, { k: 'g', l: 'G · B1 · B2' }].map(o => ({ l: o.l, onClick: () => this.setState({ floorScheme: o.k }), st: chip(scheme === o.k) }));
+      tileChips = [{ k: 'm2', l: 'm²' }, { k: 'price', l: this.props.currency ?? '€' }].map(o => ({ l: o.l, onClick: () => this.setState({ tileInfo: o.k }), st: chip(tileInfo === o.k, '#4d7cfe') }));
+      gridCells = units.map(u => {
+        const s = ST[u.st], active = S.sel && S.sel.cell === u, dim = !match(u);
+        return {
+          onClick: dim ? () => {} : () => this.setState({ sel: { cell: u, obj } }),
+          type: u.type, m2: (S.tileInfo || 'm2') === 'price' ? this.fmtShort(u.price) : u.m2 + ' m²', tag: u.kind === 'duplex' ? 'D' : (u.kind === 'triplex' ? 'T' : (u.kind === 'ters2' ? 'TD' : '')), no: this.dispNo(u),
+          st: 'grid-column:' + (u.col + 2) + ';grid-row:' + (maxFloor - u.floorEnd + 1) + '/span ' + u.h + ';border-radius:6px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;background:' + s.tint + ';border:1.5px solid ' + s.c + (dim ? ';opacity:.13;cursor:default' : ';cursor:pointer') + (active ? ';box-shadow:0 0 0 2px #14243f' : ''),
+        };
+      });
+      const flr = u => u.floorStart === u.floorEnd ? (u.floorStart + ' ' + t.floorAb) : (t.floorAb + ' ' + u.floorStart + '–' + u.floorEnd);
+      const filtered = units.filter(match).slice().sort((a, b) => b.floorEnd - a.floorEnd || a.col - b.col);
+      listEmpty = filtered.length === 0;
+      listItems = filtered.map(u => {
+        const s = ST[u.st];
+        return { onClick: () => this.setState({ sel: { cell: u, obj } }), no: this.dispNo(u), type: u.type, kindL: u.kind === 'flat' ? '' : ' · ' + this.KINDL[u.kind][lang], floorL: flr(u), m2: u.m2, price: this.fmt(u.price), stL: this.STL[u.st][lang],
+          bar: 'width:4px;height:34px;border-radius:3px;flex:none;background:' + s.c,
+          chip: "display:inline-block;margin-top:2px;font-size:9.5px;font-weight:800;border-radius:100px;padding:2px 8px;font-family:'Manrope',sans-serif;background:" + s.tint + ';color:' + s.deep };
+      });
+      docs = this.DOCS.map(d => ({ i: d.i, n: d.n[lang], m: d.m, iconStyle: 'width:38px;height:38px;border-radius:10px;background:' + d.bg + ';color:' + d.c + ';display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none' }));
+    }
+    const chatCards = this.CHATS_BASE.map((c, i) => {
+      const msgs = c.msgs.concat(S.chatExtra[i]);
+      const lastMsg = msgs[msgs.length - 1];
+      return { name: c.name, init: c.init, agency: c.agency[lang], online: c.online, unread: S.chatUnread[i], time: i === 0 ? '12:40' : (i === 1 ? '11:18' : (lang === 'ru' ? 'вчера' : (lang === 'tr' ? 'dün' : 'yesterday'))),
+        last: lastMsg.t ? lastMsg.t[lang] : lastMsg.text,
+        avStyle: 'position:relative;width:42px;height:42px;border-radius:50%;background:' + c.bg + ";color:#fff;font-size:13px;font-weight:800;font-family:'Manrope',sans-serif;display:inline-flex;align-items:center;justify-content:center;flex:none",
+        open: () => this.setState(s => { const cu = s.chatUnread.slice(); cu[i] = 0; return { chatId: i, chatUnread: cu }; }) };
+    });
+    const aiOn = S.aiTr !== false;
+    const langUp = lang.toUpperCase();
+    const tmOf = (m, mi) => { if (m.tm) return m.tm; const base = 12 * 60 + 28 + mi * 4; return Math.floor(base / 60) + ':' + ('' + (base % 60)).padStart(2, '0'); };
+    const msgsView = chat ? chat.msgs.concat(S.chatExtra[S.chatId]).map((m, mi, arr) => ({
+      tm: tmOf(m, mi),
+      text: m.t ? ((aiOn && !(S.trOrig || {})[S.chatId + ':' + mi]) ? m.t[lang] : m.t.tr) : m.text,
+      trCap: (!m.me && m.t && aiOn && lang !== 'tr') ? ((S.trOrig || {})[S.chatId + ':' + mi] ? ('· ' + t.trOrigOn) : ('AI · TR → ' + langUp + ' · ' + t.trOrigTap)) : '',
+      toggleOrig: () => this.setState(s => { const o = { ...(s.trOrig || {}) }; const k = s.chatId + ':' + mi; o[k] = !o[k]; return { trOrig: o }; }),
+      tick: m.me ? (m.st === 'sent' ? '✓' : '✓✓') : '',
+      tickStyle: 'display:inline-block;margin-left:4px;font-size:10px;font-weight:800;letter-spacing:-.06em;color:' + (m.st === 'sent' || m.st === 'dlv' ? 'rgba(255,255,255,.65)' : (m.me ? '#bfe0ff' : 'transparent')),
+      tmStyle: 'display:block;text-align:right;font-size:9px;margin-top:3px;line-height:1;color:' + (m.me ? 'rgba(255,255,255,.6)' : '#a6afbe'),
+      row: 'display:flex' + (m.me ? ';justify-content:flex-end' : ''), bub: 'max-width:78%;padding:9px 13px;font-size:13.5px;line-height:1.45;' + (m.me ? 'background:#4d7cfe;color:#fff;border-radius:14px 14px 4px 14px' : 'background:#fff;border:1px solid #e6e9f0;color:#14243f;border-radius:14px 14px 14px 4px') })) : [];
+    const ncard = un => 'display:flex;align-items:flex-start;gap:11px;border-radius:13px;padding:12px 13px;border:1px solid ' + (un ? '#d8e4fd;background:#f4f8ff' : '#e6e9f0;background:#fff');
+    const notifs = this.NOTIFS.map(nn => { const un = nn.fresh && !S.notifSeen; return { day: nn.day||0, icon: nn.i, iconStyle: kico(nn.bg, nn.c), text: nn.text[lang], time: nn.time[lang], unread: un, cardStyle: ncard(un) }; });
+    const dayL = [t.dayToday, t.dayYest, t.dayEarlier];
+    const notifGroups = [0,1,2].map(d => ({ label: dayL[d], items: notifs.filter(x => x.day === d) })).filter(g => g.items.length);
+    const freshCount = this.NOTIFS.filter(nn => nn.fresh).length;
+    const tabDefs = [
+      { key: 'home', icon: 'ti-smart-home', label: t.nav_home },
+      { key: 'objects', icon: 'ti-building-community', label: t.nav_objects },
+      { key: 'chats', icon: 'ti-message-circle', label: t.nav_chats, badge: chatUnreadTotal },
+      { key: 'notif', icon: 'ti-bell', label: t.nav_notif, badge: S.notifSeen ? 0 : freshCount },
+      { key: 'profile', icon: 'ti-user', label: t.nav_profile },
+    ];
+    const tabs = tabDefs.map(d => ({ icon: d.icon, label: d.label, badge: d.badge || 0,
+      st: 'flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;cursor:pointer;border-radius:10px;min-height:48px;color:' + (S.tab === d.key ? '#4d7cfe' : '#8a93a2'),
+      onClick: () => this.setState({ tab: d.key, objId: null, chatId: null, notifSeen: d.key === 'notif' ? true : S.notifSeen }) }));
+    const sel = S.sel, cell = sel ? sel.cell : null;
+    const tog = on => 'width:47px;height:28px;border-radius:14px;padding:3px;cursor:pointer;display:inline-flex;flex:none;transition:background .2s;background:' + (on ? '#34c383' : '#dfe4ec') + ';justify-content:' + (on ? 'flex-end' : 'flex-start');
+    const langBtns = ['ru','en','tr'].map(l => ({ l: l.toUpperCase(), onClick: () => this.setState({ lang: l }),
+      st: 'min-width:40px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;' + (lang === l ? 'background:#14243f;color:#fff' : 'background:#f0f2f6;color:#5a6472') }));
+    const floorWord = cell ? (cell.floorStart === cell.floorEnd ? cell.floorStart + ' ' + t.floorOne : t.floorsMany + ' ' + cell.floorStart + '–' + cell.floorEnd) : '';
+    return {
+      t,
+      topPadStyle: 'flex:none;background:#fff;height:' + top + 'px',
+      bottomPadStyle: 'flex:none;background:#fff;height:' + bottom + 'px',
+      sheetPadStyle: 'flex:none;height:' + bottom + 'px',
+      isHome, isObjList, isObjDetail, isChatList, isThread, isNotif, isProfile,
+      headerTitle, headerSub, showBack, showLogo, showBell, notifDot: !S.notifSeen,
+      goBack: () => { if (S.chatId !== null) this.setState({ chatId: null }); else if (S.objId !== null) this.setState({ objId: null }); },
+      goNotif: () => this.setState({ tab: 'notif', objId: null, chatId: null, notifSeen: true }),
+      goObjectsTab: () => this.setState({ tab: 'objects', objId: null }),
+      roleMgr: () => this.setState(s => ({ role: 'manager', objTab: s.objTab === 'pub' ? 'board' : s.objTab })), roleOwn: () => this.setState({ role: 'owner' }),
+      roleMgrStyle: seg(S.role === 'manager'), roleOwnStyle: seg(S.role === 'owner'),
+      roleLabel: S.role === 'manager' ? t.roleFullMgr : t.roleFullOwn, isOwner: S.role === 'owner',
+      kpis, bars, revNumber: this.fmt(this.REV[si]), revMonthLabel: this.MON[lang][si] + ' 2026', growthText, growthIcon,
+      growthStyle: 'font-size:12px;font-weight:700;margin-top:2px;color:' + growthColor,
+      events, todayEmpty, miniObjs, objCards,
+      objName, objImg, objMeta, objLink, legend, gridStyle, floorLabels, gridCells, listItems, listEmpty, typeChips, statusChips, schemeChips, tileChips, docs,
+      tabBoard: () => this.setState({ objTab: 'board' }), tabDocs: () => this.setState({ objTab: 'docs' }), tabPub: () => this.setState({ objTab: 'pub' }),
+      tabBoardSt: seg(S.objTab === 'board'), tabDocsSt: seg(S.objTab === 'docs'), tabPubSt: seg(S.objTab === 'pub'),
+      devBoard: S.objTab === 'board', devDocs: S.objTab === 'docs', devPub: S.objTab === 'pub' && S.role === 'owner',
+      isGrid: S.boardView !== 'list', isList: S.boardView === 'list',
+      viewGrid: () => this.setState({ boardView: 'grid' }), viewList: () => this.setState({ boardView: 'list' }),
+      vGridSt: seg(S.boardView !== 'list'), vListSt: seg(S.boardView === 'list'),
+      togglePub: () => this.setState({ pubOn: !S.pubOn }), pubTogSt: tog(S.pubOn),
+      copyLink: () => { try { navigator.clipboard.writeText('https://' + (obj ? obj.link : '')); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+      copyLabel: S.copied ? (lang === 'ru' ? 'Скопировано ✓' : (lang === 'tr' ? 'Kopyalandı ✓' : 'Copied ✓')) : (lang === 'ru' ? 'Копировать' : (lang === 'tr' ? 'Kopyala' : 'Copy')),
+      chatCards, msgsView, typing: S.typing, draft: S.draft, msgsRef: this.msgsRef,
+      onDraft: e => this.setState({ draft: e.target.value }), onKey: e => { if (e.key === 'Enter') this.doSend(); }, send: () => this.doSend(),
+      notifs, notifGroups, tabs,
+      toggleAiTr: () => this.setState(s => ({ aiTr: s.aiTr === false ? true : false })),
+      aiTrTogSt: 'width:34px;height:20px;border-radius:12px;padding:2px;cursor:pointer;display:inline-flex;flex:none;transition:background .2s;background:' + (aiOn ? '#4d7cfe' : '#c9d0dc') + ';justify-content:' + (aiOn ? 'flex-end' : 'flex-start'),
+      showSheet: !!sel, closeSheet: () => this.setState({ sel: null }),
+      selNo: cell ? this.dispNo(cell) : '', selStatusL: cell ? this.STL[cell.st][lang] : '',
+      selChip: cell ? "font-size:11px;font-weight:800;border-radius:100px;padding:5px 12px;font-family:'Manrope',sans-serif;background:" + ST[cell.st].tint + ';color:' + ST[cell.st].deep : '',
+      selChips: cell ? [cell.type + (cell.kind !== 'flat' ? ' · ' + this.KINDL[cell.kind][lang] : ''), cell.m2 + ' m²', floorWord, sel.obj.name] : [],
+      selPlan: cell ? (cell.type === '1+1' ? 'diamond-plans/plan-1-1.jpeg' : 'diamond-plans/plan-2-1.jpeg') : '',
+      selPrice: cell ? this.fmt(cell.price) : '', selPerM2: cell ? this.fmt(cell.price / cell.m2) : '',
+      selHist: cell ? (cell.histKey ? (t.histPre + ' «' + this.STL[cell.histKey][lang] + '» · ' + t.justNow) : t.histNone) : '',
+      statusBtns: cell ? ['free','res','proc','sold'].map(k => { const a = cell.st === k;
+        return { l: this.STL[k][lang], onClick: () => this.setStatus(cell, k),
+          st: "display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;border:1.5px solid " + (a ? ST[k].c : '#e2e7ef') + ';background:' + (a ? ST[k].tint : '#fff') + ';color:' + (a ? ST[k].deep : '#5a6472'),
+          dot: 'width:10px;height:10px;border-radius:3.5px;background:' + ST[k].c }; }) : [],
+      langBtns,
+      toggleNotif: () => this.setState({ notifOn: !S.notifOn }), notifTogSt: tog(S.notifOn),
+    };
+  }
+  doSend() {
+    const S = this.state;
+    if (!S.draft.trim() || S.chatId === null) return;
+    const i = S.chatId, txt = S.draft.trim();
+    const mid = Date.now();
+    this.setState(s => { const ex = s.chatExtra.map(a => a.slice()); const d = new Date(); ex[i].push({ me: 1, text: txt, st: 'sent', id: mid, tm: d.getHours() + ':' + ('' + d.getMinutes()).padStart(2, '0') }); return { chatExtra: ex, draft: '', typing: true }; });
+    const setSt = (st) => this.setState(s => { const ex = s.chatExtra.map(a => a.map(m => m.id === mid ? { ...m, st } : m)); return { chatExtra: ex }; });
+    setTimeout(() => setSt('dlv'), 700);
+    setTimeout(() => setSt('read'), 1600);
+    clearTimeout(this._rt);
+    this._rt = setTimeout(() => {
+      this.setState(s => { const ex = s.chatExtra.map(a => a.slice()); ex[i].push({ me: 0, text: this.L.autoReply[s.lang] }); return { chatExtra: ex, typing: false }; });
+    }, 1500);
+  }
+  componentWillUnmount() { clearTimeout(this._rt); }
+}
+</script>
+</body>
+</html>

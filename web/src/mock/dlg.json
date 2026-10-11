@@ -1,0 +1,117 @@
+[
+  {
+    "id": "dsup",
+    "who": "sup",
+    "msgs": [
+      {
+        "me": false,
+        "by": "Мария · OnePlan Support",
+        "lang": "RU",
+        "tx": {
+          "RU": "Здравствуйте! Это поддержка OnePlan. Пишите по любым вопросам: объекты, работа с системой, смена почты или агентства — поможем.",
+          "EN": "Hello! This is OnePlan support. Write to us about anything: listings, how the system works, changing your email or agency — we will help.",
+          "TR": "Merhaba! OnePlan destek ekibi. Her konuda yazabilirsiniz: ilanlar, sistemin kullanımı, e-posta veya ajans değişikliği — yardımcı oluruz."
+        },
+        "time": "09:00"
+      },
+      {
+        "me": false,
+        "lang": "RU",
+        "tx": {
+          "RU": "Сейчас обращений много, поэтому ответ может занять время — извините за ожидание, стараемся отвечать как можно быстрее 🙏",
+          "EN": "We are getting a lot of requests right now, so a reply may take a while — sorry for the wait, we try to answer as fast as we can 🙏",
+          "TR": "Şu anda çok sayıda talep var, yanıt biraz zaman alabilir — beklettiğimiz için özür dileriz, en kısa sürede dönüyoruz 🙏"
+        },
+        "time": "09:00"
+      }
+    ]
+  },
+  {
+    "id": "d1",
+    "who": "r1",
+    "msgs": [
+      {
+        "me": false,
+        "lang": "TR",
+        "tx": {
+          "RU": "Привет! 1+1 в Коньяалты ещё в продаже?",
+          "EN": "Hi! Is the 1+1 in Konyaaltı still for sale?",
+          "TR": "Merhaba! Konyaaltı’daki 1+1 hâlâ satışta mı?"
+        },
+        "time": "10:24"
+      },
+      {
+        "me": true,
+        "lang": "RU",
+        "tx": {
+          "RU": "Да, актуален. Могу отправить свежие фото и видео.",
+          "EN": "Yes, still available. I can send fresh photos and a video.",
+          "TR": "Evet, hâlâ satışta. Güncel fotoğraf ve video gönderebilirim."
+        },
+        "time": "10:26"
+      },
+      {
+        "me": false,
+        "lang": "TR",
+        "tx": {
+          "RU": "Отлично. Клиент хочет посмотреть в пятницу. Комиссия 50/50?",
+          "EN": "Great. My client wants a viewing on Friday. Commission 50/50?",
+          "TR": "Süper. Müşterim cuma günü görmek istiyor. Komisyon 50/50 olur mu?"
+        },
+        "time": "10:31"
+      },
+      {
+        "me": true,
+        "lang": "RU",
+        "tx": {
+          "RU": "Договорились, 50/50. Пятница после 14:00 удобно.",
+          "EN": "Deal, 50/50. Friday after 2 pm works.",
+          "TR": "Anlaştık, 50/50. Cuma 14:00 sonrası uygun."
+        },
+        "time": "10:33"
+      }
+    ]
+  },
+  {
+    "id": "d2",
+    "who": "r2",
+    "msgs": [
+      {
+        "me": false,
+        "lang": "RU",
+        "tx": {
+          "RU": "Саша, добавила виллу в Белеке — глянь, подойдёт твоей паре из Германии.",
+          "EN": "Alex, I added a villa in Belek — take a look, it fits your German couple.",
+          "TR": "Alex, Belek’te bir villa ekledim — bak, Alman çiftine uygun olabilir."
+        },
+        "time": "09:12"
+      },
+      {
+        "me": true,
+        "lang": "RU",
+        "tx": {
+          "RU": "Спасибо! Уже добавил в их подборку.",
+          "EN": "Thanks! Already added it to their collection.",
+          "TR": "Teşekkürler! Onların koleksiyonuna ekledim bile."
+        },
+        "time": "09:20"
+      }
+    ]
+  },
+  {
+    "id": "d3",
+    "who": "r5",
+    "msgs": [
+      {
+        "me": false,
+        "lang": "EN",
+        "tx": {
+          "RU": "Привет! Клиент спрашивает о рассрочке на пентхаус в Ларе.",
+          "EN": "Hi! A client is asking about a payment plan for the Lara penthouse.",
+          "TR": "Merhaba! Bir müşteri Lara çatı dubleksi için taksit planını soruyor."
+        },
+        "time": "Вчера"
+      }
+    ]
+  }
+]

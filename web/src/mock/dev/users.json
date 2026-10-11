@@ -1,0 +1,110 @@
+[
+{
+"id": 101,
+"companyIds": [
+1
+],
+"role": "admin",
+"fio": "Ahmet Serveroğlu",
+"mail": "ahmet@serveroglu.com.tr",
+"access": "all",
+"until": "—"
+},
+{
+"id": 102,
+"companyIds": [
+1,
+3
+],
+"role": "editor",
+"fio": "Мехмет Кая",
+"mail": "mehmet@serveroglu.com.tr",
+"access": "all",
+"until": "—",
+"platform": true
+},
+{
+"id": 103,
+"companyIds": [
+1
+],
+"role": "client",
+"fio": "Ирина Алиева",
+"mail": "irina.client@mail.com",
+"access": [
+8,
+10
+],
+"until": "01.06.2027"
+},
+{
+"id": 104,
+"companyIds": [
+2
+],
+"role": "admin",
+"fio": "Kemal Yükselen",
+"mail": "kemal@yukselen.com",
+"access": "all",
+"until": "—"
+},
+{
+"id": 105,
+"companyIds": [
+2
+],
+"role": "client",
+"fio": "John Smith",
+"mail": "john.buyer@mail.com",
+"access": [
+9
+],
+"until": "12.03.2027",
+"active": false
+},
+{
+"id": 106,
+"companyIds": [
+3
+],
+"role": "admin",
+"fio": "Arslan Oğuz",
+"mail": "arslan@arsogroup.com",
+"access": "all",
+"until": "—"
+},
+{
+"id": 107,
+"companyIds": [
+3,
+4
+],
+"role": "editor",
+"fio": "Zeynep Demir",
+"mail": "zeynep@arsogroup.com",
+"access": "all",
+"until": "—"
+},
+{
+"id": 108,
+"companyIds": [
+4
+],
+"role": "admin",
+"fio": "Deniz Sönmez",
+"mail": "deniz@sonmez.com",
+"access": "all",
+"until": "—"
+},
+{
+"id": 109,
+"companyIds": [
+5
+],
+"role": "admin",
+"fio": "Emre Kaya",
+"mail": "emre@avocado.com",
+"access": "all",
+"until": "—"
+}
+]

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e8edf4;font-family:'Manrope',sans-serif;color:#14243f}
+a{color:#4d7cfe;text-decoration:none}
+a:hover{color:#3a63d4}
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:44px 40px 72px;display:flex;flex-direction:column;align-items:center;gap:30px">
+  <div style="text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center">
+    <span style="display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:22px;color:#14243f"><span style="display:inline-flex"><span style="width:12px;height:12px;border-radius:50%;background:#4d7cfe"></span><span style="width:12px;height:12px;border-radius:50%;background:#43a047;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#f0ad00;margin-left:-5px"></span><span style="width:12px;height:12px;border-radius:50%;background:#e5484d;margin-left:-5px"></span></span> OnePlan</span>
+    <span style="font-size:13.5px;color:#5a6472;font-weight:600">Мобильное приложение для застройщиков · кликабельный прототип</span>
+    <span style="font-size:12px;color:#8a93a2;font-weight:600">Табы, шахматка, карточка квартиры, чаты и настройки — интерактивны</span>
+  </div>
+  <div style="display:flex;gap:64px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <dc-import name="OnePlan App" top-inset="62" bottom-inset="16" currency="{{ currency }}" start-role="{{ startRole }}" lang="{{ lang }}" empty-today="{{ emptyToday }}" hint-size="100%,100%" style="display:block;height:100%"></dc-import>
+      </x-import>
+      <span style="font-size:12.5px;font-weight:700;color:#5a6472;background:#fff;border:1px solid #dfe4ec;border-radius:100px;padding:7px 16px">iPhone · 402 × 874</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+      <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="412px,892px">
+        <dc-import name="OnePlan App" top-inset="0" bottom-inset="6" currency="{{ currency }}" start-role="{{ startRole }}" lang="{{ lang }}" empty-today="{{ emptyToday }}" hint-size="100%,100%" style="display:block;height:100%"></dc-import>
+      </x-import>
+      <span style="font-size:12.5px;font-weight:700;color:#5a6472;background:#fff;border:1px solid #dfe4ec;border-radius:100px;padding:7px 16px">Android · 412 × 892</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;currency&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;€&quot;,&quot;$&quot;,&quot;₺&quot;],&quot;default&quot;:&quot;€&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;startRole&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;manager&quot;,&quot;owner&quot;],&quot;default&quot;:&quot;manager&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ru&quot;,&quot;en&quot;,&quot;tr&quot;],&quot;default&quot;:&quot;ru&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;emptyToday&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Данные&quot;}}"></script>
+</body>
+</html>
