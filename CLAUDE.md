@@ -13,6 +13,11 @@
 - `docs/gaps-realtors.md` — чек-лист расхождений «код vs прототип» по экранам (аудит 19.09.2026). Закрывать пункты, не удалять файл.
 
 ## Как работать
+- Git (11.10.2026): репозиторий — корень проекта (CLAUDE.md, docs/, web/, страницы прототипа без медиа), ветка `main`,
+  GitHub private `git@github.com:mexmat77/oneplan-app.git` (ключ `~/.ssh/oneplan_github`, Host github.com в `~/.ssh/config`).
+  Старый репозиторий программиста пользователь архивирует отдельно — не использовать. Правило: после каждой выложенной на прод
+  задачи — `git add -A && git commit && git push` (коммит по-русски, кратко что сделано). В git НИКОГДА: `web/.env.local`,
+  `*.docx` (логины/пароли), медиа прототипа — всё в `.gitignore`, перед коммитом смотреть `git status`.
 - Node через nvm: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"` перед `npm`.
 - Dev-сервер: `cd web && npm run dev` (порт 3000). Launch-конфиги в `.claude/launch.json` подключаются по URL.
 - Проверка: `npx tsc --noEmit && npx eslint src && npm run test:unit` (Vitest, `web/tests/unit/*.test.ts` — чистая логика: курс и
