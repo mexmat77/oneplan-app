@@ -1133,7 +1133,8 @@
       "translating": "Çevriliyor…",
       "translated": "çeviri",
       "original": "orijinal",
-      "trErr": "Çeviri başarısız"
+      "trErr": "Çeviri başarısız",
+      "doc": "Belge: {title}"
     },
     "stages": {
       "new": "Yeni",
@@ -1203,7 +1204,9 @@
       "delete_client": "Müşteriyi sildi",
       "merge": "Kopyaları birleştirdi",
       "key_created": "Şifreleme anahtarı oluşturuldu",
-      "source_token": "Kaynak tokeni oluşturdu"
+      "source_token": "Kaynak tokeni oluşturdu",
+      "download_doc": "Belge indirdi",
+      "delete_doc": "Belge sildi"
     },
     "errReadonly": "CRM salt okunur — değişiklik yapılamaz",
     "errSave": "Kaydedilemedi",
@@ -1221,6 +1224,73 @@
     "save": "Kaydet",
     "create": "Oluştur",
     "close": "Kapat",
-    "more": "Daha"
+    "more": "Daha",
+    "docs": {
+      "title": "Belgeler",
+      "none": "Henüz belge yok — şablondan oluşturun veya dosya yükleyin",
+      "create": "Belge oluştur",
+      "upload": "Dosya yükle",
+      "template": "Şablon",
+      "docTitle": "Belge adı",
+      "fill": "Alanları doldurun — sözleşmeye yerleştirilir. Boş alanlar boş kalır.",
+      "generate": "Oluştur",
+      "generating": "Belge oluşturuluyor…",
+      "docx": "Word",
+      "pdf": "PDF",
+      "file": "Dosya",
+      "download": "İndir",
+      "status": {
+        "draft": "Taslak",
+        "sent": "Gönderildi",
+        "signed": "İmzalandı",
+        "void": "İptal"
+      },
+      "validUntil": "Geçerlilik",
+      "delete": "Belgeyi sil",
+      "delQ": "Belge silinsin mi? Dosyalar depodan silinir.",
+      "kinds": {
+        "sale": "Satış",
+        "rent": "Kira",
+        "deposit": "Kapora",
+        "viewing": "Yer gösterme",
+        "handover": "Teslim",
+        "consent": "KVKK onayı",
+        "other": "Diğer",
+        "passport": "Pasaport / kimlik",
+        "deed": "Tapu",
+        "receipt": "Makbuz / ödeme"
+      },
+      "uploadT": "İşleme dosya yükle",
+      "uploadKind": "Dosya türü",
+      "uploadPick": "Dosya seçin (en fazla 25 MB)",
+      "noPdf": "PDF oluşturulamadı: bu sunucuda dönüştürücü yok, Word'ü indirin.",
+      "company": "Şirket bilgileri",
+      "companyS": "Sözleşmelere yerleştirilir: ünvan, vergi no, adres, yetkili, IBAN.",
+      "companyFields": {
+        "name": "Ünvan",
+        "taxNo": "Vergi no",
+        "taxOffice": "Vergi dairesi",
+        "mersis": "MERSİS",
+        "registryNo": "Ticaret sicil no",
+        "address": "Adres",
+        "representative": "Yetkili",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "iban": "IBAN",
+        "bank": "Banka",
+        "licenseNo": "Yetki belgesi no"
+      },
+      "templates": "Belge şablonları",
+      "templatesS": "Hazır şablonlar ve kendi şablonlarınız: {{buyer.name}}, {{deal.price}} gibi alanlarla Word yükleyin — alan listesi aşağıda.",
+      "uploadTpl": "Şablon yükle",
+      "tplName": "Şablon adı",
+      "builtin": "hazır",
+      "fieldsRef": "Şablon alanları",
+      "deleteTpl": "Şablonu sil",
+      "ev": "Belge: {title}",
+      "noDeal": "Belgeler işlem içinde oluşturulur — bir işlem açın veya oluşturun.",
+      "saved": "Belge oluşturuldu",
+      "err": "Belge oluşturulamadı"
+    }
   }
 }

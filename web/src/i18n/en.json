@@ -1133,7 +1133,8 @@
       "translating": "Translating…",
       "translated": "translation",
       "original": "original",
-      "trErr": "Translation failed"
+      "trErr": "Translation failed",
+      "doc": "Document: {title}"
     },
     "stages": {
       "new": "New",
@@ -1203,7 +1204,9 @@
       "delete_client": "Deleted a client",
       "merge": "Merged duplicates",
       "key_created": "Encryption key created",
-      "source_token": "Created a source token"
+      "source_token": "Created a source token",
+      "download_doc": "Downloaded a document",
+      "delete_doc": "Deleted a document"
     },
     "errReadonly": "CRM is read-only — changes are unavailable",
     "errSave": "Could not save",
@@ -1221,6 +1224,73 @@
     "save": "Save",
     "create": "Create",
     "close": "Close",
-    "more": "More"
+    "more": "More",
+    "docs": {
+      "title": "Documents",
+      "none": "No documents yet — create one from a template or upload a file",
+      "create": "Create document",
+      "upload": "Upload file",
+      "template": "Template",
+      "docTitle": "Document title",
+      "fill": "Fill in the fields — they will be inserted into the contract. Empty fields stay empty.",
+      "generate": "Generate",
+      "generating": "Generating the document…",
+      "docx": "Word",
+      "pdf": "PDF",
+      "file": "File",
+      "download": "Download",
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "signed": "Signed",
+        "void": "Void"
+      },
+      "validUntil": "Valid until",
+      "delete": "Delete document",
+      "delQ": "Delete the document? Files will be removed from storage.",
+      "kinds": {
+        "sale": "Sale",
+        "rent": "Rental",
+        "deposit": "Deposit",
+        "viewing": "Viewing",
+        "handover": "Handover",
+        "consent": "KVKK consent",
+        "other": "Other",
+        "passport": "Passport / ID",
+        "deed": "Title deed",
+        "receipt": "Receipt / payment"
+      },
+      "uploadT": "Upload a file to the deal",
+      "uploadKind": "File type",
+      "uploadPick": "Choose a file (up to 25 MB)",
+      "noPdf": "PDF not created: converter unavailable on this server, download Word.",
+      "company": "Company details",
+      "companyS": "Inserted into contracts: name, tax number, address, representative, IBAN.",
+      "companyFields": {
+        "name": "Company name",
+        "taxNo": "Tax No",
+        "taxOffice": "Tax office",
+        "mersis": "MERSİS",
+        "registryNo": "Trade registry No",
+        "address": "Address",
+        "representative": "Representative",
+        "phone": "Phone",
+        "email": "E-mail",
+        "iban": "IBAN",
+        "bank": "Bank",
+        "licenseNo": "Licence No"
+      },
+      "templates": "Document templates",
+      "templatesS": "Built-in templates plus your own: upload a Word file with fields like {{buyer.name}}, {{deal.price}} — the field list is below.",
+      "uploadTpl": "Upload my template",
+      "tplName": "Template name",
+      "builtin": "built-in",
+      "fieldsRef": "Fields for your templates",
+      "deleteTpl": "Delete template",
+      "ev": "Document: {title}",
+      "noDeal": "Documents are created inside a deal — open or create a deal.",
+      "saved": "Document created",
+      "err": "Could not create the document"
+    }
   }
 }

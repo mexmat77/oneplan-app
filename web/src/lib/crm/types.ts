@@ -40,7 +40,7 @@ export type Deal = {
 export type TaskKind = "call" | "show" | "meeting" | "message" | "other";
 export type Task = { id: string; clientId: string | null; clientName: string | null; dealId: string | null; ownerId: string | null; kind: TaskKind; title: string; dueAt: string; doneAt: string | null; createdAt: string };
 
-export type EventKind = "created" | "stage" | "note" | "call" | "show" | "meeting" | "task" | "contact" | "lead" | "merge" | "edit" | "deal";
+export type EventKind = "created" | "stage" | "note" | "call" | "show" | "meeting" | "task" | "contact" | "lead" | "merge" | "edit" | "deal" | "doc";
 export type CrmEvent = { id: number; clientId: string | null; dealId: string | null; actorId: string | null; kind: EventKind; payload: Record<string, unknown>; text: string; createdAt: string; tr: Partial<Record<Lang, string>> };
 
 export type ClientInput = {

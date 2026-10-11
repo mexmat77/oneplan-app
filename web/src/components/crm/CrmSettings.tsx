@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { IconDownload, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
 import { deleteSource, exportClientsCsv, issueSourceToken, listAudit, saveSource, saveStages } from "@/app/crm/actions";
+import { deleteTemplate, getCompany, listTemplates, saveCompany, uploadTemplate, type Company, type TemplateInfo } from "@/app/crm/doc-actions";
+import { FIELDS, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
@@ -25,6 +27,21 @@ export function CrmSettings() {
   const [token, setToken] = useState<{ id: string; token: string } | null>(null);
   const [audit, setAudit] = useState<Awaited<ReturnType<typeof listAudit>> | null>(null);
   useEffect(() => { if (crm.me.isAdmin) listAudit().then(setAudit).catch(() => setAudit([])); }, [crm.me.isAdmin]);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [tpls, setTpls] = useState<TemplateInfo[] | null>(null);
+  const [tplFile, setTplFile] = useState<File | null>(null);
+  const [tplName, setTplName] = useState("");
+  const [tplKind, setTplKind] = useState("other");
+  const [showFields, setShowFields] = useState(false);
+  useEffect(() => { getCompany().then(setCompany).catch(() => setCompany({})); listTemplates().then(setTpls).catch(() => setTpls([])); }, []);
+  const d = c.docs;
+  async function saveCo() { if (!company) return; setBusy(true); try { await saveCompany(company); showToast(c.set.saved); } catch (e) { err(e); } finally { setBusy(false); } }
+  async function addTpl() {
+    if (!tplFile) return; setBusy(true);
+    try { const fd = new FormData(); fd.set("file", tplFile); fd.set("name", tplName); fd.set("kind", tplKind); const t2 = await uploadTemplate(fd); setTpls((v) => [...(v ?? []), t2]); setTplFile(null); setTplName(""); showToast(c.set.saved); }
+    catch (e) { err(e); } finally { setBusy(false); }
+  }
+  async function delTpl(t2: TemplateInfo) { if (!(await confirmDialog({ text: `${typeof t2.name === "string" ? t2.name : t2.name[lang]}?`, danger: true }))) return; try { await deleteTemplate(t2.id); setTpls((v) => (v ?? []).filter((x) => x.id !== t2.id)); } catch (e) { err(e); } }
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
 
   const setRow = (i: number, p: Partial<StRow>) => setSt((v) => v.map((x, j) => (j === i ? { ...x, ...p } : x)));
@@ -90,6 +107,46 @@ export function CrmSettings() {
           <Select value={src.kind} onChange={(v) => setSrc({ ...src, kind: v as SourceKind })} options={(Object.keys(c.srcKinds) as SourceKind[]).map((k) => ({ value: k, label: c.srcKinds[k] }))} size="sm" disabled={ro} />
           <button type="button" disabled={ro} onClick={addSrc} className={btnS}><IconPlus size={14} /></button>
         </div>
+      </div>
+
+      <div className={card}>
+        <div className="text-[15px] font-extrabold text-ink">{d.company}</div>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.companyS}</p>
+        {!company ? <div className="text-[13px] text-muted">…</div> : (
+          <div className="grid grid-cols-2 gap-2 max-md:grid-cols-1">
+            {(Object.keys(d.companyFields) as (keyof typeof d.companyFields)[]).map((k) => (
+              <div key={k} className={k === "address" ? "col-span-2 max-md:col-span-1" : ""}><label className="mb-[3px] block text-[11.5px] font-semibold text-muted">{d.companyFields[k]}</label><input value={company[k] ?? ""} onChange={(e) => setCompany({ ...company, [k]: e.target.value })} disabled={ro} className={`${inp} py-2 text-[13px]`} /></div>
+            ))}
+          </div>
+        )}
+        <div className="mt-3"><button type="button" disabled={ro || busy || !company} onClick={saveCo} className={btnP}>{c.set.save}</button></div>
+      </div>
+
+      <div className={card}>
+        <div className="text-[15px] font-extrabold text-ink">{d.templates}</div>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS}</p>
+        <div className="flex flex-col gap-1">
+          {(tpls ?? []).map((t2) => (
+            <div key={t2.id} className="flex items-center gap-2 rounded-[10px] bg-bg-2 px-3 py-2 text-[12.5px]">
+              <span className="min-w-0 flex-1 truncate font-semibold text-ink">{typeof t2.name === "string" ? t2.name : t2.name[lang]} <span className="font-normal text-muted">· {(d.kinds as Record<string, string>)[t2.kind] ?? t2.kind} · {t2.lang}{t2.builtin ? ` · ${d.builtin}` : ""}</span></span>
+              {!t2.builtin && <button type="button" disabled={ro} onClick={() => delTpl(t2)} title={d.deleteTpl} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[7px] text-muted hover:bg-red-tint hover:text-red"><IconTrash size={14} /></button>}
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2 max-md:grid-cols-1">
+          <input type="file" accept=".docx" onChange={(e) => { const f = e.target.files?.[0] ?? null; setTplFile(f); if (f && !tplName) setTplName(f.name.replace(/\.docx$/i, "")); }} disabled={ro} className="block w-full text-[12.5px]" />
+          <input value={tplName} onChange={(e) => setTplName(e.target.value)} placeholder={d.tplName} disabled={ro} className={`${inp} py-2 text-[13px]`} />
+          <Select value={tplKind} onChange={setTplKind} options={["sale", "rent", "deposit", "viewing", "handover", "consent", "other"].map((k) => ({ value: k, label: (d.kinds as Record<string, string>)[k] }))} size="sm" disabled={ro} />
+          <button type="button" disabled={ro || busy || !tplFile} onClick={addTpl} className={btnS}><IconPlus size={14} /> {d.uploadTpl}</button>
+        </div>
+        <button type="button" onClick={() => setShowFields((v) => !v)} className="mt-3 cursor-pointer text-[12.5px] font-bold text-blue-2 hover:underline">{d.fieldsRef} {showFields ? "▴" : "▾"}</button>
+        {showFields && (
+          <div className="mt-2 max-h-[260px] overflow-y-auto rounded-[10px] bg-bg-2 p-3 text-[12px]">
+            {(Object.keys(GROUP_LABELS) as DocGroup[]).map((g) => (
+              <div key={g} className="mb-2"><div className="font-extrabold text-ink">{GROUP_LABELS[g][lang]}</div>{FIELDS.filter((f) => f.group === g).map((f) => <div key={f.key} className="flex gap-2"><code className="text-blue-2">{"{{" + f.key + "}}"}</code><span className="text-muted">{f.label[lang]}</span></div>)}</div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className={card}>

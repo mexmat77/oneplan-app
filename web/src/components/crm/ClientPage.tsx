@@ -17,6 +17,7 @@ import type { Currency } from "@/lib/types";
 import { GEO } from "@/lib/seed";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
+import { DocsPanel } from "./DocsPanel";
 import { CrmCtx, btnD, btnP, btnS, card, chip, fill, fmtDT, fmtDate, initials, inp, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 export function ClientPage({ base, id }: { base: string; id: string }) {
@@ -119,7 +120,7 @@ function Inner({ id }: { id: string }) {
         )}
       </div>
 
-      <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
+      <div className="grid grid-cols-[1.5fr_1fr] gap-4 max-md:grid-cols-1">
         <div className={card}>
           <div className="mb-3 flex items-center justify-between"><div className="text-[15px] font-extrabold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
           {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
@@ -128,6 +129,7 @@ function Inner({ id }: { id: string }) {
                 <div className="flex items-start justify-between gap-2"><button type="button" onClick={() => setDealM({ open: true, deal: d })} className="cursor-pointer text-left text-[13.5px] font-bold text-ink hover:text-blue-2">{d.title || "—"}</button><button type="button" onClick={() => delDeal(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></div>
                 <div className="mt-1 text-[12.5px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div>
                 <div className="mt-2"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
+                <DocsPanel dealId={d.id} dealKind={d.deal} />
               </div>))}</div>
           )}
         </div>
@@ -172,6 +174,7 @@ function Timeline({ events }: { events: CrmEvent[] }) {
       case "stage": return fill(c.ev.stage, { from: stName(p.from), to: stName(p.to) });
       case "task": return fill(c.ev.task, { title: p.title ?? "" });
       case "deal": return fill(c.ev.deal, { title: p.title ?? "" });
+      case "doc": return fill(c.ev.doc, { title: p.title ?? "" });
       case "lead": return fill(c.ev.lead, { source: sourceName(crm.sources.find((s) => s.id === p.sourceId), t) });
       default: return (c.ev as Record<string, string>)[e.kind] ?? e.kind;
     }
