@@ -44,19 +44,19 @@ export function TasksView() {
     return Array.from({ length: 7 }, (_, i) => { const d = new Date(d0); d.setDate(d0.getDate() + i); return d; });
   }, []);
   const row = (x: Task, over?: boolean) => (
-    <div className="flex items-center gap-3 rounded-[12px] border border-line bg-surface px-3 py-[9px]">
+    <div className="flex items-center gap-3 rounded-[6px] border border-line bg-surface px-3 py-[6px]">
       <button type="button" onClick={() => toggle(x)} disabled={ro} className={`flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-full border-2 ${x.doneAt ? "border-green bg-green text-white" : "border-line hover:border-blue"}`}>{x.doneAt && <IconCheck size={14} />}</button>
       <button type="button" onClick={() => setModal({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className={`truncate text-[13.5px] font-semibold ${x.doneAt ? "text-muted line-through" : "text-ink"}`}>{x.title}</div><div className="text-[12px] text-muted">{taskKindName(x.kind, t)} · <span className={over ? "font-semibold text-red" : ""}>{fmtDT(x.dueAt, lang)}</span>{x.clientName ? <> · <Link href={`${crm.base}/c/${x.clientId}`} className="text-blue-2 hover:underline">{x.clientName}</Link></> : null}</div></button>
       <button type="button" onClick={() => del(x)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button>
     </div>
   );
-  const sec = (title: string, list: Task[], over?: boolean) => list.length ? <div className="mb-4"><div className={`mb-2 text-[12px] font-extrabold uppercase tracking-[.04em] ${over ? "text-red" : "text-muted"}`}>{title} · {list.length}</div><div className="flex flex-col gap-2">{list.map((x) => <div key={x.id}>{row(x, over)}</div>)}</div></div> : null;
+  const sec = (title: string, list: Task[], over?: boolean) => list.length ? <div className="mb-4"><div className={`mb-2 text-[11px] font-semibold uppercase tracking-[.05em] ${over ? "text-red" : "text-muted"}`}>{title} · {list.length}</div><div className="flex flex-col gap-2">{list.map((x) => <div key={x.id}>{row(x, over)}</div>)}</div></div> : null;
   const dayNames = [c.tk.mon, c.tk.tue, c.tk.wed, c.tk.thu, c.tk.fri, c.tk.sat, c.tk.sun];
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h1 className="mr-2 text-[20px] font-extrabold tracking-[-0.02em] text-ink">{c.nav.tasks}</h1>
-        <div className="inline-flex gap-[3px] rounded-[10px] bg-bg-2 p-[3px]">{(["list", "week"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} className={`h-8 cursor-pointer rounded-[8px] px-3 text-[12.5px] font-bold ${view === v ? "bg-surface text-ink shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted"}`}>{v === "list" ? c.tk.list : c.tk.week}</button>)}</div>
+        
+        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["list", "week"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-semibold ${view === v ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{v === "list" ? c.tk.list : c.tk.week}</button>)}</div>
         <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text"><input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> {c.task.showDone}</label>
         <div className="flex-1" />
         <button type="button" onClick={() => setModal({ open: true, task: null })} disabled={ro} className={btnP}><IconPlus size={15} /> {c.task.add}</button>
@@ -67,7 +67,7 @@ export function TasksView() {
         : (
           <div className="grid grid-cols-7 gap-2 max-md:grid-cols-1">
             {week.map((d, i) => { const key = d.toDateString(); const list = (tasks ?? []).filter((x) => new Date(x.dueAt).toDateString() === key); const today = new Date().toDateString() === key; return (
-              <div key={i} className={`min-h-[160px] rounded-[12px] border p-2 ${today ? "border-sel-line bg-blue-tint/40" : "border-line bg-surface"}`}>
+              <div key={i} className={`min-h-[160px] rounded-[6px] border p-2 ${today ? "border-sel-line bg-blue-tint/40" : "border-line bg-surface"}`}>
                 <div className={`mb-2 text-[11.5px] font-extrabold uppercase ${today ? "text-sel-ink" : "text-muted"}`}>{dayNames[i]} {d.getDate()}</div>
                 <div className="flex flex-col gap-1">{list.length === 0 ? <div className="text-[11.5px] text-muted">{c.tk.noTasks}</div> : list.map((x) => <button key={x.id} type="button" onClick={() => setModal({ open: true, task: x })} className={`cursor-pointer rounded-[8px] px-2 py-[5px] text-left text-[12px] ${x.doneAt ? "bg-bg-2 text-muted line-through" : new Date(x.dueAt) < new Date() ? "bg-red-tint text-red" : "bg-bg-2 text-ink"}`}><div className="truncate font-semibold">{x.title}</div><div className="text-[10.5px] opacity-80">{fmtDT(x.dueAt, lang).split(",").pop()?.trim()}{x.clientName ? ` · ${x.clientName}` : ""}</div></button>)}</div>
               </div>); })}

@@ -4,7 +4,7 @@
 // «дней на этапе», фильтр по ответственному; список таблицей как второй режим.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconCalendarEvent, IconLayoutKanban, IconList, IconPlus, IconUser } from "@tabler/icons-react";
+import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPlus } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
@@ -56,55 +56,60 @@ export function DealsBoard() {
   const days = (d: Deal) => (now ? Math.max(0, Math.round((now - new Date(d.updatedAt).getTime()) / 864e5)) : 0);
 
   const DealCard = (d: Deal) => {
-    const tk = taskOf(d); const m = crm.me.members.find((x) => x.id === d.ownerId);
+    const tk = taskOf(d); const m = crm.me.members.find((x) => x.id === d.ownerId); const st = crm.stages.find((x) => x.id === d.stageId);
+    const act = tk ? (new Date(tk.dueAt).getTime() < now ? "#e5484d" : "#22c15e") : "#c9d0dc";
     return (
       <div draggable={!ro} onDragStart={(e) => { setDragId(d.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", d.id); }} onDragEnd={() => { setDragId(null); setOver(null); }}
-        className={`cursor-grab rounded-[12px] border border-line bg-surface p-3 shadow-[0_1px_3px_rgba(20,36,63,.05)] transition hover:shadow-[0_8px_24px_rgba(20,36,63,.1)] active:cursor-grabbing ${dragId === d.id ? "opacity-40" : ""}`}>
-        <button type="button" onClick={() => setModal({ open: true, deal: d })} className="block w-full cursor-pointer text-left">
-          <div className="text-[13.5px] font-bold leading-[1.3] text-ink">{d.title || "—"}</div>
-          <Link href={`${crm.base}/c/${d.clientId}`} onClick={(e) => e.stopPropagation()} className="mt-[3px] inline-flex items-center gap-1 text-[12px] text-blue-2 hover:underline"><IconUser size={11} /> {d.clientName}</Link>
-          {d.amount != null && <div className="mt-[6px] text-[14px] font-extrabold text-ink">{fmt(d.amount, d.cur as Currency)}</div>}
+        className={`group cursor-grab rounded-[4px] border border-line bg-surface shadow-[0_1px_2px_rgba(20,36,63,.06)] transition hover:border-[#b9c2d0] active:cursor-grabbing ${dragId === d.id ? "opacity-40" : ""}`} style={{ borderTop: `3px solid ${st?.color ?? "#8a93a2"}` }}>
+        <button type="button" onClick={() => setModal({ open: true, deal: d })} className="block w-full cursor-pointer px-[10px] pb-[6px] pt-[8px] text-left">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-semibold leading-[1.3] text-ink">{d.title || "—"}</div>
+              <div className="truncate text-[12px] text-muted">{d.clientName}</div>
+            </div>
+            <span title={tk ? `${tk.title} · ${fmtDT(tk.dueAt, lang)}` : c.task.none} className="mt-[2px] flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border" style={{ borderColor: act, color: act }}>{tk ? <IconCalendarEvent size={11} /> : <IconChevronRight size={11} />}</span>
+          </div>
+          <div className="mt-[6px] flex items-center gap-[6px]">
+            {m && <span title={m.name} className="flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8.5px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span>}
+            <span className="text-[13px] font-semibold text-ink">{d.amount != null ? fmt(d.amount, d.cur as Currency) : "—"}</span>
+            <span className="ml-auto text-[11px] text-muted">{fill(c.kb.days, { n: days(d) })}</span>
+          </div>
         </button>
-        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
-          {m && <span title={m.name} className="flex h-6 w-6 items-center justify-center rounded-full text-[9.5px] font-extrabold text-white" style={{ background: m.color }}>{initials(m.name)}</span>}
-          <span>{fill(c.kb.days, { n: days(d) })}</span>
-          <span className="flex-1" />
-          {tk && <span className={`inline-flex items-center gap-1 ${new Date(tk.dueAt).getTime() < now ? "font-bold text-red" : ""}`}><IconCalendarEvent size={12} />{fmtDate(tk.dueAt, lang)}</span>}
-        </div>
-        <div className="mt-2 md:hidden"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
+        <div className="px-[10px] pb-2 md:hidden"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
       </div>
     );
   };
+  const totalSum = sum(shown);
 
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h1 className="mr-2 text-[20px] font-extrabold tracking-[-0.02em] text-ink">{c.nav.deals} <span className="text-[14px] font-semibold text-muted">{shown.length}</span></h1>
-        <div className="inline-flex gap-[3px] rounded-[10px] bg-bg-2 p-[3px]">
-          {(["board", "list"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} className={`flex h-8 cursor-pointer items-center gap-1 rounded-[8px] px-3 text-[12.5px] font-bold ${view === v ? "bg-surface text-ink shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted"}`}>{v === "board" ? <IconLayoutKanban size={15} /> : <IconList size={15} />} {v === "board" ? c.deal.board : c.deal.list}</button>)}
+        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">
+          {(["board", "list"] as const).map((v) => <button key={v} type="button" title={v === "board" ? c.deal.board : c.deal.list} onClick={() => setView(v)} className={`flex h-7 w-8 cursor-pointer items-center justify-center rounded-[4px] ${view === v ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{v === "board" ? <IconLayoutKanban size={15} /> : <IconList size={15} />}</button>)}
         </div>
-        {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.kb.all }, { value: crm.me.meId, label: c.kb.mine }, ...crm.me.members.filter((m) => m.id !== crm.me.meId).map((m) => ({ value: m.id, label: m.name }))]} className="w-[180px]" size="sm" />}
+        <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={14} /> {c.deal.add}</button>
         <div className="flex-1" />
-        <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={15} /> {c.deal.add}</button>
+        <span className="text-[13px] text-text"><b className="font-semibold text-ink">{totalSum || "—"}</b> · {shown.length} {c.nav.deals.toLowerCase()}</span>
+        {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.kb.all }, { value: crm.me.meId, label: c.kb.mine }, ...crm.me.members.filter((m) => m.id !== crm.me.meId).map((m) => ({ value: m.id, label: m.name }))]} className="w-[170px]" size="sm" />}
       </div>
       {deals === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : view === "board" ? (
-        <div data-crm-kanban="1" className="flex gap-3 overflow-x-auto pb-3" style={{ minHeight: "calc(100vh - 220px)" }}>
-          {crm.stages.map((st) => { const list = byStage.get(st.id) ?? []; return (
+        <div data-crm-kanban="1" className="flex overflow-x-auto rounded-[6px] border border-line bg-surface" style={{ minHeight: "calc(100vh - 200px)" }}>
+          {crm.stages.map((st, i) => { const list = byStage.get(st.id) ?? []; return (
             <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== st.id) setOver(st.id); }} onDragLeave={() => setOver((o) => (o === st.id ? null : o))} onDrop={(e) => { e.preventDefault(); const id = dragId ?? e.dataTransfer.getData("text/plain"); const d = (deals ?? []).find((x) => x.id === id); setOver(null); setDragId(null); if (d) move(d, st.id); }}
-              className={`flex w-[272px] flex-none flex-col rounded-[14px] bg-bg-2 p-2 transition ${over === st.id ? "crm-drag-over" : ""}`}>
-              <div className="mb-2 flex items-center justify-between px-1">
-                <span className="flex items-center gap-2 text-[12.5px] font-extrabold text-ink"><span className="h-[9px] w-[9px] rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)} <span className="rounded-[7px] bg-surface px-[6px] text-[11px] text-muted">{list.length}</span></span>
-                <span className="text-[11px] font-semibold text-muted">{sum(list)}</span>
+              className={`flex w-[260px] flex-none flex-col bg-[#f7f8fa] transition ${i > 0 ? "border-l border-line" : ""} ${over === st.id ? "crm-drag-over" : ""}`}>
+              <div className="border-b border-line bg-surface px-3 py-2">
+                <div className="flex items-center gap-2 text-[13px] font-semibold text-ink"><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}</div>
+                <div className="text-[11.5px] text-muted">{sum(list) || "—"} · {list.length}</div>
               </div>
-              <div className="flex min-h-[80px] flex-1 flex-col gap-2">{list.map((d) => <div key={d.id}>{DealCard(d)}</div>)}{list.length === 0 && <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-line-4 text-[11.5px] text-muted">{c.kb.empty}</div>}</div>
+              <div className="flex min-h-[80px] flex-1 flex-col gap-2 p-2">{list.map((d) => <div key={d.id}>{DealCard(d)}</div>)}{list.length === 0 && <div className="mt-2 text-center text-[11.5px] text-muted">{c.kb.empty}</div>}</div>
             </div>); })}
-          {(byStage.get("") ?? []).length > 0 && <div className="flex w-[272px] flex-none flex-col rounded-[14px] bg-bg-2 p-2"><div className="mb-2 px-1 text-[12.5px] font-extrabold text-muted">{c.deal.noStage}</div><div className="flex flex-col gap-2">{(byStage.get("") ?? []).map((d) => <div key={d.id}>{DealCard(d)}</div>)}</div></div>}
+          {(byStage.get("") ?? []).length > 0 && <div className="flex w-[260px] flex-none flex-col border-l border-line bg-[#f7f8fa]"><div className="border-b border-line bg-surface px-3 py-2 text-[13px] font-semibold text-muted">{c.deal.noStage}</div><div className="flex flex-col gap-2 p-2">{(byStage.get("") ?? []).map((d) => <div key={d.id}>{DealCard(d)}</div>)}</div></div>}
         </div>
       ) : (
         <div className={`${card} overflow-x-auto p-0`}>
           {shown.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{c.deal.none}</div> : (
-            <table data-crm-table="1" className="w-full min-w-[720px] text-[13px]"><thead><tr className="border-b border-line text-left text-[11px] uppercase tracking-[.04em] text-muted">{[c.deal.title, c.deal.client, c.deal.stage, c.deal.amount, c.owner, c.tbl.task, c.client.updated, ""].map((h, i) => <th key={i} className="px-3 py-[10px] font-bold">{h}</th>)}</tr></thead>
-              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="border-b border-line last:border-b-0 hover:bg-bg-3"><td className="px-3 py-[9px]"><button type="button" onClick={() => setModal({ open: true, deal: d })} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[9px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[9px]"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></td><td className="px-3 py-[9px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[9px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[9px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[9px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[9px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
+            <table data-crm-table="1" className="w-full min-w-[720px] text-[13px]"><thead><tr className="text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{[c.deal.title, c.deal.client, c.deal.stage, c.deal.amount, c.owner, c.tbl.task, c.client.updated, ""].map((h, i) => <th key={i} className="px-3 py-2">{h}</th>)}</tr></thead>
+              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="hover:bg-[#f7f8fa]"><td className="px-3 py-[6px]"><button type="button" onClick={() => setModal({ open: true, deal: d })} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[6px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[6px]"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></td><td className="px-3 py-[6px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[6px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[6px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[6px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[6px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
           )}
         </div>
       )}

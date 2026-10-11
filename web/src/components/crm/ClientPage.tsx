@@ -86,9 +86,9 @@ function Inner({ id }: { id: string }) {
       <div className="flex flex-col gap-4 self-start min-[1101px]:sticky min-[1101px]:top-[128px]">
       <div className={card}>
         <div className="flex flex-wrap items-start gap-4">
-          <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-blue-tint text-[18px] font-extrabold text-sel-ink">{initials(cl.name)}</span>
+          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-ink text-[14px] font-semibold text-white">{initials(cl.name)}</span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2"><h1 className="text-[22px] font-extrabold tracking-[-0.02em] text-ink">{cl.name}</h1><span className={chip}>{cl.lang}</span>{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
+            <div className="flex flex-wrap items-center gap-2"><h1 className="text-[18px] font-semibold text-ink">{cl.name}</h1><span className={chip}>{cl.lang}</span>{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
               <span>{c.source}: <b className="text-text">{sourceName(src, t)}</b></span>
               {owner && <span>{c.owner}: <b className="text-text">{owner.name}</b></span>}
@@ -107,7 +107,7 @@ function Inner({ id }: { id: string }) {
         <div className="mt-4 flex flex-wrap gap-2">
           {cl.contacts.length === 0 && <span className="text-[13px] text-muted">{c.client.noContacts}</span>}
           {cl.contacts.map((x) => (
-            <div key={x.id} className="flex items-center gap-1 rounded-[12px] border border-line bg-bg-2 py-1 pl-3 pr-1 text-[13px]">
+            <div key={x.id} className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px]">
               <span className="text-[11px] font-bold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span>
               <span className="ml-2 font-semibold text-ink">{x.value}</span>
               {(x.kind === "phone" || x.kind === "whatsapp") && <a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} title={c.client.call} className="ml-1 flex h-7 w-7 items-center justify-center rounded-[8px] text-muted hover:bg-surface hover:text-ink"><IconPhone size={15} /></a>}
@@ -128,17 +128,17 @@ function Inner({ id }: { id: string }) {
       <div className="flex min-w-0 flex-col gap-4">
         <div className={card}>
           <div className="mb-2 flex flex-wrap gap-1">
-            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex cursor-pointer items-center gap-[6px] rounded-[9px] px-3 py-[6px] text-[12.5px] font-bold ${noteKind === k ? "bg-ink text-white" : "bg-bg-2 text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
-            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[9px] bg-bg-2 px-3 py-[6px] text-[12.5px] font-bold text-text hover:bg-bg-3">{c.card.task}</button>
+            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-[6px] border px-[10px] text-[12.5px] font-medium ${noteKind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
+            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-[6px] border border-line bg-surface px-[10px] text-[12.5px] font-medium text-text hover:bg-bg-3">{c.card.task}</button>
           </div>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} min-h-[76px] resize-y`} />
-          <div className="mt-2 flex items-center justify-between"><span className="text-[11.5px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={`${btnP} px-4 py-[7px] text-[12.5px]`}>{c.ev.add}</button></div>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[72px] resize-y py-2`} />
+          <div className="mt-2 flex items-center justify-between"><span className="text-[11.5px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={btnP}>{c.ev.add}</button></div>
         </div>
         <div className={card}>
-          <div className="mb-3 flex items-center justify-between"><div className="text-[15px] font-extrabold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
+          <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
           {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
             <div className="flex flex-col gap-2">{deals.map((d) => (
-              <div key={d.id} className="rounded-[12px] border border-line p-3">
+              <div key={d.id} className="rounded-[6px] border border-line p-3">
                 <div className="flex items-start justify-between gap-2"><button type="button" onClick={() => setDealM({ open: true, deal: d })} className="cursor-pointer text-left text-[13.5px] font-bold text-ink hover:text-blue-2">{d.title || "—"}</button><button type="button" onClick={() => delDeal(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></div>
                 <div className="mt-1 text-[12.5px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div>
                 <div className="mt-2"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
@@ -147,10 +147,10 @@ function Inner({ id }: { id: string }) {
           )}
         </div>
         <div className={card}>
-          <div className="mb-3 flex items-center justify-between"><div className="text-[15px] font-extrabold text-ink">{c.client.tasks}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
+          <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.tasks}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
           {tasks.length === 0 ? <div className="text-[13px] text-muted">{c.task.none}</div> : (
             <div className="flex flex-col gap-2">{tasks.map((x) => (
-              <div key={x.id} className="flex items-center gap-3 rounded-[12px] border border-line px-3 py-2">
+              <div key={x.id} className="flex items-center gap-3 rounded-[6px] border border-line px-3 py-[6px]">
                 <button type="button" onClick={async () => { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }} disabled={ro} className={`flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-full border-2 ${x.doneAt ? "border-green bg-green text-white" : "border-line hover:border-blue"}`}>{x.doneAt && <IconCheck size={14} />}</button>
                 <button type="button" onClick={() => setTaskM({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className={`truncate text-[13.5px] font-semibold ${x.doneAt ? "text-muted line-through" : "text-ink"}`}>{x.title}</div><div className="text-[12px] text-muted">{taskKindName(x.kind, t)} · <span className={!x.doneAt && new Date(x.dueAt) < new Date() ? "font-semibold text-red" : ""}>{fmtDT(x.dueAt, lang)}</span></div></button>
               </div>))}</div>
@@ -207,7 +207,7 @@ function Timeline({ events }: { events: CrmEvent[] }) {
             <div className="min-w-0 flex-1">
               <div className="text-[12px] text-muted">{fmtDT(e.createdAt, lang)}{who ? ` · ${who}` : ""} · <span className="font-semibold text-text">{label(e)}</span></div>
               {e.text && (
-                <div className="mt-1 rounded-[10px] bg-bg-2 px-3 py-2 text-[13.5px] text-ink">
+                <div className="mt-1 rounded-[6px] border border-line bg-[#fafbfc] px-3 py-2 text-[13px] text-ink">
                   <div className="whitespace-pre-line">{x?.show && x.text ? x.text : e.text}</div>
                   <button type="button" onClick={() => translateIt(e)} className="mt-1 inline-flex cursor-pointer items-center gap-1 text-[11.5px] font-bold text-blue-2 hover:underline"><IconLanguage size={13} /> {x?.busy ? c.ev.translating : x?.show ? c.ev.original : c.ev.translate}</button>
                 </div>

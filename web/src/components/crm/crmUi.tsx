@@ -9,13 +9,13 @@ export type CrmCtxT = { me: CrmMe; stages: Stage[]; sources: Source[]; base: str
 export const CrmCtx = createContext<CrmCtxT | null>(null);
 export function useCrm(): CrmCtxT { const c = useContext(CrmCtx); if (!c) throw new Error("CrmCtx"); return c; }
 
-export const inp = "w-full rounded-[10px] border border-line bg-surface px-3 py-[10px] text-[14px] text-ink outline-none focus:border-blue";
-export const lbl = "mb-[6px] block text-[12px] font-bold uppercase tracking-[.04em] text-muted";
-export const card = "rounded-[16px] border border-line bg-surface p-[18px] shadow-[0_1px_3px_rgba(20,36,63,.05)]";
-export const btnP = "inline-flex cursor-pointer items-center gap-[7px] rounded-[12px] bg-blue-2 px-[18px] py-[10px] text-[13px] font-bold text-white hover:bg-blue-3 disabled:cursor-default disabled:opacity-50";
-export const btnS = "inline-flex cursor-pointer items-center gap-[7px] rounded-[12px] border border-line bg-surface px-[16px] py-[10px] text-[13px] font-bold text-ink hover:bg-bg-3 disabled:cursor-default disabled:opacity-50";
-export const btnD = "inline-flex cursor-pointer items-center gap-[7px] rounded-[12px] px-[14px] py-[10px] text-[13px] font-bold text-red hover:bg-red-tint";
-export const chip = "inline-flex items-center rounded-[14px] bg-bg-2 px-[10px] py-[3px] text-[11.5px] font-semibold text-text-2";
+export const inp = "h-8 w-full rounded-[6px] border border-line bg-surface px-[10px] text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15";
+export const lbl = "mb-[4px] block text-[11px] font-semibold uppercase tracking-[.05em] text-muted";
+export const card = "rounded-[6px] border border-line bg-surface p-4";
+export const btnP = "inline-flex h-8 cursor-pointer items-center gap-[6px] rounded-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:cursor-default disabled:opacity-50";
+export const btnS = "inline-flex h-8 cursor-pointer items-center gap-[6px] rounded-[6px] border border-line bg-surface px-3 text-[13px] font-semibold text-ink hover:bg-bg-3 disabled:cursor-default disabled:opacity-50";
+export const btnD = "inline-flex h-8 cursor-pointer items-center gap-[6px] rounded-[6px] px-3 text-[13px] font-semibold text-red hover:bg-red-tint";
+export const chip = "inline-flex items-center rounded-[4px] border border-line bg-bg-2 px-[6px] py-[1px] text-[11px] font-medium text-text-2";
 
 /** Имя этапа: своё (name[lang]) → i18n по ключу → ключ. */
 export function stageName(st: Stage | undefined | null, t: Dict, lang: Lang): string {

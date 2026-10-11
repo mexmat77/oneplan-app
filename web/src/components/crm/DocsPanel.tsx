@@ -32,18 +32,18 @@ export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; deal
   async function status(d: DocInfo, st: DocInfo["status"]) { try { await setDocStatus(d.id, st, d.validUntil); load(); } catch (e) { err(e); } }
   const kinds = c.kinds as Record<string, string>;
   return (
-    <div className="mt-3 rounded-[12px] border border-dashed border-line p-3">
+    <div className="mt-3 rounded-[6px] border border-line bg-[#fafbfc] p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="text-[12px] font-extrabold uppercase tracking-[.04em] text-muted">{c.title}{docs ? ` · ${docs.length}` : ""}</div>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setUpload(true)} disabled={ro} className={`${btnS} px-3 py-[6px] text-[12px]`}><IconUpload size={13} /> {c.upload}</button>
-          <button type="button" onClick={() => setCreate({ open: true })} disabled={ro} className={`${btnP} px-3 py-[6px] text-[12px]`}><IconPlus size={13} /> {c.create}</button>
+          <button type="button" onClick={() => setUpload(true)} disabled={ro} className={`${btnS} h-7 px-2 text-[12px]`}><IconUpload size={13} /> {c.upload}</button>
+          <button type="button" onClick={() => setCreate({ open: true })} disabled={ro} className={`${btnP} h-7 px-2 text-[12px]`}><IconPlus size={13} /> {c.create}</button>
         </div>
       </div>
       {docs === null ? <div className="text-[12.5px] text-muted">…</div> : docs.length === 0 ? <div className="text-[12.5px] text-muted">{c.none}</div> : (
         <div className="flex flex-col gap-1">
           {docs.map((d) => (
-            <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-[10px] bg-bg-2 px-3 py-2 text-[12.5px]">
+            <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-[6px] text-[12.5px]">
               {d.hasFile ? <IconPaperclip size={15} className="text-muted" /> : <IconFileText size={15} className="text-blue-2" />}
               <span className="min-w-0 flex-1 truncate font-semibold text-ink">{d.title} <span className="font-normal text-muted">· {kinds[d.kind] ?? d.kind} · {fmtDate(d.createdAt, lang)}</span></span>
               <Select value={d.status} onChange={(v) => status(d, v as DocInfo["status"])} options={(["draft", "sent", "signed", "void"] as const).map((k) => ({ value: k, label: c.status[k] }))} size="sm" className="w-[130px]" disabled={ro} />

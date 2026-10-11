@@ -30,45 +30,45 @@ export function Overview() {
   ];
   return (
     <>
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div><h1 className="text-[22px] font-extrabold tracking-[-0.02em] text-ink">{c.ov.hello}{me ? `, ${me.name.split(" ")[0]}` : ""}</h1><div className="text-[13px] text-muted">{fmtDate(new Date().toISOString(), lang)}</div></div>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div><h1 className="text-[18px] font-semibold text-ink">{c.ov.hello}{me ? `, ${me.name.split(" ")[0]}` : ""}</h1><div className="text-[12.5px] text-muted">{fmtDate(new Date().toISOString(), lang)}</div></div>
       </div>
       <div className="mb-4 grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2 max-md:grid-cols-1">
         {kpi.map((k) => (
-          <Link key={k.l} href={k.href} className={`${card} group flex items-start gap-3 hover:shadow-[0_8px_24px_rgba(20,36,63,.1)]`}>
-            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px]" style={{ background: k.tone + "1a", color: k.tone }}><k.Icon size={20} /></span>
-            <div className="min-w-0 flex-1"><div className="text-[26px] font-extrabold leading-none text-ink">{k.n}</div><div className="mt-1 text-[12.5px] font-semibold text-text">{k.l}</div><div className="mt-[2px] truncate text-[11.5px] text-muted">{k.s}</div></div>
-            <IconArrowUpRight size={15} className="text-muted opacity-0 transition group-hover:opacity-100" />
+          <Link key={k.l} href={k.href} className={`${card} group flex items-start gap-3 hover:border-[#b9c2d0]`}>
+            <k.Icon size={18} className="mt-[2px] flex-none text-muted" />
+            <div className="min-w-0 flex-1"><div className="text-[12px] text-muted">{k.l}</div><div className="mt-[2px] text-[22px] font-semibold leading-none text-ink">{k.n}</div><div className="mt-[6px] truncate text-[11.5px] text-muted">{k.s}</div></div>
+            <IconArrowUpRight size={14} className="text-muted opacity-0 transition group-hover:opacity-100" />
           </Link>
         ))}
       </div>
       <div className="grid grid-cols-[1.3fr_1fr] gap-4 max-[1100px]:grid-cols-1">
         <div className="flex flex-col gap-4">
           <div className={card}>
-            <div className="mb-3 flex items-center justify-between"><div className="text-[14px] font-extrabold text-ink">{c.ov.funnel}</div><Link href={`${crm.base}/deals`} className="text-[12.5px] font-bold text-blue-2 hover:underline">{c.ov.all} →</Link></div>
+            <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.ov.funnel}</div><Link href={`${crm.base}/deals`} className="text-[12.5px] font-bold text-blue-2 hover:underline">{c.ov.all} →</Link></div>
             {ov.funnel.length === 0 ? <div className="text-[13px] text-muted">{c.ov.noFunnel}</div> : (
               <div className="flex flex-col gap-2">
                 {crm.stages.filter((s) => s.kind === "open").map((s) => { const f = ov.funnel.find((x) => x.stageId === s.id) ?? { n: 0, sum: {} }; return (
                   <div key={s.id} className="grid grid-cols-[130px_1fr_auto] items-center gap-3 text-[12.5px]">
                     <span className="flex items-center gap-2 truncate font-semibold text-ink"><span className="h-[9px] w-[9px] flex-none rounded-full" style={{ background: s.color ?? "#8a93a2" }} />{stageName(s, t, lang)}</span>
-                    <div className="h-[22px] overflow-hidden rounded-[6px] bg-bg-2"><div className="h-full rounded-[6px]" style={{ width: `${(f.n / maxN) * 100}%`, background: s.color ?? "#8a93a2", opacity: 0.75 }} /></div>
+                    <div className="h-[14px] overflow-hidden rounded-[3px] bg-bg-2"><div className="h-full rounded-[3px]" style={{ width: `${(f.n / maxN) * 100}%`, background: s.color ?? "#8a93a2", opacity: 0.75 }} /></div>
                     <span className="w-[150px] text-right text-muted"><b className="text-ink">{f.n}</b> · {sumStr(f.sum)}</span>
                   </div>); })}
               </div>
             )}
           </div>
           <div className={card}>
-            <div className="mb-3 flex items-center justify-between"><div className="text-[14px] font-extrabold text-ink">{c.ov.leads}</div></div>
+            <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.ov.leads}</div></div>
             {ov.recentLeads.length === 0 ? <div className="flex items-center gap-2 text-[13px] text-muted"><IconInbox size={16} /> {c.ov.noLeads}</div> : (
               <div className="flex flex-col divide-y divide-line">
-                {ov.recentLeads.map((l, i) => <Link key={i} href={`${crm.base}/c/${l.clientId}`} className="flex items-center gap-3 py-2 text-[13px] hover:bg-bg-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-tint text-[11px] font-extrabold text-sel-ink">{initials(l.name)}</span><span className="min-w-0 flex-1 truncate font-semibold text-ink">{l.name}</span>{l.dup && <span className="rounded-[8px] bg-[#fff8e6] px-2 py-[2px] text-[10.5px] font-bold text-[#a16207]">{c.ov.dup}</span>}<span className="text-[12px] text-muted">{sourceName(crm.sources.find((s) => s.id === l.sourceId), t)} · {fmtDT(l.at, lang)}</span></Link>)}
+                {ov.recentLeads.map((l, i) => <Link key={i} href={`${crm.base}/c/${l.clientId}`} className="flex items-center gap-3 py-[6px] text-[13px] hover:bg-[#f7f8fa]"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-2 text-[10px] font-semibold text-text">{initials(l.name)}</span><span className="min-w-0 flex-1 truncate font-semibold text-ink">{l.name}</span>{l.dup && <span className="rounded-[8px] bg-[#fff8e6] px-2 py-[2px] text-[10.5px] font-bold text-[#a16207]">{c.ov.dup}</span>}<span className="text-[12px] text-muted">{sourceName(crm.sources.find((s) => s.id === l.sourceId), t)} · {fmtDT(l.at, lang)}</span></Link>)}
               </div>
             )}
           </div>
         </div>
         <div className="flex flex-col gap-4">
           <div className={card}>
-            <div className="mb-3 flex items-center justify-between"><div className="text-[14px] font-extrabold text-ink">{c.ov.today}</div><Link href={`${crm.base}/tasks`} className="text-[12.5px] font-bold text-blue-2 hover:underline">{c.ov.all} →</Link></div>
+            <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.ov.today}</div><Link href={`${crm.base}/tasks`} className="text-[12.5px] font-bold text-blue-2 hover:underline">{c.ov.all} →</Link></div>
             {ov.todayTasks.length === 0 ? <div className="text-[13px] text-muted">{c.ov.noToday}</div> : (
               <div className="flex flex-col gap-2">
                 {ov.todayTasks.slice(0, 8).map((x) => { const over = new Date(x.dueAt) < new Date(); return (
@@ -81,9 +81,9 @@ export function Overview() {
             )}
           </div>
           <div className={card}>
-            <div className="mb-3 text-[14px] font-extrabold text-ink">{c.ov.recent}</div>
+            <div className="mb-3 text-[13px] font-semibold text-ink">{c.ov.recent}</div>
             <div className="flex flex-col divide-y divide-line">
-              {ov.recent.map((r) => <Link key={r.id} href={`${crm.base}/c/${r.id}`} className="flex items-center gap-3 py-2 text-[13px] hover:bg-bg-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-tint text-[11px] font-extrabold text-sel-ink">{initials(r.name)}</span><span className="min-w-0 flex-1 truncate font-semibold text-ink">{r.name}</span><span className="text-[12px] text-muted">{fmtDT(r.updatedAt, lang)}</span></Link>)}
+              {ov.recent.map((r) => <Link key={r.id} href={`${crm.base}/c/${r.id}`} className="flex items-center gap-3 py-[6px] text-[13px] hover:bg-[#f7f8fa]"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-2 text-[10px] font-semibold text-text">{initials(r.name)}</span><span className="min-w-0 flex-1 truncate font-semibold text-ink">{r.name}</span><span className="text-[12px] text-muted">{fmtDT(r.updatedAt, lang)}</span></Link>)}
             </div>
           </div>
         </div>
