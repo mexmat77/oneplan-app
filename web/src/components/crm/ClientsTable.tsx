@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconSearch, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, type DealSummary } from "@/app/crm/actions";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
@@ -17,7 +17,7 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { PRIO_COLOR, btnP, btnS, fill, fmtDate, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, initials, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type SortKey = "name" | "updated" | "created";
@@ -31,17 +31,18 @@ export function ClientsTable() {
   const sp = useSearchParams();
   const now = useNow();
   const ro = crm.me.access !== "full";
+  const q = crm.q; // поиск — один, в шапке CRM
   const urlQ = sp.get("q") ?? "";
-  const [q, setQ] = useState(urlQ);
-  const [prevUrlQ, setPrevUrlQ] = useState(urlQ);
-  if (urlQ !== prevUrlQ) { setPrevUrlQ(urlQ); setQ(urlQ); }
+  const [urlApplied, setUrlApplied] = useState(false);
+  if (urlQ && !urlApplied) { setUrlApplied(true); crm.setQ(urlQ); }
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [view, setView] = useState<View>("all");
   const [stage, setStage] = useState<string>(""); // "" все, "none" без сделки, иначе id этапа
   const [owner, setOwner] = useState(""); const [source, setSource] = useState(""); const [tag, setTag] = useState(""); const [branch, setBranch] = useState(""); const [role, setRole] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [list, setList] = useState<Client[] | null>(null);
-  const [deals, setDeals] = useState<Record<string, DealSummary>>({});
+  const cacheKey = `${crm.base}:clients:${status}`;
+  const [list, setList] = useState<Client[] | null>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.list ?? null);
+  const [deals, setDeals] = useState<Record<string, DealSummary>>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.deals ?? {});
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "updated", dir: -1 });
   const [drawer, setDrawer] = useState<string | null>(null);
@@ -50,8 +51,12 @@ export function ClientsTable() {
   const dense = usePref(DENS_LS) !== "expanded";
 
   const load = useCallback(() => {
-    listClients({ q, status }).then(async (l) => { setList(l); setDeals(await clientDealSummary(l.map((x) => x.id)).catch(() => ({}))); }).catch(() => setList([]));
-  }, [q, status]);
+    // без поиска — кэш раздела: прошлые строки показываются сразу, свежие приходят фоном (замечание пользователя 12.10.2026)
+    const key = `${crm.base}:clients:${status}`;
+    const cached = q ? undefined : cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(key);
+    if (cached) { setList(cached.list); setDeals(cached.deals); }
+    listClients({ q, status }).then(async (l) => { const d = await clientDealSummary(l.map((x) => x.id)).catch(() => ({})); setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); }).catch(() => setList([]));
+  }, [q, status, crm.base]);
   useEffect(() => { const h = setTimeout(load, q ? 250 : 0); return () => clearTimeout(h); }, [load, q]);
 
   const isOver = (x: Client) => !!x.nextTask && new Date(x.nextTask.dueAt).getTime() < now;
@@ -99,7 +104,6 @@ export function ClientsTable() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h1 className="text-[20px] font-semibold text-ink">{c.nav.clients} <span className="text-[13px] font-normal text-muted">{list ? base.length.toLocaleString("ru-RU") : ""}</span></h1>
         <div className="flex-1" />
-        <div className="relative w-[260px]"><IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.search} className={`${inp} pl-8`} /></div>
         <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
         <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["compact", "expanded"] as const).map((d) => <button key={d} type="button" onClick={() => setPref(DENS_LS, d)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${(d === "compact") === dense ? "bg-blue-2 text-white" : "text-muted hover:text-ink"}`}>{d === "compact" ? c.tbl.compact : c.tbl.expanded}</button>)}</div>
         <button type="button" onClick={() => setModal(true)} disabled={ro} className={btnP}><IconPlus size={15} /> {c.nav.create}</button>

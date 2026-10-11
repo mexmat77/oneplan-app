@@ -74,11 +74,11 @@ export function CrmShell({ base }: { base: string }) {
 
   if (err) return <div className="p-6 text-[13px] text-muted">{err === "no-company" ? "—" : err}</div>;
   if (!boot) return <div className="py-16 text-center text-[13px] text-muted">…</div>;
-  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab };
+  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ };
   const listTab = nav.find((n) => n.active && n.key !== "clients") ?? nav[1];
   const closeAndGo = (id: string) => { closeTab(id); if (clientId === id) router.push(`${base}/clients`); };
   const ro = boot.me.access !== "full";
-  const submitSearch = () => { router.push(`${base}/clients?q=${encodeURIComponent(q.trim())}`); };
+  const submitSearch = () => { if (section !== "clients") router.push(`${base}/clients`); };
 
   let page: ReactNode;
   if (clientId) page = <ClientPage key={clientId} base={base} id={clientId} embedded />;
@@ -110,7 +110,7 @@ export function CrmShell({ base }: { base: string }) {
             <div className="text-[15px] font-semibold text-ink">{nav.find((n) => n.active)?.label ?? c.title}</div>
             <div className="relative ml-2 w-[320px] max-w-[40vw]">
               <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
-              <input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-2 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
+              <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-2 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
             </div>
             <div className="flex-1" />
             <div className="relative">

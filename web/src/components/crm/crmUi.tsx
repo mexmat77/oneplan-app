@@ -9,7 +9,14 @@ import type { CrmMe, Source, Stage, TaskKind } from "@/lib/crm/types";
 export type CrmTab = { id: string; name: string };
 export type CrmCtxT = { me: CrmMe; stages: Stage[]; sources: Source[]; base: string; refresh: () => void; setStages: (s: Stage[]) => void; setSources: (s: Source[]) => void;
   /** вкладки открытых карточек (как в браузере): регистрирует ClientPage, закрывает крестик/удаление */
-  openTab?: (id: string, name: string) => void; closeTab?: (id: string) => void };
+  openTab?: (id: string, name: string) => void; closeTab?: (id: string) => void;
+  /** один поиск в шапке CRM (12.10.2026): на списке клиентов фильтрует живьём, на других разделах Enter ведёт в список */
+  q: string; setQ: (v: string) => void };
+
+// кэш загруженных списков на время сессии: возврат к разделу рисует прошлые данные сразу, обновление — фоном
+const memCache = new Map<string, unknown>();
+export const cacheGet = <T,>(key: string): T | undefined => memCache.get(key) as T | undefined;
+export const cacheSet = <T,>(key: string, v: T): T => { memCache.set(key, v); return v; };
 export const CrmCtx = createContext<CrmCtxT | null>(null);
 export function useCrm(): CrmCtxT { const c = useContext(CrmCtx); if (!c) throw new Error("CrmCtx"); return c; }
 

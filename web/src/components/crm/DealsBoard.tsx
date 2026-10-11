@@ -14,7 +14,7 @@ import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { DealModal } from "./CrmModals";
-import { btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 const LS = "opl-crm-deals-view";
 
@@ -23,7 +23,7 @@ export function DealsBoard() {
   const c = t.crm;
   const crm = useCrm();
   const ro = crm.me.access !== "full";
-  const [deals, setDeals] = useState<Deal[] | null>(null);
+  const [deals, setDeals] = useState<Deal[] | null>(() => cacheGet<Deal[]>(`${crm.base}:deals`) ?? null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const viewPref = usePref(LS);
@@ -35,10 +35,10 @@ export function DealsBoard() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const load = useCallback(() => {
-    listDeals().then(setDeals).catch(() => setDeals([]));
+    listDeals().then((v) => setDeals(cacheSet(`${crm.base}:deals`, v))).catch(() => setDeals([]));
     listTasks(true).then(setTasks).catch(() => {});
     listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {});
-  }, []);
+  }, [crm.base]);
   useEffect(() => { load(); }, [load]);
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   async function move(d: Deal, stageId: string) {

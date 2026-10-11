@@ -29,7 +29,7 @@ export function ClientPage({ base, id, embedded }: { base: string; id: string; e
   useEffect(() => { load(); }, [load]);
   if (embedded) return <Inner id={id} />;
   if (!boot) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
-  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)) };
+  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), q: "", setQ: () => {} };
   return <CrmCtx.Provider value={ctx}><Inner id={id} /></CrmCtx.Provider>;
 }
 

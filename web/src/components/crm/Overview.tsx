@@ -2,13 +2,13 @@
 
 // CRM v2 — обзор: показатели за неделю/месяц, воронка по этапам, задачи на сегодня, последние заявки, недавние клиенты.
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IconArrowUpRight, IconCalendarEvent, IconCheck, IconInbox, IconTrendingUp, IconUsers } from "@tabler/icons-react";
 import { crmOverview, doneTask, type Overview as Ov } from "@/app/crm/actions";
 import { useI18n } from "@/i18n/provider";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
-import { card, fmtDT, fmtDate, initials, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { cacheGet, cacheSet, card, fmtDT, fmtDate, initials, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 const sumStr = (m: Record<string, number>) => Object.entries(m).map(([cur, v]) => fmt(v, cur as Currency)).join(" · ") || "—";
 
@@ -16,9 +16,9 @@ export function Overview() {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
-  const [ov, setOv] = useState<Ov | null>(null);
-  const load = () => crmOverview().then(setOv).catch(() => setOv(null));
-  useEffect(() => { load(); }, []);
+  const [ov, setOv] = useState<Ov | null>(() => cacheGet<Ov>(`${crm.base}:ov`) ?? null);
+  const load = useCallback(() => { crmOverview().then((v) => setOv(cacheSet(`${crm.base}:ov`, v))).catch(() => setOv(null)); }, [crm.base]);
+  useEffect(() => { load(); }, [load]);
   const me = crm.me.members.find((m) => m.id === crm.me.meId);
   if (!ov) return <div className="py-12 text-center text-[13px] text-muted">…</div>;
   const maxN = Math.max(1, ...ov.funnel.map((f) => f.n));

@@ -10,20 +10,23 @@ import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Task } from "@/lib/crm/types";
 import { TaskModal } from "./CrmModals";
-import { btnP, card, fmtDT, inp, taskKindName, useCrm } from "./crmUi";
+import { cacheGet, cacheSet, btnP, card, fmtDT, inp, taskKindName, useCrm } from "./crmUi";
 
 export function TasksView() {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
   const ro = crm.me.access !== "full";
-  const [tasks, setTasks] = useState<Task[] | null>(null);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [showDone, setShowDone] = useState(false);
+  // кэш раздела: пока свежий ответ не пришёл, показываем сохранённый список этого же ключа (без setState в эффекте)
+  const tasksKey = `${crm.base}:tasks:${showDone ? 1 : 0}`;
+  const [loaded, setLoaded] = useState<{ key: string; tasks: Task[] } | null>(null);
+  const tasks: Task[] | null = loaded?.key === tasksKey ? loaded.tasks : cacheGet<Task[]>(tasksKey) ?? null;
   const [view, setView] = useState<"list" | "week">("list");
   const [quick, setQuick] = useState("");
   const [modal, setModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
-  const load = useCallback(() => { listTasks(!showDone).then(setTasks).catch(() => setTasks([])); listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {}); }, [showDone]);
+  const load = useCallback(() => { const key = `${crm.base}:tasks:${showDone ? 1 : 0}`; listTasks(!showDone).then((v) => setLoaded({ key, tasks: cacheSet(key, v) })).catch(() => setLoaded({ key, tasks: [] })); listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {}); }, [showDone, crm.base]);
   useEffect(() => { load(); }, [load]);
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   async function toggle(x: Task) { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }
