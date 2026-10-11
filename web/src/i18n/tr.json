@@ -1170,6 +1170,10 @@
       "other": "Diğer"
     },
     "set": {
+      "color": "Aşama rengi",
+      "customColor": "Özel renk",
+      "up": "Yukarı",
+      "down": "Aşağı",
       "stagesT": "Satış aşamaları",
       "stagesS": "Aşamaları yeniden adlandırın, ekleyin veya kaldırın. «Satış» ve «Vazgeçti» aşamaları işlemi kapatır.",
       "addStage": "Aşama ekle",

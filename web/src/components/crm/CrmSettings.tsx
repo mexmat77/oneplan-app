@@ -2,7 +2,7 @@
 
 // Настройки CRM: этапы воронки, источники (с токеном для внешнего сайта), выгрузка CSV, журнал доступа.
 import { useEffect, useState } from "react";
-import { IconDownload, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconDownload, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
 import { deleteSource, exportClientsCsv, issueSourceToken, listAudit, saveSource, saveStages } from "@/app/crm/actions";
 import { deleteTemplate, getCompany, listTemplates, saveCompany, uploadTemplate, type Company, type TemplateInfo } from "@/app/crm/doc-actions";
 import { FIELDS, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
@@ -15,7 +15,8 @@ import Link from "next/link";
 import { btnP, btnS, card, fill, fmtDT, inp, lbl, sourceName, stageName, useCrm } from "./crmUi";
 
 type StRow = { id?: string; key: string; name: Record<string, string>; kind: StageKind; color: string | null };
-const COLORS = ["#8a93a2", "#4d7cfe", "#f5a623", "#7b4fd0", "#0ea5a4", "#22c15e", "#e5484d", "#e06aa3"];
+// палитра этапов (как в Pipedrive/HubSpot) + произвольный цвет через системный выбор (замечание пользователя 11.10.2026)
+const COLORS = ["#8a93a2", "#4d7cfe", "#2563eb", "#0ea5a4", "#14b8a6", "#22c15e", "#84cc16", "#f5a623", "#f97316", "#e5484d", "#dc2626", "#e06aa3", "#d946ef", "#7b4fd0", "#6366f1", "#475569"];
 
 export function CrmSettings({ sub }: { sub?: string }) {
   const tab = (sub && ["pipeline", "sources", "company", "templates", "data"].includes(sub) ? sub : "pipeline") as "pipeline" | "sources" | "company" | "templates" | "data";
@@ -47,6 +48,9 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
 
   const setRow = (i: number, p: Partial<StRow>) => setSt((v) => v.map((x, j) => (j === i ? { ...x, ...p } : x)));
+  const [colorFor, setColorFor] = useState<number | null>(null);
+  // порядок этапов = порядок строк (sort при сохранении); стрелки вверх/вниз
+  const move = (i: number, d: -1 | 1) => setSt((v) => { const j = i + d; if (j < 0 || j >= v.length) return v; const n = [...v]; [n[i], n[j]] = [n[j], n[i]]; return n; });
   async function saveSt() {
     setBusy(true);
     try { const out = await saveStages(st); crm.setStages(out); setSt(out.map((s) => ({ id: s.id, key: s.key, name: s.name, kind: s.kind, color: s.color }))); showToast(c.set.saved); } catch (e) { err(e); } finally { setBusy(false); }
@@ -81,10 +85,20 @@ export function CrmSettings({ sub }: { sub?: string }) {
         <div className="flex flex-col gap-2">
           {st.map((s, i) => (
             <div key={s.id ?? i} className="grid grid-cols-[28px_minmax(160px,1fr)_130px_auto] items-center gap-2">
-              <button type="button" disabled={ro} onClick={() => setRow(i, { color: COLORS[(COLORS.indexOf(s.color ?? "") + 1) % COLORS.length] })} className="h-6 w-6 cursor-pointer rounded-full border-2 border-surface shadow" style={{ background: s.color ?? "#8a93a2" }} />
+              <button type="button" disabled={ro} onClick={() => setColorFor(colorFor === i ? null : i)} title={c.set.color} className="h-6 w-6 cursor-pointer rounded-full border-2 border-surface shadow" style={{ background: s.color ?? "#8a93a2" }} />
               <input value={s.name[lang] ?? ""} onChange={(e) => setRow(i, { name: { ...s.name, [lang]: e.target.value } })} placeholder={stageName({ ...s, id: s.id ?? "", sort: i } as Stage, t, lang)} disabled={ro} className={inp} />
               <Select value={s.kind} onChange={(v) => setRow(i, { kind: v as StageKind })} options={[["open", c.set.kindOpen], ["won", c.set.kindWon], ["lost", c.set.kindLost]].map(([v, l]) => ({ value: v, label: l }))} size="sm" disabled={ro} />
-              <button type="button" disabled={ro || st.length <= 2} onClick={() => setSt((v) => v.filter((_, j) => j !== i))} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={15} /></button>
+              <span className="flex items-center">
+                <button type="button" disabled={ro || i === 0} onClick={() => move(i, -1)} title={c.set.up} className="flex h-8 w-7 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink disabled:opacity-30"><IconChevronUp size={15} /></button>
+                <button type="button" disabled={ro || i === st.length - 1} onClick={() => move(i, 1)} title={c.set.down} className="flex h-8 w-7 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink disabled:opacity-30"><IconChevronDown size={15} /></button>
+                <button type="button" disabled={ro || st.length <= 2} onClick={() => setSt((v) => v.filter((_, j) => j !== i))} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={15} /></button>
+              </span>
+              {colorFor === i && (
+                <div className="col-span-4 -mt-1 mb-1 flex flex-wrap items-center gap-[6px] rounded-[6px] border border-line bg-[#fafbfc] px-3 py-2">
+                  {COLORS.map((col) => <button key={col} type="button" onClick={() => { setRow(i, { color: col }); setColorFor(null); }} className={`h-6 w-6 cursor-pointer rounded-full border-2 ${s.color === col ? "border-ink" : "border-surface"} shadow`} style={{ background: col }} />)}
+                  <label className="ml-2 inline-flex cursor-pointer items-center gap-2 text-[12.5px] text-text"><span className="h-6 w-6 rounded-full border border-line" style={{ background: "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)" }} />{c.set.customColor}<input type="color" value={s.color ?? "#8a93a2"} onChange={(e) => setRow(i, { color: e.target.value })} className="h-0 w-0 opacity-0" /></label>
+                </div>
+              )}
             </div>
           ))}
         </div>

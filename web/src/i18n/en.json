@@ -1170,6 +1170,10 @@
       "other": "Other"
     },
     "set": {
+      "color": "Stage colour",
+      "customColor": "Custom colour",
+      "up": "Move up",
+      "down": "Move down",
       "stagesT": "Pipeline stages",
       "stagesS": "Rename, add or remove stages. “Deal” and “Lost” stages close the deal.",
       "addStage": "Add stage",
