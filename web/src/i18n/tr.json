@@ -1476,7 +1476,21 @@
       "listOf": "Müşteri listesi",
       "roles": "Roller",
       "branch": "Şube",
-      "anyBranch": "Tüm şubeler"
+      "anyBranch": "Tüm şubeler",
+      "won": "Aldı / kiraladı",
+      "lost": "Vazgeçti",
+      "flt": {
+        "client": "Müşteri",
+        "team": "Ekip ve kaynak",
+        "request": "Talep",
+        "dates": "Tarihler",
+        "createdFrom": "Oluşturma başlangıç",
+        "createdTo": "bitiş",
+        "budgetFrom": "Bütçe (min)",
+        "budgetTo": "Bütçe (max)",
+        "active": "Filtre: {n}",
+        "hint": "Ad, telefon ve e-posta — yukarıdaki aramada. Filtreler anında uygulanır."
+      }
     },
     "kb": {
       "days": "{n} gün",

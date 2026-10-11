@@ -17,9 +17,11 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, initials, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
+type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
+const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
 type SortKey = "name" | "updated" | "created";
 const DENS_LS = "opl-crm-density";
 
@@ -38,7 +40,8 @@ export function ClientsTable() {
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [view, setView] = useState<View>("all");
   const [stage, setStage] = useState<string>(""); // "" все, "none" без сделки, иначе id этапа
-  const [owner, setOwner] = useState(""); const [source, setSource] = useState(""); const [tag, setTag] = useState(""); const [branch, setBranch] = useState(""); const [role, setRole] = useState("");
+  const [flt, setFlt] = useState<Flt>(EMPTY_FLT); // расширенный фильтр блоками (12.10.2026, «как полный поиск в CRM»)
+  const setF = (p: Partial<Flt>) => setFlt((v) => ({ ...v, ...p }));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const cacheKey = `${crm.base}:clients:${status}`;
   const [list, setList] = useState<Client[] | null>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.list ?? null);
@@ -65,27 +68,38 @@ export function ClientsTable() {
   function matchView(x: Client, v: View) {
     switch (v) { case "mine": return x.ownerId === crm.me.meId; case "withTask": return !!x.nextTask; case "overdue": return isOver(x); case "noDeal": return !deals[x.id]; default: return true; }
   }
-  const stageCount = (id: string) => base.filter((x) => (id === "none" ? !deals[x.id] : deals[x.id]?.stageId === id)).length;
+  const stageOf = (x: Client) => { const d = deals[x.id]; return !d ? "none" : d.closed ? d.closed : d.stageId ?? ""; };
+  const stageCount = (id: string) => base.filter((x) => stageOf(x) === id).length;
   const allTags = useMemo(() => [...new Set(base.flatMap((x) => x.tags))].sort(), [base]);
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
-    if (stage) r = r.filter((x) => (stage === "none" ? !deals[x.id] : deals[x.id]?.stageId === stage));
-    if (owner) r = r.filter((x) => x.ownerId === owner);
-    if (source) r = r.filter((x) => x.sourceId === source);
-    if (tag) r = r.filter((x) => x.tags.includes(tag));
-    if (branch) r = r.filter((x) => x.branchId === branch);
-    if (role) r = r.filter((x) => x.roles.includes(role as Client["roles"][number]));
+    if (stage) r = r.filter((x) => stageOf(x) === stage);
+    if (flt.owner) r = r.filter((x) => x.ownerId === flt.owner);
+    if (flt.source) r = r.filter((x) => x.sourceId === flt.source);
+    if (flt.tag) r = r.filter((x) => x.tags.includes(flt.tag));
+    if (flt.branch) r = r.filter((x) => x.branchId === flt.branch);
+    if (flt.role) r = r.filter((x) => x.roles.includes(flt.role as Client["roles"][number]));
+    if (flt.cstage) r = r.filter((x) => x.stage === flt.cstage);
+    if (flt.priority) r = r.filter((x) => (flt.priority === "none" ? !x.priority : x.priority === flt.priority));
+    if (flt.lang) r = r.filter((x) => x.lang === flt.lang);
+    if (flt.channel) r = r.filter((x) => x.channel === flt.channel);
+    if (flt.kind) r = r.filter((x) => x.requests.some((q) => q.kind === flt.kind));
+    if (flt.il) r = r.filter((x) => x.requests.some((q) => (q.fields.geo as { il?: string } | undefined)?.il === flt.il) || x.want.il === flt.il);
+    const bMin = +flt.budgetMin.replace(/\D/g, "") || 0, bMax = +flt.budgetMax.replace(/\D/g, "") || 0;
+    if (bMin || bMax) r = r.filter((x) => x.requests.some((q) => { const f = q.fields; const hi = Number(f.budgetMax ?? f.rentMax ?? f.priceList ?? f.rent ?? f.budgetMin ?? 0); const lo = Number(f.budgetMin ?? hi); return hi > 0 && (!bMin || hi >= bMin) && (!bMax || lo <= bMax); }));
+    if (flt.createdFrom) r = r.filter((x) => x.createdAt >= flt.createdFrom);
+    if (flt.createdTo) r = r.filter((x) => x.createdAt <= flt.createdTo + "T23:59:59");
     const key = (x: Client) => (sort.key === "name" ? x.name.toLowerCase() : sort.key === "created" ? x.createdAt : x.updatedAt);
     return r.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0) * sort.dir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, view, stage, owner, source, tag, branch, role, sort, deals, now]);
+  }, [base, view, stage, flt, sort, deals, now]);
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   async function bulk(patch: Parameters<typeof bulkClients>[1]) { try { await bulkClients([...sel], patch); setSel(new Set()); load(); } catch (e) { err(e); } }
   const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
   const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
-  const activeFilters = [owner, source, tag, branch, role].filter(Boolean).length;
+  const activeFilters = Object.values(flt).filter(Boolean).length;
   const th = (label: string, key?: SortKey) => (
     <th key={label} onClick={key ? () => toggleSort(key) : undefined} className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted ${key ? "cursor-pointer select-none hover:text-ink" : ""}`}>
       <span className="inline-flex items-center gap-1">{label}{key && (sort.key === key ? <span className="text-blue-2">{sort.dir === 1 ? "▲" : "▼"}</span> : <IconArrowsSort size={12} className="opacity-40" />)}</span>
@@ -94,7 +108,8 @@ export function ClientsTable() {
   const pad = dense ? "py-[6px]" : "py-[12px]";
   const stageChip = (d?: DealSummary) => {
     const st = crm.stages.find((s) => s.id === d?.stageId);
-    if (!d) return <span className="text-muted">—</span>;
+    if (!d) return <span className="text-muted">{c.tbl.noStage}</span>;
+    if (d.closed) { const col = d.closed === "won" ? "#22c15e" : "#e5484d"; return <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[12px] font-medium" style={{ background: col + "1f", color: col }}>{d.closed === "won" ? c.tbl.won : c.tbl.lost}</span>; }
     const col = st?.color ?? "#8a93a2";
     return <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[12px] font-medium" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}</span>;
   };
@@ -117,18 +132,10 @@ export function ClientsTable() {
       <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
         {crm.stages.filter((s) => s.kind === "open").map((s) => { const n = stageCount(s.id); return <button key={s.id} type="button" onClick={() => setStage(stage === s.id ? "" : s.id)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === s.id ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: s.color ?? "#8a93a2" }} />{stageName(s, t, lang)}<span className={stage === s.id ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
-        <button type="button" onClick={() => setStage(stage === "none" ? "" : "none")} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === "none" ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.tbl.noStage}<span className={stage === "none" ? "text-white/70" : "text-muted"}>{stageCount("none")}</span></button>
+        {([["won", c.tbl.won, "#22c15e"], ["lost", c.tbl.lost, "#e5484d"], ["none", c.tbl.noStage, "#c9d0dc"]] as const).map(([k, l, col]) => <button key={k} type="button" onClick={() => setStage(stage === k ? "" : k)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: col }} />{l}<span className={stage === k ? "text-white/70" : "text-muted"}>{stageCount(k)}</span></button>)}
       </div>
-      {filtersOpen && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-2">
-          {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.tbl.anyOwner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} className="w-[190px]" size="sm" />}
-          <Select value={source} onChange={setSource} options={[{ value: "", label: c.tbl.anySource }, ...crm.sources.map((s) => ({ value: s.id, label: sourceName(s, t) }))]} className="w-[180px]" size="sm" />
-          <Select value={tag} onChange={setTag} options={[{ value: "", label: c.tbl.anyTag }, ...allTags.map((g) => ({ value: g, label: g }))]} className="w-[160px]" size="sm" />
-          {crm.me.branches.length > 0 && <Select value={branch} onChange={setBranch} options={[{ value: "", label: c.tbl.anyBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} className="w-[170px]" size="sm" />}
-          <Select value={role} onChange={setRole} options={[{ value: "", label: c.tbl.roles }, ...(["buyer", "seller", "landlord", "tenant"] as const).map((r) => ({ value: r, label: c.roles[r] }))]} className="w-[160px]" size="sm" />
-          {activeFilters > 0 && <button type="button" onClick={() => { setOwner(""); setSource(""); setTag(""); setBranch(""); setRole(""); }} className="cursor-pointer text-[12.5px] font-semibold text-red">{c.tbl.clear}</button>}
-        </div>
-      )}
+      {filtersOpen && <FilterPanel flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />}
+      {activeFilters > 0 && !filtersOpen && <ActiveChips flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} />}
       {sel.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] bg-ink px-3 py-[6px] text-[12.5px] text-white">
           <span className="font-semibold">{fill(c.tbl.selected, { n: sel.size })}</span>
@@ -166,5 +173,79 @@ export function ClientsTable() {
       {drawer && <ClientDrawer id={drawer} onClose={() => setDrawer(null)} onChanged={load} />}
       <ClientModal open={modal} client={null} onClose={() => setModal(false)} onSaved={(id) => { setModal(false); router.push(`${crm.base}/c/${id}`); }} onOpenDup={(id) => router.push(`${crm.base}/c/${id}`)} />
     </>
+  );
+}
+
+const ROLES_F = ["buyer", "seller", "landlord", "tenant"] as const;
+const CSTAGES_F = ["new", "contacted", "qualified", "unqualified"] as const;
+const PRIOS_F = ["hot", "warm", "cold", "none"] as const;
+const KINDS_F = ["buy", "sell", "rent_out", "rent_in"] as const;
+const CHANNELS_F = ["call", "whatsapp", "telegram", "email"] as const;
+
+/** Подпись активного фильтра для чипов. */
+function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>): string {
+  const c = t.crm;
+  switch (k) {
+    case "owner": return crm.me.members.find((m) => m.id === v)?.name ?? v;
+    case "branch": return crm.me.branches.find((b) => b.id === v)?.name ?? v;
+    case "source": return sourceName(crm.sources.find((x) => x.id === v), t);
+    case "role": return (c.roles as Record<string, string>)[v] ?? v;
+    case "cstage": return (c.cstage as Record<string, string>)[v] ?? v;
+    case "priority": return (c.prio as Record<string, string>)[v] ?? v;
+    case "kind": return (c.rq.kinds as Record<string, string>)[v] ?? v;
+    case "il": return GEO.find((g) => g.k === v)?.n ?? v;
+    case "channel": return (c.channel as Record<string, string>)[v] ?? v;
+    case "budgetMin": return `≥ ${v}`;
+    case "budgetMax": return `≤ ${v}`;
+    case "createdFrom": return `${c.tbl.flt.createdFrom} ${v}`;
+    case "createdTo": return `${c.tbl.flt.createdTo} ${v}`;
+    default: return v;
+  }
+}
+
+function ActiveChips({ flt, setF, reset }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void }) {
+  const { t } = useI18n(); const crm = useCrm();
+  const keys = (Object.keys(flt) as (keyof Flt)[]).filter((k) => flt[k]);
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
+      {keys.map((k) => <span key={k} className="inline-flex h-7 items-center gap-1 rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 font-medium text-sel-ink">{fltLabel(k, flt[k], t, crm)}<button type="button" onClick={() => setF({ [k]: "" } as Partial<Flt>)} className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full hover:bg-white/60"><IconX size={12} /></button></span>)}
+      <button type="button" onClick={reset} className="cursor-pointer text-[12.5px] font-semibold text-red hover:underline">{t.crm.tbl.clear}</button>
+    </div>
+  );
+}
+
+/** Расширенный фильтр блоками: клиент · команда и источник · заявка · сделка и даты. */
+function FilterPanel({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[] }) {
+  const { t } = useI18n(); const crm = useCrm(); const c = t.crm; const f = c.tbl.flt;
+  const block = (title: string, children: React.ReactNode) => <div className="min-w-0"><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
+  const opt = (label: string, list: readonly string[], names: Record<string, string>) => [{ value: "", label }, ...list.map((v) => ({ value: v, label: names[v] ?? v }))];
+  const active = Object.values(flt).filter(Boolean).length;
+  return (
+    <div data-crm-form="1" className="mb-3 rounded-[6px] border border-line bg-surface p-4">
+      <div className="grid grid-cols-4 gap-5 max-[1200px]:grid-cols-2 max-md:grid-cols-1">
+        {block(f.client, <>
+          <Select value={flt.role} onChange={(v) => setF({ role: v })} options={opt(c.client.roles, ROLES_F, c.roles)} size="sm" />
+          <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={opt(c.client.stage, CSTAGES_F, c.cstage)} size="sm" />
+          <Select value={flt.priority} onChange={(v) => setF({ priority: v })} options={opt(c.client.priority, PRIOS_F, c.prio)} size="sm" />
+          <div className="grid grid-cols-2 gap-2"><Select value={flt.lang} onChange={(v) => setF({ lang: v })} options={[{ value: "", label: c.client.lang }, ...["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))]} size="sm" /><Select value={flt.channel} onChange={(v) => setF({ channel: v })} options={opt(c.client.channel, CHANNELS_F, c.channel)} size="sm" /></div>
+        </>)}
+        {block(f.team, <>
+          {crm.me.members.length > 1 && <Select value={flt.owner} onChange={(v) => setF({ owner: v })} options={[{ value: "", label: c.owner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" />}
+          {crm.me.branches.length > 0 && <Select value={flt.branch} onChange={(v) => setF({ branch: v })} options={[{ value: "", label: c.client.branch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" />}
+          <Select value={flt.source} onChange={(v) => setF({ source: v })} options={[{ value: "", label: c.source }, ...crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) }))]} size="sm" />
+          <Select value={flt.tag} onChange={(v) => setF({ tag: v })} options={[{ value: "", label: c.tbl.tag }, ...allTags.map((g) => ({ value: g, label: g }))]} size="sm" disabled={!allTags.length} />
+        </>)}
+        {block(f.request, <>
+          <Select value={flt.kind} onChange={(v) => setF({ kind: v })} options={opt(c.rq.kind, KINDS_F, c.rq.kinds)} size="sm" />
+          <Select value={flt.il} onChange={(v) => setF({ il: v })} options={[{ value: "", label: c.want.il }, ...GEO.map((g) => ({ value: g.k, label: g.n }))]} size="sm" searchable />
+          <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value })} placeholder={f.budgetTo} className={inp} /></div>
+        </>)}
+        {block(f.dates, <>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-[12px] text-muted"><span>{f.createdFrom}</span><input type="date" value={flt.createdFrom} onChange={(e) => setF({ createdFrom: e.target.value })} className={inp} /></div>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-[12px] text-muted"><span>{f.createdTo}</span><input type="date" value={flt.createdTo} onChange={(e) => setF({ createdTo: e.target.value })} className={inp} /></div>
+        </>)}
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[12.5px]"><span className="text-muted">{active ? fill(f.active, { n: active }) : f.hint}</span><button type="button" onClick={reset} disabled={!active} className="cursor-pointer font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button></div>
+    </div>
   );
 }

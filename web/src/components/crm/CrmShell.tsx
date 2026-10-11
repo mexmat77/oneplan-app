@@ -56,11 +56,12 @@ export function CrmShell({ base }: { base: string }) {
   useEffect(() => { crmCounts().then(setCounts).catch(() => {}); }, [pathname]);
   const me = boot?.me.members.find((m) => m.id === boot.me.meId);
   // вкладки открытых карточек (localStorage, на кабинет): [{id, name}]
-  const tabsPref = usePref(`${TABS_LS}:${base}`);
-  const tabs: CrmTab[] = (() => { try { const v = JSON.parse(tabsPref || "[]"); return Array.isArray(v) ? v.filter((x) => x && x.id && x.name) : []; } catch { return []; } })();
-  const readTabs = useCallback((): CrmTab[] => { try { const v = JSON.parse(getPref(`${TABS_LS}:${base}`) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } }, [base]);
-  const openTab = useCallback((id: string, name: string) => { const cur = readTabs(); const i = cur.findIndex((x) => x.id === id); if (i >= 0) { if (cur[i].name !== name) setPref(`${TABS_LS}:${base}`, JSON.stringify(cur.map((x) => (x.id === id ? { id, name } : x)))); } else setPref(`${TABS_LS}:${base}`, JSON.stringify([...cur, { id, name }].slice(-12))); }, [base, readTabs]);
-  const closeTab = useCallback((id: string) => { setPref(`${TABS_LS}:${base}`, JSON.stringify(readTabs().filter((x) => x.id !== id))); }, [base, readTabs]);
+  const tabsKey = `${TABS_LS}:${base}:${boot?.me.ws.id ?? ""}`; // ключ на пространство: другой пользователь в том же браузере не видит чужих вкладок
+  const tabsPref = usePref(tabsKey);
+  const tabs: CrmTab[] = (() => { if (!boot) return []; try { const v = JSON.parse(tabsPref || "[]"); return Array.isArray(v) ? v.filter((x) => x && x.id && x.name) : []; } catch { return []; } })();
+  const readTabs = useCallback((): CrmTab[] => { try { const v = JSON.parse(getPref(tabsKey) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } }, [tabsKey]);
+  const openTab = useCallback((id: string, name: string) => { const cur = readTabs(); const i = cur.findIndex((x) => x.id === id); if (i >= 0) { if (cur[i].name !== name) setPref(tabsKey, JSON.stringify(cur.map((x) => (x.id === id ? { id, name } : x)))); } else setPref(tabsKey, JSON.stringify([...cur, { id, name }].slice(-12))); }, [tabsKey, readTabs]);
+  const closeTab = useCallback((id: string) => { setPref(tabsKey, JSON.stringify(readTabs().filter((x) => x.id !== id))); }, [tabsKey, readTabs]);
   const accessText = boot?.me.access === "readonly" ? c.readonly : boot?.me.paidTo ? fill(c.paidTo, { date: fmtDate(boot.me.paidTo, lang) }) : boot?.me.trialUntil ? fill(c.trial, { date: fmtDate(boot.me.trialUntil, lang) }) : "";
   const section = path[0] ?? "";
   const clientId = section === "c" ? path[1] : UUID.test(section) ? section : null;

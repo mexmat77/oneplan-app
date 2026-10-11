@@ -301,7 +301,15 @@ export async function deleteTask(id: string): Promise<void> {
 // ---------- настройки: этапы и источники ----------
 export async function saveStages(stages: { id?: string; key: string; name: Record<string, string>; kind: Stage["kind"]; color: string | null }[]): Promise<Stage[]> {
   const c = await crmCtx(); assertWrite(c);
-  const rows = stages.map((x, i) => ({ id: x.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, key: x.key || `s${i}`, name: x.name, kind: x.kind, color: x.color, sort: i }));
+  // свои имена этапов: введённое на одном языке переводится на два других (замечание пользователя 12.10.2026)
+  const named = await Promise.all(stages.map(async (x) => {
+    const name: Record<string, string> = { ...x.name };
+    const langs: Lang[] = ["RU", "EN", "TR"];
+    const src = langs.find((l) => name[l]?.trim());
+    if (src) for (const l of langs) if (l !== src && !name[l]?.trim()) { try { const r = await translate(name[src], l, "title"); if (!r.fallback) name[l] = r.text; } catch { /* оставим пустым — покажется исходный */ } }
+    return { ...x, name };
+  }));
+  const rows = named.map((x, i) => ({ id: x.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, key: x.key || `s${i}`, name: x.name, kind: x.kind, color: x.color, sort: i }));
   const { error } = await c.sb.from("crm_stages").upsert(rows, { onConflict: "id" });
   if (error) throw new Error(error.message);
   const ids = rows.map((r) => r.id);
@@ -413,13 +421,15 @@ export async function crmOverview(): Promise<Overview> {
 }
 
 /** Сводка по сделкам для списка клиентов: последняя открытая сделка (этап, сумма) по клиенту. */
-export type DealSummary = { id: string; stageId: string | null; amount: number | null; cur: string; title: string; deal: string };
+export type DealSummary = { id: string; stageId: string | null; amount: number | null; cur: string; title: string; deal: string; closed: "won" | "lost" | null };
+/** Открытая сделка клиента (последняя), а если открытых нет — последняя закрытая (успех/отказ) для статуса «Купили»/«Отказ». */
 export async function clientDealSummary(ids: string[]): Promise<Record<string, DealSummary>> {
   const c = await crmCtx();
   if (!ids.length) return {};
-  const { data } = await c.sb.from("crm_deals").select("id, client_id, stage_id, amount, cur, title, deal, updated_at").in("client_id", ids).is("closed_at", null).order("updated_at", { ascending: false });
+  const { data } = await c.sb.from("crm_deals").select("id, client_id, stage_id, amount, cur, title, deal, updated_at, closed_at, crm_stages(kind)").in("client_id", ids).order("updated_at", { ascending: false });
   const out: Record<string, DealSummary> = {};
-  for (const d of (data ?? []) as Row[]) { const k = d.client_id as string; if (!out[k]) out[k] = { id: d.id as string, stageId: s(d.stage_id), amount: n(d.amount), cur: (d.cur as string) || "TRY", title: (d.title as string) ?? "", deal: (d.deal as string) || "sale" }; }
+  const mk = (d: Row): DealSummary => { const st = (Array.isArray(d.crm_stages) ? d.crm_stages[0] : d.crm_stages) as Row | null; const kind = (st?.kind as string) ?? "open"; return { id: d.id as string, stageId: s(d.stage_id), amount: n(d.amount), cur: (d.cur as string) || "TRY", title: (d.title as string) ?? "", deal: (d.deal as string) || "sale", closed: d.closed_at ? (kind === "won" ? "won" : "lost") : null }; };
+  for (const d of (data ?? []) as Row[]) { const k = d.client_id as string; if (!d.closed_at && (!out[k] || out[k].closed)) out[k] = mk(d); else if (!out[k]) out[k] = mk(d); }
   return out;
 }
 

@@ -1452,7 +1452,7 @@
         "save": "+ Save view"
       },
       "stageRow": "Stage:",
-      "noStage": "No deal",
+      "noStage": "No deals",
       "compact": "Compact",
       "expanded": "Expanded",
       "allFilters": "All filters",
@@ -1476,7 +1476,21 @@
       "listOf": "Client list",
       "roles": "Roles",
       "branch": "Branch",
-      "anyBranch": "All branches"
+      "anyBranch": "All branches",
+      "won": "Bought / rented",
+      "lost": "Declined",
+      "flt": {
+        "client": "Client",
+        "team": "Team and source",
+        "request": "Request",
+        "dates": "Dates",
+        "createdFrom": "Created from",
+        "createdTo": "to",
+        "budgetFrom": "Budget from",
+        "budgetTo": "Budget to",
+        "active": "Filters: {n}",
+        "hint": "Name, phone and e-mail — in the search above. Filters apply instantly."
+      }
     },
     "kb": {
       "days": "{n} d.",

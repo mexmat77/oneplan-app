@@ -76,7 +76,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
   async function saveReasons(list: string[]) { try { setReasons(await saveLostReasons(list)); crm.refresh(); } catch (e) { teamErr(e); } }
   const show = (k: typeof tab) => tab === k;
   return (
-    <div className="grid grid-cols-[200px_1fr] gap-5 max-md:grid-cols-1">
+    <div data-crm-form="1" className="grid grid-cols-[200px_1fr] gap-5 max-md:grid-cols-1">
       <nav className="flex flex-col gap-[2px] self-start max-md:flex-row max-md:overflow-x-auto">
         {nav.map(([k, l]) => <Link key={k} href={`${crm.base}/settings/${k}`} className={`whitespace-nowrap rounded-[10px] px-3 py-[8px] text-[13px] font-semibold ${tab === k ? "bg-blue-tint text-sel-ink" : "text-text hover:bg-bg-3"}`}>{l}</Link>)}
       </nav>

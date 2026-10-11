@@ -48,7 +48,7 @@ function Inner({ id }: { id: string }) {
   const [openReq, setOpenReq] = useState<Record<string, boolean>>({});
   const [dups, setDups] = useState<DupHit[]>([]);
   const ro = crm.me.access !== "full";
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); if (d) { const ids = [...d.requests.map((r) => r.listingId), ...d.deals.map((x) => x.listingId)].filter(Boolean) as string[]; if (ids.length) listingBriefs(ids).then(setObjs).catch(() => {}); } if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => setData(null));
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); else crm.closeTab?.(id); if (d) { const ids = [...d.requests.map((r) => r.listingId), ...d.deals.map((x) => x.listingId)].filter(Boolean) as string[]; if (ids.length) listingBriefs(ids).then(setObjs).catch(() => {}); } if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => { setData(null); crm.closeTab?.(id); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
   useEffect(() => { load(); }, [load]);
