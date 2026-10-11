@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconApi, IconBell, IconBookmark, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -54,6 +54,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     { href: "/favs", label: t.nav.favs, Icon: IconHeart, badge: favsN, active: is("/favs") || (isObj && prev === "favs") },
     { href: "/sels", label: t.nav.sels, Icon: IconFolders, active: is("/sels") },
     { href: "/reqs", label: t.nav.reqs, Icon: IconBookmark, badge: reqsN, active: is("/reqs") },
+    { href: "/crm", label: t.nav.crm, Icon: IconAddressBook, active: is("/crm") },
   ];
 
   // Admin workspace switcher (platform extension): realtors base · developers cabinet · administration.

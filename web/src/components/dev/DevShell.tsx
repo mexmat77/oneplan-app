@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import {
+import { IconAddressBook,
   IconArrowLeft, IconArrowRight, IconBell, IconBellOff, IconBuildingCommunity, IconChecks, IconLayoutDashboard, IconMenu2,
   IconMessageCircle, IconSettings, IconUser, IconUsers, IconX,
 } from "@tabler/icons-react";
@@ -93,6 +93,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
     { icon: <IconLayoutDashboard size={24} />, label: t.nav_dashboard, onClick: () => go("/dev") },
     { icon: <IconBuildingCommunity size={24} />, label: t.nav_objects, onClick: () => go("/dev/objects") },
     ...(canManageUsers ? [{ icon: <IconUsers size={24} />, label: t.nav_users, onClick: () => go("/dev/users") }] : []),
+    { icon: <IconAddressBook size={24} />, label: t.nav_crm, onClick: () => go("/dev/crm") },
     { icon: <IconMessageCircle size={24} />, label: tt.chat, badge: dmUnread, onClick: () => go("/dev/chat") },
     { icon: <IconBell size={24} />, label: tt.notif, badge: unread, onClick: () => { setSheet(false); setNotifOpen(true); } },
     { icon: <IconUser size={24} />, label: t.prof_title, onClick: () => go("/dev/profile") },
@@ -119,6 +120,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
         <Link href="/dev" className={`${navCls(path === "/dev")} max-md:hidden`}><IconLayoutDashboard size={17} /> {t.nav_dashboard}</Link>
         <Link href="/dev/objects" className={`${navCls(is("/dev/objects"))} max-md:hidden`}><IconBuildingCommunity size={17} /> {t.nav_objects}</Link>
         {canManageUsers && <Link href="/dev/users" className={`${navCls(is("/dev/users"))} max-md:hidden`}><IconUsers size={17} /> {t.nav_users}</Link>}
+        <Link href="/dev/crm" className={`${navCls(is("/dev/crm"))} max-md:hidden`}><IconAddressBook size={17} /> {t.nav_crm}</Link>
         <div className="min-w-2 flex-1" />
         <Link href="/dev/chat" title={tt.chat} className={`${iconBtn(is("/dev/chat"))} max-md:hidden`}><IconMessageCircle size={19} />{badge(dmUnread)}</Link>
         <button type="button" onClick={() => setNotifOpen((v) => !v)} title={tt.notif} className={`${iconBtn()} max-md:h-10 max-md:w-10 max-md:text-ink`}><IconBell size={19} />{badge(unread)}</button>

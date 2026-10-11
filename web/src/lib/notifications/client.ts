@@ -60,6 +60,7 @@ const HREF: Record<string, (p: Record<string, string | number | null>) => string
   req_new: () => "/admin/requests", lead_new: () => "/admin/requests", unblock_req: () => "/admin/requests", report_new: () => "/admin/reports", join_registered: () => "/admin/users",
   access_approved: () => "/catalog", access_restored: () => "/catalog", report_resolved: () => null, invite_accepted: () => "/admin/users", team_added: () => "/dev",
   dev_status: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"), dev_price: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"), dev_newobj: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"),
+  crm_lead: (p) => (p.href ? String(p.href) : "/crm"),
 };
 export type NtfDict = Record<string, { t: string; s: string }>;
 

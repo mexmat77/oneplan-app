@@ -1146,5 +1146,6 @@
  "tfa_qr": "Scan the QR code in Google Authenticator or enter the key manually, then type the code from the app.",
  "tfa_get": "No app yet? Google Authenticator:",
  "tfa_relogin": "Sign in again and confirm with a code to do this",
- "cancel": "Cancel"
+ "cancel": "Cancel",
+ "nav_crm": "CRM"
 }

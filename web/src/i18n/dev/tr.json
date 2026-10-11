@@ -1146,5 +1146,6 @@
  "tfa_qr": "QR kodu Google Authenticator ile tarayın veya anahtarı elle girin, sonra uygulamadaki kodu yazın.",
  "tfa_get": "Uygulama yok mu? Google Authenticator:",
  "tfa_relogin": "Bunun için yeniden giriş yapıp kodla onaylayın",
- "cancel": "İptal"
+ "cancel": "İptal",
+ "nav_crm": "CRM"
 }
