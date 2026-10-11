@@ -111,3 +111,25 @@ await save("kvkk_consent_tr.docx", doc([
   P("", { after: 200 }),
   sign(["VERİ SAHİBİ\n{{buyer.name}}"]),
 ]));
+
+// карточка реквизитов компании (TR/EN) — скачивается из настроек CRM, чтобы отправить контрагенту
+await save("company_card_tr_en.docx", doc([
+  H("FİRMA BİLGİ KARTI / COMPANY DETAILS"),
+  P("Tarih / Date: {{deal.date}}", { align: AlignmentType.RIGHT, after: 160 }),
+  kv([
+    ["Ünvan / Company name", "{{agency.name}}"],
+    ["Vergi No / Tax No", "{{agency.taxNo}}"],
+    ["Vergi Dairesi / Tax office", "{{agency.taxOffice}}"],
+    ["MERSİS No", "{{agency.mersis}}"],
+    ["Ticaret Sicil No / Trade registry No", "{{agency.registryNo}}"],
+    ["Yetki Belgesi No / Licence No", "{{agency.licenseNo}}"],
+    ["Adres / Address", "{{agency.address}}"],
+    ["Yetkili / Representative", "{{agency.representative}}"],
+    ["Telefon / Phone", "{{agency.phone}}"],
+    ["E-posta / E-mail", "{{agency.email}}"],
+    ["Banka / Bank", "{{agency.bank}}"],
+    ["IBAN", "{{agency.iban}}"],
+  ]),
+  P("", { after: 300 }),
+  sign(["Kaşe / İmza — Stamp / Signature"]),
+]));

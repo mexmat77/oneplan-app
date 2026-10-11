@@ -13,21 +13,73 @@ const s = (v: unknown) => (v == null ? null : String(v));
 const today = () => new Date().toISOString().slice(0, 10);
 
 export type Company = Record<string, string>; // name, taxNo, taxOffice, mersis, registryNo, address, representative, phone, email, iban, bank, licenseNo
+/** Набор реквизитов (12.10.2026: у агентства их может быть несколько — юрлица, филиалы); один — основной. */
+export type CompanyProfile = { id: string; label: string; isDefault: boolean; fields: Company };
 export type TemplateInfo = { id: string; builtin: boolean; key: string | null; name: Record<Lang, string> | string; kind: string; lang: string; fields: string[]; for: string[] };
 export type DocInfo = { id: string; clientId: string | null; dealId: string | null; title: string; kind: string; status: "draft" | "sent" | "signed" | "void"; hasDocx: boolean; hasPdf: boolean; hasFile: boolean; fileName: string | null; size: number | null; templateKey: string | null; templateId: string | null; validUntil: string | null; signedAt: string | null; createdAt: string; createdBy: string | null };
 
 // ---------- реквизиты ----------
-export async function getCompany(): Promise<Company> {
-  const c = await crmCtx();
+async function loadProfiles(c: Ctx): Promise<CompanyProfile[]> {
   const { data } = await c.sb.from("crm_settings").select("company_enc").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).maybeSingle();
-  if (!data?.company_enc) return {};
-  try { return JSON.parse(dec(c, "crm_settings", "company", c.ws.id, data.company_enc as string)) as Company; } catch { return {}; }
+  if (!data?.company_enc) return [];
+  try {
+    const j = JSON.parse(dec(c, "crm_settings", "company", c.ws.id, data.company_enc as string)) as { companies?: CompanyProfile[] } & Company;
+    if (Array.isArray(j.companies)) return j.companies;
+    // старый формат (один набор полей) → один основной профиль
+    const fields: Company = {}; for (const [k, v] of Object.entries(j)) if (typeof v === "string" && v) fields[k] = v;
+    return Object.keys(fields).length ? [{ id: "main", label: fields.name ?? "", isDefault: true, fields }] : [];
+  } catch { return []; }
 }
-export async function saveCompany(company: Company): Promise<void> {
-  const c = await crmCtx(); assertWrite(c);
-  const clean: Company = {}; for (const [k, v] of Object.entries(company)) if (v?.trim()) clean[k] = v.trim();
-  const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, company_enc: enc(c, "crm_settings", "company", c.ws.id, JSON.stringify(clean)), updated_at: new Date().toISOString() }, { onConflict: "ws_kind,ws_id" });
+async function storeProfiles(c: Ctx, list: CompanyProfile[]): Promise<void> {
+  const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, company_enc: enc(c, "crm_settings", "company", c.ws.id, JSON.stringify({ companies: list })), updated_at: new Date().toISOString() }, { onConflict: "ws_kind,ws_id" });
   if (error) throw new Error(error.message);
+}
+export async function getCompanies(): Promise<CompanyProfile[]> { const c = await crmCtx(); return loadProfiles(c); }
+/** Основной набор реквизитов (для подстановки в документы). */
+export async function getCompany(): Promise<Company> {
+  const c = await crmCtx(); const list = await loadProfiles(c);
+  return (list.find((x) => x.isDefault) ?? list[0])?.fields ?? {};
+}
+export async function saveCompanyProfile(pr: { id?: string; label: string; isDefault: boolean; fields: Company }): Promise<CompanyProfile[]> {
+  const c = await crmCtx(); assertWrite(c);
+  const clean: Company = {}; for (const [k, v] of Object.entries(pr.fields)) if (v?.trim()) clean[k] = v.trim();
+  const list = await loadProfiles(c);
+  const id = pr.id || crypto.randomUUID();
+  const next: CompanyProfile = { id, label: pr.label.trim() || clean.name || "", isDefault: pr.isDefault || list.length === 0, fields: clean };
+  const out = list.some((x) => x.id === id) ? list.map((x) => (x.id === id ? next : x)) : [...list, next];
+  const final = next.isDefault ? out.map((x) => ({ ...x, isDefault: x.id === id })) : out;
+  if (!final.some((x) => x.isDefault) && final.length) final[0].isDefault = true;
+  await storeProfiles(c, final);
+  return final;
+}
+export async function deleteCompanyProfile(id: string): Promise<CompanyProfile[]> {
+  const c = await crmCtx(); assertWrite(c);
+  const list = (await loadProfiles(c)).filter((x) => x.id !== id);
+  if (list.length && !list.some((x) => x.isDefault)) list[0].isDefault = true;
+  await storeProfiles(c, list);
+  return list;
+}
+/** Карточка реквизитов (DOCX/PDF) — чтобы скачать/отправить контрагенту. */
+export async function companyCardUrl(id: string, which: "docx" | "pdf"): Promise<string> {
+  const c = await crmCtx();
+  const pr = (await loadProfiles(c)).find((x) => x.id === id);
+  if (!pr) throw new Error("not-found");
+  const values: Record<string, string> = {}; for (const [k, v] of Object.entries(pr.fields)) values["agency." + k] = v;
+  values["deal.date"] = today();
+  const docx = renderDocx(await builtinTemplate("company_card"), prepareData(values, { "deal.date": "date" }));
+  return tmpFileUrl(c, `company-${id}`, docx, which, (pr.label || pr.fields.name || "company").slice(0, 60));
+}
+/** Временный файл в закрытом bucket (перезаписывается по ключу), подписанная ссылка на 10 минут. */
+async function tmpFileUrl(c: Ctx, key: string, docx: Buffer, which: "docx" | "pdf", name: string): Promise<string> {
+  const safe = key.replace(/[^a-zA-Z0-9_-]/g, "_");
+  let buf: Buffer = docx, ext = "docx", mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (which === "pdf") { const pdf = await docxToPdf(docx).catch(() => null); if (!pdf) throw new Error("no-pdf"); buf = pdf; ext = "pdf"; mime = "application/pdf"; }
+  const p = `${c.ws.kind}/${c.ws.id}/tmp/${safe}.${ext}`;
+  const up = await c.sb.storage.from("crm").upload(p, buf, { contentType: mime, upsert: true });
+  if (up.error) throw new Error(up.error.message);
+  const { data, error } = await c.sb.storage.from("crm").createSignedUrl(p, 600, { download: which === "pdf" ? undefined : `${name.replace(/[\\/:*?"<>|]+/g, " ").trim()}.${ext}` });
+  if (error || !data) throw new Error(error?.message ?? "url");
+  return data.signedUrl;
 }
 
 // ---------- шаблоны ----------
@@ -35,7 +87,7 @@ export async function listTemplates(): Promise<TemplateInfo[]> {
   const c = await crmCtx();
   const { data } = await c.sb.from("crm_doc_templates").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).eq("active", true).order("created_at");
   const own: TemplateInfo[] = ((data ?? []) as Row[]).map((r) => ({ id: r.id as string, builtin: false, key: null, name: r.name as string, kind: r.kind as string, lang: r.lang as string, fields: ((r.fields as { key: string }[]) ?? []).map((f) => f.key), for: ["any"] }));
-  return [...BUILTIN.map((t) => ({ id: "builtin:" + t.key, builtin: true, key: t.key, name: t.name, kind: t.kind, lang: t.lang, fields: t.fields, for: t.for as string[] })), ...own];
+  return [...BUILTIN.filter((t) => t.for.length).map((t) => ({ id: "builtin:" + t.key, builtin: true, key: t.key, name: t.name, kind: t.kind, lang: t.lang, fields: t.fields, for: t.for as string[] })), ...own];
 }
 /** Свой шаблон: DOCX с {{group.key}}; поля определяются по плейсхолдерам (неизвестные ключи — тоже поля, тип text). */
 export async function uploadTemplate(fd: FormData): Promise<TemplateInfo> {
@@ -54,6 +106,36 @@ export async function uploadTemplate(fd: FormData): Promise<TemplateInfo> {
   const { error } = await c.sb.from("crm_doc_templates").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, name, lang: "—", kind, path: pathT, fields, created_by: c.me.id });
   if (error) throw new Error(error.message);
   return { id, builtin: false, key: null, name, kind, lang: "—", fields: keys, for: ["any"] };
+}
+async function templateBuffer(c: Ctx, id: string): Promise<{ buf: Buffer; name: string; fields: string[] }> {
+  if (id.startsWith("builtin:")) { const t = BUILTIN_MAP[id.slice(8)]; if (!t) throw new Error("template"); return { buf: await builtinTemplate(t.key), name: t.name.RU, fields: t.fields }; }
+  const { data: t } = await c.sb.from("crm_doc_templates").select("*").eq("id", id).maybeSingle();
+  if (!t?.path) throw new Error("template");
+  const dl = await c.sb.storage.from("crm").download(t.path as string);
+  if (dl.error || !dl.data) throw new Error("template-file");
+  return { buf: Buffer.from(await dl.data.arrayBuffer()), name: t.name as string, fields: ((t.fields as { key: string }[]) ?? []).map((f) => f.key) };
+}
+/** Предпросмотр шаблона: все поля заполнены образцами (подписи полей в скобках), PDF или DOCX. */
+export async function previewTemplate(id: string, which: "pdf" | "docx"): Promise<string> {
+  const c = await crmCtx();
+  const t = await templateBuffer(c, id);
+  const values: Record<string, string> = {}; const types: Record<string, string | undefined> = {};
+  for (const k of t.fields) { const f = FIELD_MAP[k]; types[k] = f?.type; values[k] = f?.type === "money" ? "1250000" : f?.type === "date" ? today() : f?.type === "number" ? "3" : `«${f?.label.TR ?? k}»`; }
+  const company = await getCompany(); for (const [k, v] of Object.entries(company)) if (t.fields.includes("agency." + k)) values["agency." + k] = v;
+  const docx = renderDocx(t.buf, prepareData(values, types));
+  return tmpFileUrl(c, `preview-${id}`, docx, which, `${t.name} (preview)`);
+}
+/** Скачать сам шаблон (DOCX с плейсхолдерами) — чтобы поправить и загрузить как свой. */
+export async function templateUrl(id: string): Promise<string> {
+  const c = await crmCtx();
+  const t = await templateBuffer(c, id);
+  return tmpFileUrl(c, `tpl-${id}`, t.buf, "docx", t.name);
+}
+export async function updateTemplate(id: string, patch: { name?: string; kind?: string }): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const upd: Record<string, unknown> = {}; if (patch.name?.trim()) upd.name = patch.name.trim(); if (patch.kind) upd.kind = patch.kind;
+  const { error } = await c.sb.from("crm_doc_templates").update(upd).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 export async function deleteTemplate(id: string): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
@@ -75,10 +157,11 @@ export async function listDocs(f: { dealId?: string; clientId?: string }): Promi
 }
 
 /** Значения по умолчанию для формы документа: реквизиты, клиент → buyer, объект сделки → property, сделка, ранее введённое. */
-export async function docDefaults(dealId: string): Promise<{ values: Record<string, string>; pdf: boolean }> {
+export async function docDefaults(dealId: string, companyId?: string | null): Promise<{ values: Record<string, string>; pdf: boolean; companies: CompanyProfile[] }> {
   const c = await crmCtx();
   const v: Record<string, string> = { "deal.date": today(), "deal.copies": "3", "deal.court": "Antalya", "deal.commissionWhen": "Tapu günü" };
-  const company = await getCompany();
+  const companies = await loadProfiles(c);
+  const company = (companies.find((x) => x.id === companyId) ?? companies.find((x) => x.isDefault) ?? companies[0])?.fields ?? {};
   for (const [k, val] of Object.entries(company)) v["agency." + k] = val;
   const { data: d } = await c.sb.from("crm_deals").select("*, crm_clients(*)").eq("id", dealId).maybeSingle();
   if (d) {
@@ -115,7 +198,7 @@ export async function docDefaults(dealId: string): Promise<{ values: Record<stri
     // ранее введённые значения этой сделки (продавец, тапу…) — поверх
     if (d.extra_enc) { try { Object.assign(v, JSON.parse(dec(c, "crm_deals", "extra", d.id as string, d.extra_enc as string))); } catch { /* ignore */ } }
   }
-  return { values: v, pdf: await pdfAvailable() };
+  return { values: v, pdf: await pdfAvailable(), companies };
 }
 
 export async function generateDoc(inp: { dealId: string; templateId: string; title: string; values: Record<string, string> }): Promise<DocInfo> {

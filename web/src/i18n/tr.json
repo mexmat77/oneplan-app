@@ -1341,7 +1341,42 @@
       "ev": "Belge: {title}",
       "noDeal": "Belgeler işlem içinde oluşturulur — bir işlem açın veya oluşturun.",
       "saved": "Belge oluşturuldu",
-      "err": "Belge oluşturulamadı"
+      "err": "Belge oluşturulamadı",
+      "companyS2": "Sözleşmeleri imzalayan tüzel kişiler ve şubeler. Varsayılan set belgelere eklenir; belge formunda başka biri seçilebilir.",
+      "addCompany": "Firma bilgisi ekle",
+      "noCompany": "Henüz firma bilgisi yok — bir firma ekleyin, sözleşmelere ve bilgi kartına eklenecek.",
+      "defaultCompany": "Varsayılan",
+      "cardPdf": "Kart PDF",
+      "cardDocx": "Kart Word",
+      "makeDefault": "Varsayılan yap",
+      "editCompany": "Firma bilgileri",
+      "companyLabel": "Set adı",
+      "companyLabelPh": "örn. ONETEAM Antalya, Alanya şubesi",
+      "companyGroups": {
+        "company": "Firma",
+        "contacts": "İletişim ve adres",
+        "bank": "Banka"
+      },
+      "needName": "Firma adını girin",
+      "templatesS2": "OnePlan'ın hazır şablonları ve sizinkiler. Önizleme örnek değerlerle belgeyi gösterir; DOCX'i indirin, metni düzenleyin ve kendi şablonunuz olarak yükleyin.",
+      "tplKind": "Tür",
+      "tplLang": "Dil",
+      "tplFields": "Alanlar",
+      "forDeals": "İşlemler için",
+      "anyDeal": "tümü",
+      "fieldsN": "alan",
+      "unknownFields": "kayıt dışı",
+      "previewPdf": "PDF önizleme",
+      "downloadTpl": "Şablon DOCX indir",
+      "pickDocx": "DOCX seç",
+      "uploadHint": "Word metninde {{buyer.name}} gibi yer tutucular kullanın — alan listesi aşağıda. Bilinmeyen anahtarlar da form alanı olur.",
+      "open": "Aç",
+      "similar": "Benzerini oluştur",
+      "own": "kendi",
+      "noCompanyHint": "Firma bilgileri boş — ayarlardan ekleyin, otomatik eklenecek.",
+      "sections": "Bölümler",
+      "filled": "Dolduruldu",
+      "noPdfShort": "PDF yok, sadece Word"
     },
     "nav": {
       "overview": "Genel bakış",
@@ -1854,7 +1889,10 @@
           "EUR": "EUR",
           "USD": "USD"
         }
-      }
+      },
+      "show": "Alanları göster",
+      "hide": "Daralt",
+      "noFields": "Alanlar henüz dolu değil — «Ayrıntıları doldur»a basın"
     },
     "team": {
       "title": "Ekip ve şubeler",
@@ -1885,6 +1923,21 @@
       "in3": "3 gün sonra",
       "week": "1 hafta sonra",
       "none": "Tarihsiz"
+    },
+    "act": {
+      "all": "Tümü",
+      "notes": "Notlar",
+      "tasks": "Görevler",
+      "deals": "İşlemler",
+      "docs": "Belgeler",
+      "system": "Sistem",
+      "filter": "Göster"
+    },
+    "obj": {
+      "title": "Gayrimenkul",
+      "open": "Gayrimenkulü aç",
+      "none": "Gayrimenkul bağlı değil",
+      "no": "No"
     }
   }
 }

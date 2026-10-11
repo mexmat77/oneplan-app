@@ -116,6 +116,9 @@ export type BuiltinTemplate = { key: string; file: string; name: Record<Lang, st
 
 /** Встроенные шаблоны: файлы в src/crm-templates (собраны scripts/gen-crm-templates.mjs и из образцов пользователя). */
 export const BUILTIN: BuiltinTemplate[] = [
+  { key: "company_card", file: "company_card_tr_en.docx", kind: "other", lang: "TR/EN", for: [],   // служебный: карточка реквизитов (for: [] — не предлагается в сделке)
+    name: L("Карточка реквизитов компании", "Company details card", "Firma bilgi kartı"),
+    fields: ["deal.date", "agency.name", "agency.taxNo", "agency.taxOffice", "agency.mersis", "agency.registryNo", "agency.address", "agency.representative", "agency.phone", "agency.email", "agency.iban", "agency.bank", "agency.licenseNo"] },
   { key: "sale_tripartite", file: "sale_tripartite_tr_en.docx", kind: "sale", lang: "TR/EN", for: ["sale"],
     name: L("Договор купли-продажи с агентством (3 стороны, TR/EN)", "Tripartite sale, title transfer and agency agreement (TR/EN)", "Üç taraflı satış, tapu devir ve emlak hizmet bedeli sözleşmesi (TR/EN)"),
     fields: ["deal.date", "deal.place", "agency.name", "agency.taxNo", "agency.taxOffice", "agency.address", "agency.mersis", "agency.registryNo", "agency.representative", "agency.phone",

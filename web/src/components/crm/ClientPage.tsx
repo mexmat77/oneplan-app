@@ -4,22 +4,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconBrandWhatsapp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
-import { addNote, crmBootstrap, deleteClient, deleteDeal, deleteRequest, doneTask, findDups, getClient, mergeClients, moveDeal, setClientStatus, setRequestStatus, translateNote } from "@/app/crm/actions";
+import { IconArchive, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
+import { addNote, crmBootstrap, deleteClient, deleteDeal, deleteRequest, doneTask, findDups, getClient, listingBriefs, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { Client, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, EventKind, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
-import { REQUEST_KINDS } from "@/lib/crm/requestFields";
+import type { Client, ClientStage, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
+import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
 import { fmt } from "@/lib/money";
+import { ilName, ilceName } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -43,10 +44,11 @@ function Inner({ id }: { id: string }) {
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [note, setNote] = useState("");
-  const [noteKind, setNoteKind] = useState<EventKind>("note");
+  const [objs, setObjs] = useState<Record<string, ListingBrief>>({});
+  const [openReq, setOpenReq] = useState<Record<string, boolean>>({});
   const [dups, setDups] = useState<DupHit[]>([]);
   const ro = crm.me.access !== "full";
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => setData(null));
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); if (d) { const ids = [...d.requests.map((r) => r.listingId), ...d.deals.map((x) => x.listingId)].filter(Boolean) as string[]; if (ids.length) listingBriefs(ids).then(setObjs).catch(() => {}); } if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => setData(null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
   useEffect(() => { load(); }, [load]);
@@ -62,7 +64,7 @@ function Inner({ id }: { id: string }) {
 
   async function sendNote() {
     if (!note.trim()) return;
-    try { await addNote(cl.id, null, noteKind, note); setNote(""); load(); } catch (e) { err(e); }
+    try { await addNote(cl.id, null, "note", note); setNote(""); load(); } catch (e) { err(e); }
   }
   async function archive() { try { await setClientStatus(cl.id, cl.status === "active" ? "archived" : "active"); load(); } catch (e) { err(e); } }
   async function del() {
@@ -95,6 +97,8 @@ function Inner({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
           <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
+        <Select value={cl.stage} onChange={async (v) => { try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); } }} options={(["new", "contacted", "qualified", "unqualified"] as ClientStage[]).map((k) => ({ value: k, label: c.cstage[k] }))} size="sm" className="w-[150px]" disabled={ro} title={c.client.stage} />
+        <Select value={cl.priority ?? ""} onChange={async (v) => { try { await patchClient(cl.id, { priority: (v || null) as Priority | null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" className="w-[140px]" disabled={ro} title={c.client.priority} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: cl.priority ? PRIO_COLOR[cl.priority] : "#c9d0dc" }} />} />
         {openDeal && <Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />}
         {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}
         {mainPhone && <a href={waOf(mainPhone.value)} target="_blank" rel="noreferrer" className={btnS}><IconBrandWhatsapp size={15} /> {c.client.wa}</a>}
@@ -107,7 +111,7 @@ function Inner({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
-              {field(c.client.stage, c.cstage[cl.stage])}{field(c.client.priority, cl.priority ? c.prio[cl.priority] : null)}{field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
+              {field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
               {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.kvkk.info, cl.kvkk.info?.method ? fill(c.kvkk.informed, { date: fmtDate(cl.kvkk.info.at, lang) }) + ` · ${c.kvkk.methods[cl.kvkk.info.method]}` : c.kvkk.notInformed)}{field(c.kvkk.consent, cl.kvkk.consent?.revokedAt ? fill(c.kvkk.revoked, { date: fmtDate(cl.kvkk.consent.revokedAt, lang) }) : (["call", "sms", "whatsapp", "email"] as const).filter((k) => cl.kvkk.consent?.[k]).map((k) => c.kvkk.ch[k]).join(", ") || c.kvkk.none)}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -145,10 +149,12 @@ function Inner({ id }: { id: string }) {
                 <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line px-3 py-2">
                   <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: REQ_COLOR[r.kind] }}>{c.rq.kinds[r.kind]}</span>
                   <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer text-left text-[13px] text-ink hover:text-blue-2">{reqSummary(r.kind, r.fields) || c.rq.details}</button>
+                  <button type="button" onClick={() => setOpenReq((m) => ({ ...m, [r.id]: m[r.id] === false }))} title={openReq[r.id] === false ? c.rq.show : c.rq.hide} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{openReq[r.id] === false ? <IconChevronDown size={15} /> : <IconChevronUp size={15} />}</button>
                   {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
                   <Select value={r.status} onChange={async (v) => { try { await setRequestStatus(r.id, v as RequestStatus); load(); } catch (e) { err(e); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
                   <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
+                  {openReq[r.id] !== false && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} obj={r.listingId ? objs[r.listingId] : undefined} onEdit={() => setReqM({ open: true, req: r })} /></div>}
                 </div>))}</div>
             )}
           </div>
@@ -164,6 +170,7 @@ function Inner({ id }: { id: string }) {
                     <Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />
                     <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
                   </div>
+                  {d.listingId && objs[d.listingId] && <div className="mt-2"><ObjectCard o={objs[d.listingId]} /></div>}
                   <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
                 </div>); })}</div>
             )}
@@ -177,10 +184,7 @@ function Inner({ id }: { id: string }) {
 
         {/* ---- правая колонка: лента активности с комментарием ---- */}
         <div className={`${card} self-start min-[1101px]:sticky min-[1101px]:top-[160px]`}>
-          <div className="mb-2 flex flex-wrap gap-1">
-            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex h-7 cursor-pointer items-center rounded-[6px] border px-[10px] text-[12px] font-medium ${noteKind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
-            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex h-7 cursor-pointer items-center rounded-[6px] border border-line bg-surface px-[10px] text-[12px] font-medium text-text hover:bg-bg-3">{c.card.task}</button>
-          </div>
+          <div className="mb-2 flex items-center justify-between"><span className="text-[13px] font-semibold text-ink">{c.card.activity}</span><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={`${btnS} h-7 px-2 text-[12px]`}><IconPlus size={13} /> {c.card.task}</button></div>
           {/* поле комментария во всю ширину колонки, кнопка под ним (замечание пользователя 11.10.2026 — «форма мелкая, текст не виден») */}
           <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[84px] w-full resize-y py-2 leading-[1.45]`} rows={3} />
           <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={btnP}>{c.ev.add}</button></div>
@@ -196,11 +200,17 @@ function Inner({ id }: { id: string }) {
   );
 }
 
+const ACT_FILTERS: Record<string, string[] | null> = { all: null, notes: ["note", "call", "show", "meeting"], tasks: ["task"], deals: ["deal", "stage"], docs: ["doc"], system: ["created", "edit", "request", "transfer", "lead", "merge", "contact"] };
 function Timeline({ events }: { events: CrmEvent[] }) {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
   const [tr, setTr] = useState<Record<number, { busy?: boolean; text?: string; show?: boolean }>>({});
+  const [flt, setFlt] = useState("all");
+  const shown = ACT_FILTERS[flt] ? events.filter((e) => ACT_FILTERS[flt]!.includes(e.kind)) : events;
+  const chips = (
+    <div className="mb-3 flex flex-wrap gap-1">{Object.keys(ACT_FILTERS).map((k) => { const n = ACT_FILTERS[k] ? events.filter((e) => ACT_FILTERS[k]!.includes(e.kind)).length : events.length; return <button key={k} type="button" onClick={() => setFlt(k)} className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border px-[10px] text-[12px] font-medium ${flt === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{(c.act as Record<string, string>)[k]}<span className={flt === k ? "text-white/70" : "text-muted"}>{n}</span></button>; })}</div>
+  );
   const stName = (id: unknown) => stageName(crm.stages.find((s) => s.id === id), t, lang);
   const label = (e: CrmEvent): string => {
     const p = e.payload as Record<string, string>;
@@ -222,10 +232,12 @@ function Timeline({ events }: { events: CrmEvent[] }) {
     catch { showToast(c.ev.trErr); setTr((m) => ({ ...m, [e.id]: {} })); }
   }
   if (!events.length) return <div className="text-[13px] text-muted">{c.card.noActivity}</div>;
+  if (!shown.length) return <>{chips}<div className="text-[13px] text-muted">{c.notFound}</div></>;
   const tone: Record<string, string> = { note: "#4d7cfe", call: "#22c15e", show: "#f5a623", meeting: "#7b4fd0", lead: "#0ea5a4", doc: "#e06aa3", stage: "#8a93a2" };
   return (
+    <>{chips}
     <div className="relative flex flex-col gap-3 pl-5 before:absolute before:bottom-2 before:left-[5px] before:top-2 before:w-[2px] before:bg-line">
-      {events.map((e) => {
+      {shown.map((e) => {
         const who = crm.me.members.find((m) => m.id === e.actorId)?.name;
         const x = tr[e.id];
         return (
@@ -243,6 +255,66 @@ function Timeline({ events }: { events: CrmEvent[] }) {
           </div>
         );
       })}
+    </div>
+    </>
+  );
+}
+
+/** Объект базы в карточке клиента (заявка/сделка → объявление). */
+function ObjectCard({ o }: { o: ListingBrief }) {
+  const { t } = useI18n();
+  const c = t.crm;
+  const loc = [o.il ? ilName(o.il) : null, o.ilce ? ilceName(o.ilce) : null].filter(Boolean).join(" › ");
+  return (
+    <div className="flex items-center gap-3 rounded-[6px] border border-line bg-[#fafbfc] p-2">
+      <div className="h-12 w-16 flex-none overflow-hidden rounded-[4px] bg-bg-2">{o.cover ? <img src={o.cover} alt="" className="h-full w-full object-cover" /> : null}{/* eslint-disable-line @next/next/no-img-element -- внешний URL Storage, без next/image */}</div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold text-ink">{o.title || `${c.obj.no} ${o.no ?? ""}`}</div>
+        <div className="truncate text-[12px] text-muted">{[t.deal[o.deal as keyof typeof t.deal], t.typ[o.type as keyof typeof t.typ], o.rooms, o.area ? `${o.area} m²` : null, o.floor ? `${c.obj.no === "№" ? "эт." : "fl."} ${o.floor}` : null, loc].filter(Boolean).join(" · ")}</div>
+      </div>
+      <div className="text-[13px] font-semibold text-ink">{fmt(o.price, "TRY")}</div>
+      <Link href={`/obj/${o.id}`} target="_blank" title={c.obj.open} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconExternalLink size={15} /></Link>
+    </div>
+  );
+}
+
+/** Заполненные поля заявки по группам (значения по реестру), объект — карточкой. */
+function RequestDetails({ r, obj, onEdit }: { r: CrmRequest; obj?: ListingBrief; onEdit: () => void }) {
+  const { t, lang } = useI18n();
+  const c = t.crm; const rq = c.rq;
+  const crm = useCrm();
+  const fields = REQUEST_FIELDS[r.kind];
+  const val = (k: string, v: unknown, type: string, opts?: string): string | null => {
+    if (v == null || v === "" || (Array.isArray(v) && !v.length)) return null;
+    const ol = (o: string) => (opts ? (rq.o as Record<string, Record<string, string>>)[opts]?.[o] ?? o : o);
+    switch (type) {
+      case "money": return fmt(Number(v), ((r.fields.cur as string) || "TRY") as Currency);
+      case "cur": return null;
+      case "select": return ol(String(v));
+      case "multi": return (v as string[]).map(ol).join(", ");
+      case "bool": return v ? "✓" : null;
+      case "date": return fmtDate(String(v), lang);
+      case "geo": return wantGeoLabel(v as { il?: string }, "");
+      case "rooms": return (v as string[]).join(", ");
+      case "listing": return null;
+      case "clients": return `${(v as string[]).length}`;
+      default: return String(v);
+    }
+  };
+  const rows: { g: string; k: string; label: string; v: string; closed?: boolean }[] = [];
+  for (const g of GROUP_ORDER) for (const f of fields.filter((x) => x.group === g)) { const raw = f.closed ? r.closed[f.key] : r.fields[f.key]; const v = val(f.key, raw, f.type, f.opts); if (v) rows.push({ g, k: f.key, label: (rq.f as Record<string, string>)[f.key] ?? f.key, v, closed: f.closed }); }
+  const owner = crm.me.members.find((m) => m.id === r.ownerId);
+  const groups = [...new Set(rows.map((x) => x.g))];
+  return (
+    <div className="flex flex-col gap-2">
+      {r.listingId && (obj ? <ObjectCard o={obj} /> : <div className="text-[12px] text-muted">{c.obj.title}: {r.listingId}</div>)}
+      {rows.length === 0 ? <button type="button" onClick={onEdit} className="cursor-pointer text-left text-[12.5px] text-muted hover:text-ink">{rq.noFields}</button> : groups.map((g) => (
+        <div key={g}>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[.04em] text-muted">{rq.g[g as keyof typeof rq.g]}</div>
+          <div className="grid grid-cols-3 gap-x-4 gap-y-[6px] max-[1100px]:grid-cols-2 max-md:grid-cols-1">{rows.filter((x) => x.g === g).map((x) => <div key={x.k} className="min-w-0"><div className="text-[11px] text-muted">{x.label}{x.closed ? " 🔒" : ""}</div><div className="truncate text-[13px] text-ink" title={x.v}>{x.v}</div></div>)}</div>
+        </div>
+      ))}
+      <div className="text-[11.5px] text-muted">{owner ? `${c.owner}: ${owner.name} · ` : ""}{fmtDate(r.updatedAt, lang)}</div>
     </div>
   );
 }

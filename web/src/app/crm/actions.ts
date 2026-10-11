@@ -555,3 +555,26 @@ export async function saveLostReasons(list: string[]): Promise<string[]> {
   if (error) throw new Error(error.message);
   return clean;
 }
+
+// ---------- быстрые правки из шапки карточки (12.10.2026: статус/приоритет без открытия формы) ----------
+export async function patchClient(id: string, patch: { stage?: Client["stage"]; priority?: Client["priority"]; ownerId?: string | null }): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const upd: Record<string, unknown> = {}; if (patch.stage) upd.stage = patch.stage; if (patch.priority !== undefined) upd.priority = patch.priority; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId;
+  const { error } = await c.sb.from("crm_clients").update(upd).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Краткие данные объектов базы для карточки клиента (заявка/сделка → объект). */
+export type ListingBrief = { id: string; no: number | null; title: string; price: number; deal: string; type: string; rooms: string; area: number; gross: number | null; floor: string; il: string | null; ilce: string | null; semt: string | null; cover: string | null; status: string };
+export async function listingBriefs(ids: string[]): Promise<Record<string, ListingBrief>> {
+  const c = await crmCtx();
+  const uuids = [...new Set(ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)))];
+  if (!uuids.length) return {};
+  const { data } = await c.sb.from("listings").select("id, short_id, title, price, deal, type, rooms, area, gross_area, floor_n, floors_total, il, ilce, semt, cover_url, status").in("id", uuids);
+  const out: Record<string, ListingBrief> = {};
+  for (const r of (data ?? []) as Row[]) {
+    const t = (r.title as Record<string, string>) ?? {};
+    out[r.id as string] = { id: r.id as string, no: n(r.short_id), title: t.RU || t.EN || t.TR || "", price: Number(r.price ?? 0), deal: String(r.deal ?? "sale"), type: String(r.type ?? "flat"), rooms: String(r.rooms ?? ""), area: Number(r.area ?? 0), gross: n(r.gross_area), floor: r.floor_n != null ? `${r.floor_n}${r.floors_total != null ? `/${r.floors_total}` : ""}` : "", il: s(r.il), ilce: s(r.ilce), semt: s(r.semt), cover: s(r.cover_url), status: String(r.status ?? "active") };
+  }
+  return out;
+}

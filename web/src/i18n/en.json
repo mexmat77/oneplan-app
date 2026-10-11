@@ -1341,7 +1341,42 @@
       "ev": "Document: {title}",
       "noDeal": "Documents are created inside a deal — open or create a deal.",
       "saved": "Document created",
-      "err": "Could not create the document"
+      "err": "Could not create the document",
+      "companyS2": "Legal entities and branches that sign contracts. The default set is inserted into documents; another can be picked in the document form.",
+      "addCompany": "Add company details",
+      "noCompany": "No company details yet — add a company and it will be inserted into contracts and the details card.",
+      "defaultCompany": "Default",
+      "cardPdf": "Card PDF",
+      "cardDocx": "Card Word",
+      "makeDefault": "Make default",
+      "editCompany": "Company details",
+      "companyLabel": "Set name",
+      "companyLabelPh": "e.g. ONETEAM Antalya, Alanya branch",
+      "companyGroups": {
+        "company": "Company",
+        "contacts": "Contacts and address",
+        "bank": "Bank"
+      },
+      "needName": "Enter the company name",
+      "templatesS2": "Built-in OnePlan templates and your own. Preview shows the document with sample values; download the DOCX, edit the text and upload it as your template.",
+      "tplKind": "Type",
+      "tplLang": "Language",
+      "tplFields": "Fields",
+      "forDeals": "For deals",
+      "anyDeal": "any",
+      "fieldsN": "fields",
+      "unknownFields": "not in the registry",
+      "previewPdf": "Preview PDF",
+      "downloadTpl": "Download template DOCX",
+      "pickDocx": "Choose DOCX",
+      "uploadHint": "Use placeholders like {{buyer.name}} in the Word text — field list below. Unknown keys also become form fields.",
+      "open": "Open",
+      "similar": "Create similar",
+      "own": "own",
+      "noCompanyHint": "Company details are empty — add them in settings and they will be inserted automatically.",
+      "sections": "Sections",
+      "filled": "Filled",
+      "noPdfShort": "PDF unavailable, Word only"
     },
     "nav": {
       "overview": "Overview",
@@ -1854,7 +1889,10 @@
           "EUR": "EUR",
           "USD": "USD"
         }
-      }
+      },
+      "show": "Show fields",
+      "hide": "Collapse",
+      "noFields": "No fields filled yet — click “Fill in details”"
     },
     "team": {
       "title": "Team and branches",
@@ -1885,6 +1923,21 @@
       "in3": "In 3 days",
       "week": "In a week",
       "none": "No date"
+    },
+    "act": {
+      "all": "All",
+      "notes": "Notes",
+      "tasks": "Tasks",
+      "deals": "Deals",
+      "docs": "Documents",
+      "system": "System",
+      "filter": "Show"
+    },
+    "obj": {
+      "title": "Property",
+      "open": "Open property",
+      "none": "No property linked",
+      "no": "No."
     }
   }
 }
