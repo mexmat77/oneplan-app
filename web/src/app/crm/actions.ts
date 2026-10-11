@@ -455,7 +455,13 @@ export async function crmCounts(): Promise<{ clients: number; deals: number; tas
 }
 
 // ---------- заявки (0017) ----------
-function rowBrief(r: Row): RequestBrief { return { id: r.id as string, kind: r.kind as RequestBrief["kind"], status: r.status as RequestStatus, priority: (r.priority as RequestBrief["priority"]) ?? null, fields: (r.fields as Record<string, unknown>) ?? {} }; }
+/** Поля заявки: перенесённые миграцией 0017 из «Что ищет» лежат плоско (il/ilces/semts, propType) — сводим к форме реестра (geo). */
+function normFields(f: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const o = { ...(f ?? {}) };
+  if (!o.geo && o.il) { o.geo = { il: o.il, ilces: (o.ilces as string[]) ?? [], semts: (o.semts as string[]) ?? [] }; delete o.il; delete o.ilces; delete o.semts; }
+  return o;
+}
+function rowBrief(r: Row): RequestBrief { return { id: r.id as string, kind: r.kind as RequestBrief["kind"], status: r.status as RequestStatus, priority: (r.priority as RequestBrief["priority"]) ?? null, fields: normFields(r.fields as Record<string, unknown>) }; }
 /** Закрытые поля видят владелец/руководитель и ответственный за клиента или заявку. */
 const canSeeClosed = (c: Ctx, reqOwner: string | null, clientOwner: string | null) => c.role !== "agent" || reqOwner === c.me.id || clientOwner === c.me.id;
 function rowRequest(c: Ctx, r: Row, clientOwner: string | null): CrmRequest {
@@ -463,7 +469,7 @@ function rowRequest(c: Ctx, r: Row, clientOwner: string | null): CrmRequest {
   let closed: Record<string, unknown> = {};
   if (r.closed_enc && canSeeClosed(c, s(r.owner_id), clientOwner)) { try { closed = JSON.parse(dec(c, "crm_requests", "closed", id, r.closed_enc as string) || "{}"); } catch { closed = {}; } }
   return { id, clientId: r.client_id as string, kind: r.kind as CrmRequest["kind"], status: r.status as RequestStatus, ownerId: s(r.owner_id), branchId: s(r.branch_id), listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid),
-    priority: (r.priority as CrmRequest["priority"]) ?? null, deadline: (r.deadline as CrmRequest["deadline"]) ?? null, fields: (r.fields as Record<string, unknown>) ?? {}, closed, createdAt: r.created_at as string, updatedAt: r.updated_at as string };
+    priority: (r.priority as CrmRequest["priority"]) ?? null, deadline: (r.deadline as CrmRequest["deadline"]) ?? null, fields: normFields(r.fields as Record<string, unknown>), closed, createdAt: r.created_at as string, updatedAt: r.updated_at as string };
 }
 async function listRequestsFor(c: Ctx, clientId: string, clientOwner: string | null): Promise<CrmRequest[]> {
   const { data } = await c.sb.from("crm_requests").select("*").eq("client_id", clientId).order("created_at");

@@ -81,7 +81,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         const hits = await findDups(f.contacts.map((x) => ({ kind: x.kind, value: x.value })), client?.id ?? null);
         if (hits.length) { setDups(hits); setBusy(false); return; }
       }
-      const id = await saveClient({ ...f, tags: tags.split(",").map((s) => s.trim()).filter(Boolean), firstRequest: isNew ? f.firstRequest : null, firstTask: isNew && f.firstTask?.dueAt ? f.firstTask : null }, client?.id ?? null);
+      const id = await saveClient({ ...f, tags: tags.split(",").map((s) => s.trim()).filter(Boolean), firstRequest: isNew ? f.firstRequest : null, firstTask: isNew && f.firstTask?.dueAt ? { ...f.firstTask, title: f.firstTask.title.trim() || taskKindName(f.firstTask.kind, t) } : null }, client?.id ?? null);
       onSaved(id);
     } catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
     finally { setBusy(false); }
