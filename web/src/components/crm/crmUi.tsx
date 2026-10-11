@@ -1,7 +1,7 @@
 "use client";
 
 // Общее для экранов CRM: контекст (ws, доступ, этапы, источники, базовый путь кабинета), стили, форматирование.
-import { createContext, useContext } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Dict, Lang } from "@/i18n";
 import type { CrmMe, Source, Stage, TaskKind } from "@/lib/crm/types";
 
@@ -46,3 +46,19 @@ export const fromLocalInput = (v: string) => (v ? new Date(v).toISOString() : ne
 
 export const fill = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 export const initials = (name: string) => name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+
+/** Настройка интерфейса в localStorage (колонки таблицы, режим доски) через useSyncExternalStore — без setState в effect. */
+const prefSubs = new Set<() => void>();
+const prefCache = new Map<string, string | null>();
+function readPref(key: string): string | null {
+  if (!prefCache.has(key)) { try { prefCache.set(key, localStorage.getItem(key)); } catch { prefCache.set(key, null); } }
+  return prefCache.get(key) ?? null;
+}
+export function setPref(key: string, value: string) { prefCache.set(key, value); try { localStorage.setItem(key, value); } catch {} prefSubs.forEach((l) => l()); }
+export function usePref(key: string): string | null {
+  return useSyncExternalStore((l) => { prefSubs.add(l); return () => { prefSubs.delete(l); }; }, () => readPref(key), () => null);
+}
+/** Текущее время с точностью до минуты (стабильный снимок для рендера; на сервере 0). */
+export function useNow(): number {
+  return useSyncExternalStore(() => () => {}, () => Math.floor(Date.now() / 60000) * 60000, () => 0);
+}

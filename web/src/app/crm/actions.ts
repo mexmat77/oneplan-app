@@ -346,3 +346,80 @@ export async function listReferrers(): Promise<{ realtors: { id: string; name: s
     agencies: ((ags ?? []) as Row[]).map((a) => ({ id: a.id as string, name: a.name as string })),
   };
 }
+
+// ---------- v2: обзор, расширенный список клиентов, групповые действия ----------
+export type Overview = {
+  clients7: number; clients30: number; clientsTotal: number;
+  openDeals: number; openSum: Record<string, number>; wonMonth: number; wonMonthSum: Record<string, number>; lostMonth: number;
+  tasksToday: number; tasksOverdue: number;
+  funnel: { stageId: string | null; n: number; sum: Record<string, number> }[];
+  recentLeads: { clientId: string; name: string; at: string; dup: boolean; sourceId: string | null }[];
+  todayTasks: Task[];
+  recent: { id: string; name: string; updatedAt: string; ownerId: string | null }[];
+};
+export async function crmOverview(): Promise<Overview> {
+  const c = await crmCtx();
+  const now = new Date(); const d7 = new Date(now.getTime() - 7 * 864e5).toISOString(); const d30 = new Date(now.getTime() - 30 * 864e5).toISOString();
+  const m0 = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const end = new Date(now); end.setHours(23, 59, 59, 999);
+  const ws = (q: ReturnType<typeof c.sb.from>) => q;
+  void ws;
+  const [{ count: c7 }, { count: c30 }, { count: ct }, { data: deals }, { data: tasks }, { data: inbound }, { data: recent }] = await Promise.all([
+    c.sb.from("crm_clients").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).gte("created_at", d7),
+    c.sb.from("crm_clients").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).gte("created_at", d30),
+    c.sb.from("crm_clients").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", "active"),
+    c.sb.from("crm_deals").select("id, stage_id, amount, cur, closed_at, updated_at, crm_stages(kind)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id),
+    c.sb.from("crm_tasks").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("done_at", null).lte("due_at", end.toISOString()).order("due_at"),
+    c.sb.from("crm_inbound").select("client_id, is_dup, source_id, created_at, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("created_at", { ascending: false }).limit(8),
+    c.sb.from("crm_clients").select("id, name, updated_at, owner_id").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", "active").order("updated_at", { ascending: false }).limit(8),
+  ]);
+  const add = (m: Record<string, number>, cur: string, v: unknown) => { const n = Number(v ?? 0); if (n) m[cur] = (m[cur] ?? 0) + n; };
+  const openSum: Record<string, number> = {}, wonSum: Record<string, number> = {};
+  const funnelM = new Map<string | null, { n: number; sum: Record<string, number> }>();
+  let open = 0, won = 0, lost = 0;
+  for (const d of (deals ?? []) as Row[]) {
+    const st = (Array.isArray(d.crm_stages) ? d.crm_stages[0] : d.crm_stages) as Row | null;
+    const kind = (st?.kind as string) ?? "open";
+    if (!d.closed_at) { open++; add(openSum, (d.cur as string) || "TRY", d.amount); const k = s(d.stage_id); const f = funnelM.get(k) ?? { n: 0, sum: {} }; f.n++; add(f.sum, (d.cur as string) || "TRY", d.amount); funnelM.set(k, f); }
+    else if (String(d.closed_at) >= m0) { if (kind === "won") { won++; add(wonSum, (d.cur as string) || "TRY", d.amount); } else if (kind === "lost") lost++; }
+  }
+  const todayTasks = ((tasks ?? []) as Row[]).map((r) => { const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null; return rowTask(r, (cl?.name as string) ?? null); });
+  const nowIso = now.toISOString();
+  return {
+    clients7: c7 ?? 0, clients30: c30 ?? 0, clientsTotal: ct ?? 0, openDeals: open, openSum, wonMonth: won, wonMonthSum: wonSum, lostMonth: lost,
+    tasksToday: todayTasks.filter((t) => t.dueAt >= nowIso || t.dueAt.slice(0, 10) === nowIso.slice(0, 10)).length, tasksOverdue: todayTasks.filter((t) => t.dueAt < nowIso && t.dueAt.slice(0, 10) !== nowIso.slice(0, 10)).length,
+    funnel: [...funnelM.entries()].map(([stageId, f]) => ({ stageId, ...f })),
+    recentLeads: ((inbound ?? []) as Row[]).map((r) => { const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null; return { clientId: r.client_id as string, name: (cl?.name as string) ?? "—", at: r.created_at as string, dup: !!r.is_dup, sourceId: s(r.source_id) }; }),
+    todayTasks,
+    recent: ((recent ?? []) as Row[]).map((r) => ({ id: r.id as string, name: r.name as string, updatedAt: r.updated_at as string, ownerId: s(r.owner_id) })),
+  };
+}
+
+/** Сводка по сделкам для списка клиентов: последняя открытая сделка (этап, сумма) по клиенту. */
+export async function clientDealSummary(ids: string[]): Promise<Record<string, { stageId: string | null; amount: number | null; cur: string; title: string }>> {
+  const c = await crmCtx();
+  if (!ids.length) return {};
+  const { data } = await c.sb.from("crm_deals").select("client_id, stage_id, amount, cur, title, updated_at").in("client_id", ids).is("closed_at", null).order("updated_at", { ascending: false });
+  const out: Record<string, { stageId: string | null; amount: number | null; cur: string; title: string }> = {};
+  for (const d of (data ?? []) as Row[]) { const k = d.client_id as string; if (!out[k]) out[k] = { stageId: s(d.stage_id), amount: n(d.amount), cur: (d.cur as string) || "TRY", title: (d.title as string) ?? "" }; }
+  return out;
+}
+
+/** Групповые действия над клиентами: ответственный, тег, архив/восстановление. */
+export async function bulkClients(ids: string[], patch: { ownerId?: string | null; addTag?: string; removeTag?: string; status?: "active" | "archived" }): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  if (!ids.length) return;
+  if (patch.ownerId !== undefined || patch.status) {
+    const upd: Record<string, unknown> = {}; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId; if (patch.status) upd.status = patch.status;
+    const { error } = await c.sb.from("crm_clients").update(upd).in("id", ids); if (error) throw new Error(error.message);
+  }
+  if (patch.addTag || patch.removeTag) {
+    const { data } = await c.sb.from("crm_clients").select("id, tags").in("id", ids);
+    for (const r of (data ?? []) as Row[]) {
+      let tags = ((r.tags as string[]) ?? []).slice();
+      if (patch.addTag && !tags.includes(patch.addTag)) tags.push(patch.addTag);
+      if (patch.removeTag) tags = tags.filter((x) => x !== patch.removeTag);
+      await c.sb.from("crm_clients").update({ tags }).eq("id", r.id as string);
+    }
+  }
+}

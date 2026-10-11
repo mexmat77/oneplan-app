@@ -239,6 +239,14 @@ body {
 }
 /* у админа в шапке ещё переключатель пространств (риэлторы/застройщики/управление) + CRM: до 1750px подписи пунктов прячем,
    иначе шапка переносится на вторую строку и аватар с меню уезжают влево (скриншот пользователя 11.10.2026) */
+/* с пунктом CRM шесть пунктов меню: на ноутбуках 1300–1500px ужимаем отступы и прячем бейдж «РИЭЛТОРЫ», ниже 1300 — только иконки */
+@media (max-width: 1500px) {
+  [data-topbar] [data-nav-item] { padding: 9px 9px !important; gap: 5px !important; }
+  [data-topbar] [data-brand-tag] { display: none; }
+}
+@media (max-width: 1300px) {
+  [data-topbar] [data-nav-label] { display: none !important; }
+}
 @media (max-width: 1750px) {
   [data-topbar][data-admin="1"] [data-nav-label] { display: none !important; }
   [data-topbar][data-admin="1"] [data-nav-item] { padding: 9px 11px !important; }
@@ -294,3 +302,12 @@ html[data-mapmode] main { padding-bottom: 0 !important; }
 [data-dev] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(:disabled):not([readonly]):not([data-plain]):not(:placeholder-shown), [data-dev] textarea:not(:disabled):not([readonly]):not([data-plain]):not(:placeholder-shown) { background: rgba(77,124,254,.09) !important; border-color: rgba(77,124,254,.42) !important; }
 [data-dev] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(:disabled):not([readonly]):not([data-plain]):focus, [data-dev] textarea:not(:disabled):not([readonly]):not([data-plain]):focus { background: #fff !important; border-color: #4d7cfe !important; }
 @media (max-width: 760px) { [data-dash-cols] { grid-template-columns: 1fr !important; } }
+
+/* CRM (v2, 11.10.2026): во всю ширину окна под шапкой, боковое меню слева; `data-crmmode` ставит CrmShell */
+html[data-crmmode] main { max-width: none !important; padding: 0 !important; }
+[data-crm-side] { width: 232px; }
+@media (max-width: 1100px) { [data-crm-side] { width: 64px; } [data-crm-side] [data-crm-label] { display: none; } }
+@media (max-width: 760px) { [data-crm-side] { display: none; } [data-crm-mobnav] { display: flex !important; } }
+[data-crm-table] th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
+[data-crm-kanban] { scrollbar-width: thin; }
+.crm-drag-over { outline: 2px dashed var(--blue-2); outline-offset: -2px; background: var(--blue-tint) !important; }

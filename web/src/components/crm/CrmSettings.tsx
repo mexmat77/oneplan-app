@@ -11,12 +11,14 @@ import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Source, SourceKind, Stage, StageKind } from "@/lib/crm/types";
+import Link from "next/link";
 import { btnP, btnS, card, fill, fmtDT, inp, lbl, sourceName, stageName, useCrm } from "./crmUi";
 
 type StRow = { id?: string; key: string; name: Record<string, string>; kind: StageKind; color: string | null };
 const COLORS = ["#8a93a2", "#4d7cfe", "#f5a623", "#7b4fd0", "#0ea5a4", "#22c15e", "#e5484d", "#e06aa3"];
 
-export function CrmSettings() {
+export function CrmSettings({ sub }: { sub?: string }) {
+  const tab = (sub && ["pipeline", "sources", "company", "templates", "data"].includes(sub) ? sub : "pipeline") as "pipeline" | "sources" | "company" | "templates" | "data";
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
@@ -65,14 +67,20 @@ export function CrmSettings() {
   const inboundUrl = typeof window !== "undefined" ? `${window.location.origin}/api/crm/inbound` : "/api/crm/inbound";
   const auditLabel = (a: string, meta: Record<string, unknown>) => fill((c.audit as Record<string, string>)[a] ?? a, { n: String(meta.n ?? "") });
 
+  const nav: [typeof tab, string][] = [["pipeline", c.setNav.pipeline], ["sources", c.setNav.sources], ["company", c.setNav.company], ["templates", c.setNav.templates], ["data", c.setNav.data]];
+  const show = (k: typeof tab) => tab === k;
   return (
-    <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
-      <div className={card}>
+    <div className="grid grid-cols-[200px_1fr] gap-5 max-md:grid-cols-1">
+      <nav className="flex flex-col gap-[2px] self-start max-md:flex-row max-md:overflow-x-auto">
+        {nav.map(([k, l]) => <Link key={k} href={`${crm.base}/settings/${k}`} className={`whitespace-nowrap rounded-[10px] px-3 py-[8px] text-[13px] font-semibold ${tab === k ? "bg-blue-tint text-sel-ink" : "text-text hover:bg-bg-3"}`}>{l}</Link>)}
+      </nav>
+    <div className="flex min-w-0 flex-col gap-4">
+      {show("pipeline") && <div className={card}>
         <div className="text-[15px] font-extrabold text-ink">{c.set.stagesT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.stagesS}</p>
         <div className="flex flex-col gap-2">
           {st.map((s, i) => (
-            <div key={s.id ?? i} className="grid grid-cols-[28px_1fr_120px_auto] items-center gap-2">
+            <div key={s.id ?? i} className="grid grid-cols-[28px_minmax(160px,1fr)_130px_auto] items-center gap-2">
               <button type="button" disabled={ro} onClick={() => setRow(i, { color: COLORS[(COLORS.indexOf(s.color ?? "") + 1) % COLORS.length] })} className="h-6 w-6 cursor-pointer rounded-full border-2 border-surface shadow" style={{ background: s.color ?? "#8a93a2" }} />
               <input value={s.name[lang] ?? ""} onChange={(e) => setRow(i, { name: { ...s.name, [lang]: e.target.value } })} placeholder={stageName({ ...s, id: s.id ?? "", sort: i } as Stage, t, lang)} disabled={ro} className={inp} />
               <Select value={s.kind} onChange={(v) => setRow(i, { kind: v as StageKind })} options={[["open", c.set.kindOpen], ["won", c.set.kindWon], ["lost", c.set.kindLost]].map(([v, l]) => ({ value: v, label: l }))} size="sm" disabled={ro} />
@@ -84,9 +92,9 @@ export function CrmSettings() {
           <button type="button" disabled={ro} onClick={() => setSt((v) => [...v, { key: `s${Date.now()}`, name: {}, kind: "open", color: COLORS[v.length % COLORS.length] }])} className={btnS}><IconPlus size={14} /> {c.set.addStage}</button>
           <button type="button" disabled={ro || busy} onClick={saveSt} className={btnP}>{c.set.save}</button>
         </div>
-      </div>
+      </div>}
 
-      <div className={card}>
+      {show("sources") && <div className={card}>
         <div className="text-[15px] font-extrabold text-ink">{c.set.sourcesT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS}</p>
         <div className="flex flex-col gap-2">
@@ -107,9 +115,9 @@ export function CrmSettings() {
           <Select value={src.kind} onChange={(v) => setSrc({ ...src, kind: v as SourceKind })} options={(Object.keys(c.srcKinds) as SourceKind[]).map((k) => ({ value: k, label: c.srcKinds[k] }))} size="sm" disabled={ro} />
           <button type="button" disabled={ro} onClick={addSrc} className={btnS}><IconPlus size={14} /></button>
         </div>
-      </div>
+      </div>}
 
-      <div className={card}>
+      {show("company") && <div className={card}>
         <div className="text-[15px] font-extrabold text-ink">{d.company}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.companyS}</p>
         {!company ? <div className="text-[13px] text-muted">…</div> : (
@@ -120,9 +128,9 @@ export function CrmSettings() {
           </div>
         )}
         <div className="mt-3"><button type="button" disabled={ro || busy || !company} onClick={saveCo} className={btnP}>{c.set.save}</button></div>
-      </div>
+      </div>}
 
-      <div className={card}>
+      {show("templates") && <div className={card}>
         <div className="text-[15px] font-extrabold text-ink">{d.templates}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS}</p>
         <div className="flex flex-col gap-1">
@@ -147,15 +155,15 @@ export function CrmSettings() {
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
-      <div className={card}>
+      {show("data") && <div className={card}>
         <div className="text-[15px] font-extrabold text-ink">{c.set.exportT}</div>
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.exportS}</p>
         <button type="button" onClick={doExport} className={btnS}><IconDownload size={15} /> {c.set.export}</button>
-      </div>
+      </div>}
 
-      {crm.me.isAdmin && (
+      {show("data") && crm.me.isAdmin && (
         <div className={card}>
           <div className="text-[15px] font-extrabold text-ink">{c.set.auditT}</div>
           <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.auditS}</p>
@@ -167,6 +175,7 @@ export function CrmSettings() {
           <label className={`${lbl} mt-3`}>{/* keep token keys referenced for lint */}</label>
         </div>
       )}
+    </div>
     </div>
   );
 }

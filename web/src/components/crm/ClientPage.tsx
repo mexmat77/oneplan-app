@@ -20,10 +20,12 @@ import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
 import { CrmCtx, btnD, btnP, btnS, card, chip, fill, fmtDT, fmtDate, initials, inp, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
-export function ClientPage({ base, id }: { base: string; id: string }) {
+/** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
+export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
   const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; sources: Source[] } | null>(null);
-  const load = useCallback(() => { crmBootstrap().then(setBoot).catch(() => {}); }, []);
+  const load = useCallback(() => { if (!embedded) crmBootstrap().then(setBoot).catch(() => {}); }, [embedded]);
   useEffect(() => { load(); }, [load]);
+  if (embedded) return <Inner id={id} />;
   if (!boot) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
   const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)) };
   return <CrmCtx.Provider value={ctx}><Inner id={id} /></CrmCtx.Provider>;
@@ -46,7 +48,7 @@ function Inner({ id }: { id: string }) {
   useEffect(() => { load(); }, [load]);
 
   if (data === undefined) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
-  if (data === null) return <div className={card}>{c.notFound} · <Link href={crm.base} className="text-blue-2">{c.title}</Link></div>;
+  if (data === null) return <div className={card}>{c.notFound} · <Link href={`${crm.base}/clients`} className="text-blue-2">{c.nav.clients}</Link></div>;
   const { client: cl, deals, tasks, events } = data;
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
   const src = crm.sources.find((s) => s.id === cl.sourceId);
@@ -63,7 +65,7 @@ function Inner({ id }: { id: string }) {
   async function archive() { try { await setClientStatus(cl.id, cl.status === "active" ? "archived" : "active"); load(); } catch (e) { err(e); } }
   async function del() {
     if (!(await confirmDialog({ title: c.client.delT, text: c.client.delQ, danger: true }))) return;
-    try { await deleteClient(cl.id); router.push(crm.base); } catch (e) { err(e); }
+    try { await deleteClient(cl.id); router.push(`${crm.base}/clients`); } catch (e) { err(e); }
   }
   async function merge(d: DupHit) {
     if (!(await confirmDialog({ title: c.client.mergeT, text: c.client.mergeQ }))) return;
@@ -79,8 +81,10 @@ function Inner({ id }: { id: string }) {
   const refLabel = cl.refKind === "none" ? null : cl.refKind === "text" ? cl.refText : cl.refKind === "realtor" ? c.client.refRealtor : c.client.refAgency;
   return (
     <>
-      <Link href={crm.base} className="mb-3 inline-flex items-center gap-1 text-[13px] font-semibold text-muted hover:text-ink"><IconArrowLeft size={15} /> {c.title}</Link>
-      <div className={`${card} mb-4`}>
+      <Link href={`${crm.base}/clients`} className="mb-3 inline-flex items-center gap-1 text-[13px] font-semibold text-muted hover:text-ink"><IconArrowLeft size={15} /> {c.nav.clients}</Link>
+      <div className="grid grid-cols-[360px_1fr] gap-4 max-[1100px]:grid-cols-1">
+      <div className="flex flex-col gap-4 self-start min-[1101px]:sticky min-[1101px]:top-[128px]">
+      <div className={card}>
         <div className="flex flex-wrap items-start gap-4">
           <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-blue-tint text-[18px] font-extrabold text-sel-ink">{initials(cl.name)}</span>
           <div className="min-w-0 flex-1">
@@ -115,12 +119,21 @@ function Inner({ id }: { id: string }) {
         {dups.length > 0 && (
           <div className="mt-3 rounded-[12px] border border-[#f5d58a] bg-[#fff8e6] p-3 text-[13px]">
             <div className="mb-1 font-bold text-ink">{dups.length > 1 ? c.client.dupMany : c.client.dup}:</div>
-            {dups.map((d) => <div key={d.clientId} className="flex flex-wrap items-center gap-3"><Link href={`${crm.base}/${d.clientId}`} className="font-semibold text-blue-2 hover:underline">{d.name}</Link><span className="text-muted">{c.kinds[d.kind]}</span><button type="button" onClick={() => merge(d)} disabled={ro} className="cursor-pointer text-[12.5px] font-bold text-ink underline">{c.client.dupMerge}</button></div>)}
+            {dups.map((d) => <div key={d.clientId} className="flex flex-wrap items-center gap-3"><Link href={`${crm.base}/c/${d.clientId}`} className="font-semibold text-blue-2 hover:underline">{d.name}</Link><span className="text-muted">{c.kinds[d.kind]}</span><button type="button" onClick={() => merge(d)} disabled={ro} className="cursor-pointer text-[12.5px] font-bold text-ink underline">{c.client.dupMerge}</button></div>)}
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-[1.5fr_1fr] gap-4 max-md:grid-cols-1">
+      </div>
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className={card}>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {(["note", "call", "show", "meeting"] as const).map((k) => <button key={k} type="button" onClick={() => setNoteKind(k)} className={`inline-flex cursor-pointer items-center gap-[6px] rounded-[9px] px-3 py-[6px] text-[12.5px] font-bold ${noteKind === k ? "bg-ink text-white" : "bg-bg-2 text-text hover:bg-bg-3"}`}>{c.ev[k]}</button>)}
+            <button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[9px] bg-bg-2 px-3 py-[6px] text-[12.5px] font-bold text-text hover:bg-bg-3">{c.card.task}</button>
+          </div>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} min-h-[76px] resize-y`} />
+          <div className="mt-2 flex items-center justify-between"><span className="text-[11.5px] text-muted">⌘/Ctrl + Enter</span><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={`${btnP} px-4 py-[7px] text-[12.5px]`}>{c.ev.add}</button></div>
+        </div>
         <div className={card}>
           <div className="mb-3 flex items-center justify-between"><div className="text-[15px] font-extrabold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
           {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
@@ -143,19 +156,14 @@ function Inner({ id }: { id: string }) {
               </div>))}</div>
           )}
         </div>
-      </div>
-
-      <div className={`${card} mt-4`}>
-        <div className="mb-3 text-[15px] font-extrabold text-ink">{c.client.history}</div>
-        <div className="mb-4 flex flex-col gap-2">
-          <div className="flex gap-2"><Select value={noteKind} onChange={(v) => setNoteKind(v as EventKind)} options={(["note", "call", "show", "meeting"] as const).map((k) => ({ value: k, label: c.ev[k] }))} size="sm" className="w-[150px]" disabled={ro} /><div className="flex-1" /></div>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={c.ev.addPh} disabled={ro} className={`${inp} min-h-[70px] resize-y`} />
-          <div><button type="button" onClick={sendNote} disabled={ro || !note.trim()} className={btnP}>{c.ev.add}</button></div>
-        </div>
+      <div className={card}>
+        <div className="mb-3 text-[15px] font-extrabold text-ink">{c.card.activity}</div>
         <Timeline events={events} />
       </div>
+      </div>
+      </div>
 
-      <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/${x}`)} />
+      <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
       <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
       <TaskModal open={taskM.open} task={taskM.task} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setTaskM({ open: false, task: null })} onSaved={() => { setTaskM({ open: false, task: null }); load(); }} />
     </>
@@ -186,15 +194,16 @@ function Timeline({ events }: { events: CrmEvent[] }) {
     try { const text = e.tr[lang] ?? (await translateNote(e.id, lang as Lang)); setTr((m) => ({ ...m, [e.id]: { text, show: true } })); }
     catch { showToast(c.ev.trErr); setTr((m) => ({ ...m, [e.id]: {} })); }
   }
-  if (!events.length) return null;
+  if (!events.length) return <div className="text-[13px] text-muted">{c.card.noActivity}</div>;
+  const tone: Record<string, string> = { note: "#4d7cfe", call: "#22c15e", show: "#f5a623", meeting: "#7b4fd0", lead: "#0ea5a4", doc: "#e06aa3", stage: "#8a93a2" };
   return (
-    <div className="flex flex-col gap-3">
+    <div className="relative flex flex-col gap-3 pl-5 before:absolute before:bottom-2 before:left-[5px] before:top-2 before:w-[2px] before:bg-line">
       {events.map((e) => {
         const who = crm.me.members.find((m) => m.id === e.actorId)?.name;
         const x = tr[e.id];
         return (
-          <div key={e.id} className="flex gap-3">
-            <div className="mt-[6px] h-2 w-2 flex-none rounded-full bg-line-4" />
+          <div key={e.id} className="relative">
+            <span className="absolute -left-5 top-[5px] h-3 w-3 rounded-full border-2 border-surface" style={{ background: tone[e.kind] ?? "#c9d0dc" }} />
             <div className="min-w-0 flex-1">
               <div className="text-[12px] text-muted">{fmtDT(e.createdAt, lang)}{who ? ` · ${who}` : ""} · <span className="font-semibold text-text">{label(e)}</span></div>
               {e.text && (
