@@ -23,17 +23,25 @@ export async function crmCtx(): Promise<Ctx> {
   const dek = await dekOf(sb, ws, me.id);
   // роль в пространстве (0017): одиночка — владелец; агентство/компания — первый открывший становится владельцем, остальные агенты
   const { role, branchId } = await roleOf(sb, ws, me.id);
-  await ensureDefaults(sb, ws);
+  if (!ensured.has(`${ws.kind}:${ws.id}`)) { await ensureDefaults(sb, ws); ensured.add(`${ws.kind}:${ws.id}`); } // один раз на процесс, иначе +3 запроса на каждый экшен (замедление 12.10.2026)
   const isAdmin = role === "owner";
   return { sb, me, ws, dek, access, trialUntil, paidTo, isAdmin, role, branchId };
 }
 
+const ensured = new Set<string>();
+const roleCache = new Map<string, { role: MemberRole; branchId: string | null; exp: number }>();
+/** Сбросить кэш роли (после смены роли/филиала в «Команде»). */
+export function forgetRole(ws: Ws, profileId: string) { roleCache.delete(`${ws.kind}:${ws.id}:${profileId}`); }
 async function roleOf(sb: SupabaseClient, ws: Ws, meId: string): Promise<{ role: MemberRole; branchId: string | null }> {
   if (ws.kind === "realtor") return { role: "owner", branchId: null };
+  const k = `${ws.kind}:${ws.id}:${meId}`; const hit = roleCache.get(k);
+  if (hit && hit.exp > Date.now()) return { role: hit.role, branchId: hit.branchId };
   const { data: r } = await sb.rpc("crm_claim_member", { kind: ws.kind, ws: ws.id });
   const { data: m } = await sb.from("crm_members").select("role, branch_id").eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("profile_id", meId).maybeSingle();
   const role = ((m?.role as MemberRole) ?? (r as MemberRole) ?? "agent");
-  return { role, branchId: (m?.branch_id as string | null) ?? null };
+  const out = { role, branchId: (m?.branch_id as string | null) ?? null };
+  roleCache.set(k, { ...out, exp: Date.now() + 60_000 });
+  return out;
 }
 
 /** Рабочее пространство: застройщик → его компания (profiles.developer_id или первое членство); риэлтор в агентстве →

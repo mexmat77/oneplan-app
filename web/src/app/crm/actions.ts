@@ -4,7 +4,7 @@
 // здесь, на сервере (ключ в .env). В браузер уходят уже расшифрованные значения только тех записей, что разрешены RLS.
 import { translate } from "@/app/(dev)/dev/chat/actions";
 import type { Lang } from "@/i18n";
-import { assertWrite, audit, branchesOf, crmCtx, dec, enc, hashOf, lostReasonsOf, membersOf, type Ctx } from "@/lib/crm/server";
+import { assertWrite, audit, branchesOf, crmCtx, dec, enc, forgetRole, hashOf, lostReasonsOf, membersOf, type Ctx } from "@/lib/crm/server";
 import { ROLE_OF_KIND, REQUEST_FIELDS } from "@/lib/crm/requestFields";
 import { newSourceToken } from "@/lib/crm/crypto";
 import type { Branch, Client, StageScope, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
@@ -544,6 +544,7 @@ export async function setMember(profileId: string, role: MemberRole, branchId: s
   }
   const { error } = await c.sb.from("crm_members").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, profile_id: profileId, role, branch_id: branchId }, { onConflict: "ws_kind,ws_id,profile_id" });
   if (error) throw new Error(error.message);
+  forgetRole(c.ws, profileId);
   await audit(c.sb, c.ws, c.me.id, "member_role", profileId, { role, branchId });
 }
 export async function saveBranch(b: { id?: string; name: string; city: string; headId: string | null }): Promise<Branch[]> {
