@@ -1491,7 +1491,11 @@
         "active": "Filtre: {n}",
         "hint": "Ad, telefon ve e-posta — yukarıdaki aramada. Filtreler anında uygulanır.",
         "created": "Oluşturma tarihi"
-      }
+      },
+      "addFilter": "Filtre",
+      "findField": "Alan ara…",
+      "apply": "Uygula",
+      "done": "Tamam"
     },
     "kb": {
       "days": "{n} gün",

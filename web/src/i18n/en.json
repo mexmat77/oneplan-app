@@ -1491,7 +1491,11 @@
         "active": "Filters: {n}",
         "hint": "Name, phone and e-mail — in the search above. Filters apply instantly.",
         "created": "Created"
-      }
+      },
+      "addFilter": "Filter",
+      "findField": "Find a field…",
+      "apply": "Apply",
+      "done": "Done"
     },
     "kb": {
       "days": "{n} d.",

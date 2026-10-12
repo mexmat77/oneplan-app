@@ -5,10 +5,11 @@
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, type DealSummary } from "@/app/crm/actions";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
+import { useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
@@ -135,8 +136,8 @@ export function ClientsTable() {
         {crm.stages.filter((s) => s.kind === "open").map((s) => { const n = stageCount(s.id); return <button key={s.id} type="button" onClick={() => setStage(stage === s.id ? "" : s.id)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === s.id ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: s.color ?? "#8a93a2" }} />{stageName(s, t, lang)}<span className={stage === s.id ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
         {([["won", c.tbl.won, "#22c15e"], ["lost", c.tbl.lost, "#e5484d"], ["none", c.tbl.noStage, "#c9d0dc"]] as const).map(([k, l, col]) => <button key={k} type="button" onClick={() => setStage(stage === k ? "" : k)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: col }} />{l}<span className={stage === k ? "text-white/70" : "text-muted"}>{stageCount(k)}</span></button>)}
       </div>
-      {filtersOpen && <FilterPanel flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />}
-      {activeFilters > 0 && !filtersOpen && <ActiveChips flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} />}
+      <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
+      {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}
       {sel.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] bg-ink px-3 py-[6px] text-[12.5px] text-white">
           <span className="font-semibold">{fill(c.tbl.selected, { n: sel.size })}</span>
@@ -204,48 +205,143 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
   }
 }
 
-function ActiveChips({ flt, setF, reset }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void }) {
-  const { t } = useI18n(); const crm = useCrm();
-  const keys = (Object.keys(flt) as (keyof Flt)[]).filter((k) => flt[k]);
+/** Поле фильтра для «+ Фильтр»: подпись и способ ввода значения. */
+type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string }[] };
+function useFieldDefs(allTags: string[]): FieldDef[] {
+  const { t } = useI18n(); const crm = useCrm(); const c = t.crm;
+  const opt = (list: readonly string[], names: Record<string, string>) => list.map((v) => ({ value: v, label: names[v] ?? v }));
+  const defs: FieldDef[] = [
+    { key: "role", label: c.client.roles, kind: "select", opts: opt(ROLES_F, c.roles) },
+    { key: "cstage", label: c.client.stage, kind: "select", opts: opt(CSTAGES_F, c.cstage) },
+    { key: "priority", label: c.client.priority, kind: "select", opts: opt(PRIOS_F, c.prio) },
+    { key: "kind", label: c.rq.kind, kind: "select", opts: opt(KINDS_F, c.rq.kinds) },
+    { key: "il", label: c.want.il, kind: "select", opts: GEO.map((g) => ({ value: g.k, label: g.n })) },
+    { key: "budget", label: c.client.budget, kind: "budget" },
+    { key: "source", label: c.source, kind: "select", opts: crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) })) },
+    ...(crm.me.members.length > 1 ? [{ key: "owner", label: c.owner, kind: "select" as const, opts: crm.me.members.map((m) => ({ value: m.id, label: m.name })) }] : []),
+    ...(crm.me.branches.length > 0 ? [{ key: "branch", label: c.client.branch, kind: "select" as const, opts: crm.me.branches.map((b) => ({ value: b.id, label: b.name })) }] : []),
+    { key: "lang", label: c.client.lang, kind: "select", opts: ["RU", "EN", "TR"].map((l) => ({ value: l, label: l })) },
+    { key: "channel", label: c.client.channel, kind: "select", opts: opt(CHANNELS_F, c.channel) },
+    ...(allTags.length ? [{ key: "tag", label: c.tbl.tag, kind: "select" as const, opts: allTags.map((g) => ({ value: g, label: g })) }] : []),
+    { key: "created", label: c.tbl.flt.created, kind: "dates" },
+  ];
+  return defs;
+}
+/** Активные условия как пилюли «Поле: значение» (составные budget/created — одной пилюлей). */
+function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>): { key: string; label: string; value: string }[] {
+  const out: { key: string; label: string; value: string }[] = [];
+  for (const d of defs) {
+    if (d.kind === "budget") { if (flt.budgetMin || flt.budgetMax) out.push({ key: d.key, label: d.label, value: `${flt.budgetMin ? `≥ ${Number(flt.budgetMin).toLocaleString("ru-RU")}` : ""}${flt.budgetMin && flt.budgetMax ? " " : ""}${flt.budgetMax ? `≤ ${Number(flt.budgetMax).toLocaleString("ru-RU")}` : ""}` }); }
+    else if (d.kind === "dates") { if (flt.createdFrom || flt.createdTo) out.push({ key: d.key, label: d.label, value: `${fmtD(flt.createdFrom) || "…"} – ${fmtD(flt.createdTo) || "…"}` }); }
+    else { const v = flt[d.key as keyof Flt]; if (v) out.push({ key: d.key, label: d.label, value: fltLabel(d.key as keyof Flt, v, t, crm) }); }
+  }
+  return out;
+}
+const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMin: "", budgetMax: "" } : key === "created" ? { createdFrom: "", createdTo: "" } : ({ [key]: "" } as Partial<Flt>));
+
+/** Строка фильтров как у Attio/Linear: пилюли условий + «+ Фильтр» → список полей → значение. */
+function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[] }) {
+  const { t } = useI18n(); const crm = useCrm(); const c = t.crm;
+  const defs = useFieldDefs(allTags);
+  const pills = pillsOf(flt, defs, t, crm);
+  const [open, setOpen] = useState<{ mode: "pick" | "value"; key?: string; anchor?: string } | null>(null);
+  const [q, setQ] = useState("");
+  const [range, setRange] = useState({ min: flt.budgetMin, max: flt.budgetMax });
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
+  useEscape(!!open, () => setOpen(null));
+  const def = open?.key ? defs.find((d) => d.key === open.key) : undefined;
+  const pickField = (d: FieldDef) => { setQ(""); setRange({ min: flt.budgetMin, max: flt.budgetMax }); setOpen({ mode: "value", key: d.key, anchor: open?.anchor }); };
+  const fields = defs.filter((d) => !q.trim() || d.label.toLowerCase().includes(q.trim().toLowerCase()));
+  const pop = "absolute left-0 top-[calc(100%+4px)] z-30 w-[260px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]";
+  const item = (on: boolean) => `flex h-8 w-full cursor-pointer items-center rounded-[5px] px-2 text-left text-[13px] ${on ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`;
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
-      {keys.map((k) => <span key={k} className="inline-flex h-7 items-center gap-1 rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 font-medium text-sel-ink">{fltLabel(k, flt[k], t, crm)}<button type="button" onClick={() => setF({ [k]: "" } as Partial<Flt>)} className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full hover:bg-white/60"><IconX size={12} /></button></span>)}
-      <button type="button" onClick={reset} className="cursor-pointer text-[12.5px] font-semibold text-red hover:underline">{t.crm.tbl.clear}</button>
+    <div ref={ref} className="mb-3 flex flex-wrap items-center gap-[6px]">
+      {pills.map((p) => (
+        <span key={p.key} className="relative inline-flex h-7 items-center rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 text-[12.5px] text-sel-ink">
+          <button type="button" onClick={() => { setOpen(open?.key === p.key ? null : { mode: "value", key: p.key, anchor: p.key }); setRange({ min: flt.budgetMin, max: flt.budgetMax }); }} className="cursor-pointer"><span className="text-sel-ink/70">{p.label}:</span> <span className="font-semibold">{p.value}</span></button>
+          <button type="button" onClick={() => setF(clearField(p.key))} className="ml-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full hover:bg-white/60"><IconX size={12} /></button>
+          {open?.mode === "value" && open.anchor === p.key && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} pop={pop} item={item} />}
+        </span>
+      ))}
+      <span className="relative">
+        <button type="button" onClick={() => { setOpen(open ? null : { mode: "pick", anchor: "+" }); setQ(""); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-dashed border-line px-3 text-[12.5px] font-medium text-text hover:border-blue hover:text-ink"><IconPlus size={13} /> {c.tbl.addFilter}</button>
+        {open?.mode === "pick" && (
+          <div className={pop}>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />
+            <div className="max-h-[280px] overflow-y-auto">{fields.map((d) => <button key={d.key} type="button" onClick={() => pickField(d)} className={item(false)}>{d.label}</button>)}</div>
+          </div>
+        )}
+        {open?.mode === "value" && open.anchor === "+" && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} pop={pop} item={item} />}
+      </span>
+      {pills.length > 0 && <button type="button" onClick={reset} className="ml-1 cursor-pointer text-[12.5px] font-semibold text-muted hover:text-red">{c.tbl.clear}</button>}
+    </div>
+  );
+}
+function ValuePop({ def, flt, range, setRange, apply, pop, item }: { def: FieldDef; flt: Flt; range: { min: string; max: string }; setRange: (r: { min: string; max: string }) => void; apply: (p: Partial<Flt>) => void; pop: string; item: (on: boolean) => string }) {
+  const { t } = useI18n(); const c = t.crm;
+  const [q, setQ] = useState("");
+  if (def.kind === "select") {
+    const cur = flt[def.key as keyof Flt];
+    const opts = (def.opts ?? []).filter((o) => !q.trim() || o.label.toLowerCase().includes(q.trim().toLowerCase()));
+    return (
+      <div className={pop}>
+        <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
+        {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
+        <div className="max-h-[280px] overflow-y-auto">{opts.map((o) => <button key={o.value} type="button" onClick={() => apply({ [def.key]: o.value } as Partial<Flt>)} className={item(cur === o.value)}>{o.label}</button>)}</div>
+      </div>
+    );
+  }
+  if (def.kind === "budget") return (
+    <div className={`${pop} p-3`}>
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
+      <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={range.min} onChange={(e) => setRange({ ...range, min: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetFrom} autoFocus className={inp} /><input inputMode="numeric" value={range.max} onChange={(e) => setRange({ ...range, max: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetTo} className={inp} onKeyDown={(e) => { if (e.key === "Enter") apply({ budgetMin: range.min, budgetMax: range.max }); }} /></div>
+      <button type="button" onClick={() => apply({ budgetMin: range.min, budgetMax: range.max })} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.apply}</button>
+    </div>
+  );
+  return (
+    <div className={`${pop} w-[300px] p-3`}>
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
+      <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => apply({ createdFrom: a, createdTo: b })} />
     </div>
   );
 }
 
-/** Расширенный фильтр блоками: клиент · команда и источник · заявка · сделка и даты. */
-function FilterPanel({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[] }) {
+/** «Все фильтры» — панель справа блоками (клиент · команда и источник · заявка · даты); таблица остаётся на месте. */
+function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[]; onClose: () => void }) {
   const { t } = useI18n(); const crm = useCrm(); const c = t.crm; const f = c.tbl.flt;
-  const block = (title: string, children: React.ReactNode) => <div className="min-w-0"><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
+  useEscape(true, onClose);
+  const block = (title: string, children: React.ReactNode) => <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
   const opt = (label: string, list: readonly string[], names: Record<string, string>) => [{ value: "", label }, ...list.map((v) => ({ value: v, label: names[v] ?? v }))];
   const active = Object.values(flt).filter(Boolean).length;
   return (
-    <div data-crm-form="1" className="mb-3 rounded-[6px] border border-line bg-surface p-4">
-      <div className="grid grid-cols-4 gap-5 max-[1200px]:grid-cols-2 max-md:grid-cols-1">
-        {block(f.client, <>
-          <Select value={flt.role} onChange={(v) => setF({ role: v })} options={opt(c.client.roles, ROLES_F, c.roles)} size="sm" />
-          <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={opt(c.client.stage, CSTAGES_F, c.cstage)} size="sm" />
-          <Select value={flt.priority} onChange={(v) => setF({ priority: v })} options={opt(c.client.priority, PRIOS_F, c.prio)} size="sm" />
-          <div className="grid grid-cols-2 gap-2"><Select value={flt.lang} onChange={(v) => setF({ lang: v })} options={[{ value: "", label: c.client.lang }, ...["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))]} size="sm" /><Select value={flt.channel} onChange={(v) => setF({ channel: v })} options={opt(c.client.channel, CHANNELS_F, c.channel)} size="sm" /></div>
-        </>)}
-        {block(f.team, <>
-          {crm.me.members.length > 1 && <Select value={flt.owner} onChange={(v) => setF({ owner: v })} options={[{ value: "", label: c.owner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" />}
-          {crm.me.branches.length > 0 && <Select value={flt.branch} onChange={(v) => setF({ branch: v })} options={[{ value: "", label: c.client.branch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" />}
-          <Select value={flt.source} onChange={(v) => setF({ source: v })} options={[{ value: "", label: c.source }, ...crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) }))]} size="sm" />
-          <Select value={flt.tag} onChange={(v) => setF({ tag: v })} options={[{ value: "", label: c.tbl.tag }, ...allTags.map((g) => ({ value: g, label: g }))]} size="sm" disabled={!allTags.length} />
-        </>)}
-        {block(f.request, <>
-          <Select value={flt.kind} onChange={(v) => setF({ kind: v })} options={opt(c.rq.kind, KINDS_F, c.rq.kinds)} size="sm" />
-          <Select value={flt.il} onChange={(v) => setF({ il: v })} options={[{ value: "", label: c.want.il }, ...GEO.map((g) => ({ value: g.k, label: g.n }))]} size="sm" searchable />
-          <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value })} placeholder={f.budgetTo} className={inp} /></div>
-        </>)}
-        {block(f.dates, <>
-          <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />
-        </>)}
-      </div>
-      <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[12.5px]"><span className="text-muted">{active ? fill(f.active, { n: active }) : f.hint}</span><button type="button" onClick={reset} disabled={!active} className="cursor-pointer font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button></div>
-    </div>
+    <>
+      <div className="fixed inset-0 z-[300] bg-ink/20" onClick={onClose} />
+      <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-screen w-[420px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={17} /></button></div>
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
+          {block(f.client, <>
+            <Select value={flt.role} onChange={(v) => setF({ role: v })} options={opt(c.client.roles, ROLES_F, c.roles)} size="sm" />
+            <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={opt(c.client.stage, CSTAGES_F, c.cstage)} size="sm" />
+            <Select value={flt.priority} onChange={(v) => setF({ priority: v })} options={opt(c.client.priority, PRIOS_F, c.prio)} size="sm" />
+            <div className="grid grid-cols-2 gap-2"><Select value={flt.lang} onChange={(v) => setF({ lang: v })} options={[{ value: "", label: c.client.lang }, ...["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))]} size="sm" /><Select value={flt.channel} onChange={(v) => setF({ channel: v })} options={opt(c.client.channel, CHANNELS_F, c.channel)} size="sm" /></div>
+          </>)}
+          {block(f.team, <>
+            {crm.me.members.length > 1 && <Select value={flt.owner} onChange={(v) => setF({ owner: v })} options={[{ value: "", label: c.owner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" />}
+            {crm.me.branches.length > 0 && <Select value={flt.branch} onChange={(v) => setF({ branch: v })} options={[{ value: "", label: c.client.branch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" />}
+            <Select value={flt.source} onChange={(v) => setF({ source: v })} options={[{ value: "", label: c.source }, ...crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) }))]} size="sm" />
+            <Select value={flt.tag} onChange={(v) => setF({ tag: v })} options={[{ value: "", label: c.tbl.tag }, ...allTags.map((g) => ({ value: g, label: g }))]} size="sm" disabled={!allTags.length} />
+          </>)}
+          {block(f.request, <>
+            <Select value={flt.kind} onChange={(v) => setF({ kind: v })} options={opt(c.rq.kind, KINDS_F, c.rq.kinds)} size="sm" />
+            <Select value={flt.il} onChange={(v) => setF({ il: v })} options={[{ value: "", label: c.want.il }, ...GEO.map((g) => ({ value: g.k, label: g.n }))]} size="sm" searchable />
+            <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetTo} className={inp} /></div>
+          </>)}
+          {block(f.dates, <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />)}
+          <div className="text-[12px] text-muted">{f.hint}</div>
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t border-line px-5 py-3"><button type="button" onClick={reset} disabled={!active} className="cursor-pointer text-[13px] font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button><button type="button" onClick={onClose} className={btnP}>{c.tbl.done}</button></div>
+      </aside>
+    </>
   );
 }
