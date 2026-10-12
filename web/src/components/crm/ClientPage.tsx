@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
-import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, findDups, getClient, listingBriefs, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
+import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
@@ -39,7 +39,7 @@ function Inner({ id }: { id: string }) {
   const c = t.crm;
   const crm = useCrm();
   const router = useRouter();
-  const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[] } | null | undefined>(undefined);
+  const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> } | null | undefined>(undefined);
   const [reqM, setReqM] = useState<{ open: boolean; req: CrmRequest | null; kind?: RequestKind }>({ open: false, req: null });
   const [edit, setEdit] = useState(false);
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
@@ -51,7 +51,7 @@ function Inner({ id }: { id: string }) {
   const ro = crm.me.access !== "full";
   // оптимистично (стандарт 2026): интерфейс меняется сразу, сервер — фоном, при ошибке данные перечитываются
   const patchLocal = (p: Partial<Client>) => setData((d) => (d ? { ...d, client: { ...d.client, ...p } } : d));
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) crm.openTab?.(d.client.id, d.client.name); else crm.closeTab?.(id); if (d) { const ids = [...d.requests.map((r) => r.listingId), ...d.deals.map((x) => x.listingId)].filter(Boolean) as string[]; if (ids.length) listingBriefs(ids).then(setObjs).catch(() => {}); } if (d) findDups(d.client.contacts.map((x) => ({ kind: x.kind, value: x.value })), d.client.id).then(setDups).catch(() => {}); }).catch(() => { setData(null); crm.closeTab?.(id); });
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) { crm.openTab?.(d.client.id, d.client.name); setObjs(d.objs); setDups(d.dups); } else crm.closeTab?.(id); }).catch(() => { setData(null); crm.closeTab?.(id); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
   useEffect(() => { load(); }, [load]);

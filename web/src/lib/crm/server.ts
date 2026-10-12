@@ -13,13 +13,18 @@ export const TRIAL_MONTHS = 6;
 export type Ctx = { sb: SupabaseClient; me: CurrentUser; ws: Ws; dek: Buffer; access: CrmAccess; trialUntil: string | null; paidTo: string | null; isAdmin: boolean; role: MemberRole; branchId: string | null };
 
 const dekCache = new Map<string, Buffer>();
+const wsCache = new Map<string, { ws: Ws; exp: number }>();
+const accCache = new Map<string, { access: CrmAccess; trialUntil: string | null; paidTo: string | null; exp: number }>();
 
 export async function crmCtx(): Promise<Ctx> {
   const me = await getCurrentUser();
   if (!me) throw new Error("no-session");
   const sb = await createClient();
-  const ws = await wsOf(sb, me);
-  const { access, trialUntil, paidTo } = await accessOf(sb, ws);
+  // пространство и доступ — кэш 60 с на пользователя: иначе каждый экшен делал 2–3 последовательных запроса (~80 мс каждый)
+  const wsHit = wsCache.get(me.id);
+  const ws = wsHit && wsHit.exp > Date.now() ? wsHit.ws : await wsOf(sb, me).then((w) => { wsCache.set(me.id, { ws: w, exp: Date.now() + 60_000 }); return w; });
+  const accKey = `${ws.kind}:${ws.id}`; const accHit = accCache.get(accKey);
+  const { access, trialUntil, paidTo } = accHit && accHit.exp > Date.now() ? accHit : await accessOf(sb, ws).then((a) => { accCache.set(accKey, { ...a, exp: Date.now() + 60_000 }); return a; });
   const dek = await dekOf(sb, ws, me.id);
   // роль в пространстве (0017): одиночка — владелец; агентство/компания — первый открывший становится владельцем, остальные агенты
   const { role, branchId } = await roleOf(sb, ws, me.id);

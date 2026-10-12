@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
-import { bulkClients, clientDealSummary, listClients, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
+import { bulkClients, crmClientsPage, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { Segmented } from "@/components/ui/Segmented";
@@ -79,7 +79,7 @@ export function ClientsTable() {
     const key = `${crm.base}:clients:${status}`;
     const cached = q ? undefined : cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(key);
     if (cached) { setList(cached.list); setDeals(cached.deals); }
-    listClients({ q, status }).then(async (l) => { const d = await clientDealSummary(l.map((x) => x.id)).catch(() => ({})); setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); }).catch(() => setList([]));
+    crmClientsPage({ q, status }).then(({ list: l, deals: d }) => { setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); }).catch(() => setList([]));
   }, [q, status, crm.base]);
   useEffect(() => { const h = setTimeout(load, q ? 250 : 0); return () => clearTimeout(h); }, [load, q]);
 

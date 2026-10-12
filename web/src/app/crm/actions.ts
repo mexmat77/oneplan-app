@@ -50,6 +50,16 @@ function rowContact(c: Ctx, r: Row): Contact {
 
 export async function listClients(opts: { q?: string; status?: "active" | "archived"; ownerId?: string | null; branchId?: string | null } = {}): Promise<Client[]> {
   const c = await crmCtx();
+  return listClientsFor(c, opts);
+}
+/** Страница клиентов одним вызовом (12.10.2026, «долго подгружается список»): список + сводка сделок + счётчики, один crmCtx. */
+export async function crmClientsPage(opts: { q?: string; status?: "active" | "archived" } = {}): Promise<{ list: Client[]; deals: Record<string, DealSummary>; counts: { clients: number; deals: number; tasks: number } }> {
+  const c = await crmCtx();
+  const [list, counts] = await Promise.all([listClientsFor(c, opts), countsFor(c)]);
+  const deals = await dealSummaryFor(c, list.map((x) => x.id));
+  return { list, deals, counts };
+}
+async function listClientsFor(c: Ctx, opts: { q?: string; status?: "active" | "archived"; ownerId?: string | null; branchId?: string | null }): Promise<Client[]> {
   let q = c.sb.from("crm_clients").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", opts.status ?? "active").order("updated_at", { ascending: false }).limit(500);
   if (opts.ownerId) q = q.eq("owner_id", opts.ownerId);
   if (opts.branchId) q = q.eq("branch_id", opts.branchId);
@@ -90,7 +100,7 @@ export async function listClients(opts: { q?: string; status?: "active" | "archi
   });
 }
 
-export async function getClient(id: string): Promise<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[] } | null> {
+export async function getClient(id: string): Promise<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> } | null> {
   const c = await crmCtx();
   const { data: r } = await c.sb.from("crm_clients").select("*").eq("id", id).maybeSingle();
   if (!r) return null;
@@ -98,16 +108,25 @@ export async function getClient(id: string): Promise<{ client: Client; deals: De
     c.sb.from("crm_contacts").select("*").eq("client_id", id).order("is_main", { ascending: false }).order("sort"),
     listDealsFor(c, { clientId: id }), listTasksFor(c, { clientId: id }), loadEvents(c, { clientId: id }), listRequestsFor(c, id, s(r.owner_id)),
   ]);
-  await audit(c.sb, c.ws, c.me.id, "view_client", id, {});
+  const contacts = ((cts ?? []) as Row[]).map((x) => rowContact(c, x));
+  // дубли и объекты — тем же вызовом (раньше карточка делала три серверных вызова подряд)
+  const [dups, objs] = await Promise.all([
+    findDupsFor(c, contacts.map((x) => ({ kind: x.kind, value: x.value })), id),
+    listingBriefsFor(c, [...requests.map((q) => q.listingId), ...deals.map((d) => d.listingId)].filter(Boolean) as string[]),
+    audit(c.sb, c.ws, c.me.id, "view_client", id, {}),
+  ]);
   const open = deals.filter((d) => !d.closedAt).length;
   const t0 = tasks.find((t) => !t.doneAt);
   const briefs: RequestBrief[] = requests.filter((x) => x.status !== "closed").map((x) => ({ id: x.id, kind: x.kind, status: x.status, priority: x.priority, fields: x.fields }));
-  return { client: rowClient(c, r as Row, ((cts ?? []) as Row[]).map((x) => rowContact(c, x)), deals.length, open, t0 ? { id: t0.id, title: t0.title, dueAt: t0.dueAt, kind: t0.kind } : null, briefs), deals, tasks, events, requests };
+  return { client: rowClient(c, r as Row, contacts, deals.length, open, t0 ? { id: t0.id, title: t0.title, dueAt: t0.dueAt, kind: t0.kind } : null, briefs), deals, tasks, events, requests, dups, objs };
 }
 
 /** Дубли по контактам (телефон/e-mail) среди клиентов ws. */
 export async function findDups(contacts: { kind: ContactKind; value: string }[], excludeId?: string | null): Promise<DupHit[]> {
   const c = await crmCtx();
+  return findDupsFor(c, contacts, excludeId);
+}
+async function findDupsFor(c: Ctx, contacts: { kind: ContactKind; value: string }[], excludeId?: string | null): Promise<DupHit[]> {
   const pairs = contacts.filter((x) => x.value.trim() && (x.kind === "phone" || x.kind === "whatsapp" || x.kind === "email")).map((x) => ({ kind: x.kind, hash: hashOf(c, x.kind, x.value) }));
   if (!pairs.length) return [];
   const { data } = await c.sb.from("crm_contacts").select("client_id, kind, crm_clients!inner(id, name, owner_id, merged_into, status)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).in("value_hash", pairs.map((p) => p.hash));
@@ -427,6 +446,9 @@ export type DealSummary = { id: string; stageId: string | null; amount: number |
 /** Открытая сделка клиента (последняя), а если открытых нет — последняя закрытая (успех/отказ) для статуса «Купили»/«Отказ». */
 export async function clientDealSummary(ids: string[]): Promise<Record<string, DealSummary>> {
   const c = await crmCtx();
+  return dealSummaryFor(c, ids);
+}
+async function dealSummaryFor(c: Ctx, ids: string[]): Promise<Record<string, DealSummary>> {
   if (!ids.length) return {};
   const { data } = await c.sb.from("crm_deals").select("id, client_id, stage_id, amount, cur, title, deal, updated_at, closed_at, crm_stages(kind)").in("client_id", ids).order("updated_at", { ascending: false });
   const out: Record<string, DealSummary> = {};
@@ -458,6 +480,9 @@ export async function bulkClients(ids: string[], patch: { ownerId?: string | nul
 /** Счётчики для бокового меню: активные клиенты, открытые сделки, невыполненные задачи. */
 export async function crmCounts(): Promise<{ clients: number; deals: number; tasks: number }> {
   const c = await crmCtx();
+  return countsFor(c);
+}
+async function countsFor(c: Ctx): Promise<{ clients: number; deals: number; tasks: number }> {
   const [{ count: a }, { count: b }, { count: d }] = await Promise.all([
     c.sb.from("crm_clients").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", "active"),
     c.sb.from("crm_deals").select("id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("closed_at", null),
@@ -581,6 +606,9 @@ export async function patchClient(id: string, patch: { stage?: Client["stage"]; 
 export type ListingBrief = { id: string; no: number | null; title: string; price: number; deal: string; type: string; rooms: string; area: number; gross: number | null; floor: string; il: string | null; ilce: string | null; semt: string | null; cover: string | null; status: string };
 export async function listingBriefs(ids: string[]): Promise<Record<string, ListingBrief>> {
   const c = await crmCtx();
+  return listingBriefsFor(c, ids);
+}
+async function listingBriefsFor(c: Ctx, ids: string[]): Promise<Record<string, ListingBrief>> {
   const uuids = [...new Set(ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)))];
   if (!uuids.length) return {};
   const { data } = await c.sb.from("listings").select("id, short_id, title, price, deal, type, rooms, area, gross_area, floor_n, floors_total, il, ilce, semt, cover_url, status").in("id", uuids);

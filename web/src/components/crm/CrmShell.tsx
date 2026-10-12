@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { IconCalendarCheck, IconChevronDown, IconLayoutDashboard, IconLayoutKanban, IconLock, IconMenu2, IconPlus, IconSearch, IconSettings, IconUsers, IconX } from "@tabler/icons-react";
-import { crmBootstrap, crmCounts } from "@/app/crm/actions";
+import { crmBootstrap, crmClientsPage, crmCounts } from "@/app/crm/actions";
 import { useI18n } from "@/i18n/provider";
 import type { CrmMe, Source, Stage } from "@/lib/crm/types";
 import { ClientModal } from "./ClientModal";
@@ -20,7 +20,7 @@ import { CrmSettings } from "./CrmSettings";
 import { DealsBoard } from "./DealsBoard";
 import { Overview } from "./Overview";
 import { TasksView } from "./TasksView";
-import { CrmCtx, fill, fmtDate, getPref, setPref, usePref, type CrmTab } from "./crmUi";
+import { CrmCtx, cacheGet, cacheSet, fill, fmtDate, getPref, setPref, usePref, type CrmTab } from "./crmUi";
 
 const SIDE_LS = "opl-crm-side";
 const TABS_LS = "opl-crm-tabs";
@@ -40,7 +40,12 @@ export function CrmShell({ base }: { base: string }) {
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [q, setQ] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const load = useCallback(() => { crmBootstrap().then(setBoot).catch((e: Error) => setErr(e.message)); }, []);
+    const [counts, setCounts] = useState<{ clients: number; deals: number; tasks: number } | null>(null);
+const load = useCallback(() => {
+    crmBootstrap().then(setBoot).catch((e: Error) => setErr(e.message));
+    // страница клиентов — параллельно с каркасом, в кэш раздела (а не после него): минус один круг запросов
+    if (!cacheGet(`${base}:clients:active`)) crmClientsPage({}).then(({ list, deals, counts }) => { cacheSet(`${base}:clients:active`, { list, deals }); setCounts(counts); }).catch(() => {});
+  }, [base]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { document.documentElement.setAttribute("data-crmmode", "1"); return () => document.documentElement.removeAttribute("data-crmmode"); }, []);
   // «/» — фокус на поиск, Esc — закрыть меню
@@ -56,7 +61,6 @@ export function CrmShell({ base }: { base: string }) {
   }, []);
 
   const wide = usePref(SIDE_LS) !== "0"; // левое меню с подписями и счётчиками (образец пользователя); сворачивается в иконки
-  const [counts, setCounts] = useState<{ clients: number; deals: number; tasks: number } | null>(null);
   useEffect(() => { crmCounts().then(setCounts).catch(() => {}); }, [pathname]);
   const me = boot?.me.members.find((m) => m.id === boot.me.meId);
   // вкладки открытых карточек (localStorage, на кабинет): [{id, name}]
