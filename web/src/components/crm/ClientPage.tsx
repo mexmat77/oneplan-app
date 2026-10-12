@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
-import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, saveTask, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
+import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
@@ -15,7 +15,7 @@ import type { UnitBrief, Client, ClientStage, Contact, ContactKind, CrmEvent, Cr
 import { clientNo, dealNo } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
-import { StageBar } from "./StageBar";
+import { StageMenu } from "./ClientsTable";
 import { TransferModal } from "@/components/ui/TransferModal";
 import { dealRef, ObjCard, type Briefs } from "./ObjCard";
 import { offerCloseObject } from "./closeObject";
@@ -107,6 +107,7 @@ function Inner({ id }: { id: string }) {
 
   const refLabel = cl.refKind === "none" ? null : cl.refKind === "text" ? cl.refText : cl.refKind === "realtor" ? c.client.refRealtor : c.client.refAgency;
   const mainPhone = cl.contacts.find((x) => x.kind === "phone" || x.kind === "whatsapp");
+  const openDeal = deals.find((d) => !d.closedAt);
   const openTasks = tasks.filter((x) => !x.doneAt);
   const field = (l: string, v?: string | null) => v ? <div key={l} className="min-w-0"><div className="text-[11px] font-medium text-muted">{l}</div><div className="truncate text-[13px] text-ink">{v}</div></div> : null;
   return (
@@ -118,16 +119,14 @@ function Inner({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted" title={cl.id}>· {clientNo(cl)}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
           <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
+        <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
+        <Select value={cl.priority ?? ""} onChange={async (v) => { const pr = (v || null) as Priority | null; patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" className="w-[140px]" disabled={ro} title={c.client.priority} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: cl.priority ? PRIO_COLOR[cl.priority] : "#c9d0dc" }} />} />
+        {openDeal && <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage} · {dealNo(openDeal)}</span><Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></span>}
         {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}
         {mainPhone && <a href={waOf(mainPhone.value)} target="_blank" rel="noreferrer" className={btnS}><IconBrandWhatsapp size={15} /> {c.client.wa}</a>}
         <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
         <button type="button" onClick={() => setTransfer(true)} disabled={ro} title={c.client.transfer} className={btnS}><IconUserShare size={14} /> {c.client.transfer}</button>
       </div>
-
-      {/* одна полоса этапов клиента (13.10.2026) — вместо статуса в шапке */}
-      <StageBar stages={crm.cstages} value={cl.stage || "new"} disabled={ro} dateKey="visit" dateLabel={c.card.visitDate}
-        onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }}
-        onDate={async (iso) => { try { await saveTask({ clientId: cl.id, dealId: null, ownerId: cl.ownerId ?? crm.me.meId, kind: "meeting", title: c.tbl.visitTask, dueAt: iso }); load(); } catch (e) { err(e); } }} />
 
       <div className="grid grid-cols-[1fr_460px] gap-4 max-[1100px]:grid-cols-1">
         {/* ---- основная колонка: данные, сделки, задачи ---- */}
@@ -135,7 +134,6 @@ function Inner({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
-              <div key="prio" className="min-w-0"><div className="text-[11px] font-medium text-muted">{c.client.priority}</div><Select value={cl.priority ?? ""} onChange={async (v) => { const pr = (v || null) as Priority | null; patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" menuWidth="auto" disabled={ro} className="mt-[2px] w-full" /></div>
               {field(c.source, sourceName(src, t))}{crm.me.members.length > 1 && !ro ? <div key="owner" className="min-w-0"><div className="text-[11px] font-medium text-muted">{c.owner}</div><Select value={cl.ownerId ?? ""} onChange={async (v) => { const prev = cl.ownerId; patchLocal({ ownerId: v || null }); try { await patchClient(cl.id, { ownerId: v || null }); load(); } catch (e) { patchLocal({ ownerId: prev }); err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" className="mt-[2px] w-full" /></div> : field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.citizenship, countryName(cl.citizenship, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
               {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.kvkk.info, cl.kvkk.info?.method ? fill(c.kvkk.informed, { date: fmtDate(cl.kvkk.info.at, lang) }) + ` · ${c.kvkk.methods[cl.kvkk.info.method]}` : c.kvkk.notInformed)}{field(c.kvkk.consent, cl.kvkk.consent?.revokedAt ? fill(c.kvkk.revoked, { date: fmtDate(cl.kvkk.consent.revokedAt, lang) }) : (["call", "sms", "whatsapp", "email"] as const).filter((k) => cl.kvkk.consent?.[k]).map((k) => c.kvkk.ch[k]).join(", ") || c.kvkk.none)}
             </div>

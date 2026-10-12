@@ -18,7 +18,6 @@ import { clientNo, dealNo, type CrmEvent, type Deal, type Task, type UnitBrief }
 import type { ListingBrief } from "@/app/crm/actions";
 import { Timeline } from "./ClientPage";
 import { offerCloseObject } from "./closeObject";
-import { StageBar } from "./StageBar";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
 import { dealRef, ObjCard, type Briefs } from "./ObjCard";
@@ -57,7 +56,6 @@ export function DealPage({ id }: { id: string }) {
   async function move(stageId: string) {
     const s2 = crm.stages.find((s) => s.id === stageId);
     const reason = s2?.kind === "lost" ? window.prompt(crm.me.lostReasons.length ? `${c.deal.lostPh}\n${crm.me.lostReasons.map((x, i) => `${i + 1}. ${x}`).join("\n")}` : c.deal.lostPh) ?? undefined : undefined;
-    if (s2?.kind === "lost" && reason === undefined) return;
     const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
     const prev = d.stageId;
     setData((x) => (x ? { ...x, deal: { ...x.deal, stageId, closedAt: s2?.kind === "open" ? null : x.deal.closedAt ?? new Date().toISOString() } } : x));
@@ -83,19 +81,18 @@ export function DealPage({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{d.title || "—"}</h1><span className="text-[14px] text-muted" title={d.id}>· {dealNo(d)}</span><span className={chip}>{t.deal[d.deal as keyof typeof t.deal]}</span></div>
           <div className="mt-[2px] truncate text-[13px] text-text"><Link href={`${crm.base}/c/${cl.id}`} className="font-medium text-blue-2 hover:underline">{cl.name}</Link> · {clientNo(cl)}{cl.phone ? ` · ${cl.phone}` : ""}{owner ? ` · ${owner.name}` : ""}</div>
         </div>
+        <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage}</span><Select value={d.stageId ?? ""} onChange={move} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[180px]" disabled={ro} /></span>
+        {crm.me.members.length > 1 && <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.owner}</span><Select value={d.ownerId ?? ""} onChange={async (v) => { setData((x) => (x ? { ...x, deal: { ...x.deal, ownerId: v || null } } : x)); try { await patchDealOwner(d.id, v || null); } catch (e) { err(e); load(); } }} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} size="sm" menuWidth="auto" className="w-[170px]" disabled={ro} /></span>}
         <div className="text-[18px] font-semibold text-ink">{money(d.amount) ?? "—"}</div>
         <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
         <button type="button" onClick={del} disabled={ro} title={c.deal.delete} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red"><IconTrash size={15} /></button>
       </div>
-
-      <StageBar stages={crm.stages} value={d.stageId} by="id" disabled={ro} onChange={move} />
 
       <div className="grid grid-cols-[1fr_460px] gap-4 max-[1100px]:grid-cols-1">
         <div className="flex min-w-0 flex-col gap-4">
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
-              {crm.me.members.length > 1 && <div key="owner" className="min-w-0"><div className="text-[11px] font-medium text-muted">{c.owner}</div><Select value={d.ownerId ?? ""} onChange={async (v) => { setData((x) => (x ? { ...x, deal: { ...x.deal, ownerId: v || null } } : x)); try { await patchDealOwner(d.id, v || null); } catch (e) { err(e); load(); } }} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} size="sm" menuWidth="auto" className="mt-[2px] w-full" disabled={ro} /></div>}
               {field(dc.type, t.deal[d.deal as keyof typeof t.deal])}{field(c.deal.amount, money(d.amount))}
               {field(c.deal.commission, d.commission != null ? (d.commissionKind === "pct" ? `${d.commission} %` : money(d.commission)) : null)}
               {field(c.deal.deposit, money(d.deposit))}{field(c.deal.depositAt, d.depositAt ? fmtDate(d.depositAt, lang) : null)}
