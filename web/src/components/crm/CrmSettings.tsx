@@ -11,7 +11,7 @@ import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
-import type { Source, SourceKind, Stage, StageKind } from "@/lib/crm/types";
+import type { Source, SourceKind } from "@/lib/crm/types";
 import Link from "next/link";
 import { btnS, card, fill, fmtDT, inp, lbl, sourceName, useCrm } from "./crmUi";
 
