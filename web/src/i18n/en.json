@@ -657,7 +657,8 @@
     "transferT": "Transfer the listing to another realtor",
     "transferH": "The listing moves to a colleague from your agency with photos and price history. They get a notification; it leaves your “My objects”.",
     "transferDone": "Listing transferred: {name}",
-    "transferNone": "Listings can be transferred only within an agency. Your agency has no other active realtors, or you work alone."
+    "transferNone": "Listings can be transferred only within an agency. Your agency has no other active realtors, or you work alone.",
+    "relist": "Relist (new no.)"
   },
   "sel": {
     "previewBar": "Preview",
@@ -1221,7 +1222,8 @@
       "doc": "Document: {title}",
       "request": "Request: {kind}",
       "requestEdit": "Request changed: {kind}",
-      "transfer": "Client transferred"
+      "transfer": "Client transferred",
+      "object_closed": "Object taken off the market"
     },
     "stages": {
       "new": "New",
@@ -1424,7 +1426,25 @@
       "noCompanyHint": "Company details are empty — add them in settings and they will be inserted automatically.",
       "sections": "Sections",
       "filled": "Filled",
-      "noPdfShort": "PDF unavailable, Word only"
+      "noPdfShort": "PDF unavailable, Word only",
+      "data": "Document data",
+      "dataS": "Parties, property and terms are filled once — the system then inserts them into any contracts and acts.",
+      "dataSave": "Save data",
+      "dataSaved": "Deal data saved",
+      "filledOf": "{a} of {b} fields",
+      "generateMany": "Generate documents",
+      "pickTpls": "Choose documents — they will be created from the saved deal data",
+      "ready": "ready",
+      "missingN": "missing: {n}",
+      "missingFields": "Missing fields",
+      "generateN": "Generate ({n})",
+      "generatedN": "Documents created: {n}",
+      "noTpls": "No enabled templates for this deal type — enable builtin ones or upload your own in Settings → Templates",
+      "enabled": "In use",
+      "disabled": "Disabled",
+      "toggleOff": "Disable",
+      "toggleOn": "Enable",
+      "enabledHint": "Disabled templates are not offered in deals. You can disable all builtin ones and work only with your own."
     },
     "nav": {
       "overview": "Overview",
@@ -2021,7 +2041,55 @@
       "title": "Property",
       "open": "Open property",
       "none": "No property linked",
-      "no": "No."
+      "no": "No.",
+      "pickListing": "Pick from the base",
+      "pickUnit": "Pick a unit",
+      "other": "Other object",
+      "freeText": "Object description",
+      "freePh": "E.g. 2+1 in Liman, not from the base",
+      "freeUrl": "Link (optional)",
+      "freeLabel": "Object outside OnePlan",
+      "unlink": "Unlink",
+      "unit": "Unit",
+      "wing": "Block",
+      "floor": "floor",
+      "unitSt": {
+        "free": "Free",
+        "booked": "Booked",
+        "process": "In process",
+        "sold": "Sold",
+        "reserve": "Reserved",
+        "na": "Not for sale"
+      },
+      "listingSt": {
+        "active": "For sale",
+        "reserved": "Reserved",
+        "sold": "Sold",
+        "off": "Withdrawn"
+      },
+      "scopeMine": "Mine",
+      "scopeFavs": "Favourites",
+      "scopeAll": "Whole base",
+      "searchPh": "Listing no., title, district…",
+      "typeToSearch": "Type a listing number, title or district",
+      "nothing": "Nothing found",
+      "selectedN": "Selected: {n}",
+      "done": "Done",
+      "allProjects": "All projects",
+      "allWings": "All blocks",
+      "onlyFree": "Free only",
+      "unitSearchPh": "Unit number or type (2+1)…",
+      "variants": "Shortlisted options",
+      "closeT": "Take the object off the market?",
+      "closeQ": "The deal is won. Mark the listing as “Sold”? If it comes back to the market, you can relist it with a new number.",
+      "closeQRent": "The deal is won. Mark the listing as “Withdrawn”?",
+      "closeQUnit": "The deal is won. Mark the unit as sold on the chessboard?",
+      "closeOk": "Yes, take it off",
+      "closeNo": "Leave as is",
+      "closedListing": "Listing taken off the market",
+      "closedUnit": "Unit marked as sold",
+      "closeSkipped": "Status unchanged: the object is not yours",
+      "closeErr": "Could not change the object status"
     },
     "cmd": {
       "placeholder": "What to do? Client, section, action…",

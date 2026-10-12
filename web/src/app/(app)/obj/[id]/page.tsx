@@ -9,7 +9,7 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   IconUserShare,
   IconTrash,
-  IconArrowLeft, IconBath, IconBeach, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp, IconCalendar, IconCheck, IconChevronRight,
+  IconArrowLeft, IconBath, IconRefresh, IconBeach, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp, IconCalendar, IconCheck, IconChevronRight,
   IconDots, IconFlag, IconFlagFilled, IconFolderPlus, IconHeart, IconHeartFilled, IconInfoCircle, IconLayoutGrid, IconMapPin, IconMessageCircle,
   IconPencil, IconPhone, IconRuler2, IconShieldCog, IconSparkles, IconWorldUpload, IconX,
 } from "@tabler/icons-react";
@@ -273,6 +273,9 @@ export default function ObjPage() {
                   <span key={k} onClick={() => setStOver(o.id, k)} className={`cursor-pointer rounded-[9px] border px-[13px] py-2 text-[12px] font-bold ${o.st === k ? "border-blue-2 bg-blue-2 text-white" : "border-line bg-surface text-text hover:bg-[#eef1f6]"}`}>{t.stt[k]}</span>
                 ))}
               </div>
+              {(o.st === "sold" || o.st === "off") && isMine && (
+                <button type="button" onClick={() => { const id = crypto.randomUUID(); upsertLocalListing({ ...o, id, st: "active", relistedFrom: o.id, created: new Date().toISOString(), ph: [] }); router.push(`/obj/${id}`); }} className="mb-[10px] flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[#bfe3cf] bg-green-tint p-3 text-[13.5px] font-bold text-green hover:brightness-95"><IconRefresh size={16} /> {t.obj.relist}</button>
+              )}
               <Link href={`/add?edit=${o.id}`} className="mb-[10px] flex w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue"><IconPencil size={16} /> {t.add.editB}</Link>
               <button type="button" onClick={() => setExp(true)} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue">
                 <IconWorldUpload size={16} /> {t.exp.t} {expN > 0 && <span className="rounded-[12px] bg-green-tint px-2 py-[2px] text-[11px] font-bold text-green">{expN}/3</span>}

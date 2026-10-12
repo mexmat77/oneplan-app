@@ -4,28 +4,32 @@
 import { useState } from "react";
 import { saveDeal, saveTask } from "@/app/crm/actions";
 import { Modal, ModalClose } from "@/components/ui/Modal";
+import { dealRef, type Briefs } from "./ObjCard";
+import { mergeBriefs, ObjectPicker } from "./ObjectPicker";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
-import type { Deal, DealInput, Task, TaskInput, TaskKind } from "@/lib/crm/types";
+import type { Deal, DealInput, ObjRef, Task, TaskInput, TaskKind } from "@/lib/crm/types";
 import { crmError, btnP, btnS, fromLocalInput, inp, lbl, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
 import { DuePicker } from "./DuePicker";
 import { DateField } from "@/components/ui/DateRange";
 
 type ClientOpt = { id: string; name: string };
 
-type DealProps = { open: boolean; deal: Deal | null; clients: ClientOpt[]; clientId?: string | null; requests?: { id: string; label: string }[]; onClose: () => void; onSaved: () => void };
+type DealProps = { open: boolean; deal: Deal | null; clients: ClientOpt[]; clientId?: string | null; requests?: { id: string; label: string }[]; briefs?: Briefs; onClose: () => void; onSaved: () => void };
 export function DealModal(props: DealProps) {
   return <Modal open={props.open} onClose={props.onClose} width={520}>{props.open && <DealForm key={props.deal?.id ?? "new"} {...props} />}</Modal>;
 }
-function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealProps) {
+function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose, onSaved }: DealProps) {
   const { t, lang } = useI18n();
   const crm = useCrm();
   const c = t.crm;
   const [f, setF] = useState<DealInput>(() => deal
     ? { clientId: deal.clientId, title: deal.title, deal: deal.deal, amount: deal.amount, cur: deal.cur, stageId: deal.stageId, ownerId: deal.ownerId, listingId: deal.listingId, projectId: deal.projectId, unitUid: deal.unitUid, selectionId: deal.selectionId, sourceId: deal.sourceId, requestId: deal.requestId, commission: deal.commission, commissionKind: deal.commissionKind, deposit: deal.deposit, depositAt: deal.depositAt }
     : { clientId: clientId ?? clients[0]?.id ?? "", title: "", deal: "sale", amount: null, cur: "TRY", stageId: crm.stages.find((s) => s.kind === "open")?.id ?? null, ownerId: crm.me.meId, listingId: null, projectId: null, unitUid: null, selectionId: null, sourceId: null, requestId: requests?.[0]?.id ?? null, commission: null, commissionKind: "pct", deposit: null, depositAt: null });
-  const [obj, setObj] = useState(() => (deal ? deal.listingId ?? (deal.projectId ? `${deal.projectId}${deal.unitUid != null ? `#${deal.unitUid}` : ""}` : "") : ""));
+  // объект (0024): из базы / квартира / свободно — один на сделку
+  const [refs, setRefs] = useState<ObjRef[]>(() => { const r = deal ? dealRef(deal) : null; return r ? [r] : []; });
+  const [briefs, setBriefs] = useState<Briefs>(briefs0 ?? { objs: {}, units: {} });
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<DealInput>) => setF((v) => ({ ...v, ...p }));
 
@@ -34,13 +38,12 @@ function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealP
     if (!f.clientId) { showToast(c.deal.pickClient); return; }
     setBusy(true);
     try {
-      // объект: у риэлтора — ссылка/id объявления, у застройщика — "<проект>#<квартира>"
-      const o = obj.trim();
-      const m = o.match(/\/obj\/([^/?#]+)/);
-      const listingId = crm.me.ws.kind === "realtor" ? (m ? m[1] : o || null) : null;
-      let projectId: string | null = null, unitUid: number | null = null;
-      if (crm.me.ws.kind === "developer" && o) { const [p, u] = o.split("#"); projectId = p || null; unitUid = u ? +u || null : null; }
-      await saveDeal({ ...f, listingId, projectId, unitUid }, deal?.id ?? null);
+      const r = refs[0] ?? null;
+      const listingId = r?.kind === "listing" ? r.id : null;
+      const projectId = r?.kind === "unit" ? String(r.projectId) : null;
+      const unitUid = r?.kind === "unit" ? r.unitUid : null;
+      const objectText = r?.kind === "free" ? (r.url ? `${r.text} · ${r.url}` : r.text) : null;
+      await saveDeal({ ...f, listingId, projectId, unitUid, objectText }, deal?.id ?? null);
       onSaved();
     } catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
@@ -62,7 +65,7 @@ function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealP
         <Select value={f.cur} onChange={(v) => set({ cur: v })} options={["TRY", "EUR", "USD"].map((x) => ({ value: x, label: x }))} />
       </div>
       <label className={`${lbl} mt-3`}>{c.deal.object}</label>
-      <input value={obj} onChange={(e) => setObj(e.target.value)} placeholder={c.deal.objectPh} className={inp} />
+      <ObjectPicker mode="single" value={refs} onChange={setRefs} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} />
       {requests && requests.length > 0 && <><label className={`${lbl} mt-3`}>{c.deal.request}</label><Select value={f.requestId ?? ""} onChange={(v) => set({ requestId: v || null })} options={[{ value: "", label: c.deal.noRequest }, ...requests.map((r) => ({ value: r.id, label: r.label }))]} /></>}
       {/* комиссия и задаток (0017) */}
       <div className="mt-3 grid grid-cols-[1fr_110px_1fr_1fr] gap-2 max-md:grid-cols-2">

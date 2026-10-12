@@ -51,11 +51,18 @@ export type Client = {
   dealsN: number; openDealsN: number; nextTask: { id: string; title: string; dueAt: string; kind: TaskKind } | null;
 };
 
+/** Ссылка на объект в CRM (0024): объявление риэлтора, квартира застройщика или свободный текст (не из базы). */
+export type ObjRef = { kind: "listing"; id: string } | { kind: "unit"; projectId: number; unitUid: number } | { kind: "free"; text: string; url?: string };
+export const unitKey = (projectId: number | string, unitUid: number) => `${projectId}#${unitUid}`;
+/** Квартира застройщика кратко (для карточек и выбора). */
+export type UnitBrief = { projectId: number; projectName: string; uid: number; num: string; wing: string | null; floor: number; type: string; area: number; price: number; cur: string; status: string };
+
 export type Deal = {
   id: string; clientId: string; clientName: string; ownerId: string | null; stageId: string | null; title: string; deal: string;
   amount: number | null; cur: string; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null;
   sourceId: string | null; lostReason: string | null; closedAt: string | null; createdAt: string; updatedAt: string;
   requestId: string | null; branchId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null; boardPos: number | null;
+  objectText: string | null; // объект не из базы (0024)
 };
 
 // ---------- заявки (0017): одна потребность клиента; поля по типу — реестр lib/crm/requestFields.ts ----------
@@ -66,16 +73,17 @@ export type CrmRequest = {
   id: string; clientId: string; kind: RequestKind; status: RequestStatus; ownerId: string | null; branchId: string | null;
   listingId: string | null; projectId: string | null; unitUid: number | null; priority: Priority | null; deadline: "asap" | "1m" | "3m" | "later" | null;
   fields: Record<string, unknown>; closed: Record<string, unknown>; createdAt: string; updatedAt: string;
+  variants: ObjRef[]; // подобранные варианты (0024)
 };
 export type RequestInput = {
   clientId: string; kind: RequestKind; status: RequestStatus; ownerId: string | null; branchId: string | null; listingId: string | null;
-  priority: Priority | null; deadline: CrmRequest["deadline"]; fields: Record<string, unknown>; closed: Record<string, unknown>;
+  priority: Priority | null; deadline: CrmRequest["deadline"]; fields: Record<string, unknown>; closed: Record<string, unknown>; variants?: ObjRef[];
 };
 
 export type TaskKind = "call" | "show" | "meeting" | "message" | "other";
 export type Task = { id: string; clientId: string | null; clientName: string | null; dealId: string | null; ownerId: string | null; kind: TaskKind; title: string; dueAt: string; doneAt: string | null; createdAt: string };
 
-export type EventKind = "created" | "stage" | "note" | "call" | "show" | "meeting" | "task" | "contact" | "lead" | "merge" | "edit" | "deal" | "doc" | "request" | "transfer";
+export type EventKind = "created" | "stage" | "note" | "call" | "show" | "meeting" | "task" | "contact" | "lead" | "merge" | "edit" | "deal" | "doc" | "request" | "transfer" | "object_closed";
 export type CrmEvent = { id: number; clientId: string | null; dealId: string | null; actorId: string | null; kind: EventKind; payload: Record<string, unknown>; text: string; createdAt: string; tr: Partial<Record<Lang, string>> };
 
 export type ClientInput = {
@@ -91,7 +99,7 @@ export type ClientInput = {
   /** при создании: первая задача («следующее действие») */
   firstTask?: { kind: TaskKind; dueAt: string; title: string } | null;
 };
-export type DealInput = { clientId: string; title: string; deal: string; amount: number | null; cur: string; stageId: string | null; ownerId: string | null; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null; sourceId: string | null; requestId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null };
+export type DealInput = { objectText?: string | null; clientId: string; title: string; deal: string; amount: number | null; cur: string; stageId: string | null; ownerId: string | null; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null; sourceId: string | null; requestId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null };
 export type TaskInput = { clientId: string | null; dealId: string | null; ownerId: string | null; kind: TaskKind; title: string; dueAt: string };
 
 /** Дубль по контакту: найден существующий клиент с тем же телефоном/e-mail. */

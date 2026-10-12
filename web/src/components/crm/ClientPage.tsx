@@ -4,20 +4,21 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
+import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
 import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
+import type { UnitBrief, Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
 import { StageMenu } from "./ClientsTable";
 import { TransferModal } from "@/components/ui/TransferModal";
+import { dealRef, ObjCard, type Briefs } from "./ObjCard";
+import { offerCloseObject } from "./closeObject";
 import { fmt } from "@/lib/money";
-import { ilName, ilceName } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
@@ -35,7 +36,7 @@ export function ClientPage({ base, id, embedded }: { base: string; id: string; e
   return <CrmCtx.Provider value={ctx}><Inner id={id} /></CrmCtx.Provider>;
 }
 
-type CardData = { client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> };
+type CardData = { client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief>; units: Record<string, UnitBrief> };
 function Inner({ id }: { id: string }) {
   const { t, lang } = useI18n();
   const c = t.crm;
@@ -52,12 +53,14 @@ function Inner({ id }: { id: string }) {
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [note, setNote] = useState("");
   const [objs, setObjs] = useState<Record<string, ListingBrief>>(() => cacheGet<CardData>(cardKey)?.objs ?? {});
+  const [units, setUnits] = useState<Record<string, UnitBrief>>(() => cacheGet<CardData>(cardKey)?.units ?? {});
+  const briefs: Briefs = { objs, units };
   const [openReq, setOpenReq] = useState<Record<string, boolean>>({});
   const [dups, setDups] = useState<DupHit[]>(() => cacheGet<CardData>(cardKey)?.dups ?? []);
   const ro = crm.me.access !== "full";
   // оптимистично (стандарт 2026): интерфейс меняется сразу, сервер — фоном, при ошибке данные перечитываются
   const patchLocal = (p: Partial<Client>) => setData((d) => (d ? { ...d, client: { ...d.client, ...p } } : d));
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) { cacheSet(cardKey, d); crm.openTab?.(d.client.id, d.client.name); setObjs(d.objs); setDups(d.dups); } else crm.closeTab?.(id); }).catch(() => { setData(null); crm.closeTab?.(id); });
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) { cacheSet(cardKey, d); crm.openTab?.(d.client.id, d.client.name); setObjs(d.objs); setUnits(d.units); setDups(d.dups); } else crm.closeTab?.(id); }).catch(() => { setData(null); crm.closeTab?.(id); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, cardKey]);
   useEffect(() => { load(); }, [load]);
@@ -93,7 +96,11 @@ function Inner({ id }: { id: string }) {
     const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
     const prev = d.stageId;
     setData((x) => (x ? { ...x, deals: x.deals.map((q) => (q.id === d.id ? { ...q, stageId, closedAt: st?.kind === "open" ? null : q.closedAt ?? new Date().toISOString() } : q)) } : x));
-    try { await moveDeal(d.id, stageId, picked); load(); if (prev && st?.kind === "open") showUndo(fill(c.undo.moved, { stage: stageName(st, t, lang) }), async () => { await moveDeal(d.id, prev); load(); }, c.undo.undo); } catch (e) { err(e); load(); }
+    try {
+      await moveDeal(d.id, stageId, picked); load();
+      if (prev && st?.kind === "open") showUndo(fill(c.undo.moved, { stage: stageName(st, t, lang) }), async () => { await moveDeal(d.id, prev); load(); }, c.undo.undo);
+      if (st?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t);
+    } catch (e) { err(e); load(); }
   }
   async function delDeal(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
 
@@ -172,7 +179,7 @@ function Inner({ id }: { id: string }) {
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
                   <Select value={r.status} onChange={async (v) => { const st = v as RequestStatus; setData((d) => (d ? { ...d, requests: d.requests.map((q) => (q.id === r.id ? { ...q, status: st } : q)) } : d)); try { await setRequestStatus(r.id, st); load(); } catch (e) { err(e); load(); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
                   <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
-                  {openReq[r.id] !== false && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} obj={r.listingId ? objs[r.listingId] : undefined} onEdit={() => setReqM({ open: true, req: r })} /></div>}
+                  {openReq[r.id] !== false && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} briefs={briefs} onEdit={() => setReqM({ open: true, req: r })} /></div>}
                 </div>))}</div>
             )}
           </div>
@@ -188,7 +195,7 @@ function Inner({ id }: { id: string }) {
                     <Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />
                     <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
                   </div>
-                  {d.listingId && objs[d.listingId] && <div className="mt-2"><ObjectCard o={objs[d.listingId]} /></div>}
+                  {(() => { const r = dealRef(d); return r ? <div className="mt-2"><ObjCard r={r} briefs={briefs} /></div> : null; })()}
                   <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
                 </div>); })}</div>
             )}
@@ -211,9 +218,9 @@ function Inner({ id }: { id: string }) {
       </div>
 
       <TransferModal open={transfer} title={c.client.transferOne} hint={c.client.transferH} busy={trBusy} prefer={crm.me.members.filter((m) => m.id !== cl.ownerId && m.id !== crm.me.meId).map((m) => ({ id: m.id, name: m.name }))} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { const r = await transferClient(cl.id, toId); setTransfer(false); showToast(fill(c.client.transferDone, { name: target?.name ?? crm.me.members.find((m) => m.id === toId)?.name ?? "" })); if (r.moved) { crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } else load(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setTrBusy(false); } }} />
-      <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
+      <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} briefs={briefs} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
       <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
-      <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
+      <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} briefs={briefs} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
       <TaskModal open={taskM.open} task={taskM.task} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setTaskM({ open: false, task: null })} onSaved={() => { setTaskM({ open: false, task: null }); load(); }} />
     </>
   );
@@ -285,25 +292,9 @@ function Timeline({ events }: { events: CrmEvent[] }) {
 }
 
 /** Объект базы в карточке клиента (заявка/сделка → объявление). */
-function ObjectCard({ o }: { o: ListingBrief }) {
-  const { t } = useI18n();
-  const c = t.crm;
-  const loc = [o.il ? ilName(o.il) : null, o.ilce ? ilceName(o.ilce) : null].filter(Boolean).join(" › ");
-  return (
-    <div className="flex items-center gap-3 rounded-[6px] border border-line bg-[#fafbfc] p-2">
-      <div className="h-12 w-16 flex-none overflow-hidden rounded-[4px] bg-bg-2">{o.cover ? <img src={o.cover} alt="" className="h-full w-full object-cover" /> : null}{/* eslint-disable-line @next/next/no-img-element -- внешний URL Storage, без next/image */}</div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-semibold text-ink">{o.title || `${c.obj.no} ${o.no ?? ""}`}</div>
-        <div className="truncate text-[12px] text-muted">{[t.deal[o.deal as keyof typeof t.deal], t.typ[o.type as keyof typeof t.typ], o.rooms, o.area ? `${o.area} m²` : null, o.floor ? `${c.obj.no === "№" ? "эт." : "fl."} ${o.floor}` : null, loc].filter(Boolean).join(" · ")}</div>
-      </div>
-      <div className="text-[13px] font-semibold text-ink">{fmt(o.price, "TRY")}</div>
-      <Link href={`/obj/${o.id}`} target="_blank" title={c.obj.open} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconExternalLink size={15} /></Link>
-    </div>
-  );
-}
 
 /** Заполненные поля заявки по группам (значения по реестру), объект — карточкой. */
-function RequestDetails({ r, obj, onEdit }: { r: CrmRequest; obj?: ListingBrief; onEdit: () => void }) {
+function RequestDetails({ r, briefs, onEdit }: { r: CrmRequest; briefs: Briefs; onEdit: () => void }) {
   const { t, lang } = useI18n();
   const c = t.crm; const rq = c.rq;
   const crm = useCrm();
@@ -331,7 +322,8 @@ function RequestDetails({ r, obj, onEdit }: { r: CrmRequest; obj?: ListingBrief;
   const groups = [...new Set(rows.map((x) => x.g))];
   return (
     <div className="flex flex-col gap-2">
-      {r.listingId && (obj ? <ObjectCard o={obj} /> : <div className="text-[12px] text-muted">{c.obj.title}: {r.listingId}</div>)}
+      {r.listingId && <ObjCard r={{ kind: "listing", id: r.listingId }} briefs={briefs} />}
+      {r.variants.length > 0 && <div><div className="mb-1 text-[11px] font-semibold uppercase tracking-[.04em] text-muted">{c.obj.variants} · {r.variants.length}</div><div className="flex flex-col gap-1">{r.variants.map((v, i) => <ObjCard key={i} r={v} briefs={briefs} compact />)}</div></div>}
       {rows.length === 0 ? <button type="button" onClick={onEdit} className="cursor-pointer text-left text-[12.5px] text-muted hover:text-ink">{rq.noFields}</button> : groups.map((g) => (
         <div key={g}>
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[.04em] text-muted">{rq.g[g as keyof typeof rq.g]}</div>

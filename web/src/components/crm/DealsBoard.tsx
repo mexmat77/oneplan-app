@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPlus } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
+import { offerCloseObject } from "./closeObject";
 import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/provider";
@@ -47,7 +48,7 @@ export function DealsBoard() {
     const st = crm.stages.find((s) => s.id === stageId);
     const reason = st?.kind === "lost" ? window.prompt(c.deal.lostPh) ?? undefined : undefined;
     setDeals((v) => (v ?? []).map((x) => (x.id === d.id ? { ...x, stageId, boardPos: pos ?? x.boardPos } : x))); // оптимистично
-    try { await moveDeal(d.id, stageId, reason, pos); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
+    try { await moveDeal(d.id, stageId, reason, pos); if (st?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
   }
   async function del(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
   const shown = useMemo(() => (deals ?? []).filter((d) => !owner || d.ownerId === owner), [deals, owner]);

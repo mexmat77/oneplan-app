@@ -657,7 +657,8 @@
     "transferT": "İlanı başka danışmana devret",
     "transferH": "İlan, fotoğraflar ve fiyat geçmişiyle ofisinizden bir meslektaşa geçer. Bildirim alır; ilan «İlanlarım»dan kaybolur.",
     "transferDone": "İlan devredildi: {name}",
-    "transferNone": "İlanlar yalnızca ofis içinde devredilebilir. Ofisinizde başka aktif danışman yok ya da tek başınıza çalışıyorsunuz."
+    "transferNone": "İlanlar yalnızca ofis içinde devredilebilir. Ofisinizde başka aktif danışman yok ya da tek başınıza çalışıyorsunuz.",
+    "relist": "Yeniden yayınla (yeni no)"
   },
   "sel": {
     "previewBar": "Önizle",
@@ -1221,7 +1222,8 @@
       "doc": "Belge: {title}",
       "request": "Talep: {kind}",
       "requestEdit": "Talep değişti: {kind}",
-      "transfer": "Müşteri devredildi"
+      "transfer": "Müşteri devredildi",
+      "object_closed": "Nesne satıştan kaldırıldı"
     },
     "stages": {
       "new": "Yeni",
@@ -1424,7 +1426,25 @@
       "noCompanyHint": "Firma bilgileri boş — ayarlardan ekleyin, otomatik eklenecek.",
       "sections": "Bölümler",
       "filled": "Dolduruldu",
-      "noPdfShort": "PDF yok, sadece Word"
+      "noPdfShort": "PDF yok, sadece Word",
+      "data": "Belge verileri",
+      "dataS": "Taraflar, taşınmaz ve koşullar bir kez doldurulur — sistem bunları her sözleşme ve tutanağa kendisi yerleştirir.",
+      "dataSave": "Verileri kaydet",
+      "dataSaved": "Anlaşma verileri kaydedildi",
+      "filledOf": "{b} alandan {a}",
+      "generateMany": "Belgeleri oluştur",
+      "pickTpls": "Belgeleri seçin — kayıtlı anlaşma verilerinden oluşturulacak",
+      "ready": "hazır",
+      "missingN": "eksik: {n}",
+      "missingFields": "Eksik alanlar",
+      "generateN": "Oluştur ({n})",
+      "generatedN": "Oluşturulan belge: {n}",
+      "noTpls": "Bu anlaşma türü için etkin şablon yok — yerleşikleri etkinleştirin veya Ayarlar → Şablonlar'da kendinizinkini yükleyin",
+      "enabled": "Kullanımda",
+      "disabled": "Devre dışı",
+      "toggleOff": "Devre dışı bırak",
+      "toggleOn": "Etkinleştir",
+      "enabledHint": "Devre dışı şablonlar anlaşmalarda önerilmez. Tüm yerleşikleri kapatıp yalnızca kendi şablonlarınızla çalışabilirsiniz."
     },
     "nav": {
       "overview": "Genel bakış",
@@ -2021,7 +2041,55 @@
       "title": "Gayrimenkul",
       "open": "Gayrimenkulü aç",
       "none": "Gayrimenkul bağlı değil",
-      "no": "No"
+      "no": "No",
+      "pickListing": "Veritabanından seç",
+      "pickUnit": "Daire seç",
+      "other": "Başka nesne",
+      "freeText": "Nesne açıklaması",
+      "freePh": "Örn. Liman'da 2+1, veritabanında yok",
+      "freeUrl": "Bağlantı (isteğe bağlı)",
+      "freeLabel": "OnePlan dışındaki nesne",
+      "unlink": "Bağı kaldır",
+      "unit": "Daire",
+      "wing": "Blok",
+      "floor": "kat",
+      "unitSt": {
+        "free": "Boş",
+        "booked": "Rezerve",
+        "process": "İşlemde",
+        "sold": "Satıldı",
+        "reserve": "Ayrıldı",
+        "na": "Satışta değil"
+      },
+      "listingSt": {
+        "active": "Satışta",
+        "reserved": "Rezerve",
+        "sold": "Satıldı",
+        "off": "Kaldırıldı"
+      },
+      "scopeMine": "Benim",
+      "scopeFavs": "Favoriler",
+      "scopeAll": "Tüm veritabanı",
+      "searchPh": "İlan no, başlık, ilçe…",
+      "typeToSearch": "İlan numarası, başlık veya ilçe yazın",
+      "nothing": "Bulunamadı",
+      "selectedN": "Seçili: {n}",
+      "done": "Tamam",
+      "allProjects": "Tüm projeler",
+      "allWings": "Tüm bloklar",
+      "onlyFree": "Yalnızca boş",
+      "unitSearchPh": "Daire numarası veya tip (2+1)…",
+      "variants": "Seçilen seçenekler",
+      "closeT": "Nesne satıştan kaldırılsın mı?",
+      "closeQ": "Anlaşma kazanıldı. İlan «Satıldı» olarak işaretlensin mi? Tekrar piyasaya çıkarsa yeni numarayla yeniden yayınlanabilir.",
+      "closeQRent": "Anlaşma kazanıldı. İlan «Kaldırıldı» olarak işaretlensin mi?",
+      "closeQUnit": "Anlaşma kazanıldı. Daire tabloda satıldı olarak işaretlensin mi?",
+      "closeOk": "Evet, kaldır",
+      "closeNo": "Olduğu gibi bırak",
+      "closedListing": "İlan satıştan kaldırıldı",
+      "closedUnit": "Daire satıldı olarak işaretlendi",
+      "closeSkipped": "Durum değişmedi: nesne sizin değil",
+      "closeErr": "Nesne durumu değiştirilemedi"
     },
     "cmd": {
       "placeholder": "Ne yapalım? Müşteri, bölüm, işlem…",

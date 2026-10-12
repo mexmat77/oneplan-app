@@ -87,6 +87,7 @@ export type Listing = {
   seaDist: number;
   deposit?: number;
   ph?: [string, number][]; // price history [date dd.mm.yyyy, price]
+  relistedFrom?: string; // выставлено повторно после продажи — id прежнего объявления (0024)
   created: string;
   updated: string;
   usage?: Usage;

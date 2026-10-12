@@ -9,8 +9,9 @@ import { decField, encField, normalizeContact, valueHash } from "@/lib/crm/crypt
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notify } from "@/lib/notify";
 import { ROLE_OF_KIND, REQUEST_FIELDS } from "@/lib/crm/requestFields";
+import { unitKey } from "@/lib/crm/types";
 import { newSourceToken } from "@/lib/crm/crypto";
-import type { Branch, Client, StageScope, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
+import type { ObjRef, UnitBrief, Branch, Client, StageScope, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
 
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v == null ? null : String(v));
@@ -103,7 +104,7 @@ async function listClientsFor(c: Ctx, opts: { q?: string; status?: "active" | "a
   });
 }
 
-export async function getClient(id: string): Promise<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> } | null> {
+export async function getClient(id: string): Promise<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief>; units: Record<string, UnitBrief> } | null> {
   const c = await crmCtx();
   const { data: r } = await c.sb.from("crm_clients").select("*").eq("id", id).maybeSingle();
   if (!r) return null;
@@ -113,15 +114,17 @@ export async function getClient(id: string): Promise<{ client: Client; deals: De
   ]);
   const contacts = ((cts ?? []) as Row[]).map((x) => rowContact(c, x));
   // дубли и объекты — тем же вызовом (раньше карточка делала три серверных вызова подряд)
-  const [dups, objs] = await Promise.all([
+  const variantRefs = requests.flatMap((q) => q.variants);
+  const [dups, objs, units] = await Promise.all([
     findDupsFor(c, contacts.map((x) => ({ kind: x.kind, value: x.value })), id),
-    listingBriefsFor(c, [...requests.map((q) => q.listingId), ...deals.map((d) => d.listingId)].filter(Boolean) as string[]),
+    listingBriefsFor(c, [...requests.map((q) => q.listingId), ...deals.map((d) => d.listingId), ...variantRefs.map((v) => (v.kind === "listing" ? v.id : null))].filter(Boolean) as string[]),
+    unitBriefsFor(c, [...deals.map((d) => (d.projectId && d.unitUid != null ? { projectId: Number(d.projectId), unitUid: d.unitUid } : null)), ...variantRefs.map((v) => (v.kind === "unit" ? { projectId: v.projectId, unitUid: v.unitUid } : null))].filter(Boolean) as { projectId: number; unitUid: number }[]),
     audit(c.sb, c.ws, c.me.id, "view_client", id, {}),
   ]);
   const open = deals.filter((d) => !d.closedAt).length;
   const t0 = tasks.find((t) => !t.doneAt);
   const briefs: RequestBrief[] = requests.filter((x) => x.status !== "closed").map((x) => ({ id: x.id, kind: x.kind, status: x.status, priority: x.priority, fields: x.fields }));
-  return { client: rowClient(c, r as Row, contacts, deals.length, open, t0 ? { id: t0.id, title: t0.title, dueAt: t0.dueAt, kind: t0.kind } : null, briefs), deals, tasks, events, requests, dups, objs };
+  return { client: rowClient(c, r as Row, contacts, deals.length, open, t0 ? { id: t0.id, title: t0.title, dueAt: t0.dueAt, kind: t0.kind } : null, briefs), deals, tasks, events, requests, dups, objs, units };
 }
 
 /** Дубли по контактам (телефон/e-mail) среди клиентов ws. */
@@ -258,7 +261,7 @@ export async function translateNote(eventId: number, to: Lang): Promise<string> 
 // ---------- сделки ----------
 function rowDeal(r: Row, clientName: string): Deal {
   return { id: r.id as string, clientId: r.client_id as string, clientName, ownerId: s(r.owner_id), stageId: s(r.stage_id), title: (r.title as string) ?? "", deal: (r.deal as string) || "sale", amount: n(r.amount), cur: (r.cur as string) || "TRY", listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid), selectionId: s(r.selection_id), sourceId: s(r.source_id), lostReason: s(r.lost_reason), closedAt: s(r.closed_at), createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos) };
+    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos), objectText: s(r.object_text) };
 }
 async function listDealsFor(c: Ctx, f: { clientId?: string }): Promise<Deal[]> {
   let q = c.sb.from("crm_deals").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("updated_at", { ascending: false }).limit(1000);
@@ -272,7 +275,7 @@ export async function saveDeal(input: DealInput, id?: string | null): Promise<st
   const did = id || crypto.randomUUID();
   // источник — свойство клиента (12.10.2026): сделка наследует источник клиента, в форме сделки его нет
   const { data: clRow } = await c.sb.from("crm_clients").select("source_id").eq("id", input.clientId).maybeSingle();
-  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, source_id: (clRow?.source_id as string | null) ?? input.sourceId ?? null, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
+  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, object_text: input.objectText?.trim() || null, source_id: (clRow?.source_id as string | null) ?? input.sourceId ?? null, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
   const { error } = await c.sb.from("crm_deals").upsert(row, { onConflict: "id" });
   if (error) throw new Error(error.message);
   if (!id) await addEvent(c, { clientId: input.clientId, dealId: did, kind: "deal", payload: { title: row.title } });
@@ -512,7 +515,7 @@ function rowRequest(c: Ctx, r: Row, clientOwner: string | null): CrmRequest {
   let closed: Record<string, unknown> = {};
   if (r.closed_enc && canSeeClosed(c, s(r.owner_id), clientOwner)) { try { closed = JSON.parse(dec(c, "crm_requests", "closed", id, r.closed_enc as string) || "{}"); } catch { closed = {}; } }
   return { id, clientId: r.client_id as string, kind: r.kind as CrmRequest["kind"], status: r.status as RequestStatus, ownerId: s(r.owner_id), branchId: s(r.branch_id), listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid),
-    priority: (r.priority as CrmRequest["priority"]) ?? null, deadline: (r.deadline as CrmRequest["deadline"]) ?? null, fields: normFields(r.fields as Record<string, unknown>), closed, createdAt: r.created_at as string, updatedAt: r.updated_at as string };
+    priority: (r.priority as CrmRequest["priority"]) ?? null, deadline: (r.deadline as CrmRequest["deadline"]) ?? null, fields: normFields(r.fields as Record<string, unknown>), closed, createdAt: r.created_at as string, updatedAt: r.updated_at as string, variants: Array.isArray(r.variants) ? (r.variants as ObjRef[]) : [] };
 }
 async function listRequestsFor(c: Ctx, clientId: string, clientOwner: string | null): Promise<CrmRequest[]> {
   const { data } = await c.sb.from("crm_requests").select("*").eq("client_id", clientId).order("created_at");
@@ -530,7 +533,7 @@ async function saveRequestFor(c: Ctx, input: RequestInput, id: string | null, si
   for (const f of REQUEST_FIELDS[input.kind]) { const v = (f.closed ? input.closed : input.fields)[f.key]; if (v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && !v.length)) (f.closed ? closed : fields)[f.key] = v; }
   void allowed;
   const row = { id: rid, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, kind: input.kind, status: input.status, owner_id: input.ownerId || c.me.id, branch_id: input.branchId ?? (id ? undefined : c.branchId),
-    listing_id: input.listingId, priority: input.priority, deadline: input.deadline, fields, closed_enc: Object.keys(closed).length ? enc(c, "crm_requests", "closed", rid, JSON.stringify(closed)) : null, created_by: id ? undefined : c.me.id };
+    listing_id: input.listingId, variants: input.variants ?? [], priority: input.priority, deadline: input.deadline, fields, closed_enc: Object.keys(closed).length ? enc(c, "crm_requests", "closed", rid, JSON.stringify(closed)) : null, created_by: id ? undefined : c.me.id };
   const { error } = await c.sb.from("crm_requests").upsert(row, { onConflict: "id" });
   if (error) throw new Error(error.message);
   // роль клиента по типу заявки
@@ -717,4 +720,105 @@ export async function transferClient(clientId: string, toProfileId: string): Pro
   await audit(admin, target, c.me.id, "transfer_in", clientId, { from: c.me.id });
   await notify([toProfileId], "client_transfer", { name: cl.name as string, from: c.me.name, href: `${target.kind === "developer" ? "/dev/crm" : "/crm"}/c/${clientId}` });
   return { moved: true };
+}
+
+// ---------- объекты в CRM (0024, 12.10.2026): из базы или свободно ----------
+/** Поиск объявлений для привязки к сделке/заявке (риэлтор, агентство). Пусто + scope: «мои» / «избранное» / недавние;
+ *  с текстом: № объявления (цифры), заголовок на любом языке, район/махалле. Не больше 30 строк — при тысяче объектов
+ *  список без поиска бесполезен (замечание пользователя). */
+export async function searchListings(q: string, scope: "mine" | "favs" | "all" = "all"): Promise<ListingBrief[]> {
+  const c = await crmCtx();
+  const text = q.trim();
+  let qb = c.sb.from("listings").select("id, short_id, title, price, deal, type, rooms, area, gross_area, floor_n, floors_total, il, ilce, semt, cover_url, status, updated_at").limit(30).order("updated_at", { ascending: false });
+  if (scope === "mine") qb = qb.eq("owner_id", c.me.id);
+  if (scope === "favs") {
+    const { data: f } = await c.sb.from("favorites").select("listing_id").eq("user_id", c.me.id);
+    const ids = (f ?? []).map((x) => x.listing_id as string);
+    if (!ids.length) return [];
+    qb = qb.in("id", ids);
+  }
+  if (/^\d+$/.test(text)) qb = qb.eq("short_id", Number(text));
+  else if (text) { const like = `%${text.replace(/[%_]/g, "")}%`; qb = qb.or(`title->>RU.ilike.${like},title->>EN.ilike.${like},title->>TR.ilike.${like},il.ilike.${like},ilce.ilike.${like},semt.ilike.${like}`); }
+  else if (scope === "all") qb = qb.eq("owner_id", c.me.id); // без текста «все» = недавние свои
+  const { data } = await qb;
+  return ((data ?? []) as Row[]).map(rowListingBrief);
+}
+function rowListingBrief(r: Row): ListingBrief {
+  const t = (r.title as Record<string, string>) ?? {};
+  return { id: r.id as string, no: n(r.short_id), title: t.RU || t.EN || t.TR || "", price: Number(r.price ?? 0), deal: String(r.deal ?? "sale"), type: String(r.type ?? "flat"), rooms: String(r.rooms ?? ""), area: Number(r.area ?? 0), gross: n(r.gross_area), floor: r.floor_n != null ? `${r.floor_n}/${r.floors_total ?? "—"}` : "", il: s(r.il), ilce: s(r.ilce), semt: s(r.semt), cover: s(r.cover_url), status: String(r.status ?? "active") };
+}
+
+type DevUnitRow = { uid: number; num: string | number; floor: number; wing?: string; type: string; area: number; price: number; status: string };
+const SPECIAL = new Set(["sosyal", "otopark", "teknik", ""]);
+function unitBrief(pid: number, pname: string, cur: string, u: DevUnitRow): UnitBrief {
+  return { projectId: pid, projectName: pname, uid: u.uid, num: String(u.num ?? ""), wing: u.wing ?? null, floor: Number(u.floor ?? 0), type: String(u.type ?? ""), area: Number(u.area ?? 0), price: Number(u.price ?? 0), cur, status: String(u.status ?? "free") };
+}
+/** Квартиры компании-застройщика: проекты для выбора и помещения по фильтру (проект, корпус, текст — номер/тип). */
+export async function searchUnits(q: string, opts: { projectId?: number | null; wing?: string | null; onlyFree?: boolean } = {}): Promise<{ projects: { id: number; name: string; wings: string[] }[]; units: UnitBrief[] }> {
+  const c = await crmCtx();
+  if (c.ws.kind !== "developer") return { projects: [], units: [] };
+  const { data } = await c.sb.from("dev_objects").select("id, data, units").eq("developer_id", c.ws.id);
+  const rows = ((data ?? []) as Row[]).map((r) => ({ id: Number(r.id), data: (r.data as Record<string, unknown>) ?? {}, units: (Array.isArray(r.units) ? r.units : []) as DevUnitRow[] }));
+  const projects = rows.map((r) => ({ id: r.id, name: String(r.data.name ?? r.id), wings: [...new Set(r.units.map((u) => u.wing ?? "").filter(Boolean))].sort() })).sort((a, b) => a.name.localeCompare(b.name));
+  const text = q.trim().toLowerCase();
+  const units: UnitBrief[] = [];
+  for (const r of rows) {
+    if (opts.projectId && r.id !== opts.projectId) continue;
+    const cur = String(r.data.pricesIn ?? r.data.cur ?? "EUR");
+    for (const u of r.units) {
+      if (SPECIAL.has(String(u.type ?? ""))) continue;
+      if (opts.wing && (u.wing ?? "") !== opts.wing) continue;
+      if (opts.onlyFree && u.status !== "free") continue;
+      if (text && !`${u.num} ${u.type} ${u.wing ?? ""} ${String(r.data.name ?? "")}`.toLowerCase().includes(text)) continue;
+      units.push(unitBrief(r.id, String(r.data.name ?? r.id), cur, u));
+      if (units.length >= 300) break;
+    }
+  }
+  units.sort((a, b) => a.projectName.localeCompare(b.projectName) || (a.wing ?? "").localeCompare(b.wing ?? "") || a.floor - b.floor || a.num.localeCompare(b.num, undefined, { numeric: true }));
+  return { projects, units };
+}
+async function unitBriefsFor(c: Ctx, refs: { projectId: number; unitUid: number }[]): Promise<Record<string, UnitBrief>> {
+  const out: Record<string, UnitBrief> = {};
+  if (!refs.length) return out;
+  const ids = [...new Set(refs.map((x) => x.projectId))];
+  const { data } = await c.sb.from("dev_objects").select("id, data, units").in("id", ids);
+  for (const r of (data ?? []) as Row[]) {
+    const pid = Number(r.id); const d = (r.data as Record<string, unknown>) ?? {}; const cur = String(d.pricesIn ?? d.cur ?? "EUR");
+    for (const ref of refs.filter((x) => x.projectId === pid)) {
+      const u = ((Array.isArray(r.units) ? r.units : []) as DevUnitRow[]).find((x) => x.uid === ref.unitUid);
+      if (u) out[unitKey(pid, ref.unitUid)] = unitBrief(pid, String(d.name ?? pid), cur, u);
+    }
+  }
+  return out;
+}
+
+/** Сделка закрыта успешно → объект снимается с продажи (решение пользователя 12.10.2026): объявление → «продано»
+ *  (аренда → «снято»), квартира застройщика → «продана» в шахматке. Объявление коллеги по агентству — сервисным ключом после
+ *  проверки, что владелец в команде. Возвращает, что изменилось (для подсказки и локального стора). */
+export async function closeDealObject(dealId: string): Promise<{ listing?: { id: string; status: string }; unit?: { projectId: number; unitUid: number } }> {
+  const c = await crmCtx(); assertWrite(c);
+  const { data: d } = await c.sb.from("crm_deals").select("client_id, listing_id, project_id, unit_uid, deal").eq("id", dealId).maybeSingle();
+  if (!d) throw new Error("not-found");
+  const out: { listing?: { id: string; status: string }; unit?: { projectId: number; unitUid: number } } = {};
+  if (d.listing_id) {
+    const status = String(d.deal).startsWith("rent") ? "off" : "sold";
+    const { data: l } = await c.sb.from("listings").select("id, owner_id").eq("id", d.listing_id as string).maybeSingle();
+    if (l) {
+      const members = await membersOf(c.sb, c.ws, c.me);
+      if (l.owner_id === c.me.id) { const { error } = await c.sb.from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", l.id as string); if (error) throw new Error(error.message); out.listing = { id: l.id as string, status }; }
+      else if (members.some((m) => m.id === l.owner_id)) { const { error } = await createAdminClient().from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", l.id as string); if (error) throw new Error(error.message); out.listing = { id: l.id as string, status }; }
+    }
+  }
+  if (d.project_id && d.unit_uid != null && c.ws.kind === "developer") {
+    const pid = Number(d.project_id);
+    const { data: o } = await c.sb.from("dev_objects").select("id, units, developer_id").eq("id", pid).maybeSingle();
+    if (o && o.developer_id === c.ws.id) {
+      const units = ((Array.isArray(o.units) ? o.units : []) as DevUnitRow[]).map((u) => (u.uid === d.unit_uid ? { ...u, status: "sold" } : u));
+      const { error } = await c.sb.from("dev_objects").update({ units, updated_at: new Date().toISOString(), updated_by: c.me.id }).eq("id", pid);
+      if (error) throw new Error(error.message);
+      out.unit = { projectId: pid, unitUid: d.unit_uid as number };
+    }
+  }
+  if (out.listing || out.unit) await addEvent(c, { clientId: d.client_id as string, dealId, kind: "object_closed", payload: { listingId: out.listing?.id ?? null, status: out.listing?.status ?? null, projectId: out.unit?.projectId ?? null, unitUid: out.unit?.unitUid ?? null } });
+  return out;
 }

@@ -12,9 +12,10 @@ import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/provider";
 import { useMahalleLoaded } from "@/lib/geo";
+import type { Briefs } from "./ObjCard";
+import { mergeBriefs, ObjectPicker } from "./ObjectPicker";
 import { GROUP_ORDER, OPTS, REQUEST_FIELDS, REQUEST_KINDS, type ReqField } from "@/lib/crm/requestFields";
-import type { CrmRequest, Priority, RequestInput, RequestKind, RequestStatus } from "@/lib/crm/types";
-import { useAllListings } from "@/store/listings";
+import type { ObjRef, CrmRequest, Priority, RequestInput, RequestKind, RequestStatus } from "@/lib/crm/types";
 import { ROOMS_ALL } from "@/lib/types";
 import { crmError, btnP, btnS, inp, lbl, useCrm, wantGeoLabel } from "./crmUi";
 
@@ -22,10 +23,16 @@ type Dict = ReturnType<typeof useI18n>["t"];
 type Vals = Record<string, unknown>;
 
 /** Одно поле заявки по типу из реестра. */
+/** Объект клиента-продавца/арендодателя (0024): объявление из базы или свободно (хранится id; свободный текст — в поле `objectText`). */
+function ListingField({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [briefs, setBriefs] = useState<Briefs>({ objs: {}, units: {} });
+  const refs: ObjRef[] = value ? [value.startsWith("free:") ? { kind: "free", text: value.slice(5) } : { kind: "listing", id: value }] : [];
+  return <ObjectPicker mode="single" value={refs} onChange={(v) => { const r = v[0]; onChange(!r ? "" : r.kind === "listing" ? r.id : r.kind === "free" ? `free:${r.url ? `${r.text} · ${r.url}` : r.text}` : ""); }} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} />;
+}
+
 export function ReqFieldInput({ f, value, onChange, t, clients }: { f: ReqField; value: unknown; onChange: (v: unknown) => void; t: Dict; clients?: { id: string; name: string }[] }) {
   const rq = t.crm.rq;
   const [geo, setGeo] = useState(false);
-  const listings = useAllListings();
   const label = <label className={lbl}>{rq.f[f.key as keyof typeof rq.f] ?? f.key}{f.closed && <IconLock size={11} className="ml-1 inline text-muted" />}</label>;
   const optLabel = (o: string) => (f.opts ? (rq.o as Record<string, Record<string, string>>)[f.opts]?.[o] ?? o : o);
   const num = (e: React.ChangeEvent<HTMLInputElement>) => { const v = e.target.value.replace(/[^\d.,-]/g, "").replace(",", "."); onChange(v === "" ? undefined : Number(v)); };
@@ -47,7 +54,7 @@ export function ReqFieldInput({ f, value, onChange, t, clients }: { f: ReqField;
         </button>
         {geo && <GeoPicker mode="filter" showAll z={500} applyLabel={t.crm.want.applyGeo} value={{ il: g.il ?? "", ilces: g.ilces ?? [], semts: g.semts ?? [] }} onApply={(v) => { onChange(v.il ? { il: v.il, ilces: v.ilces, semts: v.semts } : undefined); setGeo(false); }} onClose={() => setGeo(false)} />}
       </div>); }
-    case "listing": { const opts = listings.map((l) => ({ value: l.id, label: `${l.t?.RU || l.t?.EN || l.t?.TR || l.id} · ${l.id.slice(0, 8)}` })); return <div className="col-span-2 max-md:col-span-1">{label}<Select value={(value as string) ?? ""} onChange={(v) => onChange(v || undefined)} searchable placeholder={t.crm.deal.objectPh} options={[{ value: "", label: rq.empty }, ...opts]} /></div>; }
+    case "listing": return <div className="col-span-2 max-md:col-span-1">{label}<ListingField value={(value as string) ?? ""} onChange={(v) => onChange(v || undefined)} /></div>;
     case "clients": { const cur = (value as string[]) ?? []; return (
       <div className="col-span-2 max-md:col-span-1">{label}
         <div className="flex flex-wrap items-center gap-[6px]">
@@ -81,27 +88,29 @@ export function ReqFieldGroups({ kind, vals, closed, onField, onClosed, t, clien
   );
 }
 
-type Props = { open: boolean; clientId: string; request: CrmRequest | null; kind?: RequestKind; onClose: () => void; onSaved: () => void };
+type Props = { briefs?: Briefs; open: boolean; clientId: string; request: CrmRequest | null; kind?: RequestKind; onClose: () => void; onSaved: () => void };
 export function RequestModal(props: Props) {
   return <Modal open={props.open} onClose={props.onClose} width={720} sheet="tall">{props.open && <RequestForm key={props.request?.id ?? "new"} {...props} />}</Modal>;
 }
 
-function RequestForm({ clientId, request, kind: kind0, onClose, onSaved }: Props) {
+function RequestForm({ clientId, request, kind: kind0, briefs: briefs0, onClose, onSaved }: Props) {
   const { t } = useI18n();
   const c = t.crm; const rq = c.rq;
   const crm = useCrm();
   useMahalleLoaded();
   const [f, setF] = useState<RequestInput>(() => request
-    ? { clientId, kind: request.kind, status: request.status, ownerId: request.ownerId, branchId: request.branchId, listingId: request.listingId, priority: request.priority, deadline: request.deadline, fields: { ...request.fields }, closed: { ...request.closed } }
+    ? { clientId, kind: request.kind, status: request.status, ownerId: request.ownerId, branchId: request.branchId, listingId: request.listingId, variants: request.variants ?? [], priority: request.priority, deadline: request.deadline, fields: { ...request.fields }, closed: { ...request.closed } }
     : { clientId, kind: kind0 ?? "buy", status: "active", ownerId: crm.me.meId, branchId: crm.me.branchId, listingId: null, priority: null, deadline: null, fields: { cur: "TRY" }, closed: {} });
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const [briefs, setBriefs] = useState<Briefs>(briefs0 ?? { objs: {}, units: {} }); // карточки подобранных вариантов (0024)
+  const wantsVariants = f.kind === "buy" || f.kind === "rent_in";
   const needsClients = REQUEST_FIELDS[f.kind].some((x) => x.type === "clients");
   useEffect(() => { if (needsClients && !clients.length) listClients({}).then((l) => setClients(l.filter((x) => x.id !== clientId).map((x) => ({ id: x.id, name: x.name })))).catch(() => {}); }, [needsClients, clients.length, clientId]);
   const set = (p: Partial<RequestInput>) => setF((v) => ({ ...v, ...p }));
   async function submit() {
     setBusy(true);
-    try { await saveRequest({ ...f, listingId: (f.fields.listing as string) ?? null }, request?.id ?? null); onSaved(); }
+    try { const lid = (f.fields.listing as string) ?? ""; await saveRequest({ ...f, listingId: lid && !lid.startsWith("free:") ? lid : null, variants: wantsVariants ? f.variants ?? [] : [] }, request?.id ?? null); onSaved(); }
     catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
@@ -117,6 +126,7 @@ function RequestForm({ clientId, request, kind: kind0, onClose, onSaved }: Props
         </div>
         {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2"><div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>{crm.me.branches.length > 0 && <div><label className={lbl}>{c.client.branch}</label><Select value={f.branchId ?? ""} onChange={(v) => set({ branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} /></div>}</div>}
         <ReqFieldGroups kind={f.kind} vals={f.fields} closed={f.closed} onField={(k, v) => set({ fields: { ...f.fields, [k]: v } })} onClosed={(k, v) => set({ closed: { ...f.closed, [k]: v } })} t={t} clients={clients} />
+        {wantsVariants && <div className="mt-4"><div className="mb-2 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.obj.variants}</div><ObjectPicker mode="multi" value={f.variants ?? []} onChange={(v) => set({ variants: v })} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} /></div>}
       </div>
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{request ? c.save : c.create}</button></div>
     </div>
