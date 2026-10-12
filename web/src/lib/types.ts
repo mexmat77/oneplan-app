@@ -88,6 +88,7 @@ export type Listing = {
   deposit?: number;
   ph?: [string, number][]; // price history [date dd.mm.yyyy, price]
   relistedFrom?: string; // выставлено повторно после продажи — id прежнего объявления (0024)
+  no?: number; // короткий номер объявления из базы (listings.short_id) — показывается как «OP-9»; id — технический uuid
   created: string;
   updated: string;
   usage?: Usage;

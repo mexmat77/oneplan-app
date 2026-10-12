@@ -55,7 +55,7 @@ export function ObjCard({ r, briefs, onRemove, compact, selected, onClick }: { r
     <div className={box} onClick={onClick}>
       <div className="h-12 w-16 flex-none overflow-hidden rounded-[4px] bg-bg-2">{o.cover ? <img src={o.cover} alt="" className="h-full w-full object-cover" /> : null}</div>{/* eslint-disable-line @next/next/no-img-element */}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-semibold text-ink">{o.no != null && <span className="mr-1 text-muted">{c.obj.no}{o.no}</span>}{o.title || "—"}</div>
+        <div className="truncate text-[13px] font-semibold text-ink">{o.no != null && <span className="mr-1 text-muted">OP-{o.no}</span>}{o.title || "—"}</div>
         {!compact && <div className="truncate text-[12px] text-muted">{[t.deal[o.deal as keyof typeof t.deal], t.typ[o.type as keyof typeof t.typ], o.rooms, o.area ? `${o.area} m²` : null, o.floor || null, loc || null].filter(Boolean).join(" · ")}</div>}
       </div>
       {o.status !== "active" && <span className="rounded-[4px] px-[6px] py-[1px] text-[10.5px] font-bold text-white" style={{ background: ST_LISTING[o.status] ?? "#8a94a6" }}>{st}</span>}

@@ -12,6 +12,8 @@ const featLabel = (t: Dict, k: string) => t.feat[k as keyof Dict["feat"]] ?? k;
 
 const seaText = (t: Dict, m: number) => (m < 1000 ? `${m} ${t.par.m}` : `${m / 1000} ${t.par.km}`);
 
+/** Номер объявления для людей: из базы — «OP-9» (short_id), демо прототипа — «OP-O10» по id. Технический uuid не показываем (12.10.2026). */
+export const listingNo = (o: { id: string; no?: number }) => `OP-${o.no ?? o.id.toUpperCase()}`;
 export function detail(o: Listing, t: Dict) {
   const featsL = o.type === "land"
     ? []
@@ -72,7 +74,7 @@ export function geoAddr(o: Listing, lang: Lang): string {
 }
 
 export function metaDates(o: Listing, t: Dict): string {
-  return `${t.par.no} OP-${o.id.toUpperCase()} · ${t.par.created} ${o.created || "—"} · ${t.par.upd} ${o.updated || o.created || "—"}`;
+  return `${t.par.no} ${listingNo(o)} · ${t.par.created} ${o.created || "—"} · ${t.par.upd} ${o.updated || o.created || "—"}`;
 }
 
 export function priceLabel(o: Listing, t: Dict): string {

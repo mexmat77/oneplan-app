@@ -25,13 +25,13 @@ let started = false;
 // ---------- объявления: строка ↔ Listing ----------
 type ListingRow = {
   id: string; owner_id: string; status: ListingStatus; price: number | string; photos: string[] | null; cover_url: string | null;
-  exports: Record<string, boolean> | null; data: Listing; updated_at: string;
+  exports: Record<string, boolean> | null; data: Listing; updated_at: string; short_id?: number | null;
 };
 const num = (v: unknown) => (typeof v === "number" ? v : parseFloat(String(v ?? 0)) || 0);
 function rowToListing(r: ListingRow): Listing {
   const d = r.data ?? ({} as Listing);
   const photos = r.photos?.length ? r.photos : d.photos ?? [];
-  return { ...d, id: r.id, owner: r.owner_id, st: r.status ?? d.st, price: num(r.price) || d.price, photos, img: r.cover_url || photos[0] || d.img };
+  return { ...d, id: r.id, owner: r.owner_id, st: r.status ?? d.st, price: num(r.price) || d.price, photos, img: r.cover_url || photos[0] || d.img, no: r.short_id ?? d.no };
 }
 function listingToRow(o: Listing) {
   return {
@@ -59,7 +59,7 @@ async function upsertListing(o: Listing): Promise<boolean> {
 
 async function loadListings() {
   if (!sb) return;
-  const { data, error } = await sb.from("listings").select("id, owner_id, status, price, photos, cover_url, exports, data, updated_at").order("created_at", { ascending: false });
+  const { data, error } = await sb.from("listings").select("id, owner_id, status, price, photos, cover_url, exports, data, updated_at, short_id").order("created_at", { ascending: false });
   if (error) { console.warn("[realtor sync] listings:", error.message); markRemoteLoaded(); return; }
   const rows = (data ?? []) as ListingRow[];
   setRemoteListings(rows.map(rowToListing), true);

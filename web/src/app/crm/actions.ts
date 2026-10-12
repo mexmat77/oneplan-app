@@ -737,7 +737,8 @@ export async function searchListings(q: string, scope: "mine" | "favs" | "all" =
     if (!ids.length) return [];
     qb = qb.in("id", ids);
   }
-  if (/^\d+$/.test(text)) qb = qb.eq("short_id", Number(text));
+  const no = text.match(/^(?:op-?)?(\d+)$/i);
+  if (no) qb = qb.eq("short_id", Number(no[1]));
   else if (text) { const like = `%${text.replace(/[%_]/g, "")}%`; qb = qb.or(`title->>RU.ilike.${like},title->>EN.ilike.${like},title->>TR.ilike.${like},il.ilike.${like},ilce.ilike.${like},semt.ilike.${like}`); }
   else if (scope === "all") qb = qb.eq("owner_id", c.me.id); // без текста «все» = недавние свои
   const { data } = await qb;
