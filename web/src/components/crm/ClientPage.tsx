@@ -8,7 +8,7 @@ import { IconArchive, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCop
 import { addNote, crmBootstrap, deleteClient, deleteDeal, deleteRequest, doneTask, findDups, getClient, listingBriefs, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
-import { showToast } from "@/components/ui/toast";
+import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
 import type { Client, ClientStage, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
@@ -66,7 +66,10 @@ function Inner({ id }: { id: string }) {
     if (!note.trim()) return;
     try { await addNote(cl.id, null, "note", note); setNote(""); load(); } catch (e) { err(e); }
   }
-  async function archive() { try { await setClientStatus(cl.id, cl.status === "active" ? "archived" : "active"); load(); } catch (e) { err(e); } }
+  async function archive() {
+    const was = cl.status;
+    try { await setClientStatus(cl.id, was === "active" ? "archived" : "active"); load(); showUndo(was === "active" ? c.undo.archivedOne : c.undo.restoredOne, async () => { await setClientStatus(cl.id, was); load(); }, c.undo.undo); } catch (e) { err(e); }
+  }
   async function del() {
     if (!(await confirmDialog({ title: c.client.delT, text: c.client.delQ, danger: true }))) return;
     try { await deleteClient(cl.id); crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } catch (e) { err(e); }
@@ -79,7 +82,8 @@ function Inner({ id }: { id: string }) {
     const st = crm.stages.find((s) => s.id === stageId);
     const reason = st?.kind === "lost" ? window.prompt(crm.me.lostReasons.length ? `${c.deal.lostPh}\n${crm.me.lostReasons.map((x, i) => `${i + 1}. ${x}`).join("\n")}` : c.deal.lostPh) ?? undefined : undefined;
     const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
-    try { await moveDeal(d.id, stageId, picked); load(); } catch (e) { err(e); }
+    const prev = d.stageId;
+    try { await moveDeal(d.id, stageId, picked); load(); if (prev && st?.kind === "open") showUndo(fill(c.undo.moved, { stage: stageName(st, t, lang) }), async () => { await moveDeal(d.id, prev); load(); }, c.undo.undo); } catch (e) { err(e); }
   }
   async function delDeal(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
 
@@ -207,7 +211,10 @@ function Timeline({ events }: { events: CrmEvent[] }) {
   const crm = useCrm();
   const [tr, setTr] = useState<Record<number, { busy?: boolean; text?: string; show?: boolean }>>({});
   const [flt, setFlt] = useState("all");
-  const shown = ACT_FILTERS[flt] ? events.filter((e) => ACT_FILTERS[flt]!.includes(e.kind)) : events;
+  const [sysOpen, setSysOpen] = useState(false);
+  // «Все»: системные события (правки карточки, заявки, передачи) свёрнуты в одну строку — как в Attio 2026
+  const sysN = flt === "all" ? events.filter((e) => ACT_FILTERS.system!.includes(e.kind)).length : 0;
+  const shown = ACT_FILTERS[flt] ? events.filter((e) => ACT_FILTERS[flt]!.includes(e.kind)) : sysOpen ? events : events.filter((e) => !ACT_FILTERS.system!.includes(e.kind));
   const chips = (
     <div className="mb-3 flex flex-wrap gap-1">{Object.keys(ACT_FILTERS).map((k) => { const n = ACT_FILTERS[k] ? events.filter((e) => ACT_FILTERS[k]!.includes(e.kind)).length : events.length; return <button key={k} type="button" onClick={() => setFlt(k)} className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border px-[10px] text-[12px] font-medium ${flt === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{(c.act as Record<string, string>)[k]}<span className={flt === k ? "text-white/70" : "text-muted"}>{n}</span></button>; })}</div>
   );
@@ -232,7 +239,8 @@ function Timeline({ events }: { events: CrmEvent[] }) {
     catch { showToast(c.ev.trErr); setTr((m) => ({ ...m, [e.id]: {} })); }
   }
   if (!events.length) return <div className="text-[13px] text-muted">{c.card.noActivity}</div>;
-  if (!shown.length) return <>{chips}<div className="text-[13px] text-muted">{c.notFound}</div></>;
+  const sysLine = sysN > 0 && flt === "all" ? <button type="button" onClick={() => setSysOpen((v) => !v)} className="mt-2 cursor-pointer text-[12px] text-muted hover:text-ink">{fill(c.act.systemN, { n: sysN })} · {sysOpen ? c.act.hide : c.act.show}</button> : null;
+  if (!shown.length) return <>{chips}<div className="text-[13px] text-muted">{c.notFound}</div>{sysLine}</>;
   const tone: Record<string, string> = { note: "#4d7cfe", call: "#22c15e", show: "#f5a623", meeting: "#7b4fd0", lead: "#0ea5a4", doc: "#e06aa3", stage: "#8a93a2" };
   return (
     <>{chips}
@@ -256,6 +264,7 @@ function Timeline({ events }: { events: CrmEvent[] }) {
         );
       })}
     </div>
+    {sysLine}
     </>
   );
 }

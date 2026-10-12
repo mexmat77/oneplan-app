@@ -12,6 +12,7 @@ import { crmBootstrap, crmCounts } from "@/app/crm/actions";
 import { useI18n } from "@/i18n/provider";
 import type { CrmMe, Source, Stage } from "@/lib/crm/types";
 import { ClientModal } from "./ClientModal";
+import { CommandPalette } from "./CommandPalette";
 import { ClientPage } from "./ClientPage";
 import { ClientsTable } from "./ClientsTable";
 import { DealModal, TaskModal } from "./CrmModals";
@@ -35,6 +36,7 @@ export function CrmShell({ base }: { base: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [create, setCreate] = useState<"" | "client" | "deal" | "task">("");
   const [menu, setMenu] = useState(false);
+  const [palette, setPalette] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [q, setQ] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -45,7 +47,9 @@ export function CrmShell({ base }: { base: string }) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement; const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) || el.isContentEditable;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPalette((v) => !v); return; }
       if (e.key === "/" && !typing) { e.preventDefault(); searchRef.current?.focus(); }
+      if (e.key.toLowerCase() === "n" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); setCreate("client"); }
       if (e.key === "Escape") setMenu(false);
     };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
@@ -111,7 +115,8 @@ export function CrmShell({ base }: { base: string }) {
             <div className="text-[15px] font-semibold text-ink">{nav.find((n) => n.active)?.label ?? c.title}</div>
             <div className="relative ml-2 w-[320px] max-w-[40vw]">
               <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
-              <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-2 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
+              <kbd className="pointer-events-none absolute right-[8px] top-1/2 -translate-y-1/2 rounded-[4px] border border-line px-[5px] text-[10px] text-muted">⌘K</kbd>
+              <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-12 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
             </div>
             <div className="flex-1" />
             <div className="relative">
@@ -138,6 +143,7 @@ export function CrmShell({ base }: { base: string }) {
         </div>
       </div>
 
+      <CommandPalette open={palette} onClose={() => setPalette(false)} onCreate={(k) => setCreate(k)} />
       {boot.me.access === "readonly" && <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full bg-red px-4 py-2 text-[12px] font-bold text-white shadow-lg">{c.readonly}</div>}
       <ClientModal open={create === "client"} client={null} onClose={() => setCreate("")} onSaved={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} onOpenDup={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} />
       <CreateDealHost open={create === "deal"} onClose={() => setCreate("")} clients={clients} setClients={setClients} base={base} />

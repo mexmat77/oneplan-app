@@ -1495,7 +1495,10 @@
       "addFilter": "Filter",
       "findField": "Find a field…",
       "apply": "Apply",
-      "done": "Done"
+      "done": "Done",
+      "saveView": "Save view",
+      "viewName": "View name",
+      "deleteView": "Delete view"
     },
     "kb": {
       "days": "{n} d.",
@@ -1950,13 +1953,31 @@
       "deals": "Deals",
       "docs": "Documents",
       "system": "System",
-      "filter": "Show"
+      "filter": "Show",
+      "systemN": "System events: {n}",
+      "show": "show",
+      "hide": "hide"
     },
     "obj": {
       "title": "Property",
       "open": "Open property",
       "none": "No property linked",
       "no": "No."
+    },
+    "cmd": {
+      "placeholder": "What to do? Client, section, action…",
+      "go": "Go to",
+      "noResults": "Nothing found",
+      "navigate": "navigate",
+      "select": "select",
+      "hint": "N — new client, / — search"
+    },
+    "undo": {
+      "undo": "Undo",
+      "archived": "Archived: {n}",
+      "archivedOne": "Client archived",
+      "restoredOne": "Client restored",
+      "moved": "Stage: {stage}"
     }
   },
   "dr": {

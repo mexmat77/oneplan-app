@@ -1495,7 +1495,10 @@
       "addFilter": "Filtre",
       "findField": "Alan ara…",
       "apply": "Uygula",
-      "done": "Tamam"
+      "done": "Tamam",
+      "saveView": "Görünümü kaydet",
+      "viewName": "Görünüm adı",
+      "deleteView": "Görünümü sil"
     },
     "kb": {
       "days": "{n} gün",
@@ -1950,13 +1953,31 @@
       "deals": "İşlemler",
       "docs": "Belgeler",
       "system": "Sistem",
-      "filter": "Göster"
+      "filter": "Göster",
+      "systemN": "Sistem olayları: {n}",
+      "show": "göster",
+      "hide": "gizle"
     },
     "obj": {
       "title": "Gayrimenkul",
       "open": "Gayrimenkulü aç",
       "none": "Gayrimenkul bağlı değil",
       "no": "No"
+    },
+    "cmd": {
+      "placeholder": "Ne yapalım? Müşteri, bölüm, işlem…",
+      "go": "Git",
+      "noResults": "Sonuç yok",
+      "navigate": "gezin",
+      "select": "seç",
+      "hint": "N — yeni müşteri, / — arama"
+    },
+    "undo": {
+      "undo": "Geri al",
+      "archived": "Arşivlendi: {n}",
+      "archivedOne": "Müşteri arşivlendi",
+      "restoredOne": "Müşteri geri alındı",
+      "moved": "Aşama: {stage}"
     }
   },
   "dr": {

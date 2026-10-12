@@ -7,11 +7,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
-import { bulkClients, clientDealSummary, listClients, type DealSummary } from "@/app/crm/actions";
+import { bulkClients, clientDealSummary, listClients, patchClient, type DealSummary } from "@/app/crm/actions";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
-import { showToast } from "@/components/ui/toast";
+import { showToast, showUndo } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Client } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
@@ -19,10 +19,11 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
+type SavedView = { id: string; name: string; flt: Flt; stage: string; view: View; sort: { key: SortKey; dir: 1 | -1 } };
 const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
 type SortKey = "name" | "updated" | "created";
 const DENS_LS = "opl-crm-density";
@@ -39,17 +40,29 @@ export function ClientsTable() {
   const urlQ = sp.get("q") ?? "";
   const [urlApplied, setUrlApplied] = useState(false);
   if (urlQ && !urlApplied) { setUrlApplied(true); crm.setQ(urlQ); }
+  // последнее состояние списка запоминается (стандарт 2026: «persist the last view»): фильтры, вид, этап, сортировка
+  const lastKey = `opl-crm-last:${crm.base}:${crm.me.ws.id}`;
+  const last = (() => { try { return JSON.parse(getPref(lastKey) || "{}") as Partial<{ flt: Flt; view: View; stage: string; sort: { key: SortKey; dir: 1 | -1 } }>; } catch { return {}; } })();
   const [status, setStatus] = useState<"active" | "archived">("active");
-  const [view, setView] = useState<View>("all");
-  const [stage, setStage] = useState<string>(""); // "" все, "none" без сделки, иначе id этапа
-  const [flt, setFlt] = useState<Flt>(EMPTY_FLT); // расширенный фильтр блоками (12.10.2026, «как полный поиск в CRM»)
-  const setF = (p: Partial<Flt>) => setFlt((v) => ({ ...v, ...p }));
+  const [view, setView] = useState<View>(last.view ?? "all");
+  const [stage, setStage] = useState<string>(last.stage ?? ""); // "" все, "none" нет сделок, "won"/"lost", иначе id этапа
+  const [flt, setFlt] = useState<Flt>({ ...EMPTY_FLT, ...(last.flt ?? {}) });
+  const setF = (p: Partial<Flt>) => { setFlt((v) => ({ ...v, ...p })); setCurSaved(""); };
   const [filtersOpen, setFiltersOpen] = useState(false);
   const cacheKey = `${crm.base}:clients:${status}`;
   const [list, setList] = useState<Client[] | null>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.list ?? null);
   const [deals, setDeals] = useState<Record<string, DealSummary>>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.deals ?? {});
   const [sel, setSel] = useState<Set<string>>(new Set());
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "updated", dir: -1 });
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>(last.sort ?? { key: "updated", dir: -1 });
+  useEffect(() => { setPref(lastKey, JSON.stringify({ flt, view, stage, sort })); }, [lastKey, flt, view, stage, sort]);
+  // сохранённые виды (Linear/Attio: view = сохранённые фильтры), личные, на пространство
+  const viewsKey = `opl-crm-views:${crm.base}:${crm.me.ws.id}`;
+  const savedRaw = usePref(viewsKey);
+  const saved: SavedView[] = (() => { try { const v = JSON.parse(savedRaw || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
+  const [curSaved, setCurSaved] = useState<string>(last.flt ? "" : "");
+  const saveView = async () => { const name = window.prompt(c.tbl.viewName); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage, view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
+  const applySaved = (v: SavedView) => { setFlt({ ...EMPTY_FLT, ...v.flt }); setStage(v.stage); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
+  const deleteSaved = (id: string) => { setPref(viewsKey, JSON.stringify(saved.filter((x) => x.id !== id))); if (curSaved === id) setCurSaved(""); };
   const [drawer, setDrawer] = useState<string | null>(null);
   const [modal, setModal] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -98,7 +111,10 @@ export function ClientsTable() {
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
-  async function bulk(patch: Parameters<typeof bulkClients>[1]) { try { await bulkClients([...sel], patch); setSel(new Set()); load(); } catch (e) { err(e); } }
+  async function bulk(patch: Parameters<typeof bulkClients>[1]) {
+    const ids = [...sel];
+    try { await bulkClients(ids, patch); setSel(new Set()); load(); if (patch.status) showUndo(fill(c.undo.archived, { n: ids.length }), async () => { await bulkClients(ids, { status: patch.status === "archived" ? "active" : "archived" }); load(); }, c.undo.undo); } catch (e) { err(e); }
+  }
   const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
   const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
   const activeFilters = Object.values(flt).filter(Boolean).length;
@@ -128,6 +144,8 @@ export function ClientsTable() {
       <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
         {(["all", "mine", "withTask", "overdue", "noDeal"] as View[]).map((v) => { const n = viewCount(v); return (
           <button key={v} type="button" onClick={() => setView(v)} className={`-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${view === v ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}>{c.tbl.views[v]}<span className={`rounded-full px-[7px] py-[1px] text-[11px] ${v === "overdue" && n ? "bg-red-tint text-red" : "bg-bg-2 text-muted"}`}>{n}</span></button>); })}
+        {saved.map((v) => <span key={v.id} className={`group/sv -mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-[13px] font-medium ${curSaved === v.id ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}><button type="button" onClick={() => applySaved(v)} className="cursor-pointer">{v.name}</button><button type="button" onClick={() => deleteSaved(v.id)} title={c.tbl.deleteView} className="cursor-pointer text-muted opacity-0 hover:text-red group-hover/sv:opacity-100"><IconX size={12} /></button></span>)}
+        {(activeFilters > 0 || stage) && !curSaved && <button type="button" onClick={saveView} className="-mb-px flex cursor-pointer items-center gap-1 border-b-2 border-transparent px-3 py-2 text-[13px] font-medium text-blue-2 hover:underline"><IconPlus size={13} /> {c.tbl.saveView}</button>}
         {/* архив — отдельная вкладка справа: архивные клиенты скрыты из «Активных», но остаются для истории и поиска дублей */}
         <button type="button" onClick={() => setStatus(status === "active" ? "archived" : "active")} className={`-mb-px ml-auto flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${status === "archived" ? "border-blue-2 text-ink" : "border-transparent text-muted hover:text-ink"}`}><IconArchive size={14} /> {c.archived}{status === "archived" && list ? <span className="rounded-full bg-bg-2 px-[7px] py-[1px] text-[11px] text-muted">{base.length}</span> : null}</button>
       </div>
@@ -159,12 +177,12 @@ export function ClientsTable() {
               {rows.map((x) => { const d = deals[x.id]; const m = crm.me.members.find((y) => y.id === x.ownerId); const main = x.contacts.find((y) => y.isMain) ?? x.contacts[0]; const reg = regionOf(x); const over = isOver(x); const st = crm.stages.find((s) => s.id === d?.stageId); return (
                 <tr key={x.id} onClick={() => router.push(`${crm.base}/c/${x.id}`)} className={`group cursor-pointer hover:bg-[#f7f8fa] ${sel.has(x.id) ? "bg-blue-tint/50" : ""}`} style={over ? { boxShadow: "inset 3px 0 0 #e5484d" } : undefined}>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><span className="flex items-center gap-2"><IconChevronRight size={14} className="text-muted" /><input type="checkbox" checked={sel.has(x.id)} onChange={(e) => setSel((s) => { const n = new Set(s); if (e.target.checked) n.add(x.id); else n.delete(x.id); return n; })} /></span></td>
-                  <td className={`px-3 ${pad}`}><span className="flex items-center gap-[6px]">{x.priority && <span className="h-2 w-2 flex-none rounded-full" title={c.prio[x.priority]} style={{ background: PRIO_COLOR[x.priority] }} />}<Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{x.roles.slice(0, 2).map((r) => <span key={r} className="rounded-[3px] bg-bg-2 px-[5px] text-[10.5px] font-medium text-muted">{c.roles[r]}</span>)}</span>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
+                  <td className={`px-3 ${pad}`}><span className="flex items-center gap-[6px]"><button type="button" disabled={ro} onClick={async (e) => { e.stopPropagation(); const order: (Client["priority"])[] = [null, "hot", "warm", "cold"]; const next = order[(order.indexOf(x.priority) + 1) % order.length]; try { await patchClient(x.id, { priority: next }); load(); } catch (er) { err(er); } }} title={x.priority ? c.prio[x.priority] : c.prio.none} className="h-[10px] w-[10px] flex-none cursor-pointer rounded-full border border-line hover:scale-125" style={{ background: x.priority ? PRIO_COLOR[x.priority] : "transparent", borderColor: x.priority ? PRIO_COLOR[x.priority] : undefined }} /><Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{x.roles.slice(0, 2).map((r) => <span key={r} className="rounded-[3px] bg-bg-2 px-[5px] text-[10.5px] font-medium text-muted">{c.roles[r]}</span>)}</span>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
                   <td className={`px-3 ${pad}`}>{reg ? <span className="inline-flex items-center gap-[6px] text-text">{reg.name}{reg.more > 0 && <span className="rounded-full bg-blue-tint px-[6px] text-[11px] font-semibold text-sel-ink">+{reg.more}</span>}</span> : <span className="text-muted">—</span>}</td>
                   <td className={`max-w-[260px] px-3 ${pad}`}>{d ? <><span className="block truncate text-text">{d.title || (d.amount != null ? fmt(d.amount, d.cur as Currency) : "—")}</span>{!dense && <span className="block truncate text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}</span>}</> : <span className="text-muted">—</span>}</td>
                   <td className={`px-3 ${pad}`}>{stageChip(d)}{!dense && st && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
-                  <td className={`px-3 ${pad}`}>{m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="inline-flex items-center gap-2 text-muted"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-2 text-[10px]">—</span>{c.tbl.unassigned}</span>}</td>
+                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { try { await patchClient(x.id, { ownerId: v || null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
                   <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.updatedAt, lang)}</td>
                   <td className={`px-2 ${pad}`} onClick={(e) => e.stopPropagation()}><span className="flex items-center justify-end gap-1 opacity-0 transition group-hover:opacity-100">{main && (main.kind === "phone" || main.kind === "whatsapp") && <a href={`tel:${main.value.replace(/[^\d+]/g, "")}`} title={c.client.call} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={15} /></a>}<button type="button" onClick={() => setDrawer(x.id)} title={c.tbl.quickView} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconEye size={15} /></button><Link href={`${crm.base}/c/${x.id}`} title={c.tbl.openTab} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconExternalLink size={15} /></Link></span></td>
                 </tr>); })}
