@@ -242,6 +242,6 @@ function normalise(raw: Raw[]): Listing[] {
 
 let cache: Listing[] | null = null;
 export function getSeedListings(): Listing[] {
-  if (!cache) cache = normalise(buildRaw());
+  if (!cache) cache = normalise(buildRaw()).map((o, i) => ({ ...o, no: 1001 + i })); // демо-номера OP-1001… (0026; реальные — OP-100001…)
   return cache;
 }

@@ -36,7 +36,7 @@ async function loadSources(c: Ctx): Promise<Source[]> {
 function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: number, nextTask: Client["nextTask"], requests: RequestBrief[] = []): Client {
   const id = r.id as string;
   return {
-    id, ownerId: s(r.owner_id), name: r.name as string, lang: (r.lang as Lang) || "RU", sourceId: s(r.source_id),
+    id, no: Number(r.no ?? 0), ownerId: s(r.owner_id), name: r.name as string, lang: (r.lang as Lang) || "RU", sourceId: s(r.source_id),
     kind: (r.kind as Client["kind"]) || "person", company: s(r.company), roles: ((r.roles as ClientRole[]) ?? []), stage: (r.stage as Client["stage"]) || "new", priority: (r.priority as Client["priority"]) ?? null,
     country: s(r.country), citizenship: s(r.citizenship), channel: (r.channel as Client["channel"]) ?? null, contactTime: s(r.contact_time), campaign: s(r.campaign),
     refKind: (r.ref_kind as Client["refKind"]) || "none", refProfileId: s(r.ref_profile_id), refAgencyId: s(r.ref_agency_id), refClientId: s(r.ref_client_id), refText: s(r.ref_text),
@@ -81,9 +81,10 @@ async function listClientsFor(c: Ctx, opts: { q?: string; status?: "active" | "a
       hitIds = new Set((hits ?? []).map((h) => h.client_id as string));
     }
     const low = term.toLowerCase();
-    // по номеру карточки: «#D2B93EAE» (первые символы id) или полный uuid
-    const idq = /^#?[0-9a-f-]{4,}$/i.test(term) ? term.replace(/^#/, "").toLowerCase() : "";
-    rows = rows.filter((r) => (r.name as string).toLowerCase().includes(low) || hitIds.has(r.id as string) || (!!idq && (r.id as string).toLowerCase().startsWith(idq)));
+    // по номеру (0026): «C-100001», «100001»; старый вид «#D2B93EAE» (первые символы uuid) — тоже
+    const noq = term.match(/^(?:c-?|#)?(\d{3,})$/i); const noN = noq ? Number(noq[1]) : 0;
+    const idq = !noq && /^#?[0-9a-f-]{4,}$/i.test(term) ? term.replace(/^#/, "").toLowerCase() : "";
+    rows = rows.filter((r) => (r.name as string).toLowerCase().includes(low) || hitIds.has(r.id as string) || (!!noN && Number(r.no) === noN) || (!!idq && (r.id as string).toLowerCase().startsWith(idq)));
   }
   const ids = rows.map((r) => r.id as string);
   if (!ids.length) return [];
@@ -260,7 +261,7 @@ export async function translateNote(eventId: number, to: Lang): Promise<string> 
 
 // ---------- сделки ----------
 function rowDeal(r: Row, clientName: string): Deal {
-  return { id: r.id as string, clientId: r.client_id as string, clientName, ownerId: s(r.owner_id), stageId: s(r.stage_id), title: (r.title as string) ?? "", deal: (r.deal as string) || "sale", amount: n(r.amount), cur: (r.cur as string) || "TRY", listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid), selectionId: s(r.selection_id), sourceId: s(r.source_id), lostReason: s(r.lost_reason), closedAt: s(r.closed_at), createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  return { id: r.id as string, no: Number(r.no ?? 0), clientId: r.client_id as string, clientName, ownerId: s(r.owner_id), stageId: s(r.stage_id), title: (r.title as string) ?? "", deal: (r.deal as string) || "sale", amount: n(r.amount), cur: (r.cur as string) || "TRY", listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid), selectionId: s(r.selection_id), sourceId: s(r.source_id), lostReason: s(r.lost_reason), closedAt: s(r.closed_at), createdAt: r.created_at as string, updatedAt: r.updated_at as string,
     requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos), objectText: s(r.object_text) };
 }
 async function listDealsFor(c: Ctx, f: { clientId?: string }): Promise<Deal[]> {

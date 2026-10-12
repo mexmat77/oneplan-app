@@ -1041,7 +1041,7 @@
     "readonly": "The free period is over — CRM is read-only. Subscribe to continue working.",
     "paidTo": "Subscription until {date}",
     "secure": "Contacts and notes are encrypted and visible only to you. Platform staff cannot see them.",
-    "search": "Name, phone or e-mail",
+    "search": "Name, phone, e-mail or number (C-100001)",
     "addClient": "Add client",
     "noClients": "No clients yet — add the first one or connect your website leads.",
     "noArchived": "Archive is empty. Clients removed from the active list land here; their history, deals and documents are kept and they can be restored.",
@@ -1456,7 +1456,7 @@
       "newDeal": "Deal",
       "newTask": "Task",
       "create": "Create",
-      "search": "Name, phone, e-mail or card No.",
+      "search": "Name, phone, e-mail or number (C-100001)",
       "collapse": "Collapse menu",
       "expand": "Expand menu"
     },

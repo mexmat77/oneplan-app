@@ -34,7 +34,7 @@ export type Kvkk = {
   consent?: { call?: boolean; sms?: boolean; whatsapp?: boolean; email?: boolean; at?: string; revokedAt?: string; basis?: "consent" | "contract" | "interest"; source?: string; retainMonths?: number; deleteAt?: string };
 };
 export type Client = {
-  id: string; ownerId: string | null; name: string; lang: Lang; sourceId: string | null;
+  id: string; no: number; ownerId: string | null; name: string; lang: Lang; sourceId: string | null; // no — номер «C-100001» (0026)
   kind: "person" | "company"; company: string | null; roles: ClientRole[]; stage: ClientStage; priority: Priority | null;
   country: string | null; citizenship: string | null; channel: Channel | null; contactTime: string | null; campaign: string | null;
   refKind: RefKind; refProfileId: string | null; refAgencyId: string | null; refClientId: string | null; refText: string | null;
@@ -53,12 +53,15 @@ export type Client = {
 
 /** Ссылка на объект в CRM (0024): объявление риэлтора, квартира застройщика или свободный текст (не из базы). */
 export type ObjRef = { kind: "listing"; id: string } | { kind: "unit"; projectId: number; unitUid: number } | { kind: "free"; text: string; url?: string };
+/** Номера для людей (0026): клиент C-100001, сделка D-100001; объявление — `listingNo` в lib/detail (OP-100001). */
+export const clientNo = (c: { no?: number | null; id: string }) => (c.no ? `C-${c.no}` : `#${c.id.slice(0, 8).toUpperCase()}`);
+export const dealNo = (d: { no?: number | null; id: string }) => (d.no ? `D-${d.no}` : `#${d.id.slice(0, 8).toUpperCase()}`);
 export const unitKey = (projectId: number | string, unitUid: number) => `${projectId}#${unitUid}`;
 /** Квартира застройщика кратко (для карточек и выбора). */
 export type UnitBrief = { projectId: number; projectName: string; uid: number; num: string; wing: string | null; floor: number; type: string; area: number; price: number; cur: string; status: string };
 
 export type Deal = {
-  id: string; clientId: string; clientName: string; ownerId: string | null; stageId: string | null; title: string; deal: string;
+  id: string; no: number; clientId: string; clientName: string; ownerId: string | null; stageId: string | null; title: string; deal: string;
   amount: number | null; cur: string; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null;
   sourceId: string | null; lostReason: string | null; closedAt: string | null; createdAt: string; updatedAt: string;
   requestId: string | null; branchId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null; boardPos: number | null;

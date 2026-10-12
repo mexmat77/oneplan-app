@@ -1041,7 +1041,7 @@
     "readonly": "Ücretsiz dönem bitti — CRM yalnızca okunabilir. Devam etmek için abonelik alın.",
     "paidTo": "Abonelik: {date} tarihine kadar",
     "secure": "İletişim bilgileri ve notlar şifrelidir, yalnızca siz görürsünüz. Platform çalışanları göremez.",
-    "search": "Ad, telefon veya e-posta",
+    "search": "Ad, telefon, e-posta veya numara (C-100001)",
     "addClient": "Müşteri ekle",
     "noClients": "Henüz müşteri yok — ilkini ekleyin veya web sitenizden başvuru alın.",
     "noArchived": "Arşiv boş. Aktif listeden kaldırılan müşteriler buraya gelir; geçmiş, işlemler ve belgeler korunur, geri alınabilir.",
@@ -1456,7 +1456,7 @@
       "newDeal": "İşlem",
       "newTask": "Görev",
       "create": "Oluştur",
-      "search": "Ad, telefon, e-posta veya kart no",
+      "search": "Ad, telefon, e-posta veya numara (C-100001)",
       "collapse": "Menüyü daralt",
       "expand": "Menüyü genişlet"
     },
