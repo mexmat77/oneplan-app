@@ -67,7 +67,9 @@ export async function listClients(opts: { q?: string; status?: "active" | "archi
       hitIds = new Set((hits ?? []).map((h) => h.client_id as string));
     }
     const low = term.toLowerCase();
-    rows = rows.filter((r) => (r.name as string).toLowerCase().includes(low) || hitIds.has(r.id as string));
+    // по номеру карточки: «#D2B93EAE» (первые символы id) или полный uuid
+    const idq = /^#?[0-9a-f-]{4,}$/i.test(term) ? term.replace(/^#/, "").toLowerCase() : "";
+    rows = rows.filter((r) => (r.name as string).toLowerCase().includes(low) || hitIds.has(r.id as string) || (!!idq && (r.id as string).toLowerCase().startsWith(idq)));
   }
   const ids = rows.map((r) => r.id as string);
   if (!ids.length) return [];
