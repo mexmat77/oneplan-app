@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/UserMenu";
 import { useDevT } from "@/i18n/dev";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { uploadFile } from "@/lib/upload";
+import { toJpegFile } from "@/lib/photos";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { setCurrentUserName, touch, useDev } from "@/store/dev";
 import { copyText, genPassword, useRoleFlags } from "@/components/dev/users/shared";
@@ -55,11 +56,10 @@ export function ProfileScreen({ me }: { me: ProfileMe }) {
   };
   const pickPhoto = async (file: File | undefined) => {
     if (!file) return;
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { showToast(t.prof_photo_type); return; }
-    if (file.size > 5 * 1024 * 1024) { showToast(t.prof_photo_big); return; }
     setUpBusy(true);
     try {
-      const up = await uploadFile(file, `dev/avatars/${me.id || "demo"}`);
+      const jpg = await toJpegFile(file, 512).catch(() => { throw new Error(t.prof_photo_type); }); // HEIC/PNG/WebP → JPEG 512px
+      const up = await uploadFile(jpg, `dev/avatars/${me.id || "demo"}`);
       if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: up.url });
       setAvatar(up.url); router.refresh();
     } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); if (fileRef.current) fileRef.current.value = ""; }
@@ -94,7 +94,7 @@ export function ProfileScreen({ me }: { me: ProfileMe }) {
           <div className="relative">
             <Avatar name={name || me.name} src={avatar} size={72} />
             <button type="button" onClick={() => fileRef.current?.click()} disabled={upBusy} title={t.prof_photo_change} className="absolute -bottom-1 -right-1 flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-blue text-white shadow-[0_2px_6px_rgba(20,36,63,.25)] hover:bg-blue-3 disabled:opacity-60"><IconCamera size={14} /></button>
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => void pickPhoto(e.target.files?.[0])} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => void pickPhoto(e.target.files?.[0])} />
           </div>
           <div className="min-w-[180px] flex-1">
             <div className="text-[18px] font-extrabold tracking-[-.01em] text-ink">{name || me.name}</div>

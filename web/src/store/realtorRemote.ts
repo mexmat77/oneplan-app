@@ -155,6 +155,12 @@ export function startRealtorSync(meId: string) {
     upsert: (o) => { void upsertListing(o); },
     status: (id, st) => { void sb!.from("listings").update({ status: st, updated_at: new Date().toISOString() }).eq("id", id).then(({ error }) => err("Статус не сохранён")(error)); },
     exports: (id, map) => { void sb!.from("listings").update({ exports: map }).eq("id", id).then(({ error }) => err("Экспорт не сохранён")(error)); },
+    remove: (id) => { void (async () => {
+      const { error } = await sb!.from("listings").delete().eq("id", id);
+      if (error) { err("Объявление не удалено")(error); return; }
+      // фото объявления в bucket photos/<uid>/<listing>/ — убрать, чтобы не копились (best-effort)
+      try { const { data } = await sb!.storage.from("photos").list(`${me}/${id}`); const names = (data ?? []).map((f) => `${me}/${id}/${f.name}`); if (names.length) await sb!.storage.from("photos").remove(names); } catch { /* не критично */ }
+    })(); },
   });
   setFavHook((id, on) => { void (on ? sb!.from("favorites").upsert({ user_id: me, listing_id: id }) : sb!.from("favorites").delete().eq("user_id", me).eq("listing_id", id)).then(({ error }) => err("Избранное не сохранено")(error)); });
   setSelectionHook({ upsert: (s) => { void upsertSelection(s); }, remove: (id) => { void sb!.from("selections").delete().eq("id", id).then(({ error }) => err("Подборка не удалена")(error)); } });

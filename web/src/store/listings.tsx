@@ -81,7 +81,7 @@ export function useRemoteListings(): Remote { return useSyncExternalStore(remote
  *  (страница объекта отдавала 404 на объявления из базы, пока шёл запрос, 10.10.2026). */
 export function useListingsReady(meId: string): boolean { const rem = useRemoteListings(); return meId === "me" || rem.loaded; }
 /** Запись в базу (ставит `store/realtorRemote.ts`); без неё — localStorage. */
-export type ListingWriteHook = { upsert: (o: Listing) => void; status: (id: string, st: ListingStatus) => void; exports: (id: string, map: Record<string, boolean>) => void };
+export type ListingWriteHook = { upsert: (o: Listing) => void; status: (id: string, st: ListingStatus) => void; exports: (id: string, map: Record<string, boolean>) => void; remove: (id: string) => void };
 let writeHook: ListingWriteHook | null = null;
 export function setListingWriteHook(h: ListingWriteHook | null) { writeHook = h; }
 
@@ -95,6 +95,12 @@ export function upsertLocalListing(o: Listing) {
   const cur = readLocal();
   const i = cur.findIndex((x) => x.id === o.id);
   writeOf(LOCAL, i >= 0 ? cur.map((x) => (x.id === o.id ? o : x)) : [...cur, o]);
+}
+
+/** Удалить своё объявление (12.10.2026): из базы (hook) или из localStorage; оптимистично убирается из списка. */
+export function removeListing(id: string) {
+  if (remote.active && writeHook) { setRemoteListings(remote.list.filter((x) => x.id !== id)); writeHook.remove(id); return; }
+  writeOf(LOCAL, readLocal().filter((x) => x.id !== id));
 }
 
 /* ---------- status overrides + portal export map (prototype `stOver` / `expMap`, line 3449–3459) ---------- */

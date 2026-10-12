@@ -12,6 +12,15 @@ export async function shrinkImage(src: string, max = 1600, q = 0.82): Promise<Bl
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("toBlob"))), "image/jpeg", q));
 }
 
+/** Файл изображения с телефона/компьютера (JPG/PNG/WebP/HEIC — HEIC декодирует Safari) → JPEG не больше `max` px.
+ *  Для аватаров: 512 px; размер после сжатия — десятки КБ, лимиты на размер исходника не нужны (12.10.2026, «на телефоне не
+ *  добавляется аватар» — iPhone отдаёт HEIC, который раньше отвергался проверкой типа). */
+export async function toJpegFile(file: File, max = 512, q = 0.85): Promise<File> {
+  const url = URL.createObjectURL(file);
+  try { const blob = await shrinkImage(url, max, q); return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }); }
+  finally { URL.revokeObjectURL(url); }
+}
+
 /** data:-URL → загрузка; обычные URL (уже в хранилище или демо) возвращаются как есть. */
 export async function uploadPhotos(uid: string, listingId: string, photos: string[]): Promise<string[]> {
   const sb = createClient();

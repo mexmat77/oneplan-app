@@ -648,7 +648,11 @@
       "Sauna",
       "Çocuk parkı",
       "Teras"
-    ]
+    ],
+    "del": "İlanı sil",
+    "delT": "İlanı silme",
+    "delQ": "İlan ve fotoğrafları veritabanından kalıcı olarak silinecek. Diğer danışmanların seçkileri ve favorileri bunu kaybedecek.",
+    "deleted": "İlan silindi"
   },
   "sel": {
     "previewBar": "Önizle",
@@ -916,7 +920,11 @@
     "tfaRemoved": "İki adımlı koruma kapatıldı",
     "tfaBad": "Kod yanlış — telefonun saatini kontrol edip tekrar deneyin",
     "tfaSecret": "Elle giriş için anahtar",
-    "tfaRelogin": "Bunun için yeniden giriş yapıp kodla onaylayın"
+    "tfaRelogin": "Bunun için yeniden giriş yapıp kodla onaylayın",
+    "photoChange": "Fotoğraf yükle",
+    "photoRemove": "Kaldır",
+    "photoHint": "Telefon veya bilgisayardan herhangi bir fotoğraf, iPhone çekimleri dahil; 512 px'e küçültülür. Meslektaşlar ve müşteriler görür.",
+    "photoErr": "Görsel okunamadı — JPG, PNG veya kamera fotoğrafı seçin"
   },
   "lp": {
     "send_err": "Başvuru gönderilemedi. Lütfen tekrar deneyin veya bize yazın.",

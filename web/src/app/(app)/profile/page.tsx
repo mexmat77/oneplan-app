@@ -1,7 +1,7 @@
 "use client";
 
 // «Профиль» — prototype lines 1403–1534 (markup), 3680–3700 / 3824–3826 / 4243–4285 (logic).
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +16,11 @@ import { useMahalleLoaded } from "@/lib/geo";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { showToast } from "@/components/ui/toast";
 import { saveProfile, useProfile } from "@/store/profile";
+import { Avatar } from "@/components/ui/UserMenu";
+import { uploadFile } from "@/lib/upload";
+import { toJpegFile } from "@/lib/photos";
+import { updateMyProfile } from "@/app/(app)/profile/actions";
+import { IconCamera, IconTrash } from "@tabler/icons-react";
 
 const input = "w-full rounded-[10px] border border-line px-[11px] py-[10px] text-[13.5px] outline-none focus:border-blue";
 const label = "mb-[6px] block text-[12.5px] font-semibold text-text-2";
@@ -66,6 +71,18 @@ export default function ProfilePage() {
   const [pw, setPw] = useState({ old: "", n: "", c: "" });
 
   const initials = name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  // фото профиля (12.10.2026): хранится в user_metadata.avatar_url, файл — media/dev/avatars/<uid>; с телефона — любой формат
+  const [uid, setUid] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [upBusy, setUpBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (!hasSupabaseEnv()) return; createClient().auth.getUser().then(({ data }) => { setUid(data.user?.id ?? ""); setAvatar((data.user?.user_metadata?.avatar_url as string | undefined) || null); }).catch(() => {}); }, []);
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return; setUpBusy(true);
+    try { const jpg = await toJpegFile(file, 512).catch(() => { throw new Error(t.prof.photoErr); }); const up = await uploadFile(jpg, `dev/avatars/${uid || "demo"}`); if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: up.url }); setAvatar(up.url); showToast(t.prof.saved); router.refresh(); }
+    catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
+  const removePhoto = async () => { setUpBusy(true); try { if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: "" }); setAvatar(null); router.refresh(); } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); } };
   const areaList = areasOpen ? GEO : GEO.filter((g) => p.areas.includes(g.k));
   const toggleArea = (k: string) => saveProfile({ areas: p.areas.includes(k) ? p.areas.filter((x) => x !== k) : [...p.areas, k] });
   const mxAdded = !!p.mxId;
@@ -115,9 +132,15 @@ export default function ProfilePage() {
       </Link>
 
       <div className="rounded-[16px] border border-line bg-surface p-[22px] max-md:p-4">
-        <div className="mb-5 flex items-center gap-[14px]">
-          <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>
-          <div><div className="text-[16px] font-extrabold text-ink">{name}</div><div className="text-[12.5px] text-muted">{p.agency}</div></div>
+        <div className="mb-5 flex flex-wrap items-center gap-[14px]">
+          {avatar ? <Avatar name={name} src={avatar} size={58} /> : <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>}
+          <div className="min-w-0 flex-1"><div className="text-[16px] font-extrabold text-ink">{name}</div><div className="text-[12.5px] text-muted">{p.agency}</div></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => void pickPhoto(e.target.files?.[0])} />
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={upBusy} className={`${smallBtn} inline-flex items-center gap-[6px]`}><IconCamera size={15} /> {upBusy ? "…" : t.prof.photoChange}</button>
+            {avatar && <button type="button" onClick={removePhoto} disabled={upBusy} className={`${smallBtn} inline-flex items-center gap-[6px] text-muted`}><IconTrash size={14} /> {t.prof.photoRemove}</button>}
+          </div>
+          <div className="w-full text-[12px] text-muted">{t.prof.photoHint}</div>
         </div>
         <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[14px]">
           <div><label className={label}>{t.prof.name}</label><input value={name} onChange={(e) => setName(e.target.value)} className={input} /></div>

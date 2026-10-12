@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import {
+  IconTrash,
   IconArrowLeft, IconBath, IconBeach, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp, IconCalendar, IconCheck, IconChevronRight,
   IconDots, IconFlag, IconFlagFilled, IconFolderPlus, IconHeart, IconHeartFilled, IconInfoCircle, IconLayoutGrid, IconMapPin, IconMessageCircle,
   IconPencil, IconPhone, IconRuler2, IconShieldCog, IconSparkles, IconWorldUpload, IconX,
@@ -17,13 +18,14 @@ import { eqOf, fmt, useRates } from "@/lib/money";
 import { REALTORS } from "@/lib/seed";
 import { useRealtor } from "@/store/realtors";
 import { useMeId } from "@/store/profile";
-import { getPrevScreen, setStOver, useAllListings, useListingMeta, useListingsReady } from "@/store/listings";
+import { getPrevScreen, removeListing, setStOver, useAllListings, useListingMeta, useListingsReady } from "@/store/listings";
 import { useRole } from "@/store/role";
 import { oldPrice, type ListingStatus } from "@/lib/types";
 import { Gallery } from "@/components/obj/Gallery";
 import { ExportModal, expCount } from "@/components/obj/ExportModal";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
+import { confirmDialog } from "@/components/ui/confirm";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { usePrefs } from "@/store/prefs";
 import { addReport, type ReportReason } from "@/store/admin";
@@ -268,6 +270,10 @@ export default function ObjPage() {
               <Link href={`/add?edit=${o.id}`} className="mb-[10px] flex w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue"><IconPencil size={16} /> {t.add.editB}</Link>
               <button type="button" onClick={() => setExp(true)} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue">
                 <IconWorldUpload size={16} /> {t.exp.t} {expN > 0 && <span className="rounded-[12px] bg-green-tint px-2 py-[2px] text-[11px] font-bold text-green">{expN}/3</span>}
+              </button>
+              {/* удалить своё объявление (12.10.2026) — необратимо, поэтому с подтверждением */}
+              <button type="button" onClick={async () => { if (!(await confirmDialog({ title: t.obj.delT, text: t.obj.delQ, danger: true, ok: t.obj.del }))) return; removeListing(o.id); showToast(t.obj.deleted); router.push("/mine"); }} className="mt-[10px] flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] p-3 text-[13.5px] font-bold text-red hover:bg-red-tint">
+                <IconTrash size={16} /> {t.obj.del}
               </button>
             </div>
           )}
