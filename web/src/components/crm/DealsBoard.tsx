@@ -8,13 +8,12 @@ import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPl
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
-import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { DealModal } from "./CrmModals";
-import { cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { crmError, cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 const LS = "opl-crm-deals-view";
 
@@ -40,7 +39,7 @@ export function DealsBoard() {
     listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {});
   }, [crm.base]);
   useEffect(() => { load(); }, [load]);
-  const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
+  const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
   async function move(d: Deal, stageId: string) {
     if (d.stageId === stageId) return;
     const st = crm.stages.find((s) => s.id === stageId);

@@ -13,7 +13,7 @@ import { showToast } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
 import { FIELDS, FIELD_MAP, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
-import { btnP, btnS, card, chip, inp, lbl, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, card, chip, inp, lbl, useCrm } from "./crmUi";
 
 const tplName = (t: TemplateInfo, lang: Lang) => (typeof t.name === "string" ? t.name : t.name[lang] ?? t.name.RU);
 const COMPANY_GROUPS: [string, string[]][] = [["company", ["name", "taxNo", "taxOffice", "mersis", "registryNo", "licenseNo"]], ["contacts", ["representative", "phone", "email", "address"]], ["bank", ["bank", "iban"]]];
@@ -83,7 +83,7 @@ function CompanyForm({ pr, first, onClose, onSaved }: { pr: CompanyProfile | nul
     if (!f.name?.trim()) { showToast(d.needName); return; }
     setBusy(true);
     try { onSaved(await saveCompanyProfile({ id: pr?.id, label, isDefault, fields: f })); showToast(c.set.saved); }
-    catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
+    catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
   return (

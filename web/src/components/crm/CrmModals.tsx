@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Deal, DealInput, Task, TaskInput, TaskKind } from "@/lib/crm/types";
-import { btnP, btnS, fromLocalInput, inp, lbl, sourceName, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, fromLocalInput, inp, lbl, sourceName, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
 import { DuePicker } from "./DuePicker";
 import { DateField } from "@/components/ui/DateRange";
 
@@ -42,7 +42,7 @@ function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealP
       if (crm.me.ws.kind === "developer" && o) { const [p, u] = o.split("#"); projectId = p || null; unitUid = u ? +u || null : null; }
       await saveDeal({ ...f, listingId, projectId, unitUid }, deal?.id ?? null);
       onSaved();
-    } catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
+    } catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
   return (
@@ -98,7 +98,7 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
     if (!f.title.trim()) { showToast(c.needTitle); return; }
     setBusy(true);
     try { await saveTask({ ...f, dueAt: due || new Date().toISOString() }, task?.id ?? null); onSaved(); }
-    catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
+    catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
   const kinds: TaskKind[] = ["call", "show", "meeting", "message", "other"];

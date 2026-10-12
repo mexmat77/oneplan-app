@@ -25,6 +25,10 @@
 - Проверка: `npx tsc --noEmit && npx eslint src && npm run test:unit` (Vitest, `web/tests/unit/*.test.ts` — чистая логика: курс и
   округления, фильтры, справочник географии, подборки; `vitest.config.ts` алиас `@/` и заглушка `server-only`). Деплой гоняет всё
   это сам и останавливается при ошибке. Тесты уже ловили реальный баг (фильтр цены считал по старому курсу 48).
+- Рассинхрон версий (12.10.2026): `deploymentId` в next.config.ts из `NEXT_DEPLOYMENT_ID`, который deploy.sh ставит при сборке —
+  вкладка со старой версией при переходе перезагружается сама, а не падает на «Failed to find Server Action» (у пользователя было
+  «Не удалось сохранить» при создании клиента сразу после деплоя). В CRM ошибки экшенов показывать через `crmError(e, fallback,
+  readonlyText)` из crmUi: readonly / «Приложение обновилось — обновите страницу» с кнопкой / общий текст.
 - Staging (10.10.2026): `./scripts/deploy.sh staging` → https://ai.one-plan.pro — старый поддомен после переезда на one-plan.pro
   отдан под тестовую копию (в nginx http://ai → https://ai, НЕ на основной; браузер мог запомнить старый 301) (та же база Supabase, `/var/www/oneplan-staging`,
   pm2 «oneplan-staging», порт 3001, `.env` с `NEXT_PUBLIC_STAGE=staging` → красный баннер «тестовая версия»). Сначала проверять

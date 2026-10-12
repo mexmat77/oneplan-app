@@ -87,6 +87,7 @@ export function wantGeoLabel(w: { il?: string; ilces?: string[]; semts?: string[
 }
 
 // ---------- заявки (0017) ----------
+import { showToast } from "@/components/ui/toast";
 import { requestSummary } from "@/lib/crm/requestFields";
 import { fmt as fmtMoney } from "@/lib/money";
 import type { Currency } from "@/lib/types";
@@ -102,3 +103,13 @@ export function countryName(code: string | null | undefined, lang: Lang): string
   if (!code) return "";
   try { return new Intl.DisplayNames([LOC[lang]], { type: "region" }).of(code) ?? code; } catch { return code; }
 }
+
+/** Ошибка серверного экшена → понятный тост: режим чтения, устаревшая вкладка после деплоя (предложить обновить), иначе запасной текст. */
+export function crmError(e: unknown, fallback: string, readonlyText: string) {
+  const m = (e as Error)?.message ?? "";
+  if (m === "readonly") { showToast(readonlyText); return; }
+  if (/Server Action|Server Reference|deployment/i.test(m)) { showToast(staleText(), 8000, { label: staleBtn(), onClick: () => window.location.reload() }); return; }
+  showToast(fallback);
+}
+const staleText = () => (typeof navigator !== "undefined" && /^tr/i.test(navigator.language) ? "Uygulama güncellendi — sayfayı yenileyin" : /^en/i.test(typeof navigator !== "undefined" ? navigator.language : "") ? "The app was updated — reload the page" : "Приложение обновилось — обновите страницу");
+const staleBtn = () => (typeof navigator !== "undefined" && /^tr/i.test(navigator.language) ? "Yenile" : /^en/i.test(typeof navigator !== "undefined" ? navigator.language : "") ? "Reload" : "Обновить");

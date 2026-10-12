@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Stage, StageKind, StageScope } from "@/lib/crm/types";
-import { btnP, btnS, inp, stageName, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, inp, stageName, useCrm } from "./crmUi";
 
 type StRow = { id?: string; key: string; name: Record<string, string>; kind: StageKind; color: string | null };
 const COLORS = ["#8a93a2", "#4d7cfe", "#2563eb", "#0ea5a4", "#14b8a6", "#22c15e", "#84cc16", "#f5a623", "#f97316", "#e5484d", "#dc2626", "#e06aa3", "#d946ef", "#7b4fd0", "#6366f1", "#475569"];
@@ -27,7 +27,7 @@ export function StageEditor({ scope, stages, onSaved }: { scope: StageScope; sta
   async function save() {
     setBusy(true);
     try { const out = await saveStages(st, scope); onSaved(out); setSt(out.map((s) => ({ id: s.id, key: s.key, name: s.name, kind: s.kind, color: s.color }))); showToast(c.set.saved); }
-    catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); } finally { setBusy(false); }
+    catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setBusy(false); }
   }
   return (
     <>

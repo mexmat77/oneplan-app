@@ -13,7 +13,7 @@ import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Source, SourceKind } from "@/lib/crm/types";
 import Link from "next/link";
-import { btnS, card, fill, fmtDT, inp, lbl, sourceName, useCrm } from "./crmUi";
+import { crmError, btnS, card, fill, fmtDT, inp, lbl, sourceName, useCrm } from "./crmUi";
 
 
 export function CrmSettings({ sub }: { sub?: string }) {
@@ -27,7 +27,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const [audit, setAudit] = useState<Awaited<ReturnType<typeof listAudit>> | null>(null);
   useEffect(() => { if (crm.me.isAdmin) listAudit().then(setAudit).catch(() => setAudit([])); }, [crm.me.isAdmin]);
 
-  const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
+  const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
 
   async function addSrc() {
     if (!src.name.trim()) return;

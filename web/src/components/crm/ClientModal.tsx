@@ -17,7 +17,7 @@ import type { Channel, Client, ClientInput, ClientRole, ClientStage, ContactKind
 import { useMahalleLoaded } from "@/lib/geo";
 import { DuePicker } from "./DuePicker";
 import { ReqFieldGroups } from "./RequestModal";
-import { PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { crmError, PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 type CForm = { id?: string; kind: ContactKind; value: string; label: string; isMain: boolean };
 const KINDS: ContactKind[] = ["phone", "whatsapp", "email", "telegram", "other"];
@@ -82,7 +82,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
       }
       const id = await saveClient({ ...f, tags: tags.split(",").map((s) => s.trim()).filter(Boolean), firstRequest: isNew ? f.firstRequest : null, firstTask: isNew && f.firstTask?.dueAt ? { ...f.firstTask, title: f.firstTask.title.trim() || taskKindName(f.firstTask.kind, t) } : null }, client?.id ?? null);
       onSaved(id);
-    } catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
+    } catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
 

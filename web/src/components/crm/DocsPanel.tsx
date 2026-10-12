@@ -14,7 +14,7 @@ import { showToast } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
 import { FIELD_MAP, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
-import { btnP, btnS, fmtDate, inp, lbl, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, fmtDate, inp, lbl, useCrm } from "./crmUi";
 
 const tplName = (t: TemplateInfo, lang: Lang) => (typeof t.name === "string" ? t.name : t.name[lang] ?? t.name.RU);
 function groupFields(fields: string[]): [string, string[]][] {
@@ -34,7 +34,7 @@ export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; deal
   const [upload, setUpload] = useState(false);
   const load = useCallback(() => { listDocs({ dealId }).then(setDocs).catch(() => setDocs([])); }, [dealId]);
   useEffect(() => { load(); }, [load]);
-  const err = (e: unknown) => showToast((e as Error).message === "readonly" ? t.crm.errReadonly : c.err);
+  const err = (e: unknown) => crmError(e, c.err, t.crm.errReadonly);
   async function open(d: DocInfo, which: "docx" | "pdf" | "file") { try { window.open(await docUrl(d.id, which), "_blank", "noopener"); } catch (e) { err(e); } }
   async function del(d: DocInfo) { if (!(await confirmDialog({ text: c.delQ, danger: true }))) return; try { await deleteDoc(d.id); load(); } catch (e) { err(e); } }
   async function status(d: DocInfo, st: DocInfo["status"]) { try { await setDocStatus(d.id, st, d.validUntil); load(); } catch (e) { err(e); } }
@@ -109,7 +109,7 @@ function DocCreateModal({ dealId, dealKind, fromDoc, onClose, onDone }: { dealId
     if (!tpl) return;
     setBusy(true); showToast(c.generating);
     try { const used: Record<string, string> = {}; tpl.fields.forEach((k) => { if (values[k]) used[k] = values[k]; }); await generateDoc({ dealId, templateId: tpl.id, title: title.trim() || tplName(tpl, lang), values: used }); showToast(c.saved); onDone(); }
-    catch (e) { showToast((e as Error).message === "readonly" ? t.crm.errReadonly : c.err); }
+    catch (e) { crmError(e, c.err, t.crm.errReadonly); }
     finally { setBusy(false); }
   }
   const kinds = c.kinds as Record<string, string>;
@@ -184,7 +184,7 @@ function DocUploadModal({ dealId, onClose, onDone }: { dealId: string; onClose: 
     if (!file) return;
     setBusy(true);
     try { const fd = new FormData(); fd.set("file", file); fd.set("dealId", dealId); fd.set("title", title); fd.set("kind", kind); await uploadDoc(fd); onDone(); }
-    catch (e) { showToast((e as Error).message === "readonly" ? t.crm.errReadonly : c.err); }
+    catch (e) { crmError(e, c.err, t.crm.errReadonly); }
     finally { setBusy(false); }
   }
   const kinds = c.kinds as Record<string, string>;

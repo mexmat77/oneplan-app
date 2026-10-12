@@ -13,7 +13,7 @@ HOST=oneplan            # алиас из ~/.ssh/config (ключ ~/.ssh/oneplan
 STAGE="${1:-prod}"
 if [ "$STAGE" = "staging" ]; then DIR=/var/www/oneplan-staging; APP=oneplan-staging; PORT=3001; URL=https://ai.one-plan.pro/; else DIR=/var/www/oneplan; APP=oneplan; PORT=3000; URL=https://one-plan.pro/; fi
 echo "▸ проверка"; npx tsc --noEmit && npx eslint src --quiet && npm run test:unit --silent
-echo "▸ сборка";   npm run build >/dev/null
+echo "▸ сборка";   NEXT_DEPLOYMENT_ID="$(date +%Y%m%d%H%M%S)-$STAGE" npm run build >/dev/null
 echo "▸ загрузка"
 rsync -az --delete --exclude .env -e "ssh -o BatchMode=yes" .next/standalone/ "$HOST:$DIR/"
 rsync -az --delete -e "ssh -o BatchMode=yes" .next/static/ "$HOST:$DIR/.next/static/"

@@ -5,12 +5,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { IconArrowUpRight, IconBrandWhatsapp, IconPhone, IconX } from "@tabler/icons-react";
 import { addNote, doneTask, getClient } from "@/app/crm/actions";
-import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Client, CrmEvent, Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
-import { btnP, chip, fmtDT, initials, inp, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { crmError, btnP, chip, fmtDT, initials, inp, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 export function ClientDrawer({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged?: () => void }) {
   const { t, lang } = useI18n();
@@ -22,7 +21,7 @@ export function ClientDrawer({ id, onClose, onChanged }: { id: string; onClose: 
   const load = useCallback(() => { getClient(id).then(setData).catch(() => setData(null)); }, [id]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h); }, [onClose]);
-  async function send() { if (!note.trim()) return; try { await addNote(id, null, "note", note); setNote(""); load(); onChanged?.(); } catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); } }
+  async function send() { if (!note.trim()) return; try { await addNote(id, null, "note", note); setNote(""); load(); onChanged?.(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } }
   const waOf = (v: string) => `https://wa.me/${v.replace(/\D/g, "").replace(/^0/, "90")}`;
   return (
     <>

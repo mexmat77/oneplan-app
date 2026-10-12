@@ -6,11 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCheck, IconPlus } from "@tabler/icons-react";
 import { deleteTask, doneTask, listClients, listTasks, saveTask } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
-import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Task } from "@/lib/crm/types";
 import { TaskModal } from "./CrmModals";
-import { cacheGet, cacheSet, btnP, card, fmtDT, inp, taskKindName, useCrm } from "./crmUi";
+import { crmError, cacheGet, cacheSet, btnP, card, fmtDT, inp, taskKindName, useCrm } from "./crmUi";
 
 export function TasksView() {
   const { t, lang } = useI18n();
@@ -28,7 +27,7 @@ export function TasksView() {
   const [modal, setModal] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const load = useCallback(() => { const key = `${crm.base}:tasks:${showDone ? 1 : 0}`; listTasks(!showDone).then((v) => setLoaded({ key, tasks: cacheSet(key, v) })).catch(() => setLoaded({ key, tasks: [] })); listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {}); }, [showDone, crm.base]);
   useEffect(() => { load(); }, [load]);
-  const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave);
+  const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
   async function toggle(x: Task) { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }
   async function del(x: Task) { if (!(await confirmDialog({ text: c.task.delete + "?", danger: true }))) return; await deleteTask(x.id); load(); }
   async function quickAdd() {

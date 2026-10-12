@@ -10,14 +10,13 @@ import { GeoPicker } from "@/components/GeoPicker";
 import { DateField } from "@/components/ui/DateRange";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
-import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import { useMahalleLoaded } from "@/lib/geo";
 import { GROUP_ORDER, OPTS, REQUEST_FIELDS, REQUEST_KINDS, type ReqField } from "@/lib/crm/requestFields";
 import type { CrmRequest, Priority, RequestInput, RequestKind, RequestStatus } from "@/lib/crm/types";
 import { useAllListings } from "@/store/listings";
 import { ROOMS_ALL } from "@/lib/types";
-import { btnP, btnS, inp, lbl, useCrm, wantGeoLabel } from "./crmUi";
+import { crmError, btnP, btnS, inp, lbl, useCrm, wantGeoLabel } from "./crmUi";
 
 type Dict = ReturnType<typeof useI18n>["t"];
 type Vals = Record<string, unknown>;
@@ -103,7 +102,7 @@ function RequestForm({ clientId, request, kind: kind0, onClose, onSaved }: Props
   async function submit() {
     setBusy(true);
     try { await saveRequest({ ...f, listingId: (f.fields.listing as string) ?? null }, request?.id ?? null); onSaved(); }
-    catch (e) { showToast((e as Error).message === "readonly" ? c.errReadonly : c.errSave); }
+    catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
   }
   return (
