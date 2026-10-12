@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import {
+  IconUserShare,
   IconTrash,
   IconArrowLeft, IconBath, IconBeach, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp, IconCalendar, IconCheck, IconChevronRight,
   IconDots, IconFlag, IconFlagFilled, IconFolderPlus, IconHeart, IconHeartFilled, IconInfoCircle, IconLayoutGrid, IconMapPin, IconMessageCircle,
@@ -26,6 +27,9 @@ import { ExportModal, expCount } from "@/components/obj/ExportModal";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
 import { confirmDialog } from "@/components/ui/confirm";
+import { TransferModal } from "@/components/ui/TransferModal";
+import { transferListing } from "@/app/(app)/transfer-actions";
+import { upsertLocalListing } from "@/store/listings";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { usePrefs } from "@/store/prefs";
 import { addReport, type ReportReason } from "@/store/admin";
@@ -74,6 +78,8 @@ export default function ObjPage() {
   const [contacts, setContacts] = useState(false);
   const [rpt, setRpt] = useState<null | { reason: "" | ReportReason; text: string; miss?: boolean }>(null);
   const [exp, setExp] = useState(false);
+  const [transfer, setTransfer] = useState(false);
+  const [trBusy, setTrBusy] = useState(false);
   useScrollLock(contacts);
 
   const all = useAllListings();
@@ -271,6 +277,8 @@ export default function ObjPage() {
               <button type="button" onClick={() => setExp(true)} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue">
                 <IconWorldUpload size={16} /> {t.exp.t} {expN > 0 && <span className="rounded-[12px] bg-green-tint px-2 py-[2px] text-[11px] font-bold text-green">{expN}/3</span>}
               </button>
+              {/* передать объект другому риэлтору (12.10.2026): функция базы transfer_listing проверяет права */}
+              <button type="button" onClick={() => setTransfer(true)} className="mt-[10px] flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-line bg-surface p-3 text-[13.5px] font-bold text-ink hover:border-blue hover:text-blue"><IconUserShare size={16} /> {t.obj.transfer}</button>
               {/* удалить своё объявление (12.10.2026) — необратимо, поэтому с подтверждением */}
               <button type="button" onClick={async () => { if (!(await confirmDialog({ title: t.obj.delT, text: t.obj.delQ, danger: true, ok: t.obj.del }))) return; removeListing(o.id); showToast(t.obj.deleted); router.push("/mine"); }} className="mt-[10px] flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] p-3 text-[13.5px] font-bold text-red hover:bg-red-tint">
                 <IconTrash size={16} /> {t.obj.del}
@@ -384,6 +392,7 @@ export default function ObjPage() {
       </Modal>
 
       <ExportModal id={o.id} open={exp} onClose={() => setExp(false)} />
+      <TransferModal open={transfer} title={t.obj.transferT} hint={t.obj.transferH} busy={trBusy} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { await transferListing(o.id, toId); upsertLocalListing({ ...o, owner: toId }); setTransfer(false); showToast(t.obj.transferDone.replace("{name}", target?.name ?? "")); router.push("/mine"); } catch (e) { showToast((e as Error).message); } finally { setTrBusy(false); } }} />
     </div>
   );
 }

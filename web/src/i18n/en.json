@@ -652,7 +652,11 @@
     "del": "Delete listing",
     "delT": "Delete listing",
     "delQ": "The listing and its photos will be removed from the base permanently. Other realtors’ selections and favourites will lose it.",
-    "deleted": "Listing deleted"
+    "deleted": "Listing deleted",
+    "transfer": "Transfer listing",
+    "transferT": "Transfer the listing to another realtor",
+    "transferH": "The listing moves to the chosen realtor with photos and price history. They get a notification; it leaves your “My objects”.",
+    "transferDone": "Listing transferred: {name}"
   },
   "sel": {
     "previewBar": "Preview",
@@ -843,7 +847,14 @@
     "invMakeHint": "The link appears once created",
     "invMailFail": "Link created, but the e-mail was not sent",
     "newMailHint": "The new realtor receives an e-mail with a link to set the password",
-    "unbBadge": "Access restoration"
+    "unbBadge": "Access restoration",
+    "agRoleL": "Role in agency",
+    "agRoles": {
+      "owner": "Owner",
+      "manager": "Branch manager",
+      "agent": "Agent"
+    },
+    "agRoleH": "The owner sees all clients and configures the agency CRM, a manager their branch, an agent their own clients."
   },
   "prof": {
     "areasAdd": "+ Add region",
@@ -1001,6 +1012,14 @@
     "crm_lead": {
       "t": "New lead in CRM",
       "s": "{name} · {source}"
+    },
+    "listing_transfer": {
+      "t": "A listing was transferred to you",
+      "s": "{title} · from {from}"
+    },
+    "client_transfer": {
+      "t": "A client was transferred to you",
+      "s": "{name} · from {from}"
     }
   },
   "crm": {
@@ -1105,7 +1124,10 @@
       "transferT": "Transfer clients",
       "transferTo": "To whom",
       "transferBranch": "To branch",
-      "removeContact": "Remove contact"
+      "removeContact": "Remove contact",
+      "transferOne": "Transfer client",
+      "transferH": "Within your team only the owner changes. To a realtor outside the team the card, contacts, requests, deals and history move and are re-encrypted with their key; deal documents stay with you.",
+      "transferDone": "Client transferred: {name}"
     },
     "kinds": {
       "phone": "Phone",
@@ -2024,5 +2046,12 @@
       "d7": "In a week",
       "d30": "In a month"
     }
+  },
+  "tr": {
+    "to": "To",
+    "pick": "Choose a realtor…",
+    "sameTeam": "your team",
+    "go": "Transfer",
+    "cancel": "Cancel"
   }
 }

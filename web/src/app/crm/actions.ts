@@ -4,7 +4,10 @@
 // здесь, на сервере (ключ в .env). В браузер уходят уже расшифрованные значения только тех записей, что разрешены RLS.
 import { translate } from "@/app/(dev)/dev/chat/actions";
 import type { Lang } from "@/i18n";
-import { assertWrite, audit, branchesOf, crmCtx, dec, enc, forgetRole, hashOf, lostReasonsOf, membersOf, type Ctx } from "@/lib/crm/server";
+import { assertWrite, audit, branchesOf, crmCtx, dec, dekOfAdmin, enc, forgetRole, hashOf, lostReasonsOf, membersOf, wsOfProfile, type Ctx } from "@/lib/crm/server";
+import { decField, encField, normalizeContact, valueHash } from "@/lib/crm/crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notify } from "@/lib/notify";
 import { ROLE_OF_KIND, REQUEST_FIELDS } from "@/lib/crm/requestFields";
 import { newSourceToken } from "@/lib/crm/crypto";
 import type { Branch, Client, StageScope, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
@@ -638,4 +641,51 @@ export async function removeContact(id: string): Promise<void> {
   const { error } = await c.sb.from("crm_contacts").delete().eq("id", id);
   if (error) throw new Error(error.message);
   if (r) await addEvent(c, { clientId: r.client_id as string, kind: "contact", payload: { kind: r.kind, remove: true } });
+}
+
+// ---------- перенос клиента другому риэлтору (12.10.2026) ----------
+/** Внутри пространства — смена ответственного; в другое пространство — перенос строк с перешифровкой под его ключ
+ *  (контакты, заметки, лента, закрытые поля заявок, сырые заявки, доп. данные сделок). Документы остаются в старом
+ *  хранилище и не переносятся. Право: ответственный за клиента, владелец/руководитель пространства. */
+export async function transferClient(clientId: string, toProfileId: string): Promise<{ moved: boolean }> {
+  const c = await crmCtx(); assertWrite(c);
+  const { data: cl } = await c.sb.from("crm_clients").select("id, name, owner_id, ws_kind, ws_id").eq("id", clientId).maybeSingle();
+  if (!cl) throw new Error("not-found");
+  if (cl.owner_id !== c.me.id && c.role === "agent") throw new Error("forbidden");
+  const admin = createAdminClient();
+  const target = await wsOfProfile(admin, toProfileId);
+  const sameWs = target.kind === c.ws.kind && target.id === c.ws.id;
+  if (sameWs) {
+    await patchClient(clientId, { ownerId: toProfileId });
+    await addEvent(c, { clientId, kind: "transfer", payload: { toOwner: toProfileId, fromOwner: cl.owner_id } });
+    await notify([toProfileId], "client_transfer", { name: cl.name as string, from: c.me.name, href: `${c.ws.kind === "developer" ? "/dev/crm" : "/crm"}/c/${clientId}` });
+    return { moved: false };
+  }
+  const dek2 = await dekOfAdmin(admin, target, c.me.id);
+  const re = (table: string, field: string, id: string | number, v: string | null | undefined) => (v ? encField(dek2, decField(c.dek, v, `${table}.${field}:${id}`), `${table}.${field}:${id}`) : null);
+  const wsRow = { ws_kind: target.kind, ws_id: target.id };
+  // контакты: значение и хэш под новое пространство
+  const { data: cts } = await admin.from("crm_contacts").select("id, kind, value_enc").eq("client_id", clientId);
+  for (const x of (cts ?? []) as Row[]) { const plain = decField(c.dek, x.value_enc as string, `crm_contacts.value:${x.id}`); await admin.from("crm_contacts").update({ ...wsRow, value_enc: encField(dek2, plain, `crm_contacts.value:${x.id}`), value_hash: valueHash(target.kind, target.id, x.kind === "whatsapp" ? "phone" : (x.kind as string), normalizeContact(x.kind as string, plain)) }).eq("id", x.id as string); }
+  const { data: full } = await admin.from("crm_clients").select("notes_enc").eq("id", clientId).maybeSingle();
+  const { error } = await admin.from("crm_clients").update({ ...wsRow, owner_id: toProfileId, branch_id: null, stage: "new", source_id: null, ref_kind: "none", ref_profile_id: null, ref_agency_id: null, ref_client_id: null, notes_enc: re("crm_clients", "notes", clientId, full?.notes_enc as string | null) }).eq("id", clientId);
+  if (error) throw new Error(error.message);
+  const { data: rq } = await admin.from("crm_requests").select("id, closed_enc").eq("client_id", clientId);
+  for (const x of (rq ?? []) as Row[]) await admin.from("crm_requests").update({ ...wsRow, owner_id: toProfileId, branch_id: null, closed_enc: re("crm_requests", "closed", x.id as string, x.closed_enc as string | null) }).eq("id", x.id as string);
+  const { data: dl } = await admin.from("crm_deals").select("id, extra_enc").eq("client_id", clientId);
+  for (const x of (dl ?? []) as Row[]) await admin.from("crm_deals").update({ ...wsRow, owner_id: toProfileId, branch_id: null, stage_id: null, source_id: null, extra_enc: re("crm_deals", "extra", x.id as string, x.extra_enc as string | null) }).eq("id", x.id as string);
+  await admin.from("crm_tasks").update({ ...wsRow, owner_id: toProfileId }).eq("client_id", clientId);
+  const { data: ev } = await admin.from("crm_events").select("id, text_enc").eq("client_id", clientId);
+  for (const x of (ev ?? []) as Row[]) {
+    await admin.from("crm_events").update({ ...wsRow, text_enc: re("crm_events", "text", x.id as number, x.text_enc as string | null) }).eq("id", x.id as number);
+    const { data: trs } = await admin.from("crm_event_tr").select("lang, text_enc").eq("event_id", x.id as number);
+    for (const tr of (trs ?? []) as Row[]) await admin.from("crm_event_tr").update({ text_enc: re("crm_event_tr", tr.lang as string, x.id as number, tr.text_enc as string | null) }).eq("event_id", x.id as number).eq("lang", tr.lang as string);
+  }
+  const { data: inb } = await admin.from("crm_inbound").select("id, raw_enc").eq("client_id", clientId);
+  for (const x of (inb ?? []) as Row[]) await admin.from("crm_inbound").update({ ...wsRow, raw_enc: re("crm_inbound", "raw", x.id as string, x.raw_enc as string | null) }).eq("id", x.id as string);
+  await admin.from("crm_events").insert({ ...wsRow, client_id: clientId, actor_id: c.me.id, kind: "transfer", payload: { fromWs: c.ws.id, fromOwner: cl.owner_id, toOwner: toProfileId } });
+  await audit(c.sb, c.ws, c.me.id, "transfer_out", clientId, { to: toProfileId });
+  await audit(admin, target, c.me.id, "transfer_in", clientId, { from: c.me.id });
+  await notify([toProfileId], "client_transfer", { name: cl.name as string, from: c.me.name, href: `${target.kind === "developer" ? "/dev/crm" : "/crm"}/c/${clientId}` });
+  return { moved: true };
 }

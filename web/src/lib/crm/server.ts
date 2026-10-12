@@ -182,3 +182,19 @@ export const hashOf = (c: Ctx, kind: string, raw: string) => valueHash(c.ws.kind
 export function assertWrite(c: Ctx) {
   if (c.access !== "full") throw new Error("readonly");
 }
+
+/** Ключ данных ЧУЖОГО пространства сервисным клиентом (перенос клиента другому риэлтору, 12.10.2026): создаёт при отсутствии. */
+export async function dekOfAdmin(admin: SupabaseClient, ws: Ws, actor: string): Promise<Buffer> {
+  const k = `${ws.kind}:${ws.id}`; const cached = dekCache.get(k); if (cached) return cached;
+  const { data } = await admin.from("crm_keys").select("wrapped_key").eq("ws_kind", ws.kind).eq("ws_id", ws.id).maybeSingle();
+  let wrapped = data?.wrapped_key as string | undefined;
+  if (!wrapped) { const nk = newWrappedKey(ws.kind, ws.id); await admin.from("crm_keys").insert({ ws_kind: ws.kind, ws_id: ws.id, wrapped_key: nk.wrapped, key_ver: nk.keyVer }); wrapped = nk.wrapped; await audit(admin, ws, actor, "key_created", null, {}); await ensureDefaults(admin, ws); }
+  const dek = unwrapKey(wrapped, ws.kind, ws.id); dekCache.set(k, dek); return dek;
+}
+/** Пространство CRM профиля: агентство, если указано, иначе личное. */
+export async function wsOfProfile(admin: SupabaseClient, profileId: string): Promise<Ws> {
+  const { data: p } = await admin.from("profiles").select("agency_id, role, developer_id").eq("id", profileId).maybeSingle();
+  if (!p) throw new Error("bad-target");
+  if (p.role === "developer" && p.developer_id) return { kind: "developer", id: p.developer_id as string };
+  return p.agency_id ? { kind: "agency", id: p.agency_id as string } : { kind: "realtor", id: profileId };
+}

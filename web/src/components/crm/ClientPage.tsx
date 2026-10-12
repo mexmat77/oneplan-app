@@ -4,8 +4,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
-import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
+import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
+import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
@@ -15,6 +15,7 @@ import type { Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmReq
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
 import { StageMenu } from "./ClientsTable";
+import { TransferModal } from "@/components/ui/TransferModal";
 import { fmt } from "@/lib/money";
 import { ilName, ilceName } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
@@ -41,6 +42,8 @@ function Inner({ id }: { id: string }) {
   const router = useRouter();
   const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> } | null | undefined>(undefined);
   const [reqM, setReqM] = useState<{ open: boolean; req: CrmRequest | null; kind?: RequestKind }>({ open: false, req: null });
+  const [transfer, setTransfer] = useState(false);
+  const [trBusy, setTrBusy] = useState(false);
   const [edit, setEdit] = useState(false);
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
@@ -111,6 +114,7 @@ function Inner({ id }: { id: string }) {
         {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}
         {mainPhone && <a href={waOf(mainPhone.value)} target="_blank" rel="noreferrer" className={btnS}><IconBrandWhatsapp size={15} /> {c.client.wa}</a>}
         <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
+        <button type="button" onClick={() => setTransfer(true)} disabled={ro} title={c.client.transfer} className={btnS}><IconUserShare size={14} /> {c.client.transfer}</button>
       </div>
 
       <div className="grid grid-cols-[1fr_460px] gap-4 max-[1100px]:grid-cols-1">
@@ -203,6 +207,7 @@ function Inner({ id }: { id: string }) {
         </div>
       </div>
 
+      <TransferModal open={transfer} title={c.client.transferOne} hint={c.client.transferH} busy={trBusy} prefer={crm.me.members.filter((m) => m.id !== cl.ownerId && m.id !== crm.me.meId).map((m) => ({ id: m.id, name: m.name }))} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { const r = await transferClient(cl.id, toId); setTransfer(false); showToast(fill(c.client.transferDone, { name: target?.name ?? crm.me.members.find((m) => m.id === toId)?.name ?? "" })); if (r.moved) { crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } else load(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setTrBusy(false); } }} />
       <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
       <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
       <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />

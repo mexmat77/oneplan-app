@@ -652,7 +652,11 @@
     "del": "İlanı sil",
     "delT": "İlanı silme",
     "delQ": "İlan ve fotoğrafları veritabanından kalıcı olarak silinecek. Diğer danışmanların seçkileri ve favorileri bunu kaybedecek.",
-    "deleted": "İlan silindi"
+    "deleted": "İlan silindi",
+    "transfer": "İlanı devret",
+    "transferT": "İlanı başka danışmana devret",
+    "transferH": "İlan fotoğraflar ve fiyat geçmişiyle seçilen danışmana geçer. Bildirim alır; ilan «İlanlarım»dan kaybolur.",
+    "transferDone": "İlan devredildi: {name}"
   },
   "sel": {
     "previewBar": "Önizle",
@@ -843,7 +847,14 @@
     "invMakeHint": "Bağlantı oluşturulduktan sonra görünür",
     "invMailFail": "Bağlantı oluşturuldu ancak e-posta gönderilmedi",
     "newMailHint": "Yeni emlakçıya şifre belirleme bağlantılı e-posta gider",
-    "unbBadge": "Erişim geri alma"
+    "unbBadge": "Erişim geri alma",
+    "agRoleL": "Ofisteki rol",
+    "agRoles": {
+      "owner": "Sahip",
+      "manager": "Şube müdürü",
+      "agent": "Danışman"
+    },
+    "agRoleH": "Sahip tüm müşterileri görür ve ofis CRM'ini ayarlar, müdür kendi şubesini, danışman kendi müşterilerini."
   },
   "prof": {
     "areasAdd": "+ Bölge ekle",
@@ -1001,6 +1012,14 @@
     "crm_lead": {
       "t": "CRM'de yeni başvuru",
       "s": "{name} · {source}"
+    },
+    "listing_transfer": {
+      "t": "Size ilan devredildi",
+      "s": "{title} · {from}"
+    },
+    "client_transfer": {
+      "t": "Size müşteri devredildi",
+      "s": "{name} · {from}"
     }
   },
   "crm": {
@@ -1105,7 +1124,10 @@
       "transferT": "Müşterileri devret",
       "transferTo": "Kime",
       "transferBranch": "Şubeye",
-      "removeContact": "İletişimi kaldır"
+      "removeContact": "İletişimi kaldır",
+      "transferOne": "Müşteriyi devret",
+      "transferH": "Kendi ekibinizde sadece sorumlu değişir. Ekip dışı bir danışmana kart, iletişimler, talepler, işlemler ve geçmiş taşınır ve onun anahtarıyla şifrelenir; işlem belgeleri sizde kalır.",
+      "transferDone": "Müşteri devredildi: {name}"
     },
     "kinds": {
       "phone": "Telefon",
@@ -2024,5 +2046,12 @@
       "d7": "1 hafta sonra",
       "d30": "1 ay sonra"
     }
+  },
+  "tr": {
+    "to": "Kime",
+    "pick": "Danışman seçin…",
+    "sameTeam": "ekibiniz",
+    "go": "Devret",
+    "cancel": "İptal"
   }
 }

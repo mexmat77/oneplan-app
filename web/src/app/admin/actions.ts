@@ -12,6 +12,7 @@ export type UserInput = {
   email: string; password?: string; name: string; phone?: string; role: Role; status?: Status;
   agency_id?: string | null; agency_text?: string | null; developer_id?: string | null; dev_role?: string | null; paid_to?: string | null;
   developer_ids?: string[]; platform_staff?: boolean;
+  agency_role?: "owner" | "manager" | "agent" | null; // роль в CRM агентства (crm_members, 0017)
   lang?: "RU" | "EN" | "TR"; // язык письма-приглашения (user metadata `lang`, читают шаблоны Supabase Auth)
 };
 
@@ -44,6 +45,15 @@ async function syncMembers(admin: ReturnType<typeof createAdminClient>, id: stri
   }
 }
 
+/** Роль риэлтора в CRM агентства (владелец / руководитель филиала / агент) — crm_members для ws агентства. */
+async function syncAgencyRole(admin: ReturnType<typeof createAdminClient>, id: string, agencyId: string | null, role: "owner" | "manager" | "agent" | null) {
+  if (!agencyId) { await admin.from("crm_members").delete().eq("profile_id", id).eq("ws_kind", "agency"); return; }
+  await admin.from("crm_members").delete().eq("profile_id", id).eq("ws_kind", "agency").neq("ws_id", agencyId);
+  if (!role) return;
+  const { error } = await admin.from("crm_members").upsert({ ws_kind: "agency", ws_id: agencyId, profile_id: id, role }, { onConflict: "ws_kind,ws_id,profile_id" });
+  if (error) throw new Error(error.message);
+}
+
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 // Create an account directly (with a password) or send Supabase's invite e-mail (user sets the password from the link).
@@ -65,6 +75,7 @@ export async function createUser(input: UserInput): Promise<{ id: string }> {
   if (error) throw new Error(error.message);
   await syncMembers(admin, id, input.role === "developer" ? input.developer_ids : []);
   revalidatePath("/admin/users");
+  if (input.agency_role !== undefined) await syncAgencyRole(admin, id, input.agency_id ?? null, input.agency_role);
   return { id };
 }
 
@@ -73,6 +84,7 @@ export async function updateUser(id: string, patch: Partial<UserInput>) {
   const admin = createAdminClient();
   const { data: before } = patch.status ? await admin.from("profiles").select("status").eq("id", id).maybeSingle() : { data: null };
   const { error } = await admin.from("profiles").update(profilePatch(patch)).eq("id", id);
+  if (!error && patch.agency_role !== undefined) await syncAgencyRole(admin, id, patch.agency_id ?? null, patch.agency_role);
   if (error) throw new Error(error.message);
   if (patch.status === "active" && before && before.status !== "active") void notify([id], "access_restored");
   if (patch.role === "developer" && patch.developer_ids?.length) {

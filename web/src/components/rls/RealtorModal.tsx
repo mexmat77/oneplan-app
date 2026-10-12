@@ -18,7 +18,7 @@ const input = "w-full rounded-[11px] border border-line px-[13px] py-[11px] text
 const label = "mb-[6px] block text-[12.5px] font-semibold text-text-2";
 
 // `remote` — Supabase-режим: сохранение через серверные экшены админки (`updateUser` / `createUser` → письмо-приглашение); `meId` — текущий админ.
-type Props = { k: string; members: Member[]; agencies: string[]; remote?: { meId: string; agencies: { id: string; name: string }[] }; onClose: () => void };
+type Props = { k: string; members: Member[]; agencies: string[]; remote?: { meId: string; agencies: { id: string; name: string }[]; roles?: Record<string, string | null> }; onClose: () => void };
 
 export function RealtorModal({ k, members, agencies, remote, onClose }: Props) {
   const { t, lang } = useI18n();
@@ -27,6 +27,7 @@ export function RealtorModal({ k, members, agencies, remote, onClose }: Props) {
     ? { name: cur.name, mail: cur.mail, phone: cur.phone || "", ag: agencies.includes(cur.ag) ? cur.ag : "", to: cur.paidTo || "", agQ: "", err: "", miss: false }
     : { name: "", mail: "", phone: "+90 ", ag: "", to: "24.09.2026", agQ: "", err: "", miss: false });
   const [cal, setCal] = useState(false);
+  const [agRole, setAgRole] = useState<"owner" | "manager" | "agent">(((remote?.roles?.[k] as "owner" | "manager" | "agent" | null) ?? "agent"));
   const [busy, setBusy] = useState(false);
   const ruToIso = (d: string) => { const m = d.trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; };
   const agFree = t.rl.agFree;
@@ -53,7 +54,7 @@ export function RealtorModal({ k, members, agencies, remote, onClose }: Props) {
     const patch = { name: f.name.trim(), mail: f.mail.trim(), phone: f.phone.trim() || cur?.phone || "", ag: f.ag || agFree, paidTo: f.to.trim() || cur?.paidTo || "" };
     if (remote) {
       const agencyId = remote.agencies.find((a) => a.name === f.ag)?.id ?? null;
-      const body = { name: patch.name, email: patch.mail, phone: patch.phone, agency_id: agencyId, agency_text: !agencyId && f.ag ? f.ag : null, paid_to: ruToIso(patch.paidTo) };
+      const body = { name: patch.name, email: patch.mail, phone: patch.phone, agency_id: agencyId, agency_text: !agencyId && f.ag ? f.ag : null, paid_to: ruToIso(patch.paidTo), agency_role: agencyId ? agRole : null };
       setBusy(true);
       try {
         if (cur) await updateUser(k, body); else await createUser({ ...body, role: "realtor", status: "active", lang });
@@ -91,6 +92,15 @@ export function RealtorModal({ k, members, agencies, remote, onClose }: Props) {
           );
         })}
       </div>
+      {remote && f.ag && remote.agencies.some((a) => a.name === f.ag) && (
+        <>
+          <label className={label}>{t.rl.agRoleL}</label>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {(["owner", "manager", "agent"] as const).map((r) => <button key={r} type="button" onClick={() => setAgRole(r)} className={`cursor-pointer rounded-[18px] border px-[13px] py-[8px] text-[12.5px] ${agRole === r ? "border-sel-line bg-blue-tint font-bold text-sel-ink" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{t.rl.agRoles[r]}</button>)}
+          </div>
+          <div className="-mt-2 mb-3 text-[11.5px] text-muted">{t.rl.agRoleH}</div>
+        </>
+      )}
       <label className={label}>{t.rl.paidToL}</label>
       <div onClick={() => setCal(true)} className="mb-3 flex w-[210px] cursor-pointer items-center gap-2 rounded-[11px] border border-line bg-surface px-[13px] py-[10px] text-[14px] hover:border-blue">
         <IconCalendar size={16} className="flex-none text-blue" /><span className="flex-1 font-bold text-ink">{f.to || "—"}</span><IconChevronDown size={16} className="flex-none text-muted" />

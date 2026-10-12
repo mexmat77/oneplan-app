@@ -17,6 +17,9 @@ export default async function RlsPage() {
     sb.from("reports").select(REPORT_SELECT).order("created_at", { ascending: false }),
     sb.from("invites").select("code", { count: "exact", head: true }).is("used_by", null),
   ]);
-  const remote: RlsRemote = { members: (profiles ?? []) as RemoteMember[], agencies: (agencies ?? []) as RemoteAgency[], reports: (reports ?? []) as ReportRow[], invitesN: invitesN ?? 0, meId: user.id };
+  // роли в CRM агентства (0017): владелец / руководитель / агент — показываются и правятся в «Данные риэлтора»
+  const { data: roles } = await sb.from("crm_members").select("profile_id, role").eq("ws_kind", "agency");
+  const roleOf = new Map((roles ?? []).map((r) => [r.profile_id as string, r.role as string]));
+  const remote: RlsRemote = { members: ((profiles ?? []) as RemoteMember[]).map((p) => ({ ...p, agency_role: roleOf.get(p.id) ?? null })), agencies: (agencies ?? []) as RemoteAgency[], reports: (reports ?? []) as ReportRow[], invitesN: invitesN ?? 0, meId: user.id };
   return <RlsScreen remote={remote} />;
 }

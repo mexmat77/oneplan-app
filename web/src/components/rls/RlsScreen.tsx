@@ -34,7 +34,7 @@ const ST_CHIP: Record<Member["status"], [string, string]> = { active: ["#e4f6ee"
 const PAY_CLS = { ok: "bg-green-tint text-green", soon: "bg-warn-tint text-warn-2", exp: "bg-red-tint text-red-2" };
 const av = (name: string) => name.split(" ").map((w) => w[0]).join("");
 
-export type RemoteMember = { id: string; name: string; email: string | null; phone: string | null; agency_id: string | null; agency_text: string | null; color: string; city: string | null; langs: string | null; status: "active" | "paused" | "pending"; paid_to: string | null; last_seen: string | null; role: string };
+export type RemoteMember = { id: string; name: string; email: string | null; phone: string | null; agency_id: string | null; agency_text: string | null; color: string; city: string | null; langs: string | null; status: "active" | "paused" | "pending"; paid_to: string | null; last_seen: string | null; role: string; agency_role?: string | null };
 export type RemoteAgency = { id: string; name: string; addr: string | null; phone: string | null; lic: string | null; scan_path: string | null };
 export type RlsRemote = { members: RemoteMember[]; agencies: RemoteAgency[]; reports: ReportRow[]; invitesN: number; meId: string };
 
@@ -266,7 +266,7 @@ export function RlsScreen({ remote }: { remote: RlsRemote | null }) {
       )}
 
       {inv && <InviteModal remote={!!remote} onClose={() => setInv(false)} />}
-      {editK && <RealtorModal key={editK} k={editK} members={members} agencies={agNames} remote={remote ? { meId, agencies: remote.agencies.map((a) => ({ id: a.id, name: a.name })) } : undefined} onClose={() => { setEditK(""); if (remote) refresh(); }} />}
+      {editK && <RealtorModal key={editK} k={editK} members={members} agencies={agNames} remote={remote ? { meId, agencies: remote.agencies.map((a) => ({ id: a.id, name: a.name })), roles: Object.fromEntries(remote.members.map((m) => [m.id, m.agency_role ?? null])) } : undefined} onClose={() => { setEditK(""); if (remote) refresh(); }} />}
       {agEdit !== null && <AgencyModal key={agEdit} edit={agEdit} agencies={agencies} members={members} profileAgency={profile.agency} remote={!!remote} onSaved={(nm, old) => { setAgEdit(null); if (old) setAgView(nm); if (remote) refresh(); }} onClose={() => setAgEdit(null)} />}
     </div>
   );
