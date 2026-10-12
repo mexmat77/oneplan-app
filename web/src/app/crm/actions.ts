@@ -464,10 +464,11 @@ async function dealSummaryFor(c: Ctx, ids: string[]): Promise<Record<string, Dea
 export async function bulkClients(ids: string[], patch: { ownerId?: string | null; branchId?: string | null; addTag?: string; removeTag?: string; status?: "active" | "archived" }): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
   if (!ids.length) return;
-  if (patch.ownerId !== undefined || patch.branchId !== undefined || patch.status) {
-    const upd: Record<string, unknown> = {}; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId; if (patch.branchId !== undefined) upd.branch_id = patch.branchId; if (patch.status) upd.status = patch.status;
+  if (patch.ownerId !== undefined) for (const cid of ids) await reassignFor(c, cid, patch.ownerId);
+  if (patch.branchId !== undefined || patch.status) {
+    const upd: Record<string, unknown> = {}; if (patch.branchId !== undefined) upd.branch_id = patch.branchId; if (patch.status) upd.status = patch.status;
     const { error } = await c.sb.from("crm_clients").update(upd).in("id", ids); if (error) throw new Error(error.message);
-    if (patch.ownerId !== undefined || patch.branchId !== undefined) for (const cid of ids) await addEvent(c, { clientId: cid, kind: "transfer", payload: { toOwner: patch.ownerId ?? null, toBranch: patch.branchId ?? null } });
+    if (patch.branchId !== undefined) for (const cid of ids) await addEvent(c, { clientId: cid, kind: "transfer", payload: { toBranch: patch.branchId ?? null } });
   }
   if (patch.addTag || patch.removeTag) {
     const { data } = await c.sb.from("crm_clients").select("id, tags").in("id", ids);
@@ -600,9 +601,36 @@ export async function saveLostReasons(list: string[]): Promise<string[]> {
 // ---------- быстрые правки из шапки карточки (12.10.2026: статус/приоритет без открытия формы) ----------
 export async function patchClient(id: string, patch: { stage?: Client["stage"]; priority?: Client["priority"]; ownerId?: string | null; boardPos?: number | null }): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
-  const upd: Record<string, unknown> = {}; if (patch.stage) upd.stage = patch.stage; if (patch.priority !== undefined) upd.priority = patch.priority; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId; if (patch.boardPos !== undefined) upd.board_pos = patch.boardPos;
+  if (patch.ownerId !== undefined) await reassignFor(c, id, patch.ownerId);
+  const upd: Record<string, unknown> = {}; if (patch.stage) upd.stage = patch.stage; if (patch.priority !== undefined) upd.priority = patch.priority; if (patch.boardPos !== undefined) upd.board_pos = patch.boardPos;
+  if (!Object.keys(upd).length) return;
   const { error } = await c.sb.from("crm_clients").update(upd).eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+/** Передача клиента другому ответственному ВНУТРИ пространства (12.10.2026, «передать клиента в агентстве»).
+ *  Право: ответственный за клиента, администратор агентства, руководитель филиала (в пределах видимости RLS).
+ *  Запись — сервисным ключом: политика update проверяет строку после изменения, и риэлтор не мог отдать своего клиента.
+ *  Вместе с клиентом переходят его открытые заявки, сделки и невыполненные задачи того же ответственного; получатель получает
+ *  уведомление `client_transfer`. */
+async function reassignFor(c: Ctx, clientId: string, toId: string | null): Promise<void> {
+  const { data: cl } = await c.sb.from("crm_clients").select("id, name, owner_id").eq("id", clientId).maybeSingle(); // видимость по RLS
+  if (!cl) throw new Error("not-found");
+  const from = (cl.owner_id as string | null) ?? null;
+  if (from === toId) return;
+  if (from !== c.me.id && c.role === "agent") throw new Error("forbidden");
+  if (toId) { const members = await membersOf(c.sb, c.ws, c.me); if (!members.some((m) => m.id === toId)) throw new Error("not-member"); }
+  const admin = createAdminClient();
+  const { error } = await admin.from("crm_clients").update({ owner_id: toId }).eq("id", clientId).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id);
+  if (error) throw new Error(error.message);
+  if (toId) {
+    const mine = (t: "crm_requests" | "crm_deals" | "crm_tasks") => { const q = admin.from(t).update({ owner_id: toId }).eq("client_id", clientId); return from ? q.eq("owner_id", from) : q.is("owner_id", null); };
+    await mine("crm_requests").eq("status", "active");
+    await mine("crm_deals");
+    await mine("crm_tasks").is("done_at", null);
+  }
+  await addEvent(c, { clientId, kind: "transfer", payload: { toOwner: toId, fromOwner: from } });
+  if (toId && toId !== c.me.id) await notify([toId], "client_transfer", { name: cl.name as string, from: c.me.name, href: `${c.ws.kind === "developer" ? "/dev/crm" : "/crm"}/c/${clientId}` });
 }
 
 /** Краткие данные объектов базы для карточки клиента (заявка/сделка → объект). */
@@ -655,12 +683,7 @@ export async function transferClient(clientId: string, toProfileId: string): Pro
   const admin = createAdminClient();
   const target = await wsOfProfile(admin, toProfileId);
   const sameWs = target.kind === c.ws.kind && target.id === c.ws.id;
-  if (sameWs) {
-    await patchClient(clientId, { ownerId: toProfileId });
-    await addEvent(c, { clientId, kind: "transfer", payload: { toOwner: toProfileId, fromOwner: cl.owner_id } });
-    await notify([toProfileId], "client_transfer", { name: cl.name as string, from: c.me.name, href: `${c.ws.kind === "developer" ? "/dev/crm" : "/crm"}/c/${clientId}` });
-    return { moved: false };
-  }
+  if (sameWs) { await reassignFor(c, clientId, toProfileId); return { moved: false }; }
   const dek2 = await dekOfAdmin(admin, target, c.me.id);
   const re = (table: string, field: string, id: string | number, v: string | null | undefined) => (v ? encField(dek2, decField(c.dek, v, `${table}.${field}:${id}`), `${table}.${field}:${id}`) : null);
   const wsRow = { ws_kind: target.kind, ws_id: target.id };

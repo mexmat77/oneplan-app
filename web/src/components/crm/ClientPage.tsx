@@ -65,7 +65,7 @@ function Inner({ id }: { id: string }) {
   if (data === undefined) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
   if (data === null) return <div className={card}>{c.notFound} · <Link href={`${crm.base}/clients`} className="text-blue-2">{c.nav.clients}</Link></div>;
   const { client: cl, deals, tasks, events, requests } = data;
-  const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
+  const err = (e: unknown) => { const m = (e as Error)?.message; if (m === "not-member") return showToast(c.team.notMember); if (m === "forbidden") return showToast(c.team.forbiddenT); crmError(e, c.errSave, c.errReadonly); };
   const src = crm.sources.find((s) => s.id === cl.sourceId);
   const owner = crm.me.members.find((m) => m.id === cl.ownerId);
   const waOf = (v: string) => `https://wa.me/${v.replace(/\D/g, "").replace(/^0/, "90")}`;
@@ -126,7 +126,7 @@ function Inner({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
-              {field(c.source, sourceName(src, t))}{field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.citizenship, countryName(cl.citizenship, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
+              {field(c.source, sourceName(src, t))}{crm.me.members.length > 1 && !ro ? <div key="owner" className="min-w-0"><div className="text-[11px] font-medium text-muted">{c.owner}</div><Select value={cl.ownerId ?? ""} onChange={async (v) => { const prev = cl.ownerId; patchLocal({ ownerId: v || null }); try { await patchClient(cl.id, { ownerId: v || null }); load(); } catch (e) { patchLocal({ ownerId: prev }); err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" className="mt-[2px] w-full" /></div> : field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.citizenship, countryName(cl.citizenship, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
               {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.kvkk.info, cl.kvkk.info?.method ? fill(c.kvkk.informed, { date: fmtDate(cl.kvkk.info.at, lang) }) + ` · ${c.kvkk.methods[cl.kvkk.info.method]}` : c.kvkk.notInformed)}{field(c.kvkk.consent, cl.kvkk.consent?.revokedAt ? fill(c.kvkk.revoked, { date: fmtDate(cl.kvkk.consent.revokedAt, lang) }) : (["call", "sms", "whatsapp", "email"] as const).filter((k) => cl.kvkk.consent?.[k]).map((k) => c.kvkk.ch[k]).join(", ") || c.kvkk.none)}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">

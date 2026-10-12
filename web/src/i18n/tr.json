@@ -851,11 +851,11 @@
     "unbBadge": "Erişim geri alma",
     "agRoleL": "Ofisteki rol",
     "agRoles": {
-      "owner": "Sahip",
+      "owner": "Ajans yöneticisi",
       "manager": "Şube müdürü",
       "agent": "Danışman"
     },
-    "agRoleH": "Sahip tüm müşterileri görür ve ofis CRM'ini ayarlar, müdür kendi şubesini, danışman kendi müşterilerini."
+    "agRoleH": "Yönetici tüm müşterileri görür ve ajans CRM'ini ayarlar, şube müdürü kendi şubesini, danışman kendi müşterilerini görür."
   },
   "prof": {
     "areasAdd": "+ Bölge ekle",
@@ -1963,7 +1963,7 @@
     },
     "team": {
       "title": "Ekip ve şubeler",
-      "sub": "Personel rolleri ve şubeler. Sahip her şeyi, şube müdürü kendi şubesini, danışman kendi müşterilerini görür.",
+      "sub": "Personel rolleri ve şubeler. Yönetici tüm müşterileri görür ve CRM'i ayarlar, şube müdürü kendi şubesini, danışman kendi müşterilerini görür. Sorumlu listeden veya müşteri kartından değiştirilebilir.",
       "members": "Personel",
       "branches": "Şubeler",
       "addBranch": "Şube ekle",
@@ -1972,17 +1972,19 @@
       "branchHead": "Müdür",
       "noBranches": "Şube yok — küçük bir ofis için gerekmez",
       "roles": {
-        "owner": "Sahip",
+        "owner": "Ajans yöneticisi",
         "manager": "Şube müdürü",
         "agent": "Danışman"
       },
-      "lastOwner": "Tek sahip rolü değiştirilemez",
-      "forbidden": "Ekibi yalnızca sahip değiştirebilir",
+      "lastOwner": "Tek yönetici kaldırılamaz",
+      "forbidden": "Ekibi yalnızca ajans yöneticisi değiştirebilir",
       "solo": "Tek başınıza çalışıyorsunuz — ofise başka danışmanlar katılınca ekip görünür.",
       "lostT": "Kayıp nedenleri",
       "lostS": "Kaybedilen işlemleri kapatmak için liste.",
       "lostAdd": "Yeni neden",
-      "you": "siz"
+      "you": "siz",
+      "notMember": "Alıcı ekibinizde değil",
+      "forbiddenT": "Yalnızca müşterinin sorumlusu veya yönetici devredebilir"
     },
     "due": {
       "today": "Bugün",

@@ -13,7 +13,7 @@ import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { Segmented } from "@/components/ui/Segmented";
 import { useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
-import { showUndo } from "@/components/ui/toast";
+import { showToast, showUndo } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Client } from "@/lib/crm/types";
 import type { Lang } from "@/i18n";
@@ -120,7 +120,7 @@ export function ClientsTable() {
   }, [base, view, stage, flt, sort, deals, now]);
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
-  const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
+  const err = (e: unknown) => { const m = (e as Error)?.message; if (m === "not-member") return showToast(c.team.notMember); if (m === "forbidden") return showToast(c.team.forbiddenT); crmError(e, c.errSave, c.errReadonly); };
   async function bulk(patch: Parameters<typeof bulkClients>[1]) {
     const ids = [...sel];
     try { await bulkClients(ids, patch); setSel(new Set()); load(); if (patch.status) showUndo(fill(c.undo.archived, { n: ids.length }), async () => { await bulkClients(ids, { status: patch.status === "archived" ? "active" : "archived" }); load(); }, c.undo.undo); } catch (e) { err(e); }

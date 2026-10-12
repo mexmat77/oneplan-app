@@ -851,11 +851,11 @@
     "unbBadge": "Access restoration",
     "agRoleL": "Role in agency",
     "agRoles": {
-      "owner": "Owner",
+      "owner": "Agency admin",
       "manager": "Branch manager",
-      "agent": "Agent"
+      "agent": "Realtor"
     },
-    "agRoleH": "The owner sees all clients and configures the agency CRM, a manager their branch, an agent their own clients."
+    "agRoleH": "The admin sees all clients and configures the agency CRM, a branch manager their branch, a realtor their own clients."
   },
   "prof": {
     "areasAdd": "+ Add region",
@@ -1963,7 +1963,7 @@
     },
     "team": {
       "title": "Team and branches",
-      "sub": "Staff roles and agency branches. The owner sees everything, a branch manager their branch, an agent their own clients.",
+      "sub": "Staff roles and agency branches. The admin sees all clients and configures the CRM, a branch manager their branch, a realtor their own clients. The owner of a client can be changed in the list or on the client card.",
       "members": "Staff",
       "branches": "Branches",
       "addBranch": "Add branch",
@@ -1972,17 +1972,19 @@
       "branchHead": "Manager",
       "noBranches": "No branches — a small agency doesn't need them",
       "roles": {
-        "owner": "Owner",
+        "owner": "Agency admin",
         "manager": "Branch manager",
-        "agent": "Agent"
+        "agent": "Realtor"
       },
-      "lastOwner": "The only owner cannot be demoted",
-      "forbidden": "Only the owner can change the team",
+      "lastOwner": "You cannot remove the only admin",
+      "forbidden": "Only the agency admin can change the team",
       "solo": "You work alone — the team appears when other realtors join the agency.",
       "lostT": "Lost reasons",
       "lostS": "Reference list for closing deals as lost.",
       "lostAdd": "New reason",
-      "you": "you"
+      "you": "you",
+      "notMember": "The recipient is not in your team",
+      "forbiddenT": "Only the client's owner or an admin can transfer"
     },
     "due": {
       "today": "Today",
