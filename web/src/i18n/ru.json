@@ -2070,6 +2070,10 @@
       "archivedOne": "Клиент в архиве",
       "restoredOne": "Клиент возвращён",
       "moved": "Этап: {stage}"
+    },
+    "dealCard": {
+      "type": "Тип сделки",
+      "closed": "Закрыта"
     }
   },
   "dr": {

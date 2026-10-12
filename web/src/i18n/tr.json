@@ -2115,6 +2115,10 @@
       "archivedOne": "Müşteri arşivlendi",
       "restoredOne": "Müşteri geri alındı",
       "moved": "Aşama: {stage}"
+    },
+    "dealCard": {
+      "type": "Anlaşma türü",
+      "closed": "Kapandı"
     }
   },
   "dr": {

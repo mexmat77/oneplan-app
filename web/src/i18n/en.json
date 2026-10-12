@@ -2115,6 +2115,10 @@
       "archivedOne": "Client archived",
       "restoredOne": "Client restored",
       "moved": "Stage: {stage}"
+    },
+    "dealCard": {
+      "type": "Deal type",
+      "closed": "Closed"
     }
   },
   "dr": {

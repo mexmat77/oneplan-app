@@ -192,7 +192,7 @@ function Inner({ id }: { id: string }) {
                 <div key={d.id} className="rounded-[6px] border border-line p-3">
                   <div className="flex flex-wrap items-start gap-2">
                     <span className="mt-[6px] h-[9px] w-[9px] flex-none rounded-full" style={{ background: st?.color ?? "#8a93a2" }} />
-                    <button type="button" onClick={() => setDealM({ open: true, deal: d })} className="min-w-0 flex-1 cursor-pointer text-left"><div className="text-[13.5px] font-semibold text-ink hover:text-blue-2">{d.title || "—"} <span className="text-[11.5px] font-normal text-muted">{dealNo(d)}</span></div><div className="text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div></button>
+                    <Link href={`${crm.base}/d/${d.id}`} className="min-w-0 flex-1 cursor-pointer text-left"><div className="text-[13.5px] font-semibold text-ink hover:text-blue-2">{d.title || "—"} <span className="text-[11.5px] font-normal text-muted">{dealNo(d)}</span></div><div className="text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div></Link>
                     <Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />
                     <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
                   </div>
@@ -228,7 +228,7 @@ function Inner({ id }: { id: string }) {
 }
 
 const ACT_FILTERS: Record<string, string[] | null> = { all: null, notes: ["note", "call", "show", "meeting"], tasks: ["task"], deals: ["deal", "stage"], docs: ["doc"], system: ["created", "edit", "request", "transfer", "lead", "merge", "contact"] };
-function Timeline({ events }: { events: CrmEvent[] }) {
+export function Timeline({ events }: { events: CrmEvent[] }) {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();

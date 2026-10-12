@@ -301,9 +301,10 @@ export async function deleteDeal(id: string): Promise<void> {
 function rowTask(r: Row, clientName: string | null): Task {
   return { id: r.id as string, clientId: s(r.client_id), clientName, dealId: s(r.deal_id), ownerId: s(r.owner_id), kind: r.kind as Task["kind"], title: (r.title as string) ?? "", dueAt: r.due_at as string, doneAt: s(r.done_at), createdAt: r.created_at as string };
 }
-async function listTasksFor(c: Ctx, f: { clientId?: string; open?: boolean }): Promise<Task[]> {
+async function listTasksFor(c: Ctx, f: { clientId?: string; dealId?: string; open?: boolean }): Promise<Task[]> {
   let q = c.sb.from("crm_tasks").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("due_at").limit(500);
   if (f.clientId) q = q.eq("client_id", f.clientId);
+  if (f.dealId) q = q.eq("deal_id", f.dealId);
   if (f.open) q = q.is("done_at", null);
   const { data } = await q;
   return ((data ?? []) as Row[]).map((r) => { const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null; return rowTask(r, (cl?.name as string) ?? null); });
@@ -823,4 +824,31 @@ export async function closeDealObject(dealId: string): Promise<{ listing?: { id:
   }
   if (out.listing || out.unit) await addEvent(c, { clientId: d.client_id as string, dealId, kind: "object_closed", payload: { listingId: out.listing?.id ?? null, status: out.listing?.status ?? null, projectId: out.unit?.projectId ?? null, unitUid: out.unit?.unitUid ?? null } });
   return out;
+}
+
+// ---------- карточка сделки (13.10.2026): одна страница как у клиента ----------
+export async function getDeal(id: string): Promise<{ deal: Deal; client: { id: string; no: number; name: string; phone: string | null; lang: string }; events: CrmEvent[]; tasks: Task[]; objs: Record<string, ListingBrief>; units: Record<string, UnitBrief>; requests: { id: string; label: string }[] } | null> {
+  const c = await crmCtx();
+  const { data: r } = await c.sb.from("crm_deals").select("*, crm_clients(id, no, name, lang)").eq("id", id).maybeSingle();
+  if (!r) return null;
+  const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null;
+  if (!cl) return null;
+  const deal = rowDeal(r as Row, String(cl.name ?? ""));
+  const [{ data: cts }, events, tasks, { data: rq }] = await Promise.all([
+    c.sb.from("crm_contacts").select("*").eq("client_id", cl.id as string).order("is_main", { ascending: false }).order("sort"),
+    loadEvents(c, { dealId: id }), listTasksFor(c, { dealId: id }),
+    c.sb.from("crm_requests").select("id, kind, fields, status").eq("client_id", cl.id as string).order("created_at"),
+  ]);
+  const phone = ((cts ?? []) as Row[]).map((x) => rowContact(c, x)).find((x) => x.kind === "phone" || x.kind === "whatsapp")?.value ?? null;
+  const ref = deal.projectId && deal.unitUid != null ? [{ projectId: Number(deal.projectId), unitUid: deal.unitUid }] : [];
+  const [objs, units] = await Promise.all([listingBriefsFor(c, deal.listingId ? [deal.listingId] : []), unitBriefsFor(c, ref)]);
+  const requests = ((rq ?? []) as Row[]).map((x) => ({ id: x.id as string, label: `${x.kind}${x.status === "active" ? "" : ` (${x.status})`}` }));
+  await audit(c.sb, c.ws, c.me.id, "view_deal", id, {});
+  return { deal, client: { id: cl.id as string, no: Number(cl.no ?? 0), name: String(cl.name ?? ""), phone, lang: String(cl.lang ?? "RU") }, events, tasks, objs, units, requests };
+}
+/** Ответственный за сделку (шапка карточки сделки). */
+export async function patchDealOwner(id: string, ownerId: string | null): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const { error } = await c.sb.from("crm_deals").update({ owner_id: ownerId }).eq("id", id);
+  if (error) throw new Error(error.message);
 }

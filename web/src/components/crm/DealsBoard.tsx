@@ -3,6 +3,7 @@
 // CRM v2 — сделки: канбан с перетаскиванием (HTML5 drag & drop, на тач — выбор этапа в карточке), сумма и счётчик колонки,
 // «дней на этапе», фильтр по ответственному; список таблицей как второй режим.
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
@@ -23,6 +24,7 @@ export function DealsBoard() {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
+  const router = useRouter();
   const ro = crm.me.access !== "full";
   const [deals, setDeals] = useState<Deal[] | null>(() => cacheGet<Deal[]>(`${crm.base}:deals`) ?? null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -63,7 +65,7 @@ export function DealsBoard() {
     return (
       <div data-card="1" draggable={!ro} onDragStart={(e) => { setDragId(d.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", d.id); }} onDragEnd={() => { setDragId(null); setDrop(null); }}
         className={`group cursor-grab rounded-[4px] border border-line bg-surface shadow-[0_1px_2px_rgba(20,36,63,.06)] transition hover:border-[#b9c2d0] active:cursor-grabbing ${dragId === d.id ? "opacity-40" : ""}`} style={{ borderTop: `3px solid ${st?.color ?? "#8a93a2"}` }}>
-        <button type="button" onClick={() => setModal({ open: true, deal: d })} className="block w-full cursor-pointer px-[10px] pb-[6px] pt-[8px] text-left">
+        <button type="button" onClick={() => router.push(`${crm.base}/d/${d.id}`)} className="block w-full cursor-pointer px-[10px] pb-[6px] pt-[8px] text-left">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-semibold leading-[1.3] text-ink">{d.title || "—"}</div>
@@ -110,7 +112,7 @@ export function DealsBoard() {
         <div className={`${card} overflow-x-auto p-0`}>
           {shown.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{c.deal.none}</div> : (
             <table data-crm-table="1" className="w-full min-w-[720px] text-[13px]"><thead><tr className="text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{[c.deal.title, c.deal.client, c.deal.stage, c.deal.amount, c.owner, c.tbl.task, c.client.updated, ""].map((h, i) => <th key={i} className="px-3 py-2">{h}</th>)}</tr></thead>
-              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="hover:bg-[#f7f8fa]"><td className="px-3 py-[6px]"><button type="button" onClick={() => setModal({ open: true, deal: d })} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[6px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[6px]"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></td><td className="px-3 py-[6px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[6px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[6px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[6px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[6px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
+              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="hover:bg-[#f7f8fa]"><td className="px-3 py-[6px]"><button type="button" onClick={() => router.push(`${crm.base}/d/${d.id}`)} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[6px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[6px]"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></td><td className="px-3 py-[6px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[6px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[6px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[6px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[6px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
           )}
         </div>
       )}
