@@ -138,8 +138,10 @@ export function ClientsTable() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h1 className="text-[20px] font-semibold text-ink">{c.nav.clients} <span className="text-[13px] font-normal text-muted">{list ? base.length.toLocaleString("ru-RU") : ""}</span></h1>
         <div className="flex-1" />
+        {/* стандарт тулбара (12.10.2026): справа → вид · плотность · фильтры · главное действие */}
+        <Segmented value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
+        {mode === "list" && <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />}
         <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
-        <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />
         <button type="button" onClick={() => setModal(true)} disabled={ro} className={btnP}><IconPlus size={15} /> {c.nav.create}</button>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
@@ -153,8 +155,6 @@ export function ClientsTable() {
       <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
         {crm.cstages.map((st) => { const n = stageCount(st.key); return <button key={st.id} type="button" onClick={() => setStage(stage === st.key ? "" : st.key)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === st.key ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={stage === st.key ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
-        <span className="flex-1" />
-        <Segmented value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
       </div>
       <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
       {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}

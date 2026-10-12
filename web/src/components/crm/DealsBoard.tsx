@@ -84,11 +84,11 @@ export function DealsBoard() {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
-        <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={14} /> {c.deal.add}</button>
-        <div className="flex-1" />
         <span className="text-[13px] text-text"><b className="font-semibold text-ink">{totalSum || "—"}</b> · {shown.length} {c.nav.deals.toLowerCase()}</span>
         {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.kb.all }, { value: crm.me.meId, label: c.kb.mine }, ...crm.me.members.filter((m) => m.id !== crm.me.meId).map((m) => ({ value: m.id, label: m.name }))]} className="w-[170px]" size="sm" />}
+        <div className="flex-1" />
+        <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
+        <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={14} /> {c.deal.add}</button>
       </div>
       {deals === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : view === "board" ? (
         <div data-crm-kanban="1" className="flex overflow-x-auto rounded-[6px] border border-line bg-surface" style={{ minHeight: "calc(100vh - 200px)" }}>

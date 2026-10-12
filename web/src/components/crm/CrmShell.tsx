@@ -146,8 +146,8 @@ export function CrmShell({ base }: { base: string }) {
       <CommandPalette open={palette} onClose={() => setPalette(false)} onCreate={(k) => setCreate(k)} />
       {boot.me.access === "readonly" && <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full bg-red px-4 py-2 text-[12px] font-bold text-white shadow-lg">{c.readonly}</div>}
       <ClientModal open={create === "client"} client={null} onClose={() => setCreate("")} onSaved={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} onOpenDup={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} />
-      <CreateDealHost open={create === "deal"} onClose={() => setCreate("")} clients={clients} setClients={setClients} base={base} />
-      <CreateTaskHost open={create === "task"} onClose={() => setCreate("")} clients={clients} setClients={setClients} />
+      <CreateDealHost open={create === "deal"} onClose={() => setCreate("")} clients={clients} setClients={setClients} base={base} preset={clientId ? { id: clientId, name: tabs.find((x) => x.id === clientId)?.name ?? "…" } : null} />
+      <CreateTaskHost open={create === "task"} onClose={() => setCreate("")} clients={clients} setClients={setClients} preset={clientId ? { id: clientId, name: tabs.find((x) => x.id === clientId)?.name ?? "…" } : null} />
     </CrmCtx.Provider>
   );
 }
@@ -157,13 +157,17 @@ import { listClients } from "@/app/crm/actions";
 function useClientOpts(open: boolean, clients: { id: string; name: string }[], setClients: (v: { id: string; name: string }[]) => void) {
   useEffect(() => { if (open && !clients.length) listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {}); }, [open, clients.length, setClients]);
 }
-function CreateDealHost({ open, onClose, clients, setClients, base }: { open: boolean; onClose: () => void; clients: { id: string; name: string }[]; setClients: (v: { id: string; name: string }[]) => void; base: string }) {
+type Preset = { id: string; name: string } | null;
+// в карточке клиента «Создать → Сделка/Задача» подставляет этого клиента и открывает окно сразу, не дожидаясь списка клиентов
+const withPreset = (clients: { id: string; name: string }[], preset: Preset) => (preset && !clients.some((x) => x.id === preset.id) ? [preset, ...clients] : clients);
+function CreateDealHost({ open, onClose, clients, setClients, base, preset }: { open: boolean; onClose: () => void; clients: { id: string; name: string }[]; setClients: (v: { id: string; name: string }[]) => void; base: string; preset: Preset }) {
   useClientOpts(open, clients, setClients);
   const router = useRouter();
-  return <DealModal open={open && clients.length > 0} deal={null} clients={clients} onClose={onClose} onSaved={() => { onClose(); router.push(`${base}/deals`); router.refresh(); }} />;
+  const list = withPreset(clients, preset);
+  return <DealModal open={open && list.length > 0} deal={null} clients={list} clientId={preset?.id ?? null} onClose={onClose} onSaved={() => { onClose(); if (!preset) router.push(`${base}/deals`); router.refresh(); }} />;
 }
-function CreateTaskHost({ open, onClose, clients, setClients }: { open: boolean; onClose: () => void; clients: { id: string; name: string }[]; setClients: (v: { id: string; name: string }[]) => void }) {
+function CreateTaskHost({ open, onClose, clients, setClients, preset }: { open: boolean; onClose: () => void; clients: { id: string; name: string }[]; setClients: (v: { id: string; name: string }[]) => void; preset: Preset }) {
   useClientOpts(open, clients, setClients);
   const router = useRouter();
-  return <TaskModal open={open} task={null} clients={clients} onClose={onClose} onSaved={() => { onClose(); router.refresh(); }} />;
+  return <TaskModal open={open} task={null} clients={withPreset(clients, preset)} clientId={preset?.id ?? null} onClose={onClose} onSaved={() => { onClose(); router.refresh(); }} />;
 }

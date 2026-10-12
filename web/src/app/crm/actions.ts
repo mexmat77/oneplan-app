@@ -77,7 +77,7 @@ export async function listClients(opts: { q?: string; status?: "active" | "archi
     c.sb.from("crm_contacts").select("*").in("client_id", ids).order("is_main", { ascending: false }).order("sort"),
     c.sb.from("crm_deals").select("client_id, closed_at").in("client_id", ids),
     c.sb.from("crm_tasks").select("id, client_id, title, due_at, kind").in("client_id", ids).is("done_at", null).order("due_at"),
-    c.sb.from("crm_requests").select("id, client_id, kind, status, priority, fields").in("client_id", ids).neq("status", "closed").order("created_at"),
+    c.sb.from("crm_requests").select("id, client_id, kind, status, priority, fields").in("client_id", ids).order("created_at"),
   ]);
   const byClient = <T extends Row>(list: T[] | null) => { const m = new Map<string, T[]>(); (list ?? []).forEach((x) => { const k = x.client_id as string; m.set(k, [...(m.get(k) ?? []), x]); }); return m; };
   const cm = byClient(cts as Row[] | null), dm = byClient(deals as Row[] | null), tm = byClient(tasks as Row[] | null), rm = byClient(reqs as Row[] | null);
@@ -86,7 +86,7 @@ export async function listClients(opts: { q?: string; status?: "active" | "archi
     const ds = dm.get(id) ?? [];
     const t0 = (tm.get(id) ?? [])[0];
     return rowClient(c, r, (cm.get(id) ?? []).map((x) => rowContact(c, x)), ds.length, ds.filter((d) => !d.closed_at).length,
-      t0 ? { id: t0.id as string, title: t0.title as string, dueAt: t0.due_at as string, kind: t0.kind as Task["kind"] } : null, (rm.get(id) ?? []).map(rowBrief));
+      t0 ? { id: t0.id as string, title: t0.title as string, dueAt: t0.due_at as string, kind: t0.kind as Task["kind"] } : null, (rm.get(id) ?? []).map(rowBrief).sort((a, b) => Number(a.status === "closed") - Number(b.status === "closed")));
   });
 }
 

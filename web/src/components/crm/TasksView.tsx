@@ -58,10 +58,9 @@ export function TasksView() {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        
-        <Segmented value={view} onChange={setView} options={[{ value: "list", label: c.tk.list, icon: <IconList size={15} /> }, { value: "week", label: c.tk.week, icon: <IconCalendarWeek size={15} /> }]} />
         <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text"><input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> {c.task.showDone}</label>
         <div className="flex-1" />
+        <Segmented value={view} onChange={setView} options={[{ value: "list", label: c.tk.list, icon: <IconList size={15} /> }, { value: "week", label: c.tk.week, icon: <IconCalendarWeek size={15} /> }]} />
         <button type="button" onClick={() => setModal({ open: true, task: null })} disabled={ro} className={btnP}><IconPlus size={15} /> {c.task.add}</button>
       </div>
       <div className="mb-4 flex gap-2"><input value={quick} onChange={(e) => setQuick(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") quickAdd(); }} placeholder={c.tk.add} disabled={ro} className={inp} /><button type="button" onClick={quickAdd} disabled={ro || !quick.trim()} className={btnP}><IconPlus size={15} /></button></div>
