@@ -1617,7 +1617,9 @@
       "sendNote": "Save",
       "openFull": "Open card",
       "lastActivity": "Last activity",
-      "noActivity": "Nothing yet — add the first note or call"
+      "noActivity": "Nothing yet — add the first note or call",
+      "about": "About",
+      "visitDate": "Arrival date"
     },
     "setNav": {
       "pipeline": "Pipeline",
@@ -1991,7 +1993,8 @@
       },
       "show": "Show fields",
       "hide": "Collapse",
-      "noFields": "No fields filled yet — click “Fill in details”"
+      "noFields": "No fields filled yet — click “Fill in details”",
+      "delete": "Delete request"
     },
     "team": {
       "title": "Team and branches",
@@ -2118,7 +2121,8 @@
     },
     "dealCard": {
       "type": "Deal type",
-      "closed": "Closed"
+      "closed": "Closed",
+      "about": "About the deal"
     }
   },
   "dr": {

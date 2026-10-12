@@ -1617,7 +1617,9 @@
       "sendNote": "Kaydet",
       "openFull": "Kartı aç",
       "lastActivity": "Son etkinlik",
-      "noActivity": "Henüz bir şey yok — ilk notu veya aramayı ekleyin"
+      "noActivity": "Henüz bir şey yok — ilk notu veya aramayı ekleyin",
+      "about": "Müşteri hakkında",
+      "visitDate": "Geliş tarihi"
     },
     "setNav": {
       "pipeline": "Satış hunisi",
@@ -1991,7 +1993,8 @@
       },
       "show": "Alanları göster",
       "hide": "Daralt",
-      "noFields": "Alanlar henüz dolu değil — «Ayrıntıları doldur»a basın"
+      "noFields": "Alanlar henüz dolu değil — «Ayrıntıları doldur»a basın",
+      "delete": "Talebi sil"
     },
     "team": {
       "title": "Ekip ve şubeler",
@@ -2118,7 +2121,8 @@
     },
     "dealCard": {
       "type": "Anlaşma türü",
-      "closed": "Kapandı"
+      "closed": "Kapandı",
+      "about": "Anlaşma hakkında"
     }
   },
   "dr": {

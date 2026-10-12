@@ -48,7 +48,7 @@ function FieldInput({ k, value, onChange, lang }: { k: string; value: string; on
   return <input inputMode={f?.type === "money" || f?.type === "number" ? "decimal" : undefined} value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={f?.hint?.[lang]} />;
 }
 
-export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; dealKind: string; onChange?: () => void }) {
+export function DocsPanel({ dealId, dealKind, onChange, bare }: { dealId: string; dealKind: string; onChange?: () => void; bare?: boolean }) {
   const { t, lang } = useI18n();
   const c = t.crm.docs;
   const crm = useCrm();
@@ -64,9 +64,9 @@ export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; deal
   const kinds = c.kinds as Record<string, string>;
   const size = (n: number | null) => (n ? (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`) : "");
   return (
-    <div className="mt-3 rounded-[6px] border border-line bg-[#fafbfc] p-3">
+    <div className={bare ? "" : "mt-3 rounded-[6px] border border-line bg-[#fafbfc] p-3"}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted">{c.title}{docs ? ` · ${docs.length}` : ""}</div>
+        <div className={bare ? "text-[13px] font-semibold text-ink" : "text-[12px] font-semibold uppercase tracking-[.04em] text-muted"}>{c.title}{docs ? ` · ${docs.length}` : ""}</div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setModal("data")} disabled={ro} title={c.dataS} className={`${btnS} h-7 px-2 text-[12px]`}><IconForms size={13} /> {c.data}</button>
           <button type="button" onClick={() => setModal("upload")} disabled={ro} className={`${btnS} h-7 px-2 text-[12px]`}><IconUpload size={13} /> {c.upload}</button>
@@ -76,10 +76,10 @@ export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; deal
       {docs === null ? <div className="text-[12.5px] text-muted">…</div> : docs.length === 0 ? <div className="text-[12.5px] text-muted">{c.none}</div> : (
         <div className="flex flex-col gap-1">
           {docs.map((d) => (
-            <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-[6px] text-[12.5px]">
+            <div key={d.id} className={`flex items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-[6px] text-[12.5px] ${bare ? "flex-wrap" : "flex-wrap"}`}>
               <button type="button" onClick={() => open(d, d.hasPdf ? "pdf" : d.hasDocx ? "docx" : "file")} title={c.open} className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[6px] bg-bg-2 text-ink hover:bg-blue-tint">{d.hasFile ? <IconPaperclip size={16} className="text-muted" /> : d.hasPdf ? <IconFileTypePdf size={16} className="text-red" /> : <IconFileText size={16} className="text-blue-2" />}</button>
-              <div className="min-w-0 flex-1">
-                <button type="button" onClick={() => open(d, d.hasPdf ? "pdf" : d.hasDocx ? "docx" : "file")} className="block max-w-full cursor-pointer truncate text-left font-semibold text-ink hover:text-blue-2">{d.title}</button>
+              <div className={`min-w-0 flex-1 ${bare ? "basis-[calc(100%-40px)]" : ""}`}>
+                <button type="button" onClick={() => open(d, d.hasPdf ? "pdf" : d.hasDocx ? "docx" : "file")} className="block max-w-full cursor-pointer truncate text-left font-semibold text-ink hover:text-blue-2" title={d.title}>{d.title}</button>
                 <div className="truncate text-[11.5px] text-muted">{kinds[d.kind] ?? d.kind} · {fmtDate(d.createdAt, lang)}{d.size ? ` · ${size(d.size)}` : ""}{d.validUntil ? ` · ${c.validUntil} ${fmtDate(d.validUntil, lang)}` : ""}</div>
               </div>
               <span className="inline-flex items-center gap-[6px]"><span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLOR[d.status] }} /><Select value={d.status} onChange={(v) => status(d, v as DocInfo["status"])} options={(["draft", "sent", "signed", "void"] as const).map((k) => ({ value: k, label: c.status[k] }))} size="sm" menuWidth="auto" disabled={ro} className="w-[140px]" /></span>
