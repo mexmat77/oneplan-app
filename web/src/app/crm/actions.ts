@@ -270,7 +270,9 @@ export async function listDeals(): Promise<Deal[]> { const c = await crmCtx(); r
 export async function saveDeal(input: DealInput, id?: string | null): Promise<string> {
   const c = await crmCtx(); assertWrite(c);
   const did = id || crypto.randomUUID();
-  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, source_id: input.sourceId, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
+  // источник — свойство клиента (12.10.2026): сделка наследует источник клиента, в форме сделки его нет
+  const { data: clRow } = await c.sb.from("crm_clients").select("source_id").eq("id", input.clientId).maybeSingle();
+  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, source_id: (clRow?.source_id as string | null) ?? input.sourceId ?? null, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
   const { error } = await c.sb.from("crm_deals").upsert(row, { onConflict: "id" });
   if (error) throw new Error(error.message);
   if (!id) await addEvent(c, { clientId: input.clientId, dealId: did, kind: "deal", payload: { title: row.title } });

@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Deal, DealInput, Task, TaskInput, TaskKind } from "@/lib/crm/types";
-import { crmError, btnP, btnS, fromLocalInput, inp, lbl, sourceName, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, fromLocalInput, inp, lbl, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
 import { DuePicker } from "./DuePicker";
 import { DateField } from "@/components/ui/DateRange";
 
@@ -71,10 +71,9 @@ function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealP
         <div><label className={lbl}>{c.deal.deposit}</label><input inputMode="numeric" value={f.deposit ?? ""} onChange={(e) => set({ deposit: e.target.value ? +e.target.value.replace(/\D/g, "") : null })} className={inp} /></div>
         <div><label className={lbl}>{c.deal.depositAt}</label><DateField value={f.depositAt ?? ""} onChange={(v) => set({ depositAt: v || null })} /></div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div><label className={lbl}>{c.source}</label><Select value={f.sourceId ?? ""} onChange={(v) => set({ sourceId: v || null })} options={[{ value: "", label: c.noSource }, ...crm.sources.filter((s) => s.active).map((s) => ({ value: s.id, label: sourceName(s, t) }))]} /></div>
-        {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>}
-      </div>
+      {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2">
+        <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>
+      </div>}
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{deal ? c.save : c.create}</button></div>
     </div>
   );
