@@ -392,7 +392,7 @@ export default function ObjPage() {
       </Modal>
 
       <ExportModal id={o.id} open={exp} onClose={() => setExp(false)} />
-      <TransferModal open={transfer} title={t.obj.transferT} hint={t.obj.transferH} busy={trBusy} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { await transferListing(o.id, toId); upsertLocalListing({ ...o, owner: toId }); setTransfer(false); showToast(t.obj.transferDone.replace("{name}", target?.name ?? "")); router.push("/mine"); } catch (e) { showToast((e as Error).message); } finally { setTrBusy(false); } }} />
+      <TransferModal open={transfer} scope="agency" emptyText={t.obj.transferNone} title={t.obj.transferT} hint={t.obj.transferH} busy={trBusy} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { await transferListing(o.id, toId); upsertLocalListing({ ...o, owner: toId }); setTransfer(false); showToast(t.obj.transferDone.replace("{name}", target?.name ?? "")); router.push("/mine"); } catch (e) { showToast((e as Error).message); } finally { setTrBusy(false); } }} />
     </div>
   );
 }

@@ -655,8 +655,9 @@
     "deleted": "Listing deleted",
     "transfer": "Transfer listing",
     "transferT": "Transfer the listing to another realtor",
-    "transferH": "The listing moves to the chosen realtor with photos and price history. They get a notification; it leaves your “My objects”.",
-    "transferDone": "Listing transferred: {name}"
+    "transferH": "The listing moves to a colleague from your agency with photos and price history. They get a notification; it leaves your “My objects”.",
+    "transferDone": "Listing transferred: {name}",
+    "transferNone": "Listings can be transferred only within an agency. Your agency has no other active realtors, or you work alone."
   },
   "sel": {
     "previewBar": "Preview",

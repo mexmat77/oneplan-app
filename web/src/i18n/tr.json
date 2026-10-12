@@ -655,8 +655,9 @@
     "deleted": "İlan silindi",
     "transfer": "İlanı devret",
     "transferT": "İlanı başka danışmana devret",
-    "transferH": "İlan fotoğraflar ve fiyat geçmişiyle seçilen danışmana geçer. Bildirim alır; ilan «İlanlarım»dan kaybolur.",
-    "transferDone": "İlan devredildi: {name}"
+    "transferH": "İlan, fotoğraflar ve fiyat geçmişiyle ofisinizden bir meslektaşa geçer. Bildirim alır; ilan «İlanlarım»dan kaybolur.",
+    "transferDone": "İlan devredildi: {name}",
+    "transferNone": "İlanlar yalnızca ofis içinde devredilebilir. Ofisinizde başka aktif danışman yok ya da tek başınıza çalışıyorsunuz."
   },
   "sel": {
     "previewBar": "Önizle",

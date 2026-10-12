@@ -9,13 +9,13 @@ import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/provider";
 
-type Props = { open: boolean; title: string; hint?: string; prefer?: { id: string; name: string }[]; busy?: boolean; onClose: () => void; onPick: (id: string, target: TransferTarget | null) => void };
+type Props = { open: boolean; title: string; hint?: string; prefer?: { id: string; name: string }[]; busy?: boolean; scope?: "agency" | "all"; emptyText?: string; onClose: () => void; onPick: (id: string, target: TransferTarget | null) => void };
 
-export function TransferModal({ open, title, hint, prefer, busy, onClose, onPick }: Props) {
+export function TransferModal({ open, title, hint, prefer, busy, scope = "all", emptyText, onClose, onPick }: Props) {
   const { t } = useI18n();
   const [list, setList] = useState<TransferTarget[] | null>(null);
   const [to, setTo] = useState("");
-  useEffect(() => { if (open && !list) listTransferTargets().then(setList).catch(() => setList([])); }, [open, list]);
+  useEffect(() => { if (open && !list) listTransferTargets(scope).then(setList).catch(() => setList([])); }, [open, list, scope]);
   if (!open) return null;
   const preferIds = new Set((prefer ?? []).map((p) => p.id));
   const opts = [
@@ -27,6 +27,7 @@ export function TransferModal({ open, title, hint, prefer, busy, onClose, onPick
       <div data-crm-form="1">
         <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{title}</div><ModalClose onClick={onClose} /></div>
         {hint && <p className="mb-3 text-[12.5px] text-muted">{hint}</p>}
+        {list && list.length === 0 && !(prefer?.length) && emptyText && <p className="mb-3 rounded-[6px] bg-[#fff8e6] px-3 py-2 text-[12.5px] text-[#a16207]">{emptyText}</p>}
         <label className="mb-[4px] block text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{t.tr.to}</label>
         <Select value={to} onChange={setTo} options={opts} searchable placeholder={list ? t.tr.pick : "…"} disabled={!list} />
         <div className="mt-4 flex justify-end gap-2">
