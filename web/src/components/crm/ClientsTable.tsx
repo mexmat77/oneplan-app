@@ -22,7 +22,7 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; dealStage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
@@ -74,13 +74,15 @@ export function ClientsTable() {
   const mode = usePref(MODE_LS) === "board" ? "board" : "list"; // список или канбан по воронке клиента (выбор пользователя)
 
   const patchRow = (id: string, p: Partial<Client>) => setList((prev) => prev?.map((x) => (x.id === id ? { ...x, ...p } : x)) ?? prev); // оптимистично
+  const setCounts = crm.setCounts;
   const load = useCallback(() => {
     // без поиска — кэш раздела: прошлые строки показываются сразу, свежие приходят фоном (замечание пользователя 12.10.2026)
     const key = `${crm.base}:clients:${status}`;
     const cached = q ? undefined : cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(key);
     if (cached) { setList(cached.list); setDeals(cached.deals); }
-    crmClientsPage({ q, status }).then(({ list: l, deals: d }) => { setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); }).catch(() => setList([]));
-  }, [q, status, crm.base]);
+    const run = !q ? cacheRun(key, () => crmClientsPage({ q, status })) : crmClientsPage({ q, status });
+    run.then(({ list: l, deals: d, counts }) => { setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); setCounts?.(counts); }).catch(() => setList([]));
+  }, [q, status, crm.base, setCounts]);
   useEffect(() => { const h = setTimeout(load, q ? 250 : 0); return () => clearTimeout(h); }, [load, q]);
 
   const isOver = (x: Client) => !!x.nextTask && new Date(x.nextTask.dueAt).getTime() < now;

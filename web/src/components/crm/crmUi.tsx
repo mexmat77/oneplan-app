@@ -11,12 +11,18 @@ export type CrmCtxT = { me: CrmMe; stages: Stage[]; cstages: Stage[]; sources: S
   /** вкладки открытых карточек (как в браузере): регистрирует ClientPage, закрывает крестик/удаление */
   openTab?: (id: string, name: string) => void; closeTab?: (id: string) => void;
   /** один поиск в шапке CRM (12.10.2026): на списке клиентов фильтрует живьём, на других разделах Enter ведёт в список */
-  q: string; setQ: (v: string) => void };
+  q: string; setQ: (v: string) => void;
+  /** счётчики бокового меню: страницы, которые их уже получили, обновляют без отдельного вызова */
+  setCounts?: (c: { clients: number; deals: number; tasks: number }) => void };
 
 // кэш загруженных списков на время сессии: возврат к разделу рисует прошлые данные сразу, обновление — фоном
 const memCache = new Map<string, unknown>();
 export const cacheGet = <T,>(key: string): T | undefined => memCache.get(key) as T | undefined;
 export const cacheSet = <T,>(key: string, v: T): T => { memCache.set(key, v); return v; };
+// запрос в полёте: второй потребитель того же ключа ждёт тот же промис, а не шлёт свой (серверные экшены Next идут по очереди)
+const pending = new Map<string, Promise<unknown>>();
+export const cachePending = <T,>(key: string): Promise<T> | undefined => pending.get(key) as Promise<T> | undefined;
+export function cacheRun<T>(key: string, factory: () => Promise<T>): Promise<T> { const cur = pending.get(key) as Promise<T> | undefined; if (cur) return cur; const p = factory().finally(() => { if (pending.get(key) === p) pending.delete(key); }); pending.set(key, p); return p; }
 export const CrmCtx = createContext<CrmCtxT | null>(null);
 export function useCrm(): CrmCtxT { const c = useContext(CrmCtx); if (!c) throw new Error("CrmCtx"); return c; }
 

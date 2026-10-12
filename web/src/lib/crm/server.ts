@@ -4,7 +4,7 @@ import "server-only";
 // 6 мес → ограниченный режим без оплаты), ключ данных ws (конвертное шифрование, см. crypto.ts), наборы по умолчанию.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser, type CurrentUser } from "@/lib/auth";
+import { getCurrentUserCached, type CurrentUser } from "@/lib/auth";
 import { decField, encField, newWrappedKey, normalizeContact, unwrapKey, valueHash } from "./crypto";
 import { DEFAULT_CLIENT_STAGES, DEFAULT_SOURCES, DEFAULT_STAGES, type Branch, type CrmAccess, type CrmMember, type MemberRole, type Ws, type WsKind } from "./types";
 
@@ -17,7 +17,7 @@ const wsCache = new Map<string, { ws: Ws; exp: number }>();
 const accCache = new Map<string, { access: CrmAccess; trialUntil: string | null; paidTo: string | null; exp: number }>();
 
 export async function crmCtx(): Promise<Ctx> {
-  const me = await getCurrentUser();
+  const me = await getCurrentUserCached();
   if (!me) throw new Error("no-session");
   const sb = await createClient();
   // пространство и доступ — кэш 60 с на пользователя: иначе каждый экшен делал 2–3 последовательных запроса (~80 мс каждый)

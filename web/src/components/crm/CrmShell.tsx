@@ -20,7 +20,7 @@ import { CrmSettings } from "./CrmSettings";
 import { DealsBoard } from "./DealsBoard";
 import { Overview } from "./Overview";
 import { TasksView } from "./TasksView";
-import { CrmCtx, cacheGet, cacheSet, fill, fmtDate, getPref, setPref, usePref, type CrmTab } from "./crmUi";
+import { CrmCtx, cacheGet, cacheRun, cacheSet, fill, fmtDate, getPref, setPref, usePref, type CrmTab } from "./crmUi";
 
 const SIDE_LS = "opl-crm-side";
 const TABS_LS = "opl-crm-tabs";
@@ -40,13 +40,14 @@ export function CrmShell({ base }: { base: string }) {
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [q, setQ] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-    const [counts, setCounts] = useState<{ clients: number; deals: number; tasks: number } | null>(null);
-const load = useCallback(() => {
+  const [counts, setCounts] = useState<{ clients: number; deals: number; tasks: number } | null>(null);
+  const load = () => {
     crmBootstrap().then(setBoot).catch((e: Error) => setErr(e.message));
     // страница клиентов — параллельно с каркасом, в кэш раздела (а не после него): минус один круг запросов
-    if (!cacheGet(`${base}:clients:active`)) crmClientsPage({}).then(({ list, deals, counts }) => { cacheSet(`${base}:clients:active`, { list, deals }); setCounts(counts); }).catch(() => {});
-  }, [base]);
-  useEffect(() => { load(); }, [load]);
+    if (!cacheGet(`${base}:clients:active`)) cacheRun(`${base}:clients:active`, () => crmClientsPage({})).then((r) => { cacheSet(`${base}:clients:active`, { list: r.list, deals: r.deals }); setCounts(r.counts); }).catch(() => {});
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- load пересоздаётся на каждый рендер, грузим один раз на кабинет
+  useEffect(() => { load(); }, [base]);
   useEffect(() => { document.documentElement.setAttribute("data-crmmode", "1"); return () => document.documentElement.removeAttribute("data-crmmode"); }, []);
   // «/» — фокус на поиск, Esc — закрыть меню
   useEffect(() => {
@@ -61,7 +62,9 @@ const load = useCallback(() => {
   }, []);
 
   const wide = usePref(SIDE_LS) !== "0"; // левое меню с подписями и счётчиками (образец пользователя); сворачивается в иконки
-  useEffect(() => { crmCounts().then(setCounts).catch(() => {}); }, [pathname]);
+  const section = path[0] ?? "";
+  const clientId = section === "c" ? path[1] : UUID.test(section) ? section : null;
+  useEffect(() => { if (section === "clients" || clientId) return; crmCounts().then(setCounts).catch(() => {}); }, [pathname, section, clientId]); // на клиентах счётчики приходят вместе со страницей
   const me = boot?.me.members.find((m) => m.id === boot.me.meId);
   // вкладки открытых карточек (localStorage, на кабинет): [{id, name}]
   const tabsKey = `${TABS_LS}:${base}:${boot?.me.ws.id ?? ""}`; // ключ на пространство: другой пользователь в том же браузере не видит чужих вкладок
@@ -71,8 +74,6 @@ const load = useCallback(() => {
   const openTab = useCallback((id: string, name: string) => { const cur = readTabs(); const i = cur.findIndex((x) => x.id === id); if (i >= 0) { if (cur[i].name !== name) setPref(tabsKey, JSON.stringify(cur.map((x) => (x.id === id ? { id, name } : x)))); } else setPref(tabsKey, JSON.stringify([...cur, { id, name }].slice(-12))); }, [tabsKey, readTabs]);
   const closeTab = useCallback((id: string) => { setPref(tabsKey, JSON.stringify(readTabs().filter((x) => x.id !== id))); }, [tabsKey, readTabs]);
   const accessText = boot?.me.access === "readonly" ? c.readonly : boot?.me.paidTo ? fill(c.paidTo, { date: fmtDate(boot.me.paidTo, lang) }) : boot?.me.trialUntil ? fill(c.trial, { date: fmtDate(boot.me.trialUntil, lang) }) : "";
-  const section = path[0] ?? "";
-  const clientId = section === "c" ? path[1] : UUID.test(section) ? section : null;
   const nav: { key: string; href: string; label: string; Icon: typeof IconUsers; active: boolean }[] = [
     { key: "", href: base, label: c.nav.overview, Icon: IconLayoutDashboard, active: section === "" },
     { key: "clients", href: `${base}/clients`, label: c.nav.clients, Icon: IconUsers, active: section === "clients" || !!clientId },
@@ -83,7 +84,7 @@ const load = useCallback(() => {
 
   if (err) return <div className="p-6 text-[13px] text-muted">{err === "no-company" ? "—" : err}</div>;
   if (!boot) return <div className="py-16 text-center text-[13px] text-muted">…</div>;
-  const ctx = { me: boot.me, stages: boot.stages, cstages: boot.cstages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setCstages: (s: Stage[]) => setBoot((b) => (b ? { ...b, cstages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ };
+  const ctx = { me: boot.me, stages: boot.stages, cstages: boot.cstages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setCstages: (s: Stage[]) => setBoot((b) => (b ? { ...b, cstages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ, setCounts };
   const listTab = nav.find((n) => n.active && n.key !== "clients") ?? nav[1];
   const closeAndGo = (id: string) => { closeTab(id); if (clientId === id) router.push(`${base}/clients`); };
   const ro = boot.me.access !== "full";

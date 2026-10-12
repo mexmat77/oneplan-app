@@ -33,3 +33,19 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     mfaRequired,
   };
 }
+
+// Кэш пользователя на 60 с по access-токену (12.10.2026): getUser + профиль — два сетевых запроса (~180 мс) на КАЖДЫЙ
+// серверный экшен; безопасность данных всё равно обеспечивает RLS по тому же токену. Используется только в CRM (crmCtx).
+const userCache = new Map<string, { u: CurrentUser; exp: number }>();
+export async function getCurrentUserCached(): Promise<CurrentUser | null> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const tok = session?.access_token;
+  if (!tok) return getCurrentUser();
+  const hit = userCache.get(tok);
+  if (hit && hit.exp > Date.now()) return hit.u;
+  const u = await getCurrentUser();
+  if (u) { if (userCache.size > 500) userCache.clear(); userCache.set(tok, { u, exp: Date.now() + 60_000 }); }
+  return u;
+}
