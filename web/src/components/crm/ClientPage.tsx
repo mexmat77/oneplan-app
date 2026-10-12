@@ -22,7 +22,7 @@ import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
+import { cacheGet, cacheSet, crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -35,12 +35,15 @@ export function ClientPage({ base, id, embedded }: { base: string; id: string; e
   return <CrmCtx.Provider value={ctx}><Inner id={id} /></CrmCtx.Provider>;
 }
 
+type CardData = { client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> };
 function Inner({ id }: { id: string }) {
   const { t, lang } = useI18n();
   const c = t.crm;
   const crm = useCrm();
   const router = useRouter();
-  const [data, setData] = useState<{ client: Client; deals: Deal[]; tasks: Task[]; events: CrmEvent[]; requests: CrmRequest[]; dups: DupHit[]; objs: Record<string, ListingBrief> } | null | undefined>(undefined);
+  // кэш карточки на сессию (12.10.2026, «моргает при переключении вкладок»): вкладка открывается из памяти, свежие данные — фоном
+  const cardKey = `${crm.base}:client:${id}`;
+  const [data, setData] = useState<CardData | null | undefined>(() => cacheGet<CardData>(cardKey));
   const [reqM, setReqM] = useState<{ open: boolean; req: CrmRequest | null; kind?: RequestKind }>({ open: false, req: null });
   const [transfer, setTransfer] = useState(false);
   const [trBusy, setTrBusy] = useState(false);
@@ -48,15 +51,15 @@ function Inner({ id }: { id: string }) {
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [note, setNote] = useState("");
-  const [objs, setObjs] = useState<Record<string, ListingBrief>>({});
+  const [objs, setObjs] = useState<Record<string, ListingBrief>>(() => cacheGet<CardData>(cardKey)?.objs ?? {});
   const [openReq, setOpenReq] = useState<Record<string, boolean>>({});
-  const [dups, setDups] = useState<DupHit[]>([]);
+  const [dups, setDups] = useState<DupHit[]>(() => cacheGet<CardData>(cardKey)?.dups ?? []);
   const ro = crm.me.access !== "full";
   // оптимистично (стандарт 2026): интерфейс меняется сразу, сервер — фоном, при ошибке данные перечитываются
   const patchLocal = (p: Partial<Client>) => setData((d) => (d ? { ...d, client: { ...d.client, ...p } } : d));
-  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) { crm.openTab?.(d.client.id, d.client.name); setObjs(d.objs); setDups(d.dups); } else crm.closeTab?.(id); }).catch(() => { setData(null); crm.closeTab?.(id); });
+  const load = useCallback(() => { getClient(id).then((d) => { setData(d); if (d) { cacheSet(cardKey, d); crm.openTab?.(d.client.id, d.client.name); setObjs(d.objs); setDups(d.dups); } else crm.closeTab?.(id); }).catch(() => { setData(null); crm.closeTab?.(id); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, cardKey]);
   useEffect(() => { load(); }, [load]);
 
   if (data === undefined) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
