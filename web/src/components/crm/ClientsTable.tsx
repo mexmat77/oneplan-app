@@ -367,21 +367,30 @@ function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: 
   );
 }
 
+/** Позиция fixed-меню под триггером: не вылезать за правый край, при нехватке места снизу — открыть вверх. */
+function menuPos(rect: { left: number; top: number; bottom: number } | null, w: number, h: number): React.CSSProperties {
+  if (!rect) return { position: "fixed", zIndex: 600 };
+  const vw = window.innerWidth || document.documentElement.clientWidth || 1600, vh = window.innerHeight || document.documentElement.clientHeight || 1000;
+  const left = Math.max(8, Math.min(rect.left, vw - w - 8));
+  const up = rect.bottom + h > vh && rect.top - h > 0;
+  return up ? { position: "fixed", zIndex: 600, left, bottom: vh - rect.top + 4 } : { position: "fixed", zIndex: 600, left, top: rect.bottom + 4 };
+}
 /** Чип этапа клиента с меню «Сменить статус» (как в современных CRM — прямо из списка). */
 export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const [open, setOpen] = useState(false);
   const [visitFor, setVisitFor] = useState<string | null>(null); // этап с датой («Приедет»): выбор даты приезда → задача
   const [due, setDue] = useState("");
+  const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null); // меню — fixed, иначе его режет overflow таблицы
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
   const st = crm.cstages.find((x) => x.key === value);
   const col = st?.color ?? "#8a93a2";
   return (
     <span ref={ref} className="relative inline-block">
-      <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
+      <button type="button" disabled={disabled} onClick={(e) => { const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom }); setVisitFor(null); setOpen((v) => !v); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
       {open && (
-        <div className={`absolute left-0 top-[calc(100%+4px)] z-30 rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] ${visitFor ? "w-[360px]" : "w-[220px]"}`}>
+        <div style={menuPos(rect, visitFor ? 372 : 232, visitFor ? 440 : 380)} className={`rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] ${visitFor ? "w-[360px]" : "w-[220px]"}`}>
           <div className="px-2 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[.05em] text-muted">{c.tbl.changeStatus}</div>
           {crm.cstages.map((x) => <button key={x.id} type="button" onClick={() => { if (x.key === "visit") { setVisitFor(x.key); const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(12, 0, 0, 0); setDue(d.toISOString()); return; } setOpen(false); if (x.key !== value) onChange(x.key); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${x.key === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: x.color ?? "#8a93a2" }} />{stageName(x, t, lang)}{x.key === "visit" && <IconCalendar size={13} className="ml-auto text-muted" />}</button>)}
           {visitFor && (
