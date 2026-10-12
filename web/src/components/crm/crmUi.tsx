@@ -113,3 +113,22 @@ export function crmError(e: unknown, fallback: string, readonlyText: string) {
 }
 const staleText = () => (typeof navigator !== "undefined" && /^tr/i.test(navigator.language) ? "Uygulama güncellendi — sayfayı yenileyin" : /^en/i.test(typeof navigator !== "undefined" ? navigator.language : "") ? "The app was updated — reload the page" : "Приложение обновилось — обновите страницу");
 const staleBtn = () => (typeof navigator !== "undefined" && /^tr/i.test(navigator.language) ? "Yenile" : /^en/i.test(typeof navigator !== "undefined" ? navigator.language : "") ? "Reload" : "Обновить");
+
+// ---------- канбан: ручной порядок карточек (0019) ----------
+/** Позиция между соседями (дробная): без соседей 1, только перед → prev+1, только после → next−1. */
+export function posBetween(prev: number | null | undefined, next: number | null | undefined): number {
+  if (prev == null && next == null) return 1;
+  if (prev == null) return (next as number) - 1;
+  if (next == null) return prev + 1;
+  return (prev + next) / 2;
+}
+/** Порядок в колонке: с позицией — по ней, без позиции — после, по дате изменения (новее выше). */
+export function sortBoard<T extends { boardPos: number | null; updatedAt: string }>(list: T[]): T[] {
+  return [...list].sort((a, b) => (a.boardPos != null && b.boardPos != null ? a.boardPos - b.boardPos : a.boardPos != null ? -1 : b.boardPos != null ? 1 : b.updatedAt.localeCompare(a.updatedAt)));
+}
+/** Индекс вставки по положению курсора над карточками колонки (`[data-card]`): до середины карточки — перед ней, иначе после. */
+export function dropIndex(e: React.DragEvent, colEl: HTMLElement): number {
+  const cards = [...colEl.querySelectorAll<HTMLElement>("[data-card]")];
+  for (let i = 0; i < cards.length; i++) { const r = cards[i].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) return i; }
+  return cards.length;
+}

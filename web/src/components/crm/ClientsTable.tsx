@@ -5,7 +5,7 @@
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
@@ -22,7 +22,7 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; dealStage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
@@ -168,7 +168,7 @@ export function ClientsTable() {
           <button type="button" onClick={() => setSel(new Set())} className="ml-auto cursor-pointer"><IconX size={15} /></button>
         </div>
       )}
-      {mode === "board" && list !== null && <ClientBoard rows={rows} deals={deals} onMove={async (id, k) => { patchRow(id, { stage: k }); try { await patchClient(id, { stage: k }); } catch (e) { err(e); load(); } }} />}
+      {mode === "board" && list !== null && <ClientBoard rows={rows} deals={deals} onMove={async (id, k, pos) => { patchRow(id, { stage: k, boardPos: pos }); try { await patchClient(id, { stage: k, boardPos: pos }); } catch (e) { err(e); load(); } }} />}
       <div className={`overflow-x-auto rounded-[6px] border border-line bg-surface ${mode === "board" ? "hidden" : ""}`}>
         {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
           <table data-crm-table="1" className="w-full min-w-[900px] text-[13px]">
@@ -408,26 +408,31 @@ export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { va
 }
 
 /** Канбан клиентов по воронке клиента: перетаскивание меняет статус. */
-function ClientBoard({ rows, deals, onMove }: { rows: Client[]; deals: Record<string, DealSummary>; onMove: (id: string, key: string) => void }) {
+function ClientBoard({ rows, deals, onMove }: { rows: Client[]; deals: Record<string, DealSummary>; onMove: (id: string, key: string, pos: number) => void }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm; const router = useRouter(); const now = useNow();
   const [dragId, setDragId] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
+  const [drop, setDrop] = useState<{ col: string; idx: number } | null>(null); // куда упадёт карточка — пунктирное место (12.10.2026)
+  const ph = <div className="h-[76px] rounded-[4px] border-2 border-dashed border-blue-2/60 bg-blue-tint/40" />;
   return (
     <div data-crm-kanban="1" className="mb-3 flex gap-0 overflow-x-auto rounded-[6px] border border-line bg-surface">
-      {crm.cstages.map((st, i) => { const list = rows.filter((x) => (x.stage || "new") === st.key); return (
-        <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== st.key) setOver(st.key); }} onDragLeave={() => setOver((o) => (o === st.key ? null : o))} onDrop={(e) => { e.preventDefault(); if (dragId) onMove(dragId, st.key); setDragId(null); setOver(null); }}
-          className={`flex w-[250px] flex-none flex-col bg-[#f7f8fa] ${i > 0 ? "border-l border-line" : ""} ${over === st.key ? "crm-drag-over" : ""}`}>
+      {crm.cstages.map((st, i) => { const list = sortBoard(rows.filter((x) => (x.stage || "new") === st.key)); const here = drop?.col === st.key ? drop.idx : -1; return (
+        <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; const idx = dropIndex(e, e.currentTarget); if (drop?.col !== st.key || drop.idx !== idx) setDrop({ col: st.key, idx }); }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrop((d) => (d?.col === st.key ? null : d)); }}
+          onDrop={(e) => { e.preventDefault(); if (dragId) { const others = list.filter((x) => x.id !== dragId); const idx = Math.min(drop?.col === st.key ? drop.idx : others.length, others.length); const before = others.slice(0, idx).filter((x) => x.id !== dragId); const prev = before[before.length - 1]; const next = others[idx]; onMove(dragId, st.key, posBetween(prev?.boardPos ?? (prev ? 0 : null), next?.boardPos ?? (next ? 2 : null))); } setDragId(null); setDrop(null); }}
+          className={`flex w-[250px] flex-none flex-col bg-[#f7f8fa] ${i > 0 ? "border-l border-line" : ""} ${here >= 0 ? "crm-drag-over" : ""}`}>
           <div className="flex items-center gap-2 border-b border-line px-3 py-2 text-[12px] font-semibold text-ink"><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className="font-normal text-muted">{list.length}</span></div>
           <div className="flex min-h-[200px] flex-col gap-2 p-2">
-            {list.map((x) => { const d = deals[x.id]; const over2 = !!x.nextTask && new Date(x.nextTask.dueAt).getTime() < now; const m = crm.me.members.find((y) => y.id === x.ownerId); const req = x.requests[0]; return (
-              <div key={x.id} draggable onDragStart={(e) => { setDragId(x.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", x.id); }} onDragEnd={() => { setDragId(null); setOver(null); }} onClick={() => router.push(`${crm.base}/c/${x.id}`)}
+            {here === 0 && ph}
+            {list.map((x, k) => { const d = deals[x.id]; const over2 = !!x.nextTask && new Date(x.nextTask.dueAt).getTime() < now; const m = crm.me.members.find((y) => y.id === x.ownerId); const req = x.requests[0]; return (<React.Fragment key={x.id}>
+              <div data-card="1" draggable onDragStart={(e) => { setDragId(x.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", x.id); }} onDragEnd={() => { setDragId(null); setDrop(null); }} onClick={() => router.push(`${crm.base}/c/${x.id}`)}
                 className={`cursor-pointer rounded-[4px] border border-line bg-surface p-[10px] hover:border-[#b9c2d0] ${dragId === x.id ? "opacity-50" : ""}`} style={{ borderTop: `3px solid ${x.priority ? PRIO_COLOR[x.priority] : st.color ?? "#8a93a2"}` }}>
                 <div className="flex items-center gap-[6px]"><span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{x.name}</span>{m && <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" title={m.name} style={{ background: m.color }}>{initials(m.name)}</span>}</div>
                 <div className="mt-[2px] truncate text-[12px] text-muted">{x.contacts.find((y) => y.isMain)?.value ?? x.contacts[0]?.value ?? ""}</div>
                 {req && <div className="mt-1 truncate text-[12px] text-text"><span className="rounded-[3px] px-1 text-[10.5px] font-semibold text-white" style={{ background: REQ_COLOR[req.kind] }}>{c.rq.kinds[req.kind]}</span> {reqSummary(req.kind, req.fields)}</div>}
                 {d && !d.closed && <div className="mt-1 truncate text-[11.5px] text-muted">{c.deal.stage}: {stageName(crm.stages.find((s2) => s2.id === d.stageId), t, lang)}</div>}
                 {x.nextTask && <div className={`mt-1 truncate text-[11.5px] ${over2 ? "font-semibold text-red" : "text-muted"}`}>{x.nextTask.title} · {fmtDate(x.nextTask.dueAt, lang)}</div>}
-              </div>); })}
+              </div>
+              {here === k + 1 && ph}
+            </React.Fragment>); })}
           </div>
         </div>); })}
     </div>

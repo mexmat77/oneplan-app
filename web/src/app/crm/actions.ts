@@ -36,7 +36,7 @@ function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: n
     kind: (r.kind as Client["kind"]) || "person", company: s(r.company), roles: ((r.roles as ClientRole[]) ?? []), stage: (r.stage as Client["stage"]) || "new", priority: (r.priority as Client["priority"]) ?? null,
     country: s(r.country), citizenship: s(r.citizenship), channel: (r.channel as Client["channel"]) ?? null, contactTime: s(r.contact_time), campaign: s(r.campaign),
     refKind: (r.ref_kind as Client["refKind"]) || "none", refProfileId: s(r.ref_profile_id), refAgencyId: s(r.ref_agency_id), refClientId: s(r.ref_client_id), refText: s(r.ref_text),
-    branchId: s(r.branch_id), kvkk: ((r.kvkk as Kvkk) ?? {}), requests,
+    branchId: s(r.branch_id), kvkk: ((r.kvkk as Kvkk) ?? {}), requests, boardPos: n(r.board_pos),
     budgetMin: n(r.budget_min), budgetMax: n(r.budget_max), cur: (r.cur as string) || "TRY", want: (r.want as Want) ?? {},
     notes: dec(c, "crm_clients", "notes", id, r.notes_enc as string | null), tags: (r.tags as string[]) ?? [], consent: !!r.consent, consentAt: s(r.consent_at),
     status: r.status as Client["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string,
@@ -236,7 +236,7 @@ export async function translateNote(eventId: number, to: Lang): Promise<string> 
 // ---------- сделки ----------
 function rowDeal(r: Row, clientName: string): Deal {
   return { id: r.id as string, clientId: r.client_id as string, clientName, ownerId: s(r.owner_id), stageId: s(r.stage_id), title: (r.title as string) ?? "", deal: (r.deal as string) || "sale", amount: n(r.amount), cur: (r.cur as string) || "TRY", listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid), selectionId: s(r.selection_id), sourceId: s(r.source_id), lostReason: s(r.lost_reason), closedAt: s(r.closed_at), createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at) };
+    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos) };
 }
 async function listDealsFor(c: Ctx, f: { clientId?: string }): Promise<Deal[]> {
   let q = c.sb.from("crm_deals").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("updated_at", { ascending: false }).limit(1000);
@@ -254,12 +254,12 @@ export async function saveDeal(input: DealInput, id?: string | null): Promise<st
   if (!id) await addEvent(c, { clientId: input.clientId, dealId: did, kind: "deal", payload: { title: row.title } });
   return did;
 }
-export async function moveDeal(id: string, stageId: string, lostReason?: string): Promise<void> {
+export async function moveDeal(id: string, stageId: string, lostReason?: string, boardPos?: number | null): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
   const [{ data: d }, { data: st }] = await Promise.all([c.sb.from("crm_deals").select("client_id, stage_id").eq("id", id).maybeSingle(), c.sb.from("crm_stages").select("key, kind").eq("id", stageId).maybeSingle()]);
   if (!d || !st) throw new Error("not-found");
   const closed = st.kind === "open" ? null : new Date().toISOString();
-  const { error } = await c.sb.from("crm_deals").update({ stage_id: stageId, closed_at: closed, lost_reason: st.kind === "lost" ? lostReason ?? null : null }).eq("id", id);
+  const { error } = await c.sb.from("crm_deals").update({ stage_id: stageId, closed_at: closed, lost_reason: st.kind === "lost" ? lostReason ?? null : null, ...(boardPos !== undefined ? { board_pos: boardPos } : {}) }).eq("id", id);
   if (error) throw new Error(error.message);
   await addEvent(c, { clientId: d.client_id as string, dealId: id, kind: "stage", payload: { from: d.stage_id, to: stageId, key: st.key } });
 }
@@ -570,9 +570,9 @@ export async function saveLostReasons(list: string[]): Promise<string[]> {
 }
 
 // ---------- быстрые правки из шапки карточки (12.10.2026: статус/приоритет без открытия формы) ----------
-export async function patchClient(id: string, patch: { stage?: Client["stage"]; priority?: Client["priority"]; ownerId?: string | null }): Promise<void> {
+export async function patchClient(id: string, patch: { stage?: Client["stage"]; priority?: Client["priority"]; ownerId?: string | null; boardPos?: number | null }): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
-  const upd: Record<string, unknown> = {}; if (patch.stage) upd.stage = patch.stage; if (patch.priority !== undefined) upd.priority = patch.priority; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId;
+  const upd: Record<string, unknown> = {}; if (patch.stage) upd.stage = patch.stage; if (patch.priority !== undefined) upd.priority = patch.priority; if (patch.ownerId !== undefined) upd.owner_id = patch.ownerId; if (patch.boardPos !== undefined) upd.board_pos = patch.boardPos;
   const { error } = await c.sb.from("crm_clients").update(upd).eq("id", id);
   if (error) throw new Error(error.message);
 }

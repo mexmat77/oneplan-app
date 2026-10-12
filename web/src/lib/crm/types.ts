@@ -38,7 +38,7 @@ export type Client = {
   kind: "person" | "company"; company: string | null; roles: ClientRole[]; stage: ClientStage; priority: Priority | null;
   country: string | null; citizenship: string | null; channel: Channel | null; contactTime: string | null; campaign: string | null;
   refKind: RefKind; refProfileId: string | null; refAgencyId: string | null; refClientId: string | null; refText: string | null;
-  branchId: string | null; kvkk: Kvkk;
+  branchId: string | null; kvkk: Kvkk; boardPos: number | null;
   budgetMin: number | null; budgetMax: number | null; cur: string; want: Want;
   notes: string; tags: string[]; consent: boolean; consentAt: string | null;
   status: "active" | "archived"; createdAt: string; updatedAt: string;
@@ -53,7 +53,7 @@ export type Deal = {
   id: string; clientId: string; clientName: string; ownerId: string | null; stageId: string | null; title: string; deal: string;
   amount: number | null; cur: string; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null;
   sourceId: string | null; lostReason: string | null; closedAt: string | null; createdAt: string; updatedAt: string;
-  requestId: string | null; branchId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null;
+  requestId: string | null; branchId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null; boardPos: number | null;
 };
 
 // ---------- заявки (0017): одна потребность клиента; поля по типу — реестр lib/crm/requestFields.ts ----------

@@ -3,7 +3,7 @@
 // CRM v2 — сделки: канбан с перетаскиванием (HTML5 drag & drop, на тач — выбор этапа в карточке), сумма и счётчик колонки,
 // «дней на этапе», фильтр по ответственному; список таблицей как второй режим.
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPlus } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
@@ -14,7 +14,7 @@ import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { DealModal } from "./CrmModals";
-import { crmError, cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 const LS = "opl-crm-deals-view";
 
@@ -33,7 +33,8 @@ export function DealsBoard() {
   const [owner, setOwner] = useState("");
   const [modal, setModal] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [dragId, setDragId] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
+  const [drop, setDrop] = useState<{ col: string; idx: number } | null>(null); // пунктирное место вставки (12.10.2026)
+  const ph = <div className="h-[84px] rounded-[4px] border-2 border-dashed border-blue-2/60 bg-blue-tint/40" />;
   const load = useCallback(() => {
     listDeals().then((v) => setDeals(cacheSet(`${crm.base}:deals`, v))).catch(() => setDeals([]));
     listTasks(true).then(setTasks).catch(() => {});
@@ -41,16 +42,16 @@ export function DealsBoard() {
   }, [crm.base]);
   useEffect(() => { load(); }, [load]);
   const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);
-  async function move(d: Deal, stageId: string) {
-    if (d.stageId === stageId) return;
+  async function move(d: Deal, stageId: string, pos?: number) {
+    if (d.stageId === stageId && pos === undefined) return;
     const st = crm.stages.find((s) => s.id === stageId);
     const reason = st?.kind === "lost" ? window.prompt(c.deal.lostPh) ?? undefined : undefined;
-    setDeals((v) => (v ?? []).map((x) => (x.id === d.id ? { ...x, stageId } : x))); // оптимистично
-    try { await moveDeal(d.id, stageId, reason); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
+    setDeals((v) => (v ?? []).map((x) => (x.id === d.id ? { ...x, stageId, boardPos: pos ?? x.boardPos } : x))); // оптимистично
+    try { await moveDeal(d.id, stageId, reason, pos); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
   }
   async function del(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
   const shown = useMemo(() => (deals ?? []).filter((d) => !owner || d.ownerId === owner), [deals, owner]);
-  const byStage = useMemo(() => { const m = new Map<string, Deal[]>(); shown.forEach((d) => { const k = d.stageId ?? ""; m.set(k, [...(m.get(k) ?? []), d]); }); return m; }, [shown]);
+  const byStage = useMemo(() => { const m = new Map<string, Deal[]>(); shown.forEach((d) => { const k = d.stageId ?? ""; m.set(k, [...(m.get(k) ?? []), d]); }); for (const [k, v] of m) m.set(k, sortBoard(v)); return m; }, [shown]);
   const sum = (list: Deal[]) => { const by: Record<string, number> = {}; list.forEach((d) => { if (d.amount) by[d.cur] = (by[d.cur] ?? 0) + d.amount; }); return Object.entries(by).map(([cur, v]) => fmt(v, cur as Currency)).join(" · "); };
   const taskOf = (d: Deal) => tasks.find((x) => x.dealId === d.id) ?? tasks.find((x) => x.clientId === d.clientId);
   const days = (d: Deal) => (now ? Math.max(0, Math.round((now - new Date(d.updatedAt).getTime()) / 864e5)) : 0);
@@ -59,7 +60,7 @@ export function DealsBoard() {
     const tk = taskOf(d); const m = crm.me.members.find((x) => x.id === d.ownerId); const st = crm.stages.find((x) => x.id === d.stageId);
     const act = tk ? (new Date(tk.dueAt).getTime() < now ? "#e5484d" : "#22c15e") : "#c9d0dc";
     return (
-      <div draggable={!ro} onDragStart={(e) => { setDragId(d.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", d.id); }} onDragEnd={() => { setDragId(null); setOver(null); }}
+      <div data-card="1" draggable={!ro} onDragStart={(e) => { setDragId(d.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", d.id); }} onDragEnd={() => { setDragId(null); setDrop(null); }}
         className={`group cursor-grab rounded-[4px] border border-line bg-surface shadow-[0_1px_2px_rgba(20,36,63,.06)] transition hover:border-[#b9c2d0] active:cursor-grabbing ${dragId === d.id ? "opacity-40" : ""}`} style={{ borderTop: `3px solid ${st?.color ?? "#8a93a2"}` }}>
         <button type="button" onClick={() => setModal({ open: true, deal: d })} className="block w-full cursor-pointer px-[10px] pb-[6px] pt-[8px] text-left">
           <div className="flex items-start gap-2">
@@ -93,13 +94,14 @@ export function DealsBoard() {
       {deals === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : view === "board" ? (
         <div data-crm-kanban="1" className="flex overflow-x-auto rounded-[6px] border border-line bg-surface" style={{ minHeight: "calc(100vh - 200px)" }}>
           {crm.stages.map((st, i) => { const list = byStage.get(st.id) ?? []; return (
-            <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== st.id) setOver(st.id); }} onDragLeave={() => setOver((o) => (o === st.id ? null : o))} onDrop={(e) => { e.preventDefault(); const id = dragId ?? e.dataTransfer.getData("text/plain"); const d = (deals ?? []).find((x) => x.id === id); setOver(null); setDragId(null); if (d) move(d, st.id); }}
-              className={`flex w-[260px] flex-none flex-col bg-[#f7f8fa] transition ${i > 0 ? "border-l border-line" : ""} ${over === st.id ? "crm-drag-over" : ""}`}>
+            <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; const idx = dropIndex(e, e.currentTarget); if (drop?.col !== st.id || drop.idx !== idx) setDrop({ col: st.id, idx }); }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrop((x) => (x?.col === st.id ? null : x)); }}
+              onDrop={(e) => { e.preventDefault(); const id = dragId ?? e.dataTransfer.getData("text/plain"); const d = (deals ?? []).find((x) => x.id === id); const others = list.filter((x) => x.id !== id); const idx = Math.min(drop?.col === st.id ? drop.idx : others.length, others.length); const prev = others[idx - 1], next = others[idx]; setDrop(null); setDragId(null); if (d) move(d, st.id, posBetween(prev?.boardPos ?? (prev ? 0 : null), next?.boardPos ?? (next ? 2 : null))); }}
+              className={`flex w-[260px] flex-none flex-col bg-[#f7f8fa] transition ${i > 0 ? "border-l border-line" : ""} ${drop?.col === st.id ? "crm-drag-over" : ""}`}>
               <div className="border-b border-line bg-surface px-3 py-2">
                 <div className="flex items-center gap-2 text-[13px] font-semibold text-ink"><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}</div>
                 <div className="text-[11.5px] text-muted">{sum(list) || "—"} · {list.length}</div>
               </div>
-              <div className="flex min-h-[80px] flex-1 flex-col gap-2 p-2">{list.map((d) => <div key={d.id}>{DealCard(d)}</div>)}{list.length === 0 && <div className="mt-2 text-center text-[11.5px] text-muted">{c.kb.empty}</div>}</div>
+              <div className="flex min-h-[80px] flex-1 flex-col gap-2 p-2">{drop?.col === st.id && drop.idx === 0 && ph}{list.map((d, k) => <React.Fragment key={d.id}><div>{DealCard(d)}</div>{drop?.col === st.id && drop.idx === k + 1 && ph}</React.Fragment>)}{list.length === 0 && !(drop?.col === st.id) && <div className="mt-2 text-center text-[11.5px] text-muted">{c.kb.empty}</div>}</div>
             </div>); })}
           {(byStage.get("") ?? []).length > 0 && <div className="flex w-[260px] flex-none flex-col border-l border-line bg-[#f7f8fa]"><div className="border-b border-line bg-surface px-3 py-2 text-[13px] font-semibold text-muted">{c.deal.noStage}</div><div className="flex flex-col gap-2 p-2">{(byStage.get("") ?? []).map((d) => <div key={d.id}>{DealCard(d)}</div>)}</div></div>}
         </div>
