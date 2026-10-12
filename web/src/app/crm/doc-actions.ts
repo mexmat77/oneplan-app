@@ -15,7 +15,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export type Company = Record<string, string>; // name, taxNo, taxOffice, mersis, registryNo, address, representative, phone, email, iban, bank, licenseNo
 /** Набор реквизитов (12.10.2026: у агентства их может быть несколько — юрлица, филиалы); один — основной. */
 export type CompanyProfile = { id: string; label: string; isDefault: boolean; fields: Company };
-export type TemplateInfo = { id: string; builtin: boolean; key: string | null; name: Record<Lang, string> | string; kind: string; lang: string; fields: string[]; for: string[] };
+export type TemplateInfo = { id: string; builtin: boolean; key: string | null; name: Record<Lang, string> | string; kind: string; lang: string; enabled: boolean; fields: string[]; for: string[] };
 export type DocInfo = { id: string; clientId: string | null; dealId: string | null; title: string; kind: string; status: "draft" | "sent" | "signed" | "void"; hasDocx: boolean; hasPdf: boolean; hasFile: boolean; fileName: string | null; size: number | null; templateKey: string | null; templateId: string | null; validUntil: string | null; signedAt: string | null; createdAt: string; createdBy: string | null };
 
 // ---------- реквизиты ----------
@@ -83,11 +83,33 @@ async function tmpFileUrl(c: Ctx, key: string, docx: Buffer, which: "docx" | "pd
 }
 
 // ---------- шаблоны ----------
-export async function listTemplates(): Promise<TemplateInfo[]> {
+async function templatesOff(c: Ctx): Promise<string[]> {
+  const { data, error } = await c.sb.from("crm_settings").select("templates_off").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).maybeSingle();
+  if (error) return []; // до миграции 0025 колонки нет
+  return Array.isArray(data?.templates_off) ? (data!.templates_off as string[]) : [];
+}
+/** Встроенный шаблон включить/выключить в пространстве (0025); свой — поле active. */
+export async function setTemplateEnabled(id: string, on: boolean): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  if (id.startsWith("builtin:")) {
+    const key = id.slice(8); const cur = await templatesOff(c);
+    const next = on ? cur.filter((k) => k !== key) : [...new Set([...cur, key])];
+    const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, templates_off: next }, { onConflict: "ws_kind,ws_id" });
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await c.sb.from("crm_doc_templates").update({ active: on }).eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+}
+export async function listTemplates(all = false): Promise<TemplateInfo[]> {
   const c = await crmCtx();
-  const { data } = await c.sb.from("crm_doc_templates").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).eq("active", true).order("created_at");
-  const own: TemplateInfo[] = ((data ?? []) as Row[]).map((r) => ({ id: r.id as string, builtin: false, key: null, name: r.name as string, kind: r.kind as string, lang: r.lang as string, fields: ((r.fields as { key: string }[]) ?? []).map((f) => f.key), for: ["any"] }));
-  return [...BUILTIN.filter((t) => t.for.length).map((t) => ({ id: "builtin:" + t.key, builtin: true, key: t.key, name: t.name, kind: t.kind, lang: t.lang, fields: t.fields, for: t.for as string[] })), ...own];
+  const off = new Set(await templatesOff(c));
+  let q = c.sb.from("crm_doc_templates").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("created_at");
+  if (!all) q = q.eq("active", true);
+  const { data } = await q;
+  const own: TemplateInfo[] = ((data ?? []) as Row[]).map((r) => ({ id: r.id as string, builtin: false, key: null, name: r.name as string, kind: r.kind as string, lang: r.lang as string, enabled: r.active !== false, fields: ((r.fields as { key: string }[]) ?? []).map((f) => f.key), for: ["any"] }));
+  const builtin = BUILTIN.filter((t) => t.for.length && (all || !off.has(t.key))).map((t) => ({ id: "builtin:" + t.key, builtin: true, key: t.key, name: t.name, kind: t.kind, lang: t.lang, enabled: !off.has(t.key), fields: t.fields, for: t.for as string[] }));
+  return [...builtin, ...own];
 }
 /** Свой шаблон: DOCX с {{group.key}}; поля определяются по плейсхолдерам (неизвестные ключи — тоже поля, тип text). */
 export async function uploadTemplate(fd: FormData): Promise<TemplateInfo> {
@@ -105,7 +127,7 @@ export async function uploadTemplate(fd: FormData): Promise<TemplateInfo> {
   const fields = keys.map((k) => ({ key: k, type: FIELD_MAP[k]?.type ?? "text", group: FIELD_MAP[k]?.group ?? k.split(".")[0] }));
   const { error } = await c.sb.from("crm_doc_templates").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, name, lang: "—", kind, path: pathT, fields, created_by: c.me.id });
   if (error) throw new Error(error.message);
-  return { id, builtin: false, key: null, name, kind, lang: "—", fields: keys, for: ["any"] };
+  return { id, builtin: false, key: null, name, kind, lang: "—", enabled: true, fields: keys, for: ["any"] };
 }
 async function templateBuffer(c: Ctx, id: string): Promise<{ buf: Buffer; name: string; fields: string[] }> {
   if (id.startsWith("builtin:")) { const t = BUILTIN_MAP[id.slice(8)]; if (!t) throw new Error("template"); return { buf: await builtinTemplate(t.key), name: t.name.RU, fields: t.fields }; }
@@ -157,13 +179,16 @@ export async function listDocs(f: { dealId?: string; clientId?: string }): Promi
 }
 
 /** Значения по умолчанию для формы документа: реквизиты, клиент → buyer, объект сделки → property, сделка, ранее введённое. */
-export async function docDefaults(dealId: string, companyId?: string | null): Promise<{ values: Record<string, string>; pdf: boolean; companies: CompanyProfile[] }> {
+export async function docDefaults(dealId: string, companyId?: string | null): Promise<{ values: Record<string, string>; pdf: boolean; companies: CompanyProfile[]; companyId: string | null }> {
   const c = await crmCtx();
   const v: Record<string, string> = { "deal.date": today(), "deal.copies": "3", "deal.court": "Antalya", "deal.commissionWhen": "Tapu günü" };
   const companies = await loadProfiles(c);
-  const company = (companies.find((x) => x.id === companyId) ?? companies.find((x) => x.isDefault) ?? companies[0])?.fields ?? {};
-  for (const [k, val] of Object.entries(company)) v["agency." + k] = val;
   const { data: d } = await c.sb.from("crm_deals").select("*, crm_clients(*)").eq("id", dealId).maybeSingle();
+  let stored: Record<string, string> = {};
+  if (d?.extra_enc) { try { stored = JSON.parse(dec(c, "crm_deals", "extra", d.id as string, d.extra_enc as string)); } catch { stored = {}; } }
+  const pickId = companyId ?? stored._companyId ?? null;
+  const company = (companies.find((x) => x.id === pickId) ?? companies.find((x) => x.isDefault) ?? companies[0])?.fields ?? {};
+  for (const [k, val] of Object.entries(company)) v["agency." + k] = val;
   if (d) {
     const cl = (Array.isArray(d.crm_clients) ? d.crm_clients[0] : d.crm_clients) as Row | null;
     if (cl) {
@@ -195,13 +220,40 @@ export async function docDefaults(dealId: string, companyId?: string | null): Pr
         if (loc) v["property.address"] = loc;
       }
     }
-    // ранее введённые значения этой сделки (продавец, тапу…) — поверх
-    if (d.extra_enc) { try { Object.assign(v, JSON.parse(dec(c, "crm_deals", "extra", d.id as string, d.extra_enc as string))); } catch { /* ignore */ } }
+    // сохранённые данные сделки (стороны, объект, условия) — поверх автоподстановки
+    for (const [k, val] of Object.entries(stored)) if (!k.startsWith("_") && !k.startsWith("agency.")) v[k] = val;
   }
-  return { values: v, pdf: await pdfAvailable(), companies };
+  return { values: v, pdf: await pdfAvailable(), companies, companyId: (companies.find((x) => x.id === pickId) ?? companies.find((x) => x.isDefault) ?? companies[0])?.id ?? null };
 }
 
-export async function generateDoc(inp: { dealId: string; templateId: string; title: string; values: Record<string, string> }): Promise<DocInfo> {
+/** Слить значения в данные сделки (extra_enc): реквизиты компании (agency.*) не хранятся — они берутся из набора `_companyId`. */
+async function mergeDealData(c: Ctx, dealId: string, values: Record<string, string>) {
+  const { data: d } = await c.sb.from("crm_deals").select("extra_enc").eq("id", dealId).maybeSingle();
+  let cur: Record<string, string> = {};
+  if (d?.extra_enc) { try { cur = JSON.parse(dec(c, "crm_deals", "extra", dealId, d.extra_enc as string)); } catch { cur = {}; } }
+  for (const [k, val] of Object.entries(values)) { if (k.startsWith("agency.")) continue; if (val?.trim()) cur[k] = val; else delete cur[k]; }
+  await c.sb.from("crm_deals").update({ extra_enc: enc(c, "crm_deals", "extra", dealId, JSON.stringify(cur)) }).eq("id", dealId);
+}
+/** «Данные для документов» сделки: сохранить один раз, дальше система сама подставляет в любые шаблоны. */
+export async function saveDealDocData(dealId: string, values: Record<string, string>, companyId?: string | null): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  await mergeDealData(c, dealId, { ...values, _companyId: companyId ?? "" });
+}
+/** Несколько документов за раз из сохранённых данных сделки (без повторного ввода). */
+export async function generateDocs(dealId: string, templateIds: string[], values: Record<string, string>): Promise<DocInfo[]> {
+  const c = await crmCtx(); assertWrite(c);
+  await mergeDealData(c, dealId, values);
+  const tpls = await listTemplates(true);
+  const out: DocInfo[] = [];
+  for (const id of templateIds) {
+    const t = tpls.find((x) => x.id === id); if (!t) continue;
+    const used: Record<string, string> = {}; t.fields.forEach((k) => { if (values[k]) used[k] = values[k]; });
+    out.push(await generateDoc({ dealId, templateId: id, title: typeof t.name === "string" ? t.name : t.name.RU, values: used, keep: false }));
+  }
+  return out;
+}
+
+export async function generateDoc(inp: { dealId: string; templateId: string; title: string; values: Record<string, string>; keep?: boolean }): Promise<DocInfo> {
   const c = await crmCtx(); assertWrite(c);
   const { data: d } = await c.sb.from("crm_deals").select("id, client_id").eq("id", inp.dealId).maybeSingle();
   if (!d) throw new Error("deal");
@@ -228,9 +280,8 @@ export async function generateDoc(inp: { dealId: string; templateId: string; tit
   if (pdf) { const u2 = await c.sb.storage.from("crm").upload(`${base}/document.pdf`, pdf, { contentType: "application/pdf" }); if (!u2.error) pathPdf = `${base}/document.pdf`; }
   const { data: row, error } = await c.sb.from("crm_docs").insert({ id, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: inp.dealId, template_id: templateId, template_key: templateKey, title: inp.title.trim(), kind, path_docx: `${base}/document.docx`, path_pdf: pathPdf, size: docx.length, params_enc: enc(c, "crm_docs", "params", id, JSON.stringify(inp.values)), created_by: c.me.id }).select("*").single();
   if (error) throw new Error(error.message);
-  // запомнить в сделке продавца/объект/условия для следующих документов (без реквизитов компании и данных клиента)
-  const keep: Record<string, string> = {}; for (const [k, val] of Object.entries(inp.values)) if (!k.startsWith("agency.") && !k.startsWith("buyer.") && val) keep[k] = val;
-  await c.sb.from("crm_deals").update({ extra_enc: enc(c, "crm_deals", "extra", inp.dealId, JSON.stringify(keep)) }).eq("id", inp.dealId);
+  // данные сделки (стороны, объект, условия) — один раз на сделку (12.10.2026, «20 раз заполнять — ужас»): всё, кроме реквизитов
+  if (inp.keep !== false) await mergeDealData(c, inp.dealId, inp.values);
   await c.sb.from("crm_events").insert({ ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: d.client_id, deal_id: inp.dealId, actor_id: c.me.id, kind: "doc", payload: { title: inp.title.trim(), docId: id } });
   return rowDoc(row as Row);
 }

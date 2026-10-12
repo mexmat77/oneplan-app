@@ -5,7 +5,7 @@
 // переименование и тип своих шаблонов, загрузка своего).
 import { useEffect, useState } from "react";
 import { IconBuilding, IconDownload, IconEye, IconFileTypePdf, IconPencil, IconPlus, IconStar, IconStarFilled, IconTrash, IconUpload } from "@tabler/icons-react";
-import { companyCardUrl, deleteCompanyProfile, deleteTemplate, getCompanies, listTemplates, previewTemplate, saveCompanyProfile, templateUrl, updateTemplate, uploadTemplate, type Company, type CompanyProfile, type TemplateInfo } from "@/app/crm/doc-actions";
+import { companyCardUrl, deleteCompanyProfile, deleteTemplate, getCompanies, listTemplates, previewTemplate, saveCompanyProfile, templateUrl, updateTemplate, uploadTemplate, type Company, type CompanyProfile, type TemplateInfo, setTemplateEnabled } from "@/app/crm/doc-actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
@@ -14,6 +14,7 @@ import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
 import { FIELDS, FIELD_MAP, GROUP_LABELS, type DocGroup } from "@/lib/crm/docFields";
 import { crmError, btnP, btnS, card, chip, inp, lbl, useCrm } from "./crmUi";
+import { saveSigned } from "./DocsPanel";
 
 const tplName = (t: TemplateInfo, lang: Lang) => (typeof t.name === "string" ? t.name : t.name[lang] ?? t.name.RU);
 const COMPANY_GROUPS: [string, string[]][] = [["company", ["name", "taxNo", "taxOffice", "mersis", "registryNo", "licenseNo"]], ["contacts", ["representative", "phone", "email", "address"]], ["bank", ["bank", "iban"]]];
@@ -28,7 +29,7 @@ export function CompanySettings() {
   const [edit, setEdit] = useState<{ open: boolean; pr: CompanyProfile | null }>({ open: false, pr: null });
   useEffect(() => { getCompanies().then(setList).catch(() => setList([])); }, []);
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : (e as Error).message === "no-pdf" ? d.noPdf : c.errSave);
-  async function openCard(pr: CompanyProfile, which: "docx" | "pdf") { try { window.open(await companyCardUrl(pr.id, which), "_blank", "noopener"); } catch (e) { err(e); } }
+  async function openCard(pr: CompanyProfile, which: "docx" | "pdf") { try { await saveSigned(await companyCardUrl(pr.id, which)); } catch (e) { err(e); } }
   async function makeDefault(pr: CompanyProfile) { try { setList(await saveCompanyProfile({ ...pr, isDefault: true })); } catch (e) { err(e); } }
   async function del(pr: CompanyProfile) { if (!(await confirmDialog({ text: `${pr.label || pr.fields.name}?`, danger: true }))) return; try { setList(await deleteCompanyProfile(pr.id)); } catch (e) { err(e); } }
   return (
@@ -119,10 +120,11 @@ export function TemplateSettings() {
   const [showRef, setShowRef] = useState(false);
   const [up, setUp] = useState<{ file: File | null; name: string; kind: string }>({ file: null, name: "", kind: "other" });
   const [rename, setRename] = useState<{ id: string; name: string } | null>(null);
-  useEffect(() => { listTemplates().then(setTpls).catch(() => setTpls([])); }, []);
+  useEffect(() => { listTemplates(true).then(setTpls).catch(() => setTpls([])); }, []);
+  async function toggle(t2: TemplateInfo) { try { await setTemplateEnabled(t2.id, !t2.enabled); setTpls((v) => (v ?? []).map((x) => (x.id === t2.id ? { ...x, enabled: !t2.enabled } : x))); } catch (e) { err(e); } }
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : (e as Error).message === "no-pdf" ? d.noPdf : c.errSave);
   async function preview(t2: TemplateInfo, which: "pdf" | "docx") { setBusy(t2.id); try { window.open(await previewTemplate(t2.id, which), "_blank", "noopener"); } catch (e) { err(e); } finally { setBusy(null); } }
-  async function download(t2: TemplateInfo) { try { window.open(await templateUrl(t2.id), "_blank", "noopener"); } catch (e) { err(e); } }
+  async function download(t2: TemplateInfo) { try { await saveSigned(await templateUrl(t2.id)); } catch (e) { err(e); } }
   async function del(t2: TemplateInfo) { if (!(await confirmDialog({ text: `${tplName(t2, lang)}?`, danger: true }))) return; try { await deleteTemplate(t2.id); setTpls((v) => (v ?? []).filter((x) => x.id !== t2.id)); } catch (e) { err(e); } }
   async function setKind(t2: TemplateInfo, kind: string) { try { await updateTemplate(t2.id, { kind }); setTpls((v) => (v ?? []).map((x) => (x.id === t2.id ? { ...x, kind } : x))); } catch (e) { err(e); } }
   async function saveRename() { if (!rename) return; try { await updateTemplate(rename.id, { name: rename.name }); setTpls((v) => (v ?? []).map((x) => (x.id === rename.id ? { ...x, name: rename.name } : x))); setRename(null); } catch (e) { err(e); } }
@@ -136,14 +138,14 @@ export function TemplateSettings() {
   return (
     <div className={card}>
       <div className="text-[15px] font-semibold text-ink">{d.templates}</div>
-      <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS2}</p>
+      <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS2} {d.enabledHint}</p>
       {!tpls ? <div className="text-[13px] text-muted">…</div> : (
         <div className="overflow-x-auto rounded-[6px] border border-line">
           <table data-crm-table="1" className="w-full min-w-[760px] text-[13px]">
-            <thead><tr>{[d.tplName, d.tplKind, d.tplLang, d.tplFields, ""].map((h, i) => <th key={i} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{h}</th>)}</tr></thead>
+            <thead><tr>{[d.tplName, d.tplKind, d.tplLang, d.tplFields, d.enabled, ""].map((h, i) => <th key={i} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{h}</th>)}</tr></thead>
             <tbody>
               {tpls.map((t2) => (
-                <tr key={t2.id} className="group hover:bg-[#f7f8fa]">
+                <tr key={t2.id} className={`group hover:bg-[#f7f8fa] ${t2.enabled ? "" : "opacity-60"}`}>
                   <td className="px-3 py-2">
                     {rename?.id === t2.id ? <span className="flex gap-1"><input value={rename.name} onChange={(e) => setRename({ id: t2.id, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setRename(null); }} className={`${inp} h-7`} autoFocus /><button type="button" onClick={saveRename} className={`${btnP} h-7 px-2`}>OK</button></span>
                       : <span className="flex items-center gap-2"><span className="font-medium text-ink">{tplName(t2, lang)}</span>{t2.builtin ? <span className={chip}>{d.builtin}</span> : <button type="button" disabled={ro} onClick={() => setRename({ id: t2.id, name: tplName(t2, lang) })} className="cursor-pointer text-muted opacity-0 hover:text-ink group-hover:opacity-100"><IconPencil size={13} /></button>}</span>}
@@ -153,6 +155,7 @@ export function TemplateSettings() {
                   <td className="px-3 py-2 text-text">{t2.lang}</td>
                   <td className="px-3 py-2"><button type="button" onClick={() => setFieldsOf(fieldsOf === t2.id ? null : t2.id)} className="cursor-pointer text-[12.5px] font-semibold text-blue-2 hover:underline">{t2.fields.length} {d.fieldsN}</button>{missing(t2).length > 0 && <span className="ml-2 rounded-[4px] bg-[#fff8e6] px-[6px] text-[11px] font-semibold text-[#a16207]" title={missing(t2).join(", ")}>{missing(t2).length} {d.unknownFields}</span>}
                     {fieldsOf === t2.id && <div className="mt-1 flex max-w-[420px] flex-wrap gap-1">{t2.fields.map((k) => <code key={k} className={`rounded-[3px] px-1 text-[11px] ${FIELD_MAP[k] ? "bg-bg-2 text-text" : "bg-[#fff8e6] text-[#a16207]"}`} title={FIELD_MAP[k]?.label[lang]}>{k}</code>)}</div>}</td>
+                  <td className="px-3 py-2"><button type="button" disabled={ro} onClick={() => toggle(t2)} title={t2.enabled ? d.toggleOff : d.toggleOn} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-[10px] text-[11.5px] font-semibold ${t2.enabled ? "border-[#bfe3cf] bg-green-tint text-green" : "border-line bg-bg-2 text-muted"} disabled:opacity-50`}><span className={`h-2 w-2 rounded-full ${t2.enabled ? "bg-green" : "bg-line-4"}`} />{t2.enabled ? d.enabled : d.disabled}</button></td>
                   <td className="px-2 py-2">
                     <span className="flex items-center justify-end gap-1">
                       <button type="button" disabled={busy === t2.id} onClick={() => preview(t2, "pdf")} title={d.previewPdf} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-2 hover:text-ink disabled:opacity-40"><IconEye size={16} /></button>
