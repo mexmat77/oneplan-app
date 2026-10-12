@@ -25,6 +25,7 @@ function Inner() {
   const [pass, setPass] = useState("");
   const [pass2, setPass2] = useState("");
   const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState(""); // логин для менеджера паролей (autocomplete=username), 12.10.2026
 
   const goHome = async () => {
     const sb = createClient();
@@ -64,7 +65,7 @@ function Inner() {
           const { data: { session } } = await sb.auth.getSession();
           if (!session) throw new Error(t.auth.no_token);
         }
-        if (needPassword) setPhase("password"); else await goHome();
+        if (needPassword) { const { data: { user: u } } = await sb.auth.getUser(); setEmail(u?.email ?? ""); setPhase("password"); } else await goHome();
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
         setPhase("error");
@@ -102,6 +103,8 @@ function Inner() {
           <form onSubmit={savePassword}>
             <div className="mb-1 text-[17px] font-extrabold text-ink">{t.auth.set_title}</div>
             <div className="mb-4 text-[13.5px] leading-[1.5] text-text-2">{t.auth.set_hint}</div>
+            <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.login.email}</label>
+            <input type="email" name="username" autoComplete="username" value={email} readOnly className={`${inputCls} mb-[12px] bg-bg-2 text-text-2`} />
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.auth.pass}</label>
             <input type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} className={`${inputCls} mb-[12px]`} autoFocus />
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.auth.pass2}</label>

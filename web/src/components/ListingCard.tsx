@@ -43,7 +43,7 @@ export function ListingCard({ o, currentUser }: { o: Listing; currentUser?: stri
   // Prototype `expShow`: portal export button only on «Мои объекты» for own listings.
   const expShow = isMine && path.startsWith("/mine");
 
-  const iconBtn = "absolute right-[10px] flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-[9px] text-[15px] transition hover:bg-line-2";
+  const iconBtn = "absolute right-[10px] flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-[9px] text-[15px] transition"; // hover — у каждого состояния свой (12.10.2026: общий hover:bg-line-2 красил активную синюю кнопку в белый)
 
   return (
     <article
@@ -70,7 +70,7 @@ export function ListingCard({ o, currentUser }: { o: Listing; currentUser?: stri
         type="button"
         title={t.cat.fav}
         onClick={() => toggleFav(o.id)}
-        className={`${iconBtn} top-[10px] bg-[rgba(255,255,255,.94)] ${fav ? "text-red" : "text-muted"}`}
+        className={`${iconBtn} top-[10px] bg-[rgba(255,255,255,.94)] hover:bg-line-2 ${fav ? "text-red" : "text-muted"}`}
       >
         {fav ? <IconHeartFilled size={15} /> : <IconHeart size={15} />}
       </button>
@@ -78,7 +78,7 @@ export function ListingCard({ o, currentUser }: { o: Listing; currentUser?: stri
         type="button"
         title={inSel ? t.obj.inSel : t.obj.addSel}
         onClick={() => toggleSel(o.id)}
-        className={`${iconBtn} top-[47px] ${inSel ? "bg-blue-2 text-white hover:bg-blue-3" : "bg-[rgba(255,255,255,.94)] text-text"}`}
+        className={`${iconBtn} top-[47px] ${inSel ? "bg-blue-2 text-white hover:bg-[#e5484d]" : "bg-[rgba(255,255,255,.94)] text-text hover:bg-line-2"}`}
       >
         {inSel ? <IconCheck size={15} stroke={2.5} /> : <IconFolderPlus size={15} />}
       </button>
