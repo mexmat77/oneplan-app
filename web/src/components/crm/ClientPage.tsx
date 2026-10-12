@@ -14,6 +14,7 @@ import { useI18n } from "@/i18n/provider";
 import type { Client, ClientStage, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
+import { StageMenu } from "./ClientsTable";
 import { fmt } from "@/lib/money";
 import { ilName, ilceName } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
@@ -101,7 +102,7 @@ function Inner({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
           <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
-        <Select value={cl.stage} onChange={async (v) => { try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); } }} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang) }))} size="sm" className="w-[160px]" disabled={ro} title={c.client.stage} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: crm.cstages.find((st) => st.key === cl.stage)?.color ?? "#8a93a2" }} />} />
+        <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} onChange={async (v) => { try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); } }} disabled={ro} />
         <Select value={cl.priority ?? ""} onChange={async (v) => { try { await patchClient(cl.id, { priority: (v || null) as Priority | null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" className="w-[140px]" disabled={ro} title={c.client.priority} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: cl.priority ? PRIO_COLOR[cl.priority] : "#c9d0dc" }} />} />
         {openDeal && <Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />}
         {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}

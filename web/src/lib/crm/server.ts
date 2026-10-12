@@ -101,6 +101,14 @@ export async function ensureDefaults(sb: SupabaseClient, ws: Ws) {
   const { count: cn } = await sb.from("crm_stages").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("scope", "client");
   if (!cn) {
     await sb.from("crm_stages").insert(DEFAULT_CLIENT_STAGES.map((s, i) => ({ ws_kind: ws.kind, ws_id: ws.id, key: s.key, kind: s.kind, color: s.color, sort: i, name: {}, scope: "client" })));
+  } else {
+    // «Приедет» с датой (12.10.2026) добавляется в наборы, созданные до него, если воронка ещё не правилась вручную
+    const { data: cs } = await sb.from("crm_stages").select("key, sort").eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("scope", "client");
+    const keys = (cs ?? []).map((x) => x.key as string);
+    if (!keys.includes("visit") && keys.every((k) => DEFAULT_CLIENT_STAGES.some((d) => d.key === k))) {
+      const v = DEFAULT_CLIENT_STAGES.find((d) => d.key === "visit")!; const after = (cs ?? []).find((x) => x.key === "selection")?.sort ?? 3;
+      await sb.from("crm_stages").insert({ ws_kind: ws.kind, ws_id: ws.id, key: "visit", kind: v.kind, color: v.color, sort: Number(after) + 0.5, name: {}, scope: "client" });
+    }
   }
   const { count: sn } = await sb.from("crm_sources").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id);
   if (!sn) {

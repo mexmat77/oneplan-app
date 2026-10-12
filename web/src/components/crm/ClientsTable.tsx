@@ -6,8 +6,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronDown, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
-import { bulkClients, clientDealSummary, listClients, patchClient, type DealSummary } from "@/app/crm/actions";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
+import { bulkClients, clientDealSummary, listClients, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
+import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
@@ -180,7 +181,7 @@ export function ClientsTable() {
                   <td className={`px-3 ${pad}`}><span className="flex items-center gap-[6px]"><button type="button" disabled={ro} onClick={async (e) => { e.stopPropagation(); const order: (Client["priority"])[] = [null, "hot", "warm", "cold"]; const next = order[(order.indexOf(x.priority) + 1) % order.length]; try { await patchClient(x.id, { priority: next }); load(); } catch (er) { err(er); } }} title={x.priority ? c.prio[x.priority] : c.prio.none} className="h-[10px] w-[10px] flex-none cursor-pointer rounded-full border border-line hover:scale-125" style={{ background: x.priority ? PRIO_COLOR[x.priority] : "transparent", borderColor: x.priority ? PRIO_COLOR[x.priority] : undefined }} /><Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{x.roles.slice(0, 2).map((r) => <span key={r} className="rounded-[3px] bg-bg-2 px-[5px] text-[10.5px] font-medium text-muted">{c.roles[r]}</span>)}</span>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
                   <td className={`px-3 ${pad}`}>{reg ? <span className="inline-flex items-center gap-[6px] text-text">{reg.name}{reg.more > 0 && <span className="rounded-full bg-blue-tint px-[6px] text-[11px] font-semibold text-sel-ink">+{reg.more}</span>}</span> : <span className="text-muted">—</span>}</td>
                   <td className={`max-w-[260px] px-3 ${pad}`}>{d ? <><span className="block truncate text-text">{d.title || (d.amount != null ? fmt(d.amount, d.cur as Currency) : "—")}</span>{!dense && <span className="block truncate text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}</span>}</> : <span className="text-muted">—</span>}</td>
-                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} onChange={async (k) => { try { await patchClient(x.id, { stage: k }); load(); } catch (er) { err(er); } }} disabled={ro} />{!dense && <span className="mt-[3px] block truncate text-[12px] text-muted">{d ? (d.closed ? (d.closed === "won" ? c.tbl.won : c.tbl.lost) : `${c.deal.stage}: ${stageName(st, t, lang)}`) : x.nextTask ? x.nextTask.title : ""}</span>}</td>
+                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} clientId={x.id} ownerId={x.ownerId} onChange={async (k) => { try { await patchClient(x.id, { stage: k }); load(); } catch (er) { err(er); } }} disabled={ro} />{!dense && <span className="mt-[3px] block truncate text-[12px] text-muted">{d ? (d.closed ? (d.closed === "won" ? c.tbl.won : c.tbl.lost) : `${c.deal.stage}: ${stageName(st, t, lang)}`) : x.nextTask ? x.nextTask.title : ""}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { try { await patchClient(x.id, { ownerId: v || null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
                   <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.updatedAt, lang)}</td>
@@ -367,9 +368,11 @@ function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: 
 }
 
 /** Чип этапа клиента с меню «Сменить статус» (как в современных CRM — прямо из списка). */
-function StageMenu({ value, onChange, disabled }: { value: string; onChange: (key: string) => void; disabled?: boolean }) {
+export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const [open, setOpen] = useState(false);
+  const [visitFor, setVisitFor] = useState<string | null>(null); // этап с датой («Приедет»): выбор даты приезда → задача
+  const [due, setDue] = useState("");
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
   const st = crm.cstages.find((x) => x.key === value);
@@ -378,9 +381,16 @@ function StageMenu({ value, onChange, disabled }: { value: string; onChange: (ke
     <span ref={ref} className="relative inline-block">
       <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-[220px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]">
+        <div className={`absolute left-0 top-[calc(100%+4px)] z-30 rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] ${visitFor ? "w-[360px]" : "w-[220px]"}`}>
           <div className="px-2 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[.05em] text-muted">{c.tbl.changeStatus}</div>
-          {crm.cstages.map((x) => <button key={x.id} type="button" onClick={() => { setOpen(false); if (x.key !== value) onChange(x.key); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${x.key === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: x.color ?? "#8a93a2" }} />{stageName(x, t, lang)}</button>)}
+          {crm.cstages.map((x) => <button key={x.id} type="button" onClick={() => { if (x.key === "visit") { setVisitFor(x.key); const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(12, 0, 0, 0); setDue(d.toISOString()); return; } setOpen(false); if (x.key !== value) onChange(x.key); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${x.key === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: x.color ?? "#8a93a2" }} />{stageName(x, t, lang)}{x.key === "visit" && <IconCalendar size={13} className="ml-auto text-muted" />}</button>)}
+          {visitFor && (
+            <div className="mt-1 border-t border-line p-2">
+              <div className="mb-1 text-[11px] font-semibold text-ink">{c.tbl.visitDate}</div>
+              <DuePicker value={due} onChange={setDue} />
+              <button type="button" onClick={async () => { setOpen(false); setVisitFor(null); onChange(visitFor); try { await saveTask({ clientId, dealId: null, ownerId: ownerId ?? crm.me.meId, kind: "meeting", title: c.tbl.visitTask, dueAt: due || new Date().toISOString() }); } catch { /* задача не создалась — статус уже стоит */ } }} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.visitSave}</button>
+            </div>
+          )}
         </div>
       )}
     </span>

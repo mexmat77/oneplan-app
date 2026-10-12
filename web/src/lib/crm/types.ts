@@ -114,7 +114,7 @@ export const DEFAULT_STAGES: Record<WsKind, { key: string; kind: StageKind; colo
 /** Воронка клиента по умолчанию (работа менеджера до сделки) — одна для всех видов пространств. */
 export const DEFAULT_CLIENT_STAGES: { key: string; kind: StageKind; color: string }[] = [
   { key: "new", kind: "open", color: "#4d7cfe" }, { key: "noanswer", kind: "open", color: "#e5484d" }, { key: "work", kind: "open", color: "#f5a623" },
-  { key: "selection", kind: "open", color: "#0ea5a4" }, { key: "show", kind: "open", color: "#7b4fd0" }, { key: "thinking", kind: "open", color: "#8a93a2" },
+  { key: "selection", kind: "open", color: "#0ea5a4" }, { key: "visit", kind: "open", color: "#16a34a" }, { key: "show", kind: "open", color: "#7b4fd0" }, { key: "thinking", kind: "open", color: "#8a93a2" },
   { key: "won", kind: "won", color: "#22c15e" }, { key: "lost", kind: "lost", color: "#475569" }, { key: "unqualified", kind: "lost", color: "#c9d0dc" },
 ];
 export const DEFAULT_SOURCES: { key: string; kind: SourceKind }[] = [

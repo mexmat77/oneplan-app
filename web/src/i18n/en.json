@@ -1190,7 +1190,7 @@
       "lost": "Lost",
       "lead": "Lead",
       "call": "Call",
-      "visit": "Office visit",
+      "visit": "Will visit",
       "contract": "Contract",
       "paid": "Paid",
       "noanswer": "No answer",
@@ -1508,7 +1508,10 @@
       "listMode": "List",
       "boardMode": "Board",
       "changeStatus": "Change status",
-      "dealStage": "Deal stage"
+      "dealStage": "Deal stage",
+      "visitDate": "Arrival date and time",
+      "visitTask": "Client visit",
+      "visitSave": "Set status and reminder"
     },
     "kb": {
       "days": "{n} d.",

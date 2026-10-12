@@ -1190,7 +1190,7 @@
       "lost": "Vazgeçti",
       "lead": "Başvuru",
       "call": "Arama",
-      "visit": "Ofis ziyareti",
+      "visit": "Gelecek",
       "contract": "Sözleşme",
       "paid": "Ödeme",
       "noanswer": "Ulaşılamadı",
@@ -1508,7 +1508,10 @@
       "listMode": "Liste",
       "boardMode": "Pano",
       "changeStatus": "Durumu değiştir",
-      "dealStage": "İşlem aşaması"
+      "dealStage": "İşlem aşaması",
+      "visitDate": "Geliş tarihi ve saati",
+      "visitTask": "Müşteri ziyareti",
+      "visitSave": "Durumu ve hatırlatmayı ayarla"
     },
     "kb": {
       "days": "{n} gün",
