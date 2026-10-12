@@ -2089,7 +2089,17 @@
       "closedListing": "İlan satıştan kaldırıldı",
       "closedUnit": "Daire satıldı olarak işaretlendi",
       "closeSkipped": "Durum değişmedi: nesne sizin değil",
-      "closeErr": "Nesne durumu değiştirilemedi"
+      "closeErr": "Nesne durumu değiştirilemedi",
+      "scopeHint": {
+        "mine": "İlanlarınız. Arama listeyi numara, başlık veya ilçeye göre daraltır.",
+        "favs": "Nesne veritabanında kalple işaretlediğiniz ilanlar.",
+        "all": "Tüm veritabanının son ilanları. Bulmak için numara (OP-100009), başlık veya ilçe yazın."
+      },
+      "empty": {
+        "mine": "Henüz ilanınız yok — «Nesnelerim»'de nesne ekleyin.",
+        "favs": "Favoriler boş — veritabanında ilanları kalple işaretleyin.",
+        "all": "Veritabanında henüz ilan yok."
+      }
     },
     "cmd": {
       "placeholder": "Ne yapalım? Müşteri, bölüm, işlem…",

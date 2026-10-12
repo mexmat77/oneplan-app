@@ -2089,7 +2089,17 @@
       "closedListing": "Listing taken off the market",
       "closedUnit": "Unit marked as sold",
       "closeSkipped": "Status unchanged: the object is not yours",
-      "closeErr": "Could not change the object status"
+      "closeErr": "Could not change the object status",
+      "scopeHint": {
+        "mine": "Your listings. Search narrows the list by number, title or district.",
+        "favs": "Listings you marked with a heart in the object base.",
+        "all": "Latest listings of the whole base. Type a number (OP-100009), title or district to find one."
+      },
+      "empty": {
+        "mine": "You have no listings yet — add an object in “My objects”.",
+        "favs": "Favourites are empty — mark listings with a heart in the object base.",
+        "all": "The base has no listings yet."
+      }
     },
     "cmd": {
       "placeholder": "What to do? Client, section, action…",

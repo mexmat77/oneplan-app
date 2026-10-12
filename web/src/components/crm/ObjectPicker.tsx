@@ -78,13 +78,14 @@ function ListingsModal({ onClose, value, onPick, briefs, onBriefs, mode }: MProp
     <Modal open onClose={onClose} width={760}>
       <div data-crm-form="1">
         <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickListing}</div><ModalClose onClick={onClose} /></div>
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
           <Segmented value={scope} onChange={setScope} size="sm" options={[{ value: "mine", label: c.obj.scopeMine }, { value: "favs", label: c.obj.scopeFavs }, { value: "all", label: c.obj.scopeAll }]} />
           <div className="relative min-w-[240px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.obj.searchPh} className={`${inp} pl-9`} /></div>
         </div>
+        <p className="mb-3 text-[12px] text-muted">{(c.obj.scopeHint as Record<string, string>)[scope]}</p>
         <div className="flex max-h-[60vh] flex-col gap-[6px] overflow-y-auto">
           {rows === null && <div className="py-6 text-center text-[13px] text-muted">…</div>}
-          {rows?.length === 0 && <div className="py-6 text-center text-[13px] text-muted">{scope === "all" && !q ? c.obj.typeToSearch : c.obj.nothing}</div>}
+          {rows?.length === 0 && <div className="py-6 text-center text-[13px] text-muted">{q ? c.obj.nothing : (c.obj.empty as Record<string, string>)[scope]}</div>}
           {rows?.map((r) => <ObjCard key={r.id} r={{ kind: "listing", id: r.id }} briefs={b} selected={isSel(r.id)} onClick={() => { onBriefs({ objs: { [r.id]: r }, units: {} }); onPick({ kind: "listing", id: r.id }); }} />)}
         </div>
         {mode === "multi" && <div className="mt-3 flex items-center justify-between text-[12.5px] text-muted"><span>{c.obj.selectedN.replace("{n}", String(value.length))}</span><button type="button" onClick={onClose} className={btnP}>{c.obj.done}</button></div>}
