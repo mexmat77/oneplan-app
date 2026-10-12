@@ -43,6 +43,7 @@ function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: n
     branchId: s(r.branch_id), kvkk: ((r.kvkk as Kvkk) ?? {}), requests, boardPos: n(r.board_pos),
     budgetMin: n(r.budget_min), budgetMax: n(r.budget_max), cur: (r.cur as string) || "TRY", want: (r.want as Want) ?? {},
     notes: dec(c, "crm_clients", "notes", id, r.notes_enc as string | null), tags: (r.tags as string[]) ?? [], consent: !!r.consent, consentAt: s(r.consent_at),
+    dossier: parseDossier(c, id, r.dossier_enc as string | null),
     status: r.status as Client["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string, lastActivityAt: (r.last_activity_at as string | null) ?? (r.updated_at as string),
     contacts, dealsN, openDealsN: openN, nextTask,
   };
@@ -259,10 +260,24 @@ export async function translateNote(eventId: number, to: Lang): Promise<string> 
   return res.text;
 }
 
+/** Анкета клиента (0027): расшифровка; битое/пустое → {}. */
+function parseDossier(c: Ctx, id: string, enc_: string | null): Record<string, string> {
+  if (!enc_) return {};
+  try { return JSON.parse(dec(c, "crm_clients", "dossier", id, enc_) || "{}"); } catch { return {}; }
+}
+/** Анкета для договоров — сохранить (заполняется один раз, подставляется во все документы). */
+export async function saveDossier(clientId: string, values: Record<string, string>): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const clean: Record<string, string> = {}; for (const [k, v] of Object.entries(values)) if (v?.trim()) clean[k] = v.trim();
+  const { error } = await c.sb.from("crm_clients").update({ dossier_enc: enc(c, "crm_clients", "dossier", clientId, JSON.stringify(clean)) }).eq("id", clientId);
+  if (error) throw new Error(error.message);
+  await addEvent(c, { clientId, kind: "edit", payload: { dossier: true } });
+}
+
 // ---------- сделки ----------
-function rowDeal(r: Row, clientName: string): Deal {
+function rowDeal(r: Row, clientName: string, sellerName: string | null = null): Deal {
   return { id: r.id as string, no: Number(r.no ?? 0), clientId: r.client_id as string, clientName, ownerId: s(r.owner_id), stageId: s(r.stage_id), title: (r.title as string) ?? "", deal: (r.deal as string) || "sale", amount: n(r.amount), cur: (r.cur as string) || "TRY", listingId: s(r.listing_id), projectId: s(r.project_id), unitUid: n(r.unit_uid), selectionId: s(r.selection_id), sourceId: s(r.source_id), lostReason: s(r.lost_reason), closedAt: s(r.closed_at), createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos), objectText: s(r.object_text) };
+    requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos), objectText: s(r.object_text), companyProfileId: s(r.company_profile_id), sellerClientId: s(r.seller_client_id), sellerName };
 }
 async function listDealsFor(c: Ctx, f: { clientId?: string }): Promise<Deal[]> {
   let q = c.sb.from("crm_deals").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("updated_at", { ascending: false }).limit(1000);
@@ -276,7 +291,7 @@ export async function saveDeal(input: DealInput, id?: string | null): Promise<st
   const did = id || crypto.randomUUID();
   // источник — свойство клиента (12.10.2026): сделка наследует источник клиента, в форме сделки его нет
   const { data: clRow } = await c.sb.from("crm_clients").select("source_id").eq("id", input.clientId).maybeSingle();
-  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, object_text: input.objectText?.trim() || null, source_id: (clRow?.source_id as string | null) ?? input.sourceId ?? null, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
+  const row = { id: did, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: input.clientId, owner_id: input.ownerId || c.me.id, stage_id: input.stageId, title: input.title.trim(), deal: input.deal, amount: input.amount, cur: input.cur || "TRY", listing_id: input.listingId, project_id: input.projectId, unit_uid: input.unitUid, selection_id: input.selectionId, object_text: input.objectText?.trim() || null, company_profile_id: input.companyProfileId || null, seller_client_id: input.sellerClientId || null, source_id: (clRow?.source_id as string | null) ?? input.sourceId ?? null, request_id: input.requestId, commission: input.commission, commission_kind: input.commission != null ? input.commissionKind ?? "sum" : null, deposit: input.deposit, deposit_at: input.depositAt, branch_id: id ? undefined : c.branchId, created_by: id ? undefined : c.me.id };
   const { error } = await c.sb.from("crm_deals").upsert(row, { onConflict: "id" });
   if (error) throw new Error(error.message);
   if (!id) await addEvent(c, { clientId: input.clientId, dealId: did, kind: "deal", payload: { title: row.title } });
@@ -833,7 +848,8 @@ export async function getDeal(id: string): Promise<{ deal: Deal; client: { id: s
   if (!r) return null;
   const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null;
   if (!cl) return null;
-  const deal = rowDeal(r as Row, String(cl.name ?? ""));
+  const { data: seller } = r.seller_client_id ? await c.sb.from("crm_clients").select("name").eq("id", r.seller_client_id as string).maybeSingle() : { data: null };
+  const deal = rowDeal(r as Row, String(cl.name ?? ""), (seller?.name as string | undefined) ?? null);
   const [{ data: cts }, events, tasks, { data: rq }] = await Promise.all([
     c.sb.from("crm_contacts").select("*").eq("client_id", cl.id as string).order("is_main", { ascending: false }).order("sort"),
     loadEvents(c, { dealId: id }), listTasksFor(c, { dealId: id }),

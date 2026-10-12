@@ -36,6 +36,9 @@ const person = (g: "buyer" | "seller" | "guarantor"): DocField[] => [
   { key: `${g}.accountHolder`, label: L("Владелец счёта", "Account holder", "Hesap sahibi"), group: g },
 ];
 
+/** Поля анкеты стороны (клиент как покупатель/продавец), ключи без префикса группы (0027). */
+export const PARTY_FIELDS: DocField[] = person("buyer").map((f) => ({ ...f, key: f.key.slice("buyer.".length) }));
+
 export const FIELDS: DocField[] = [
   { key: "agency.name", label: L("Название компании", "Company name", "Ünvan"), group: "agency", required: true },
   { key: "agency.taxNo", label: L("Налоговый номер", "Tax No", "Vergi No"), group: "agency" },

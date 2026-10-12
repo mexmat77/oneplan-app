@@ -41,6 +41,7 @@ export type Client = {
   branchId: string | null; kvkk: Kvkk; boardPos: number | null;
   budgetMin: number | null; budgetMax: number | null; cur: string; want: Want;
   notes: string; tags: string[]; consent: boolean; consentAt: string | null;
+  dossier: Record<string, string>; // анкета для договоров (0027): ключи PARTY_FIELDS, зашифрована
   status: "active" | "archived"; createdAt: string; updatedAt: string;
   /** последняя реальная активность (события ленты, задачи) — сортировка списка по умолчанию (0023) */
   lastActivityAt: string;
@@ -66,11 +67,12 @@ export type Deal = {
   sourceId: string | null; lostReason: string | null; closedAt: string | null; createdAt: string; updatedAt: string;
   requestId: string | null; branchId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null; boardPos: number | null;
   objectText: string | null; // объект не из базы (0024)
+  companyProfileId: string | null; sellerClientId: string | null; sellerName: string | null; // стороны сделки (0027)
 };
 
 // ---------- заявки (0017): одна потребность клиента; поля по типу — реестр lib/crm/requestFields.ts ----------
 export type RequestKind = "buy" | "sell" | "rent_out" | "rent_in";
-export type RequestStatus = "active" | "matching" | "showing" | "negotiation" | "paused" | "closed";
+export type RequestStatus = "active" | "matching" | "showing" | "booked" | "negotiation" | "paused" | "closed";
 export type RequestBrief = { id: string; kind: RequestKind; status: RequestStatus; priority: Priority | null; fields: Record<string, unknown> };
 export type CrmRequest = {
   id: string; clientId: string; kind: RequestKind; status: RequestStatus; ownerId: string | null; branchId: string | null;
@@ -102,7 +104,7 @@ export type ClientInput = {
   /** при создании: первая задача («следующее действие») */
   firstTask?: { kind: TaskKind; dueAt: string; title: string } | null;
 };
-export type DealInput = { objectText?: string | null; clientId: string; title: string; deal: string; amount: number | null; cur: string; stageId: string | null; ownerId: string | null; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null; sourceId: string | null; requestId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null };
+export type DealInput = { objectText?: string | null; companyProfileId?: string | null; sellerClientId?: string | null; clientId: string; title: string; deal: string; amount: number | null; cur: string; stageId: string | null; ownerId: string | null; listingId: string | null; projectId: string | null; unitUid: number | null; selectionId: string | null; sourceId: string | null; requestId: string | null; commission: number | null; commissionKind: "pct" | "sum" | null; deposit: number | null; depositAt: string | null };
 export type TaskInput = { clientId: string | null; dealId: string | null; ownerId: string | null; kind: TaskKind; title: string; dueAt: string };
 
 /** Дубль по контакту: найден существующий клиент с тем же телефоном/e-mail. */
@@ -110,14 +112,9 @@ export type DupHit = { clientId: string; name: string; kind: ContactKind; ownerI
 
 /** Наборы этапов по умолчанию (ключи — для логики; имена — i18n `crm.stages`). */
 export const DEFAULT_STAGES: Record<WsKind, { key: string; kind: StageKind; color: string }[]> = {
-  realtor: [
-    { key: "new", kind: "open", color: "#8a93a2" }, { key: "work", kind: "open", color: "#4d7cfe" }, { key: "show", kind: "open", color: "#f5a623" },
-    { key: "booked", kind: "open", color: "#7b4fd0" }, { key: "won", kind: "won", color: "#22c15e" }, { key: "lost", kind: "lost", color: "#e5484d" },
-  ],
-  agency: [
-    { key: "new", kind: "open", color: "#8a93a2" }, { key: "work", kind: "open", color: "#4d7cfe" }, { key: "show", kind: "open", color: "#f5a623" },
-    { key: "booked", kind: "open", color: "#7b4fd0" }, { key: "won", kind: "won", color: "#22c15e" }, { key: "lost", kind: "lost", color: "#e5484d" },
-  ],
+  // 13.10.2026 (решение пользователя): показы и брони — этапы ЗАЯВКИ; сделка — открыта / закрыта / отменена
+  realtor: [{ key: "open", kind: "open", color: "#4d7cfe" }, { key: "closed", kind: "won", color: "#22c15e" }, { key: "cancelled", kind: "lost", color: "#e5484d" }],
+  agency: [{ key: "open", kind: "open", color: "#4d7cfe" }, { key: "closed", kind: "won", color: "#22c15e" }, { key: "cancelled", kind: "lost", color: "#e5484d" }],
   developer: [
     { key: "lead", kind: "open", color: "#8a93a2" }, { key: "call", kind: "open", color: "#4d7cfe" }, { key: "visit", kind: "open", color: "#f5a623" },
     { key: "booked", kind: "open", color: "#7b4fd0" }, { key: "contract", kind: "open", color: "#0ea5a4" }, { key: "paid", kind: "won", color: "#22c15e" },

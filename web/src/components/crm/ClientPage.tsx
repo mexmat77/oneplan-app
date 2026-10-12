@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
+import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
 import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
@@ -22,6 +22,7 @@ import { offerCloseObject } from "./closeObject";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
+import { DossierModal } from "./DossierModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
 import { cacheGet, cacheSet, crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel, contactLabelOptions } from "./crmUi";
@@ -48,6 +49,7 @@ function Inner({ id }: { id: string }) {
   const [data, setData] = useState<CardData | null | undefined>(() => cacheGet<CardData>(cardKey));
   const [reqM, setReqM] = useState<{ open: boolean; req: CrmRequest | null; kind?: RequestKind }>({ open: false, req: null });
   const [transfer, setTransfer] = useState(false);
+  const [dossier, setDossier] = useState(false);
   const [trBusy, setTrBusy] = useState(false);
   const [edit, setEdit] = useState(false);
   const [dealM, setDealM] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
@@ -112,20 +114,30 @@ function Inner({ id }: { id: string }) {
   const field = (l: string, v?: string | null) => v ? <div key={l} className="min-w-0"><div className="text-[11px] font-medium text-muted">{l}</div><div className="truncate text-[13px] text-ink">{v}</div></div> : null;
   return (
     <>
-      {/* шапка карточки — образец пользователя: имя · номер, строка с телефоном/источником/ответственным, справа этап и действия */}
-      <div className="-mx-4 -mt-4 mb-4 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-5 py-3">
-        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-tint text-[14px] font-semibold text-sel-ink">{initials(cl.name)}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted" title={cl.id}>· {clientNo(cl)}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
-          <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
+      {/* шапка (13.10.2026, «колхозно и сумбурно, при ресайзе ужас»): строка 1 — кто это (имя не переносится по словам,
+          обрезается с подсказкой) и действия справа; строка 2 — статусы одной полосой: статус клиента, приоритет (сам чип —
+          выбор, без дублирующего списка), язык, роли, этап открытой сделки. Группы не рвутся при сужении. */}
+      <div className="-mx-4 -mt-4 mb-4 border-b border-line bg-surface px-5 py-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-tint text-[14px] font-semibold text-sel-ink">{initials(cl.name)}</span>
+          <div className="min-w-[240px] flex-[1_1_320px]">
+            <div className="flex items-center gap-2 whitespace-nowrap"><h1 className="truncate text-[17px] font-semibold text-ink" title={cl.name}>{cl.name}</h1><span className="flex-none text-[14px] text-muted" title={cl.id}>· {clientNo(cl)}</span></div>
+            <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
+          </div>
+          <div className="ml-auto flex flex-none flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
+            <button type="button" onClick={() => setDossier(true)} disabled={ro} title={c.client.dossierS} className={btnS}><IconId size={14} /> {c.client.dossier}{Object.keys(cl.dossier).length ? ` · ${Object.keys(cl.dossier).length}` : ""}</button>
+            <button type="button" onClick={() => setTransfer(true)} disabled={ro} title={c.client.transfer} className={btnS}><IconUserShare size={14} /> {c.client.transfer}</button>
+          </div>
         </div>
-        <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
-        <Select value={cl.priority ?? ""} onChange={async (v) => { const pr = (v || null) as Priority | null; patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" className="w-[140px]" disabled={ro} title={c.client.priority} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: cl.priority ? PRIO_COLOR[cl.priority] : "#c9d0dc" }} />} />
-        {openDeal && <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage} · {dealNo(openDeal)}</span><Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></span>}
-        {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}
-        {mainPhone && <a href={waOf(mainPhone.value)} target="_blank" rel="noreferrer" className={btnS}><IconBrandWhatsapp size={15} /> {c.client.wa}</a>}
-        <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
-        <button type="button" onClick={() => setTransfer(true)} disabled={ro} title={c.client.transfer} className={btnS}><IconUserShare size={14} /> {c.client.transfer}</button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
+          <PriorityChip value={cl.priority} disabled={ro} onChange={async (pr) => { patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} />
+          <span className={chip}>{cl.lang}</span>
+          {cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}
+          {cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}
+          {openDeal && <span className="ml-auto inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage} · {dealNo(openDeal)}</span><Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" menuWidth="auto" className="w-[170px]" disabled={ro} /></span>}
+        </div>
       </div>
 
       <div className="grid grid-cols-[1fr_460px] gap-4 max-[1100px]:grid-cols-1">
@@ -175,12 +187,12 @@ function Inner({ id }: { id: string }) {
                   <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: REQ_COLOR[r.kind] }}>{c.rq.kinds[r.kind]}</span>
                   <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer text-left text-[13px] text-ink hover:text-blue-2">{reqSummary(r.kind, r.fields) || c.rq.details}</button>
                   <button type="button" onClick={() => setReqM({ open: true, req: r })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
-                  <button type="button" onClick={() => setOpenReq((m) => ({ ...m, [r.id]: m[r.id] === false }))} title={openReq[r.id] === false ? c.rq.show : c.rq.hide} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{openReq[r.id] === false ? <IconChevronDown size={15} /> : <IconChevronUp size={15} />}</button>
+                  <button type="button" onClick={() => setOpenReq((m) => ({ ...m, [r.id]: m[r.id] !== true }))} title={openReq[r.id] !== true ? c.rq.show : c.rq.hide} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{openReq[r.id] !== true ? <IconChevronDown size={15} /> : <IconChevronUp size={15} />}</button>
                   {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
                   <Select value={r.status} onChange={async (v) => { const st = v as RequestStatus; setData((d) => (d ? { ...d, requests: d.requests.map((q) => (q.id === r.id ? { ...q, status: st } : q)) } : d)); try { await setRequestStatus(r.id, st); load(); } catch (e) { err(e); load(); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
                   <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
-                  {openReq[r.id] !== false && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} briefs={briefs} onEdit={() => setReqM({ open: true, req: r })} /></div>}
+                  {openReq[r.id] === true && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} briefs={briefs} onEdit={() => setReqM({ open: true, req: r })} /></div>}
                 </div>))}</div>
             )}
           </div>
@@ -220,10 +232,30 @@ function Inner({ id }: { id: string }) {
 
       <TransferModal open={transfer} title={c.client.transferOne} hint={c.client.transferH} busy={trBusy} prefer={crm.me.members.filter((m) => m.id !== cl.ownerId && m.id !== crm.me.meId).map((m) => ({ id: m.id, name: m.name }))} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { const r = await transferClient(cl.id, toId); setTransfer(false); showToast(fill(c.client.transferDone, { name: target?.name ?? crm.me.members.find((m) => m.id === toId)?.name ?? "" })); if (r.moved) { crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } else load(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setTrBusy(false); } }} />
       <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} briefs={briefs} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
+      <DossierModal open={dossier} clientId={cl.id} clientName={cl.name} value={cl.dossier} onClose={() => setDossier(false)} onSaved={(v) => { patchLocal({ dossier: v }); setDossier(false); load(); }} />
       <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
       <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} briefs={briefs} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
       <TaskModal open={taskM.open} task={taskM.task} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setTaskM({ open: false, task: null })} onSaved={() => { setTaskM({ open: false, task: null }); load(); }} />
     </>
+  );
+}
+
+/** Приоритет как чип-статус (13.10.2026): клик — меню из четырёх значений; цвет = приоритет. */
+function PriorityChip({ value, onChange, disabled }: { value: Priority | null; onChange: (v: Priority | null) => void; disabled?: boolean }) {
+  const { t } = useI18n();
+  const c = t.crm;
+  const [open, setOpen] = useState(false);
+  const col = value ? PRIO_COLOR[value] : "#8a93a2";
+  const opts: (Priority | null)[] = ["hot", "warm", "cold", null];
+  return (
+    <span className="relative inline-block">
+      <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95 disabled:cursor-default" style={{ background: col + "1f", color: col }}><span className="h-[7px] w-[7px] rounded-full" style={{ background: col }} />{value ? c.prio[value] : c.prio.none}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-[180px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]" onMouseLeave={() => setOpen(false)}>
+          {opts.map((k) => <button key={k ?? "none"} type="button" onClick={() => { setOpen(false); onChange(k); }} className={`flex w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 py-[6px] text-left text-[12.5px] hover:bg-bg-3 ${k === value ? "font-semibold text-ink" : "text-text"}`}><span className="h-[7px] w-[7px] rounded-full" style={{ background: k ? PRIO_COLOR[k] : "#c9d0dc" }} />{k ? c.prio[k] : c.prio.none}</button>)}
+        </div>
+      )}
+    </span>
   );
 }
 

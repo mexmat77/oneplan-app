@@ -1139,7 +1139,10 @@
         "work": "Work",
         "home": "Home",
         "other": "Other"
-      }
+      },
+      "dossier": "Dossier",
+      "dossierS": "Contract data: passport / Turkish ID, address, tax number, IBAN. Filled once, inserted into every document where the client is buyer or seller.",
+      "dossierSaved": "Dossier saved"
     },
     "kinds": {
       "phone": "Phone",
@@ -1176,7 +1179,16 @@
       "commissionSum": "Amount",
       "deposit": "Deposit",
       "depositAt": "Deposit date",
-      "lostPick": "Lost reason"
+      "lostPick": "Lost reason",
+      "company": "Legal entity (on behalf of)",
+      "noCompany": "No company details",
+      "noCompanyHint": "Add company details in Settings → Details — they are inserted into contracts",
+      "buyer": "Buyer / client",
+      "seller": "Seller",
+      "noSeller": "No seller",
+      "sellerDev": "Developer company",
+      "partiesHint": "Resale — three-party contract: agency, buyer, seller. Party data comes from client dossiers.",
+      "partiesDev": "Contract between the developer company and the buyer. Buyer data comes from their dossier."
     },
     "task": {
       "add": "New task",
@@ -1240,7 +1252,10 @@
       "noanswer": "No answer",
       "selection": "Selection sent",
       "thinking": "Thinking",
-      "unqualified": "Unqualified"
+      "unqualified": "Unqualified",
+      "open": "Open",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
     },
     "sources": {
       "recommend": "Referral",
@@ -1718,7 +1733,8 @@
         "showing": "Showings",
         "negotiation": "Negotiation",
         "paused": "Paused",
-        "closed": "Closed"
+        "closed": "Closed",
+        "booked": "Booked"
       },
       "dl": {
         "asap": "ASAP",

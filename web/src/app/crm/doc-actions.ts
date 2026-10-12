@@ -186,13 +186,20 @@ export async function docDefaults(dealId: string, companyId?: string | null): Pr
   const { data: d } = await c.sb.from("crm_deals").select("*, crm_clients(*)").eq("id", dealId).maybeSingle();
   let stored: Record<string, string> = {};
   if (d?.extra_enc) { try { stored = JSON.parse(dec(c, "crm_deals", "extra", d.id as string, d.extra_enc as string)); } catch { stored = {}; } }
-  const pickId = companyId ?? stored._companyId ?? null;
+  const pickId = companyId ?? (d?.company_profile_id as string | null) ?? stored._companyId ?? null;
   const company = (companies.find((x) => x.id === pickId) ?? companies.find((x) => x.isDefault) ?? companies[0])?.fields ?? {};
   for (const [k, val] of Object.entries(company)) v["agency." + k] = val;
   if (d) {
     const cl = (Array.isArray(d.crm_clients) ? d.crm_clients[0] : d.crm_clients) as Row | null;
+    // стороны (0027): анкеты клиентов — покупатель (клиент сделки) и продавец (seller_client_id); контакты — запасной вариант
+    const dossierOf = (row: Row | null) => { if (!row?.dossier_enc) return {}; try { return JSON.parse(dec(c, "crm_clients", "dossier", row.id as string, row.dossier_enc as string) || "{}") as Record<string, string>; } catch { return {}; } };
+    if (d.seller_client_id) {
+      const { data: sel } = await c.sb.from("crm_clients").select("*").eq("id", d.seller_client_id as string).maybeSingle();
+      if (sel) { v["seller.name"] = sel.name as string; for (const [k, val] of Object.entries(dossierOf(sel as Row))) v["seller." + k] = val; }
+    }
     if (cl) {
       v["buyer.name"] = cl.name as string;
+      for (const [k, val] of Object.entries(dossierOf(cl))) v["buyer." + k] = val;
       const { data: cts } = await c.sb.from("crm_contacts").select("*").eq("client_id", cl.id as string).order("is_main", { ascending: false });
       for (const x of (cts ?? []) as Row[]) {
         const val = dec(c, "crm_contacts", "value", x.id as string, x.value_enc as string);
@@ -228,16 +235,33 @@ export async function docDefaults(dealId: string, companyId?: string | null): Pr
 
 /** Слить значения в данные сделки (extra_enc): реквизиты компании (agency.*) не хранятся — они берутся из набора `_companyId`. */
 async function mergeDealData(c: Ctx, dealId: string, values: Record<string, string>) {
-  const { data: d } = await c.sb.from("crm_deals").select("extra_enc").eq("id", dealId).maybeSingle();
+  const { data: d } = await c.sb.from("crm_deals").select("extra_enc, client_id, seller_client_id").eq("id", dealId).maybeSingle();
   let cur: Record<string, string> = {};
   if (d?.extra_enc) { try { cur = JSON.parse(dec(c, "crm_deals", "extra", dealId, d.extra_enc as string)); } catch { cur = {}; } }
-  for (const [k, val] of Object.entries(values)) { if (k.startsWith("agency.")) continue; if (val?.trim()) cur[k] = val; else delete cur[k]; }
+  // стороны (0027): покупатель и продавец живут в АНКЕТАХ клиентов, а не в сделке — записываем туда
+  const parties: [string, string | null][] = [["buyer.", (d?.client_id as string | null) ?? null], ["seller.", (d?.seller_client_id as string | null) ?? null]];
+  for (const [pref, cid] of parties) {
+    if (!cid) continue;
+    const upd: Record<string, string> = {}; let any = false;
+    for (const [k, val] of Object.entries(values)) if (k.startsWith(pref)) { any = true; upd[k.slice(pref.length)] = val ?? ""; }
+    if (!any) continue;
+    const { data: row } = await c.sb.from("crm_clients").select("dossier_enc").eq("id", cid).maybeSingle();
+    let doss: Record<string, string> = {};
+    if (row?.dossier_enc) { try { doss = JSON.parse(dec(c, "crm_clients", "dossier", cid, row.dossier_enc as string) || "{}"); } catch { doss = {}; } }
+    for (const [k, val] of Object.entries(upd)) { if (val.trim()) doss[k] = val.trim(); else delete doss[k]; }
+    await c.sb.from("crm_clients").update({ dossier_enc: enc(c, "crm_clients", "dossier", cid, JSON.stringify(doss)) }).eq("id", cid);
+  }
+  for (const [k, val] of Object.entries(values)) {
+    if (k.startsWith("agency.") || (k.startsWith("buyer.") && d?.client_id) || (k.startsWith("seller.") && d?.seller_client_id)) continue;
+    if (val?.trim()) cur[k] = val; else delete cur[k];
+  }
   await c.sb.from("crm_deals").update({ extra_enc: enc(c, "crm_deals", "extra", dealId, JSON.stringify(cur)) }).eq("id", dealId);
 }
 /** «Данные для документов» сделки: сохранить один раз, дальше система сама подставляет в любые шаблоны. */
 export async function saveDealDocData(dealId: string, values: Record<string, string>, companyId?: string | null): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
   await mergeDealData(c, dealId, { ...values, _companyId: companyId ?? "" });
+  if (companyId !== undefined) await c.sb.from("crm_deals").update({ company_profile_id: companyId || null }).eq("id", dealId);
 }
 /** Несколько документов за раз из сохранённых данных сделки (без повторного ввода). */
 export async function generateDocs(dealId: string, templateIds: string[], values: Record<string, string>): Promise<DocInfo[]> {

@@ -20,6 +20,7 @@ import { Timeline } from "./ClientPage";
 import { offerCloseObject } from "./closeObject";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
+import { getCompanies, type CompanyProfile } from "@/app/crm/doc-actions";
 import { dealRef, ObjCard, type Briefs } from "./ObjCard";
 import { crmError, btnP, btnS, cacheGet, cacheSet, card, chip, fill, fmtDT, fmtDate, inp, stageName, taskKindName, useCrm } from "./crmUi";
 
@@ -36,6 +37,8 @@ export function DealPage({ id }: { id: string }) {
   const [edit, setEdit] = useState(false);
   const [taskM, setTaskM] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [note, setNote] = useState("");
+  const [companies, setCompanies] = useState<CompanyProfile[]>([]);
+  useEffect(() => { let on = true; getCompanies().then((l) => { if (on) setCompanies(l); }).catch(() => {}); return () => { on = false; }; }, []);
   const load = useCallback(() => {
     getDeal(id).then((d) => { setData(d); if (d) { cacheSet(key, d); crm.openTab?.(`d:${d.deal.id}`, d.deal.title || dealNo(d.deal)); } else crm.closeTab?.(`d:${id}`); }).catch(() => { setData(null); crm.closeTab?.(`d:${id}`); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,10 +96,11 @@ export function DealPage({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
+              {field(c.deal.company, companies.find((x) => x.id === d.companyProfileId)?.label ?? companies.find((x) => x.id === d.companyProfileId)?.fields.name ?? null)}
+              {field(c.deal.buyer, cl.name)}{field(c.deal.seller, d.sellerName ?? (crm.me.ws.kind === "developer" ? c.deal.sellerDev : null))}
               {field(dc.type, t.deal[d.deal as keyof typeof t.deal])}{field(c.deal.amount, money(d.amount))}
               {field(c.deal.commission, d.commission != null ? (d.commissionKind === "pct" ? `${d.commission} %` : money(d.commission)) : null)}
               {field(c.deal.deposit, money(d.deposit))}{field(c.deal.depositAt, d.depositAt ? fmtDate(d.depositAt, lang) : null)}
-              {field(c.deal.request, requests.find((r) => r.id === d.requestId)?.label ?? null)}
               {field(c.client.created, fmtDate(d.createdAt, lang))}{field(dc.closed, d.closedAt ? fmtDate(d.closedAt, lang) : null)}{field(c.deal.lost, d.lostReason)}
             </div>
           </div>

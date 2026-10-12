@@ -1,9 +1,10 @@
 "use client";
 
 // Модалки сделки и задачи.
-import { useState } from "react";
-import { saveDeal, saveTask } from "@/app/crm/actions";
+import { useState, useEffect } from "react";
+import { saveDeal, saveTask, listClients } from "@/app/crm/actions";
 import { Modal, ModalClose } from "@/components/ui/Modal";
+import { getCompanies, type CompanyProfile } from "@/app/crm/doc-actions";
 import { dealRef, type Briefs } from "./ObjCard";
 import { mergeBriefs, ObjectPicker } from "./ObjectPicker";
 import { Select } from "@/components/ui/Select";
@@ -24,9 +25,14 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
   const { t, lang } = useI18n();
   const crm = useCrm();
   const c = t.crm;
+  const dev = crm.me.ws.kind === "developer";
+  // стороны (0027): юрлицо из настроек (реквизиты), продавец — клиент CRM с анкетой (у застройщика продавец — сама компания)
+  const [companies, setCompanies] = useState<CompanyProfile[] | null>(null);
+  const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => { let on = true; getCompanies().then((l) => { if (on) setCompanies(l); }).catch(() => { if (on) setCompanies([]); }); if (!dev) listClients({}).then((l) => { if (on) setSellers(l.map((x) => ({ id: x.id, name: x.name }))); }).catch(() => {}); return () => { on = false; }; }, [dev]);
   const [f, setF] = useState<DealInput>(() => deal
-    ? { clientId: deal.clientId, title: deal.title, deal: deal.deal, amount: deal.amount, cur: deal.cur, stageId: deal.stageId, ownerId: deal.ownerId, listingId: deal.listingId, projectId: deal.projectId, unitUid: deal.unitUid, selectionId: deal.selectionId, sourceId: deal.sourceId, requestId: deal.requestId, commission: deal.commission, commissionKind: deal.commissionKind, deposit: deal.deposit, depositAt: deal.depositAt }
-    : { clientId: clientId ?? clients[0]?.id ?? "", title: "", deal: "sale", amount: null, cur: "TRY", stageId: crm.stages.find((s) => s.kind === "open")?.id ?? null, ownerId: crm.me.meId, listingId: null, projectId: null, unitUid: null, selectionId: null, sourceId: null, requestId: requests?.[0]?.id ?? null, commission: null, commissionKind: "pct", deposit: null, depositAt: null });
+    ? { clientId: deal.clientId, title: deal.title, deal: deal.deal, amount: deal.amount, cur: deal.cur, stageId: deal.stageId, ownerId: deal.ownerId, listingId: deal.listingId, projectId: deal.projectId, unitUid: deal.unitUid, selectionId: deal.selectionId, sourceId: deal.sourceId, requestId: deal.requestId, companyProfileId: deal.companyProfileId, sellerClientId: deal.sellerClientId, commission: deal.commission, commissionKind: deal.commissionKind, deposit: deal.deposit, depositAt: deal.depositAt }
+    : { clientId: clientId ?? clients[0]?.id ?? "", title: "", deal: "sale", amount: null, cur: "TRY", stageId: crm.stages.find((s) => s.kind === "open")?.id ?? null, ownerId: crm.me.meId, listingId: null, projectId: null, unitUid: null, selectionId: null, sourceId: null, requestId: requests?.[0]?.id ?? null, companyProfileId: null, sellerClientId: null, commission: null, commissionKind: "pct", deposit: null, depositAt: null });
   // объект (0024): из базы / квартира / свободно — один на сделку
   const [refs, setRefs] = useState<ObjRef[]>(() => { const r = deal ? dealRef(deal) : null; return r ? [r] : []; });
   const [briefs, setBriefs] = useState<Briefs>(briefs0 ?? { objs: {}, units: {} });
@@ -43,7 +49,8 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       const projectId = r?.kind === "unit" ? String(r.projectId) : null;
       const unitUid = r?.kind === "unit" ? r.unitUid : null;
       const objectText = r?.kind === "free" ? (r.url ? `${r.text} · ${r.url}` : r.text) : null;
-      await saveDeal({ ...f, listingId, projectId, unitUid, objectText }, deal?.id ?? null);
+      const companyProfileId = f.companyProfileId ?? (companies?.find((x) => x.isDefault) ?? companies?.[0])?.id ?? null;
+      await saveDeal({ ...f, companyProfileId, listingId, projectId, unitUid, objectText }, deal?.id ?? null);
       onSaved();
     } catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
@@ -51,8 +58,14 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
   return (
     <div data-crm-form="1">
       <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{deal ? deal.title || c.deal.add : c.deal.add}</div><ModalClose onClick={onClose} /></div>
-      <label className={lbl}>{c.deal.client}</label>
-      <Select value={f.clientId} onChange={(v) => set({ clientId: v })} placeholder={c.deal.pickClient} searchable options={clients.map((x) => ({ value: x.id, label: x.name }))} disabled={!!deal} />
+      <label className={lbl}>{c.deal.company}</label>
+      <Select value={f.companyProfileId ?? (companies?.find((x) => x.isDefault) ?? companies?.[0])?.id ?? ""} onChange={(v) => set({ companyProfileId: v || null })} placeholder={companies === null ? "…" : c.deal.noCompany} options={(companies ?? []).map((x) => ({ value: x.id, label: x.label || x.fields.name || "—" }))} disabled={companies === null} />
+      {companies && companies.length === 0 && <div className="mt-1 text-[11.5px] text-[#a16207]">{c.deal.noCompanyHint}</div>}
+      <div className={`mt-3 grid gap-2 ${dev ? "grid-cols-1" : "grid-cols-2 max-md:grid-cols-1"}`}>
+        <div><label className={lbl}>{c.deal.buyer}</label><Select value={f.clientId} onChange={(v) => set({ clientId: v })} placeholder={c.deal.pickClient} searchable options={clients.map((x) => ({ value: x.id, label: x.name }))} disabled={!!deal} /></div>
+        {!dev && <div><label className={lbl}>{c.deal.seller}</label><Select value={f.sellerClientId ?? ""} onChange={(v) => set({ sellerClientId: v || null })} searchable placeholder={c.deal.noSeller} options={[{ value: "", label: c.deal.noSeller }, ...sellers.filter((x) => x.id !== f.clientId).map((x) => ({ value: x.id, label: x.name }))]} /></div>}
+      </div>
+      <p className="mt-1 text-[11.5px] text-muted">{dev ? c.deal.partiesDev : c.deal.partiesHint}</p>
       <label className={`${lbl} mt-3`}>{c.deal.title}</label>
       <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.deal.titlePh} className={inp} autoFocus />
       <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2">
@@ -66,7 +79,6 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       </div>
       <label className={`${lbl} mt-3`}>{c.deal.object}</label>
       <ObjectPicker mode="single" value={refs} onChange={setRefs} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} />
-      {requests && requests.length > 0 && <><label className={`${lbl} mt-3`}>{c.deal.request}</label><Select value={f.requestId ?? ""} onChange={(v) => set({ requestId: v || null })} options={[{ value: "", label: c.deal.noRequest }, ...requests.map((r) => ({ value: r.id, label: r.label }))]} /></>}
       {/* комиссия и задаток (0017) */}
       <div className="mt-3 grid grid-cols-[1fr_110px_1fr_1fr] gap-2 max-md:grid-cols-2">
         <div><label className={lbl}>{c.deal.commission}</label><input inputMode="decimal" value={f.commission ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^\d.,]/g, "").replace(",", "."); set({ commission: v ? Number(v) : null }); }} className={inp} /></div>

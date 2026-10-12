@@ -1139,7 +1139,10 @@
         "work": "İş",
         "home": "Ev",
         "other": "Diğer"
-      }
+      },
+      "dossier": "Anket",
+      "dossierS": "Sözleşme verileri: pasaport / T.C. kimlik, adres, vergi no, IBAN. Bir kez doldurulur, müşterinin alıcı veya satıcı olduğu tüm belgelere yerleştirilir.",
+      "dossierSaved": "Anket kaydedildi"
     },
     "kinds": {
       "phone": "Telefon",
@@ -1176,7 +1179,16 @@
       "commissionSum": "Tutar",
       "deposit": "Kapora",
       "depositAt": "Kapora tarihi",
-      "lostPick": "Kayıp nedeni"
+      "lostPick": "Kayıp nedeni",
+      "company": "Tüzel kişi (kimin adına)",
+      "noCompany": "Şirket bilgileri yok",
+      "noCompanyHint": "Ayarlar → Bilgiler'de şirket bilgilerini ekleyin — sözleşmelere yerleştirilir",
+      "buyer": "Alıcı / müşteri",
+      "seller": "Satıcı",
+      "noSeller": "Satıcı yok",
+      "sellerDev": "Geliştirici şirket",
+      "partiesHint": "İkinci el — üç taraflı sözleşme: ajans, alıcı, satıcı. Taraf verileri müşteri anketlerinden gelir.",
+      "partiesDev": "Geliştirici şirket ile alıcı arasında sözleşme. Alıcı verileri anketinden gelir."
     },
     "task": {
       "add": "Yeni görev",
@@ -1240,7 +1252,10 @@
       "noanswer": "Ulaşılamadı",
       "selection": "Seçki gönderildi",
       "thinking": "Düşünüyor",
-      "unqualified": "Uygun değil"
+      "unqualified": "Uygun değil",
+      "open": "Açık",
+      "closed": "Kapandı",
+      "cancelled": "İptal"
     },
     "sources": {
       "recommend": "Tavsiye",
@@ -1718,7 +1733,8 @@
         "showing": "Gösterimler",
         "negotiation": "Pazarlık",
         "paused": "Beklemede",
-        "closed": "Kapalı"
+        "closed": "Kapalı",
+        "booked": "Rezerve"
       },
       "dl": {
         "asap": "Acil",
