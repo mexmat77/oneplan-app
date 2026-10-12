@@ -69,8 +69,8 @@ function Month({ year, month, lang, from, to, hover, onPick, onHover }: { year: 
 }
 
 /** Всплывающая панель с позиционированием под триггером. */
-type Rect = { left: number; top: number; bottom: number };
-function Pop({ rect, anchor, onClose, children }: { rect: Rect | null; anchor: React.RefObject<HTMLButtonElement | null>; onClose: () => void; children: ReactNode }) {
+type Rect = { left: number; right: number; top: number; bottom: number };
+function Pop({ rect, anchor, width, onClose, children }: { rect: Rect | null; anchor: React.RefObject<HTMLButtonElement | null>; width: number; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEscape(true, onClose);
   useEffect(() => {
@@ -78,7 +78,9 @@ function Pop({ rect, anchor, onClose, children }: { rect: Rect | null; anchor: R
     document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true);
   }, [anchor, onClose]);
   const r = rect;
-  const left = r ? Math.min(r.left, Math.max(8, window.innerWidth - 640)) : 0;
+  // не вылезать за экран: сначала по левому краю триггера, иначе по правому, иначе прижать к краю окна (ширина панели известна)
+  let left = r ? r.left : 0;
+  if (r && left + width > window.innerWidth - 8) left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
   const top = r ? (r.bottom + 340 > window.innerHeight ? Math.max(8, r.top - 8 - 330) : r.bottom + 6) : 0;
   return <div ref={ref} style={{ position: "fixed", left, top, zIndex: 600 }} className="rounded-[8px] border border-line bg-surface p-3 shadow-[0_12px_40px_rgba(20,36,63,.18)]">{children}</div>;
 }
@@ -96,7 +98,7 @@ export function DateRange({ from, to, onChange, placeholder, className = "" }: {
   const [view, setView] = useState({ y: base.getFullYear(), m: base.getMonth() });
   const btn = useRef<HTMLButtonElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
-  const openIt = () => { const f = parse(from) ?? today(); setDraft({ from: parse(from), to: parse(to) }); setView({ y: f.getFullYear(), m: f.getMonth() }); const b = btn.current?.getBoundingClientRect(); setRect(b ? { left: b.left, top: b.top, bottom: b.bottom } : null); setOpen(true); };
+  const openIt = () => { const f = parse(from) ?? today(); setDraft({ from: parse(from), to: parse(to) }); setView({ y: f.getFullYear(), m: f.getMonth() }); const b = btn.current?.getBoundingClientRect(); setRect(b ? { left: b.left, right: b.right, top: b.top, bottom: b.bottom } : null); setOpen(true); };
   const pick = (x: Date) => {
     if (!draft.from || draft.to) { setDraft({ from: x, to: null }); return; }
     const a = draft.from.getTime() <= x.getTime() ? draft.from : x, b = draft.from.getTime() <= x.getTime() ? x : draft.from;
@@ -114,7 +116,7 @@ export function DateRange({ from, to, onChange, placeholder, className = "" }: {
         {label ? <span role="button" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onChange("", ""); }} className="flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-bg-3 hover:text-ink"><IconX size={13} /></span> : null}
       </button>
       {open && (
-        <Pop rect={rect} anchor={btn} onClose={() => setOpen(false)}>
+        <Pop rect={rect} anchor={btn} width={700} onClose={() => setOpen(false)}>
           <div className="flex gap-3">
             <div className="flex w-[150px] flex-col gap-[2px] border-r border-line pr-3">
               {pl.map((p) => <button key={p.key} type="button" onClick={() => apply(p.r)} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] ${cur === p.key ? "bg-blue-tint font-semibold text-sel-ink" : "text-text hover:bg-bg-3"}`}>{(d.p as Record<string, string>)[p.key]}</button>)}
@@ -147,7 +149,7 @@ export function DateField({ value, onChange, placeholder, className = "", cleara
   const [view, setView] = useState({ y: base.getFullYear(), m: base.getMonth() });
   const btn = useRef<HTMLButtonElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
-  const openIt = () => { const f = parse(value) ?? today(); setView({ y: f.getFullYear(), m: f.getMonth() }); const b = btn.current?.getBoundingClientRect(); setRect(b ? { left: b.left, top: b.top, bottom: b.bottom } : null); setOpen(true); };
+  const openIt = () => { const f = parse(value) ?? today(); setView({ y: f.getFullYear(), m: f.getMonth() }); const b = btn.current?.getBoundingClientRect(); setRect(b ? { left: b.left, right: b.right, top: b.top, bottom: b.bottom } : null); setOpen(true); };
   const shift = (n: number) => setView((v) => { const dt = new Date(v.y, v.m + n, 1); return { y: dt.getFullYear(), m: dt.getMonth() }; });
   const sel = parse(value);
   return (
@@ -158,7 +160,7 @@ export function DateField({ value, onChange, placeholder, className = "", cleara
         {value && clearable ? <span role="button" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onChange(""); }} className="flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-bg-3 hover:text-ink"><IconX size={13} /></span> : null}
       </button>
       {open && (
-        <Pop rect={rect} anchor={btn} onClose={() => setOpen(false)}>
+        <Pop rect={rect} anchor={btn} width={420} onClose={() => setOpen(false)}>
           <div className="flex gap-3">
             <div className="flex w-[130px] flex-col gap-[2px] border-r border-line pr-3">
               {singlePresets().map((p) => <button key={p.key} type="button" onClick={() => { onChange(p.v); setOpen(false); }} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] ${value === p.v ? "bg-blue-tint font-semibold text-sel-ink" : "text-text hover:bg-bg-3"}`}>{(d.s as Record<string, string>)[p.key]}</button>)}
