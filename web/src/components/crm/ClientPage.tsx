@@ -145,7 +145,7 @@ function Inner({ id }: { id: string }) {
         <div className="flex min-w-0 flex-col gap-4">
           <div className={card}>
             <div className="mb-3 text-[13px] font-semibold text-ink">{c.card.info}</div>
-            <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-x-4 gap-y-3">
               {field(c.source, sourceName(src, t))}{crm.me.members.length > 1 && !ro ? <div key="owner" className="min-w-0"><div className="text-[11px] font-medium text-muted">{c.owner}</div><Select value={cl.ownerId ?? ""} onChange={async (v) => { const prev = cl.ownerId; patchLocal({ ownerId: v || null }); try { await patchClient(cl.id, { ownerId: v || null }); load(); } catch (e) { patchLocal({ ownerId: prev }); err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" className="mt-[2px] w-full" /></div> : field(c.owner, owner?.name)}{field(c.client.branch, crm.me.branches.find((b) => b.id === cl.branchId)?.name)}{field(c.client.country, countryName(cl.country, lang))}{field(c.client.citizenship, countryName(cl.citizenship, lang))}{field(c.client.channel, cl.channel ? `${c.channel[cl.channel]}${cl.contactTime ? ` · ${cl.contactTime}` : ""}` : null)}{field(c.client.campaign, cl.campaign)}
               {field(c.client.ref, refLabel)}{field(c.client.created, fmtDate(cl.createdAt, lang))}{field(c.client.updated, fmtDate(cl.updatedAt, lang))}{field(c.kvkk.info, cl.kvkk.info?.method ? fill(c.kvkk.informed, { date: fmtDate(cl.kvkk.info.at, lang) }) + ` · ${c.kvkk.methods[cl.kvkk.info.method]}` : c.kvkk.notInformed)}{field(c.kvkk.consent, cl.kvkk.consent?.revokedAt ? fill(c.kvkk.revoked, { date: fmtDate(cl.kvkk.consent.revokedAt, lang) }) : (["call", "sms", "whatsapp", "email"] as const).filter((k) => cl.kvkk.consent?.[k]).map((k) => c.kvkk.ch[k]).join(", ") || c.kvkk.none)}
             </div>
@@ -183,16 +183,23 @@ function Inner({ id }: { id: string }) {
               <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted">{c.rq.none}{REQUEST_KINDS.map((k) => <button key={k} type="button" disabled={ro} onClick={() => setReqM({ open: true, req: null, kind: k })} className="h-7 cursor-pointer rounded-full border border-line bg-surface px-3 text-[12px] font-medium text-text hover:bg-bg-3">+ {c.rq.kinds[k]}</button>)}</div>
             ) : (
               <div className="flex flex-col gap-2">{requests.map((r) => (
-                <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line px-3 py-2">
+                <div key={r.id} className="rounded-[6px] border border-line px-3 py-2">
+                  {/* строка 1 — тип и суть (одна строка, обрезается); группа управления переносится целиком (13.10.2026) */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex min-w-[240px] flex-[1_1_320px] items-center gap-2">
                   <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: REQ_COLOR[r.kind] }}>{c.rq.kinds[r.kind]}</span>
-                  <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer text-left text-[13px] text-ink hover:text-blue-2">{reqSummary(r.kind, r.fields) || c.rq.details}</button>
-                  <button type="button" onClick={() => setReqM({ open: true, req: r })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
+                  <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer truncate text-left text-[13px] text-ink hover:text-blue-2" title={reqSummary(r.kind, r.fields)}>{reqSummary(r.kind, r.fields) || c.rq.details}</button>
                   <button type="button" onClick={() => setOpenReq((m) => ({ ...m, [r.id]: m[r.id] !== true }))} title={openReq[r.id] !== true ? c.rq.show : c.rq.hide} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{openReq[r.id] !== true ? <IconChevronDown size={15} /> : <IconChevronUp size={15} />}</button>
+                    </div>
+                    <div className="ml-auto flex flex-none items-center gap-2">
                   {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
                   <Select value={r.status} onChange={async (v) => { const st = v as RequestStatus; setData((d) => (d ? { ...d, requests: d.requests.map((q) => (q.id === r.id ? { ...q, status: st } : q)) } : d)); try { await setRequestStatus(r.id, st); load(); } catch (e) { err(e); load(); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
+                  <button type="button" onClick={() => setReqM({ open: true, req: r })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
                   <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
-                  {openReq[r.id] === true && <div className="w-full border-t border-line pt-2"><RequestDetails r={r} briefs={briefs} onEdit={() => setReqM({ open: true, req: r })} /></div>}
+                    </div>
+                  </div>
+                  {openReq[r.id] === true && <div className="mt-2 border-t border-line pt-2"><RequestDetails r={r} briefs={briefs} onEdit={() => setReqM({ open: true, req: r })} /></div>}
                 </div>))}</div>
             )}
           </div>
