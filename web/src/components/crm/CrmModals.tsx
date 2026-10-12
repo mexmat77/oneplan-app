@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/provider";
 import type { Deal, DealInput, Task, TaskInput, TaskKind } from "@/lib/crm/types";
 import { btnP, btnS, fromLocalInput, inp, lbl, sourceName, stageName, taskKindName, toLocalInput, useCrm } from "./crmUi";
 import { DuePicker } from "./DuePicker";
+import { DateField } from "@/components/ui/DateRange";
 
 type ClientOpt = { id: string; name: string };
 
@@ -68,7 +69,7 @@ function DealForm({ deal, clients, clientId, requests, onClose, onSaved }: DealP
         <div><label className={lbl}>{c.deal.commission}</label><input inputMode="decimal" value={f.commission ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^\d.,]/g, "").replace(",", "."); set({ commission: v ? Number(v) : null }); }} className={inp} /></div>
         <div><label className={lbl}>&nbsp;</label><Select value={f.commissionKind ?? "pct"} onChange={(v) => set({ commissionKind: v as "pct" | "sum" })} options={[{ value: "pct", label: c.deal.commissionPct }, { value: "sum", label: c.deal.commissionSum }]} /></div>
         <div><label className={lbl}>{c.deal.deposit}</label><input inputMode="numeric" value={f.deposit ?? ""} onChange={(e) => set({ deposit: e.target.value ? +e.target.value.replace(/\D/g, "") : null })} className={inp} /></div>
-        <div><label className={lbl}>{c.deal.depositAt}</label><input type="date" value={f.depositAt ?? ""} onChange={(e) => set({ depositAt: e.target.value || null })} className={inp} /></div>
+        <div><label className={lbl}>{c.deal.depositAt}</label><DateField value={f.depositAt ?? ""} onChange={(v) => set({ depositAt: v || null })} /></div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div><label className={lbl}>{c.source}</label><Select value={f.sourceId ?? ""} onChange={(v) => set({ sourceId: v || null })} options={[{ value: "", label: c.noSource }, ...crm.sources.filter((s) => s.active).map((s) => ({ value: s.id, label: sourceName(s, t) }))]} /></div>

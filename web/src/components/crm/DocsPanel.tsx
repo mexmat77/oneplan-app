@@ -8,6 +8,7 @@ import { IconCheck, IconDownload, IconFileText, IconFileTypePdf, IconPaperclip, 
 import { deleteDoc, docDefaults, docParams, docUrl, generateDoc, listDocs, listTemplates, setDocStatus, uploadDoc, type CompanyProfile, type DocInfo, type TemplateInfo } from "@/app/crm/doc-actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Modal, ModalClose } from "@/components/ui/Modal";
+import { DateField } from "@/components/ui/DateRange";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
@@ -156,7 +157,8 @@ function DocCreateModal({ dealId, dealKind, fromDoc, onClose, onDone }: { dealId
                           <label className={lbl}>{label}{f?.required ? <span className="text-red"> *</span> : ""}{values[k]?.trim() ? <IconCheck size={11} className="ml-1 inline text-green" /> : null}</label>
                           {f?.type === "select" ? <Select value={values[k] ?? ""} onChange={(v) => set(k, v)} options={[{ value: "", label: "—" }, ...(f.options ?? []).map((o) => ({ value: o, label: o }))]} />
                             : wide ? <textarea value={values[k] ?? ""} onChange={(e) => set(k, e.target.value)} className={`${inp} min-h-[64px] resize-y py-2`} />
-                            : <input type={f?.type === "date" ? "date" : "text"} inputMode={f?.type === "money" || f?.type === "number" ? "decimal" : undefined} value={values[k] ?? ""} onChange={(e) => set(k, e.target.value)} className={inp} />}
+                            : f?.type === "date" ? <DateField value={values[k] ?? ""} onChange={(v) => set(k, v)} />
+                            : <input inputMode={f?.type === "money" || f?.type === "number" ? "decimal" : undefined} value={values[k] ?? ""} onChange={(e) => set(k, e.target.value)} className={inp} />}
                         </div>
                       ); })}
                   </div>

@@ -3,7 +3,8 @@
 // Быстрый выбор срока (правило пользователя 12.10.2026 — «не в 5 кликов, а в 1»): пресеты сегодня / завтра / +3 дня / неделя
 // + время одним кликом, точная дата — обычным полем. Значение — ISO.
 import { useI18n } from "@/i18n/provider";
-import { fromLocalInput, inp, toLocalInput } from "./crmUi";
+import { inp, toLocalInput } from "./crmUi";
+import { DateField } from "@/components/ui/DateRange";
 
 const at = (daysAhead: number, hour: number) => { const d = new Date(); d.setDate(d.getDate() + daysAhead); d.setHours(hour, 0, 0, 0); return d.toISOString(); };
 const sameDay = (a: string, daysAhead: number) => { const d = new Date(); d.setDate(d.getDate() + daysAhead); return new Date(a).toDateString() === d.toDateString(); };
@@ -23,7 +24,10 @@ export function DuePicker({ value, onChange, allowEmpty }: { value: string; onCh
         <span className="mx-1 h-4 w-px bg-line" />
         {hours.map((h) => <button key={h} type="button" onClick={() => { const b = value ? new Date(value) : new Date(); b.setHours(h, 0, 0, 0); onChange(b.toISOString()); }} className={chip(!!value && hour === h)}>{h}:00</button>)}
       </div>
-      <input type="datetime-local" value={value ? toLocalInput(value) : ""} onChange={(e) => onChange(e.target.value ? fromLocalInput(e.target.value) : "")} className={`${inp} w-[220px]`} />
+      <div className="flex items-center gap-2">
+        <DateField className="w-[190px]" clearable={!!allowEmpty} value={value ? toLocalInput(value).slice(0, 10) : ""} onChange={(v) => { if (!v) { onChange(""); return; } const [y, m, dd] = v.split("-").map(Number); const b = value ? new Date(value) : new Date(); b.setFullYear(y, m - 1, dd); if (!value) b.setHours(10, 0, 0, 0); onChange(b.toISOString()); }} />
+        <input type="time" value={value ? toLocalInput(value).slice(11, 16) : ""} onChange={(e) => { if (!e.target.value) return; const [h, mi] = e.target.value.split(":").map(Number); const b = value ? new Date(value) : new Date(); b.setHours(h, mi, 0, 0); onChange(b.toISOString()); }} className={`${inp} w-[96px]`} />
+      </div>
     </div>
   );
 }

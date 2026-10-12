@@ -1489,7 +1489,8 @@
         "budgetFrom": "Bütçe (min)",
         "budgetTo": "Bütçe (max)",
         "active": "Filtre: {n}",
-        "hint": "Ad, telefon ve e-posta — yukarıdaki aramada. Filtreler anında uygulanır."
+        "hint": "Ad, telefon ve e-posta — yukarıdaki aramada. Filtreler anında uygulanır.",
+        "created": "Oluşturma tarihi"
       }
     },
     "kb": {
@@ -1952,6 +1953,29 @@
       "open": "Gayrimenkulü aç",
       "none": "Gayrimenkul bağlı değil",
       "no": "No"
+    }
+  },
+  "dr": {
+    "period": "Dönem",
+    "pickDate": "Tarih",
+    "pickFrom": "Başlangıç seçin",
+    "pickTo": "bitiş seçin",
+    "clear": "Temizle",
+    "p": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "d7": "Son 7 gün",
+      "d30": "Son 30 gün",
+      "thisMonth": "Bu ay",
+      "lastMonth": "Geçen ay",
+      "quarter": "Bu çeyrek",
+      "year": "Bu yıl"
+    },
+    "s": {
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "d7": "1 hafta sonra",
+      "d30": "1 ay sonra"
     }
   }
 }

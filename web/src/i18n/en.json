@@ -1489,7 +1489,8 @@
         "budgetFrom": "Budget from",
         "budgetTo": "Budget to",
         "active": "Filters: {n}",
-        "hint": "Name, phone and e-mail — in the search above. Filters apply instantly."
+        "hint": "Name, phone and e-mail — in the search above. Filters apply instantly.",
+        "created": "Created"
       }
     },
     "kb": {
@@ -1952,6 +1953,29 @@
       "open": "Open property",
       "none": "No property linked",
       "no": "No."
+    }
+  },
+  "dr": {
+    "period": "Period",
+    "pickDate": "Date",
+    "pickFrom": "Pick a start date",
+    "pickTo": "pick an end date",
+    "clear": "Clear",
+    "p": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "d7": "Last 7 days",
+      "d30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "quarter": "This quarter",
+      "year": "This year"
+    },
+    "s": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "d7": "In a week",
+      "d30": "In a month"
     }
   }
 }

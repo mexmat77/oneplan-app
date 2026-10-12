@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { IconChevronDown, IconLock, IconMapPin } from "@tabler/icons-react";
 import { listClients, saveRequest } from "@/app/crm/actions";
 import { GeoPicker } from "@/components/GeoPicker";
+import { DateField } from "@/components/ui/DateRange";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
@@ -35,7 +36,7 @@ export function ReqFieldInput({ f, value, onChange, t, clients }: { f: ReqField;
     case "number": return <div>{label}<input inputMode="decimal" value={value == null ? "" : String(value)} onChange={num} className={inp} /></div>;
     case "money": return <div>{label}<input inputMode="numeric" value={typeof value === "number" ? value.toLocaleString("ru-RU") : ""} onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); onChange(v ? Number(v) : undefined); }} className={inp} /></div>;
     case "cur": return <div>{label}<Select value={(value as string) || "TRY"} onChange={(v) => onChange(v)} options={OPTS.cur.map((x) => ({ value: x, label: x }))} /></div>;
-    case "date": return <div>{label}<input type="date" value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value || undefined)} className={inp} /></div>;
+    case "date": return <div>{label}<DateField value={(value as string) ?? ""} onChange={(v) => onChange(v || undefined)} /></div>;
     case "bool": return <label className="flex h-9 cursor-pointer items-center gap-2 self-end text-[13px] text-text"><input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked || undefined)} /> {rq.f[f.key as keyof typeof rq.f] ?? f.key}</label>;
     case "select": return <div>{label}<Select value={(value as string) ?? ""} onChange={(v) => onChange(v || undefined)} options={[{ value: "", label: rq.empty }, ...(f.opts ? OPTS[f.opts] : []).map((o) => ({ value: o, label: optLabel(o) }))]} /></div>;
     case "multi": { const cur = (value as string[]) ?? []; return <div className="col-span-2 max-md:col-span-1">{label}<div className="flex flex-wrap gap-[6px]">{(f.opts ? OPTS[f.opts] : []).map((o) => { const on = cur.includes(o); return <button key={o} type="button" onClick={() => onChange(on ? cur.filter((x) => x !== o) : [...cur, o])} className={`h-7 cursor-pointer rounded-full border px-3 text-[12px] font-medium ${on ? "border-sel-line bg-blue-tint text-sel-ink" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{optLabel(o)}</button>; })}</div></div>; }

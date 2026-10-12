@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, type DealSummary } from "@/app/crm/actions";
+import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
@@ -197,8 +198,8 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
     case "channel": return (c.channel as Record<string, string>)[v] ?? v;
     case "budgetMin": return `≥ ${v}`;
     case "budgetMax": return `≤ ${v}`;
-    case "createdFrom": return `${c.tbl.flt.createdFrom} ${v}`;
-    case "createdTo": return `${c.tbl.flt.createdTo} ${v}`;
+    case "createdFrom": return `${c.tbl.flt.created}: ${fmtD(v)} –`;
+    case "createdTo": return `– ${fmtD(v)}`;
     default: return v;
   }
 }
@@ -241,8 +242,7 @@ function FilterPanel({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partia
           <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value })} placeholder={f.budgetTo} className={inp} /></div>
         </>)}
         {block(f.dates, <>
-          <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-[12px] text-muted"><span>{f.createdFrom}</span><input type="date" value={flt.createdFrom} onChange={(e) => setF({ createdFrom: e.target.value })} className={inp} /></div>
-          <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-[12px] text-muted"><span>{f.createdTo}</span><input type="date" value={flt.createdTo} onChange={(e) => setF({ createdTo: e.target.value })} className={inp} /></div>
+          <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />
         </>)}
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[12.5px]"><span className="text-muted">{active ? fill(f.active, { n: active }) : f.hint}</span><button type="button" onClick={reset} disabled={!active} className="cursor-pointer font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button></div>
