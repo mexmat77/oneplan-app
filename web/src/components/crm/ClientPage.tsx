@@ -24,12 +24,12 @@ import { CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryNam
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
-  const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; sources: Source[] } | null>(null);
+  const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; cstages: Stage[]; sources: Source[] } | null>(null);
   const load = useCallback(() => { if (!embedded) crmBootstrap().then(setBoot).catch(() => {}); }, [embedded]);
   useEffect(() => { load(); }, [load]);
   if (embedded) return <Inner id={id} />;
   if (!boot) return <div className="py-10 text-center text-[13px] text-muted">…</div>;
-  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), q: "", setQ: () => {} };
+  const ctx = { me: boot.me, stages: boot.stages, cstages: boot.cstages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setCstages: (s: Stage[]) => setBoot((b) => (b ? { ...b, cstages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), q: "", setQ: () => {} };
   return <CrmCtx.Provider value={ctx}><Inner id={id} /></CrmCtx.Provider>;
 }
 
@@ -101,7 +101,7 @@ function Inner({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{cl.name}</h1><span className="text-[14px] text-muted">· #{cl.id.slice(0, 8).toUpperCase()}</span><span className={chip}>{cl.lang}</span>{cl.priority && <span className="inline-flex items-center gap-1 rounded-[4px] px-[6px] py-[1px] text-[11px] font-semibold text-white" style={{ background: PRIO_COLOR[cl.priority] }}>{c.prio[cl.priority]}</span>}{cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}{cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}{cl.status === "archived" && <span className={chip}>{c.archived}</span>}{cl.tags.map((x) => <span key={x} className={chip}>{x}</span>)}</div>
           <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
         </div>
-        <Select value={cl.stage} onChange={async (v) => { try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); } }} options={(["new", "contacted", "qualified", "unqualified"] as ClientStage[]).map((k) => ({ value: k, label: c.cstage[k] }))} size="sm" className="w-[150px]" disabled={ro} title={c.client.stage} />
+        <Select value={cl.stage} onChange={async (v) => { try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); } }} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang) }))} size="sm" className="w-[160px]" disabled={ro} title={c.client.stage} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: crm.cstages.find((st) => st.key === cl.stage)?.color ?? "#8a93a2" }} />} />
         <Select value={cl.priority ?? ""} onChange={async (v) => { try { await patchClient(cl.id, { priority: (v || null) as Priority | null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} size="sm" className="w-[140px]" disabled={ro} title={c.client.priority} icon={<span className="h-2 w-2 flex-none rounded-full" style={{ background: cl.priority ? PRIO_COLOR[cl.priority] : "#c9d0dc" }} />} />
         {openDeal && <Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />}
         {mainPhone && <a href={`tel:${mainPhone.value.replace(/[^\d+]/g, "")}`} className={btnP}><IconPhone size={14} /> {c.client.call}</a>}

@@ -1192,7 +1192,11 @@
       "call": "Arama",
       "visit": "Ofis ziyareti",
       "contract": "Sözleşme",
-      "paid": "Ödeme"
+      "paid": "Ödeme",
+      "noanswer": "Ulaşılamadı",
+      "selection": "Seçki gönderildi",
+      "thinking": "Düşünüyor",
+      "unqualified": "Uygun değil"
     },
     "sources": {
       "recommend": "Tavsiye",
@@ -1218,8 +1222,8 @@
       "customColor": "Özel renk",
       "up": "Yukarı",
       "down": "Aşağı",
-      "stagesT": "Satış aşamaları",
-      "stagesS": "Aşamaları yeniden adlandırın, ekleyin veya kaldırın. «Satış» ve «Vazgeçti» aşamaları işlemi kapatır.",
+      "stagesT": "İşlem hunisi",
+      "stagesS": "Belirli bir gayrimenkul için işlem aşamaları. «Başarı» ve «Red» işlemi kapatır.",
       "addStage": "Aşama ekle",
       "stageName": "Ad",
       "stageKind": "Tür",
@@ -1244,7 +1248,9 @@
       "noAudit": "Henüz kayıt yok",
       "save": "Kaydet",
       "saved": "Kaydedildi",
-      "inactive": "kapalı"
+      "inactive": "kapalı",
+      "clientStagesT": "Müşteri hunisi",
+      "clientStagesS": "İşlem öncesi müşteriyle çalışma durumları: listede ve panoda doğrudan değişir. «Başarı» ve «Red» çalışmayı kapatır."
     },
     "audit": {
       "view_client": "Müşteri kartını açtı",
@@ -1498,7 +1504,11 @@
       "done": "Tamam",
       "saveView": "Görünümü kaydet",
       "viewName": "Görünüm adı",
-      "deleteView": "Görünümü sil"
+      "deleteView": "Görünümü sil",
+      "listMode": "Liste",
+      "boardMode": "Pano",
+      "changeStatus": "Durumu değiştir",
+      "dealStage": "İşlem aşaması"
     },
     "kb": {
       "days": "{n} gün",

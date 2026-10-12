@@ -7,7 +7,7 @@ import type { Dict, Lang } from "@/i18n";
 import type { CrmMe, Source, Stage, TaskKind } from "@/lib/crm/types";
 
 export type CrmTab = { id: string; name: string };
-export type CrmCtxT = { me: CrmMe; stages: Stage[]; sources: Source[]; base: string; refresh: () => void; setStages: (s: Stage[]) => void; setSources: (s: Source[]) => void;
+export type CrmCtxT = { me: CrmMe; stages: Stage[]; cstages: Stage[]; sources: Source[]; base: string; refresh: () => void; setStages: (s: Stage[]) => void; setCstages: (s: Stage[]) => void; setSources: (s: Source[]) => void;
   /** вкладки открытых карточек (как в браузере): регистрирует ClientPage, закрывает крестик/удаление */
   openTab?: (id: string, name: string) => void; closeTab?: (id: string) => void;
   /** один поиск в шапке CRM (12.10.2026): на списке клиентов фильтрует живьём, на других разделах Enter ведёт в список */

@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth";
 import { decField, encField, newWrappedKey, normalizeContact, unwrapKey, valueHash } from "./crypto";
-import { DEFAULT_SOURCES, DEFAULT_STAGES, type Branch, type CrmAccess, type CrmMember, type MemberRole, type Ws, type WsKind } from "./types";
+import { DEFAULT_CLIENT_STAGES, DEFAULT_SOURCES, DEFAULT_STAGES, type Branch, type CrmAccess, type CrmMember, type MemberRole, type Ws, type WsKind } from "./types";
 
 export const TRIAL_MONTHS = 6;
 
@@ -23,6 +23,7 @@ export async function crmCtx(): Promise<Ctx> {
   const dek = await dekOf(sb, ws, me.id);
   // роль в пространстве (0017): одиночка — владелец; агентство/компания — первый открывший становится владельцем, остальные агенты
   const { role, branchId } = await roleOf(sb, ws, me.id);
+  await ensureDefaults(sb, ws);
   const isAdmin = role === "owner";
   return { sb, me, ws, dek, access, trialUntil, paidTo, isAdmin, role, branchId };
 }
@@ -92,9 +93,14 @@ async function dekOf(sb: SupabaseClient, ws: Ws, actor: string): Promise<Buffer>
 
 /** Этапы и источники по умолчанию при первом использовании ws. */
 export async function ensureDefaults(sb: SupabaseClient, ws: Ws) {
-  const { count } = await sb.from("crm_stages").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id);
+  const { count } = await sb.from("crm_stages").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("scope", "deal");
   if (!count) {
-    await sb.from("crm_stages").insert(DEFAULT_STAGES[ws.kind as WsKind].map((s, i) => ({ ws_kind: ws.kind, ws_id: ws.id, key: s.key, kind: s.kind, color: s.color, sort: i, name: {} })));
+    await sb.from("crm_stages").insert(DEFAULT_STAGES[ws.kind as WsKind].map((s, i) => ({ ws_kind: ws.kind, ws_id: ws.id, key: s.key, kind: s.kind, color: s.color, sort: i, name: {}, scope: "deal" })));
+  }
+  // воронка клиента (0018) — у существующих пространств создаётся при первом открытии после миграции
+  const { count: cn } = await sb.from("crm_stages").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("scope", "client");
+  if (!cn) {
+    await sb.from("crm_stages").insert(DEFAULT_CLIENT_STAGES.map((s, i) => ({ ws_kind: ws.kind, ws_id: ws.id, key: s.key, kind: s.kind, color: s.color, sort: i, name: {}, scope: "client" })));
   }
   const { count: sn } = await sb.from("crm_sources").select("id", { count: "exact", head: true }).eq("ws_kind", ws.kind).eq("ws_id", ws.id);
   if (!sn) {

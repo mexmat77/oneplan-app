@@ -32,7 +32,7 @@ export function CrmShell({ base }: { base: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const path = pathname.startsWith(base) ? pathname.slice(base.length).split("/").filter(Boolean) : [];
-  const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; sources: Source[] } | null>(null);
+  const [boot, setBoot] = useState<{ me: CrmMe; stages: Stage[]; cstages: Stage[]; sources: Source[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [create, setCreate] = useState<"" | "client" | "deal" | "task">("");
   const [menu, setMenu] = useState(false);
@@ -79,7 +79,7 @@ export function CrmShell({ base }: { base: string }) {
 
   if (err) return <div className="p-6 text-[13px] text-muted">{err === "no-company" ? "—" : err}</div>;
   if (!boot) return <div className="py-16 text-center text-[13px] text-muted">…</div>;
-  const ctx = { me: boot.me, stages: boot.stages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ };
+  const ctx = { me: boot.me, stages: boot.stages, cstages: boot.cstages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setCstages: (s: Stage[]) => setBoot((b) => (b ? { ...b, cstages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ };
   const listTab = nav.find((n) => n.active && n.key !== "clients") ?? nav[1];
   const closeAndGo = (id: string) => { closeTab(id); if (clientId === id) router.push(`${base}/clients`); };
   const ro = boot.me.access !== "full";

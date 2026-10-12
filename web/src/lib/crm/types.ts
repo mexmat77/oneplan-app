@@ -14,7 +14,8 @@ export type SourceKind = "manual" | "site" | "phone" | "portal" | "referral" | "
 export type Source = { id: string; name: string; kind: SourceKind; active: boolean; sort: number; hasToken: boolean };
 
 export type StageKind = "open" | "won" | "lost";
-export type Stage = { id: string; key: string; name: Record<Lang, string>; kind: StageKind; color: string | null; sort: number };
+export type StageScope = "deal" | "client";
+export type Stage = { id: string; key: string; name: Record<Lang, string>; kind: StageKind; color: string | null; sort: number; scope: StageScope };
 
 export type ContactKind = "phone" | "email" | "whatsapp" | "telegram" | "other";
 export type Contact = { id: string; kind: ContactKind; value: string; label: string | null; isMain: boolean };
@@ -23,7 +24,8 @@ export type RefKind = "none" | "realtor" | "agency" | "client" | "text";
 export type Want = { deal?: string; type?: string; rooms?: string[]; il?: string; ilces?: string[]; semts?: string[] };
 
 export type ClientRole = "buyer" | "seller" | "landlord" | "tenant";
-export type ClientStage = "new" | "contacted" | "qualified" | "unqualified";
+/** Ключ этапа воронки клиента (crm_stages scope=client; наборы по умолчанию — DEFAULT_CLIENT_STAGES). */
+export type ClientStage = string;
 export type Priority = "hot" | "warm" | "cold";
 export type Channel = "call" | "whatsapp" | "telegram" | "email";
 /** KVKK: информирование (Aydınlatma Metni) и согласие (Açık Rıza) — раздельно. */
@@ -109,6 +111,12 @@ export const DEFAULT_STAGES: Record<WsKind, { key: string; kind: StageKind; colo
     { key: "lost", kind: "lost", color: "#e5484d" },
   ],
 };
+/** Воронка клиента по умолчанию (работа менеджера до сделки) — одна для всех видов пространств. */
+export const DEFAULT_CLIENT_STAGES: { key: string; kind: StageKind; color: string }[] = [
+  { key: "new", kind: "open", color: "#4d7cfe" }, { key: "noanswer", kind: "open", color: "#e5484d" }, { key: "work", kind: "open", color: "#f5a623" },
+  { key: "selection", kind: "open", color: "#0ea5a4" }, { key: "show", kind: "open", color: "#7b4fd0" }, { key: "thinking", kind: "open", color: "#8a93a2" },
+  { key: "won", kind: "won", color: "#22c15e" }, { key: "lost", kind: "lost", color: "#475569" }, { key: "unqualified", kind: "lost", color: "#c9d0dc" },
+];
 export const DEFAULT_SOURCES: { key: string; kind: SourceKind }[] = [
   { key: "recommend", kind: "referral" }, { key: "site", kind: "site" }, { key: "phone", kind: "phone" }, { key: "instagram", kind: "social" },
   { key: "sahibinden", kind: "portal" }, { key: "partner", kind: "partner" }, { key: "walkin", kind: "other" },

@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconChevronDown, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, patchClient, type DealSummary } from "@/app/crm/actions";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { useEscape } from "@/hooks/useScrollLock";
@@ -14,17 +14,19 @@ import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import type { Client } from "@/lib/crm/types";
+import type { Lang } from "@/i18n";
 import { fmt } from "@/lib/money";
 import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { PRIO_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
-type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
+type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; dealStage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
 type SavedView = { id: string; name: string; flt: Flt; stage: string; view: View; sort: { key: SortKey; dir: 1 | -1 } };
-const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
+const MODE_LS = "opl-crm-clients-mode";
+const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", dealStage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
 type SortKey = "name" | "updated" | "created";
 const DENS_LS = "opl-crm-density";
 
@@ -67,6 +69,7 @@ export function ClientsTable() {
   const [modal, setModal] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const dense = usePref(DENS_LS) !== "expanded";
+  const mode = usePref(MODE_LS) === "board" ? "board" : "list"; // список или канбан по воронке клиента (выбор пользователя)
 
   const load = useCallback(() => {
     // без поиска — кэш раздела: прошлые строки показываются сразу, свежие приходят фоном (замечание пользователя 12.10.2026)
@@ -83,8 +86,9 @@ export function ClientsTable() {
   function matchView(x: Client, v: View) {
     switch (v) { case "mine": return x.ownerId === crm.me.meId; case "withTask": return !!x.nextTask; case "overdue": return isOver(x); case "noDeal": return !deals[x.id]; default: return true; }
   }
-  const stageOf = (x: Client) => { const d = deals[x.id]; return !d ? "none" : d.closed ? d.closed : d.stageId ?? ""; };
-  const stageCount = (id: string) => base.filter((x) => stageOf(x) === id).length;
+  const dealStageOf = (x: Client) => { const d = deals[x.id]; return !d ? "none" : d.closed ? d.closed : d.stageId ?? ""; };
+  const stageOf = (x: Client) => x.stage || "new"; // строка этапов и канбан — по воронке КЛИЕНТА (0018)
+  const stageCount = (key: string) => base.filter((x) => stageOf(x) === key).length;
   const allTags = useMemo(() => [...new Set(base.flatMap((x) => x.tags))].sort(), [base]);
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
@@ -95,6 +99,7 @@ export function ClientsTable() {
     if (flt.branch) r = r.filter((x) => x.branchId === flt.branch);
     if (flt.role) r = r.filter((x) => x.roles.includes(flt.role as Client["roles"][number]));
     if (flt.cstage) r = r.filter((x) => x.stage === flt.cstage);
+    if (flt.dealStage) r = r.filter((x) => dealStageOf(x) === flt.dealStage);
     if (flt.priority) r = r.filter((x) => (flt.priority === "none" ? !x.priority : x.priority === flt.priority));
     if (flt.lang) r = r.filter((x) => x.lang === flt.lang);
     if (flt.channel) r = r.filter((x) => x.channel === flt.channel);
@@ -124,13 +129,6 @@ export function ClientsTable() {
     </th>
   );
   const pad = dense ? "py-[6px]" : "py-[12px]";
-  const stageChip = (d?: DealSummary) => {
-    const st = crm.stages.find((s) => s.id === d?.stageId);
-    if (!d) return <span className="text-muted">{c.tbl.noStage}</span>;
-    if (d.closed) { const col = d.closed === "won" ? "#22c15e" : "#e5484d"; return <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[12px] font-medium" style={{ background: col + "1f", color: col }}>{d.closed === "won" ? c.tbl.won : c.tbl.lost}</span>; }
-    const col = st?.color ?? "#8a93a2";
-    return <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[12px] font-medium" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}</span>;
-  };
 
   return (
     <>
@@ -151,8 +149,9 @@ export function ClientsTable() {
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
-        {crm.stages.filter((s) => s.kind === "open").map((s) => { const n = stageCount(s.id); return <button key={s.id} type="button" onClick={() => setStage(stage === s.id ? "" : s.id)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === s.id ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: s.color ?? "#8a93a2" }} />{stageName(s, t, lang)}<span className={stage === s.id ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
-        {([["won", c.tbl.won, "#22c15e"], ["lost", c.tbl.lost, "#e5484d"], ["none", c.tbl.noStage, "#c9d0dc"]] as const).map(([k, l, col]) => <button key={k} type="button" onClick={() => setStage(stage === k ? "" : k)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: col }} />{l}<span className={stage === k ? "text-white/70" : "text-muted"}>{stageCount(k)}</span></button>)}
+        {crm.cstages.map((st) => { const n = stageCount(st.key); return <button key={st.id} type="button" onClick={() => setStage(stage === st.key ? "" : st.key)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === st.key ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={stage === st.key ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
+        <span className="flex-1" />
+        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["list", "board"] as const).map((m) => <button key={m} type="button" onClick={() => setPref(MODE_LS, m)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${mode === m ? "bg-blue-2 text-white" : "text-muted hover:text-ink"}`}>{m === "list" ? c.tbl.listMode : c.tbl.boardMode}</button>)}</div>
       </div>
       <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
       {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}
@@ -166,7 +165,8 @@ export function ClientsTable() {
           <button type="button" onClick={() => setSel(new Set())} className="ml-auto cursor-pointer"><IconX size={15} /></button>
         </div>
       )}
-      <div className="overflow-x-auto rounded-[6px] border border-line bg-surface">
+      {mode === "board" && list !== null && <ClientBoard rows={rows} deals={deals} onMove={async (id, k) => { try { await patchClient(id, { stage: k }); load(); } catch (e) { err(e); } }} />}
+      <div className={`overflow-x-auto rounded-[6px] border border-line bg-surface ${mode === "board" ? "hidden" : ""}`}>
         {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
           <table data-crm-table="1" className="w-full min-w-[900px] text-[13px]">
             <thead><tr>
@@ -180,7 +180,7 @@ export function ClientsTable() {
                   <td className={`px-3 ${pad}`}><span className="flex items-center gap-[6px]"><button type="button" disabled={ro} onClick={async (e) => { e.stopPropagation(); const order: (Client["priority"])[] = [null, "hot", "warm", "cold"]; const next = order[(order.indexOf(x.priority) + 1) % order.length]; try { await patchClient(x.id, { priority: next }); load(); } catch (er) { err(er); } }} title={x.priority ? c.prio[x.priority] : c.prio.none} className="h-[10px] w-[10px] flex-none cursor-pointer rounded-full border border-line hover:scale-125" style={{ background: x.priority ? PRIO_COLOR[x.priority] : "transparent", borderColor: x.priority ? PRIO_COLOR[x.priority] : undefined }} /><Link href={`${crm.base}/c/${x.id}`} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-ink hover:text-blue-2">{x.name}</Link>{x.roles.slice(0, 2).map((r) => <span key={r} className="rounded-[3px] bg-bg-2 px-[5px] text-[10.5px] font-medium text-muted">{c.roles[r]}</span>)}</span>{!dense && <span className={`block truncate text-[12px] ${over ? "text-red" : "text-muted"}`}>{main?.value ?? "—"}{over && x.nextTask ? ` · ${fill(c.tbl.overdueBy, { d: hoursAgo(x.nextTask.dueAt) })}` : ""}</span>}{dense && over && <span className="ml-2 text-[11px] text-red">!</span>}</td>
                   <td className={`px-3 ${pad}`}>{reg ? <span className="inline-flex items-center gap-[6px] text-text">{reg.name}{reg.more > 0 && <span className="rounded-full bg-blue-tint px-[6px] text-[11px] font-semibold text-sel-ink">+{reg.more}</span>}</span> : <span className="text-muted">—</span>}</td>
                   <td className={`max-w-[260px] px-3 ${pad}`}>{d ? <><span className="block truncate text-text">{d.title || (d.amount != null ? fmt(d.amount, d.cur as Currency) : "—")}</span>{!dense && <span className="block truncate text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}</span>}</> : <span className="text-muted">—</span>}</td>
-                  <td className={`px-3 ${pad}`}>{stageChip(d)}{!dense && st && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>
+                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} onChange={async (k) => { try { await patchClient(x.id, { stage: k }); load(); } catch (er) { err(er); } }} disabled={ro} />{!dense && <span className="mt-[3px] block truncate text-[12px] text-muted">{d ? (d.closed ? (d.closed === "won" ? c.tbl.won : c.tbl.lost) : `${c.deal.stage}: ${stageName(st, t, lang)}`) : x.nextTask ? x.nextTask.title : ""}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { try { await patchClient(x.id, { ownerId: v || null }); load(); } catch (e) { err(e); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
                   <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.updatedAt, lang)}</td>
@@ -197,20 +197,20 @@ export function ClientsTable() {
 }
 
 const ROLES_F = ["buyer", "seller", "landlord", "tenant"] as const;
-const CSTAGES_F = ["new", "contacted", "qualified", "unqualified"] as const;
 const PRIOS_F = ["hot", "warm", "cold", "none"] as const;
 const KINDS_F = ["buy", "sell", "rent_out", "rent_in"] as const;
 const CHANNELS_F = ["call", "whatsapp", "telegram", "email"] as const;
 
 /** Подпись активного фильтра для чипов. */
-function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>): string {
+function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>, lang: Lang): string {
   const c = t.crm;
   switch (k) {
     case "owner": return crm.me.members.find((m) => m.id === v)?.name ?? v;
     case "branch": return crm.me.branches.find((b) => b.id === v)?.name ?? v;
     case "source": return sourceName(crm.sources.find((x) => x.id === v), t);
     case "role": return (c.roles as Record<string, string>)[v] ?? v;
-    case "cstage": return (c.cstage as Record<string, string>)[v] ?? v;
+    case "cstage": return stageName(crm.cstages.find((x) => x.key === v), t, lang);
+    case "dealStage": return v === "won" ? c.tbl.won : v === "lost" ? c.tbl.lost : v === "none" ? c.tbl.noStage : stageName(crm.stages.find((x) => x.id === v), t, lang);
     case "priority": return (c.prio as Record<string, string>)[v] ?? v;
     case "kind": return (c.rq.kinds as Record<string, string>)[v] ?? v;
     case "il": return GEO.find((g) => g.k === v)?.n ?? v;
@@ -226,11 +226,12 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
 /** Поле фильтра для «+ Фильтр»: подпись и способ ввода значения. */
 type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string }[] };
 function useFieldDefs(allTags: string[]): FieldDef[] {
-  const { t } = useI18n(); const crm = useCrm(); const c = t.crm;
+  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const opt = (list: readonly string[], names: Record<string, string>) => list.map((v) => ({ value: v, label: names[v] ?? v }));
   const defs: FieldDef[] = [
     { key: "role", label: c.client.roles, kind: "select", opts: opt(ROLES_F, c.roles) },
-    { key: "cstage", label: c.client.stage, kind: "select", opts: opt(CSTAGES_F, c.cstage) },
+    { key: "cstage", label: c.client.stage, kind: "select", opts: crm.cstages.map((x) => ({ value: x.key, label: stageName(x, t, lang) })) },
+    { key: "dealStage", label: c.tbl.dealStage, kind: "select", opts: [...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang) })), { value: "won", label: c.tbl.won }, { value: "lost", label: c.tbl.lost }, { value: "none", label: c.tbl.noStage }] },
     { key: "priority", label: c.client.priority, kind: "select", opts: opt(PRIOS_F, c.prio) },
     { key: "kind", label: c.rq.kind, kind: "select", opts: opt(KINDS_F, c.rq.kinds) },
     { key: "il", label: c.want.il, kind: "select", opts: GEO.map((g) => ({ value: g.k, label: g.n })) },
@@ -246,12 +247,12 @@ function useFieldDefs(allTags: string[]): FieldDef[] {
   return defs;
 }
 /** Активные условия как пилюли «Поле: значение» (составные budget/created — одной пилюлей). */
-function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>): { key: string; label: string; value: string }[] {
+function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>, lang: Lang): { key: string; label: string; value: string }[] {
   const out: { key: string; label: string; value: string }[] = [];
   for (const d of defs) {
     if (d.kind === "budget") { if (flt.budgetMin || flt.budgetMax) out.push({ key: d.key, label: d.label, value: `${flt.budgetMin ? `≥ ${Number(flt.budgetMin).toLocaleString("ru-RU")}` : ""}${flt.budgetMin && flt.budgetMax ? " " : ""}${flt.budgetMax ? `≤ ${Number(flt.budgetMax).toLocaleString("ru-RU")}` : ""}` }); }
     else if (d.kind === "dates") { if (flt.createdFrom || flt.createdTo) out.push({ key: d.key, label: d.label, value: `${fmtD(flt.createdFrom) || "…"} – ${fmtD(flt.createdTo) || "…"}` }); }
-    else { const v = flt[d.key as keyof Flt]; if (v) out.push({ key: d.key, label: d.label, value: fltLabel(d.key as keyof Flt, v, t, crm) }); }
+    else { const v = flt[d.key as keyof Flt]; if (v) out.push({ key: d.key, label: d.label, value: fltLabel(d.key as keyof Flt, v, t, crm, lang) }); }
   }
   return out;
 }
@@ -259,9 +260,9 @@ const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMi
 
 /** Строка фильтров как у Attio/Linear: пилюли условий + «+ Фильтр» → список полей → значение. */
 function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[] }) {
-  const { t } = useI18n(); const crm = useCrm(); const c = t.crm;
+  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const defs = useFieldDefs(allTags);
-  const pills = pillsOf(flt, defs, t, crm);
+  const pills = pillsOf(flt, defs, t, crm, lang);
   const [open, setOpen] = useState<{ mode: "pick" | "value"; key?: string; anchor?: string } | null>(null);
   const [q, setQ] = useState("");
   const [range, setRange] = useState({ min: flt.budgetMin, max: flt.budgetMax });
@@ -327,7 +328,7 @@ function ValuePop({ def, flt, range, setRange, apply, pop, item }: { def: FieldD
 
 /** «Все фильтры» — панель справа блоками (клиент · команда и источник · заявка · даты); таблица остаётся на месте. */
 function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[]; onClose: () => void }) {
-  const { t } = useI18n(); const crm = useCrm(); const c = t.crm; const f = c.tbl.flt;
+  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm; const f = c.tbl.flt;
   useEscape(true, onClose);
   const block = (title: string, children: React.ReactNode) => <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
   const opt = (label: string, list: readonly string[], names: Record<string, string>) => [{ value: "", label }, ...list.map((v) => ({ value: v, label: names[v] ?? v }))];
@@ -340,7 +341,8 @@ function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
           {block(f.client, <>
             <Select value={flt.role} onChange={(v) => setF({ role: v })} options={opt(c.client.roles, ROLES_F, c.roles)} size="sm" />
-            <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={opt(c.client.stage, CSTAGES_F, c.cstage)} size="sm" />
+            <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={[{ value: "", label: c.client.stage }, ...crm.cstages.map((x) => ({ value: x.key, label: stageName(x, t, lang) }))]} size="sm" />
+            <Select value={flt.dealStage} onChange={(v) => setF({ dealStage: v })} options={[{ value: "", label: c.tbl.dealStage }, ...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang) })), { value: "won", label: c.tbl.won }, { value: "lost", label: c.tbl.lost }, { value: "none", label: c.tbl.noStage }]} size="sm" />
             <Select value={flt.priority} onChange={(v) => setF({ priority: v })} options={opt(c.client.priority, PRIOS_F, c.prio)} size="sm" />
             <div className="grid grid-cols-2 gap-2"><Select value={flt.lang} onChange={(v) => setF({ lang: v })} options={[{ value: "", label: c.client.lang }, ...["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))]} size="sm" /><Select value={flt.channel} onChange={(v) => setF({ channel: v })} options={opt(c.client.channel, CHANNELS_F, c.channel)} size="sm" /></div>
           </>)}
@@ -361,5 +363,53 @@ function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: 
         <div className="flex items-center justify-between gap-2 border-t border-line px-5 py-3"><button type="button" onClick={reset} disabled={!active} className="cursor-pointer text-[13px] font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button><button type="button" onClick={onClose} className={btnP}>{c.tbl.done}</button></div>
       </aside>
     </>
+  );
+}
+
+/** Чип этапа клиента с меню «Сменить статус» (как в современных CRM — прямо из списка). */
+function StageMenu({ value, onChange, disabled }: { value: string; onChange: (key: string) => void; disabled?: boolean }) {
+  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
+  const st = crm.cstages.find((x) => x.key === value);
+  const col = st?.color ?? "#8a93a2";
+  return (
+    <span ref={ref} className="relative inline-block">
+      <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-[220px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]">
+          <div className="px-2 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[.05em] text-muted">{c.tbl.changeStatus}</div>
+          {crm.cstages.map((x) => <button key={x.id} type="button" onClick={() => { setOpen(false); if (x.key !== value) onChange(x.key); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${x.key === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: x.color ?? "#8a93a2" }} />{stageName(x, t, lang)}</button>)}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/** Канбан клиентов по воронке клиента: перетаскивание меняет статус. */
+function ClientBoard({ rows, deals, onMove }: { rows: Client[]; deals: Record<string, DealSummary>; onMove: (id: string, key: string) => void }) {
+  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm; const router = useRouter(); const now = useNow();
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [over, setOver] = useState<string | null>(null);
+  return (
+    <div data-crm-kanban="1" className="mb-3 flex gap-0 overflow-x-auto rounded-[6px] border border-line bg-surface">
+      {crm.cstages.map((st, i) => { const list = rows.filter((x) => (x.stage || "new") === st.key); return (
+        <div key={st.id} onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== st.key) setOver(st.key); }} onDragLeave={() => setOver((o) => (o === st.key ? null : o))} onDrop={(e) => { e.preventDefault(); if (dragId) onMove(dragId, st.key); setDragId(null); setOver(null); }}
+          className={`flex w-[250px] flex-none flex-col bg-[#f7f8fa] ${i > 0 ? "border-l border-line" : ""} ${over === st.key ? "crm-drag-over" : ""}`}>
+          <div className="flex items-center gap-2 border-b border-line px-3 py-2 text-[12px] font-semibold text-ink"><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className="font-normal text-muted">{list.length}</span></div>
+          <div className="flex min-h-[200px] flex-col gap-2 p-2">
+            {list.map((x) => { const d = deals[x.id]; const over2 = !!x.nextTask && new Date(x.nextTask.dueAt).getTime() < now; const m = crm.me.members.find((y) => y.id === x.ownerId); const req = x.requests[0]; return (
+              <div key={x.id} draggable onDragStart={(e) => { setDragId(x.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", x.id); }} onDragEnd={() => { setDragId(null); setOver(null); }} onClick={() => router.push(`${crm.base}/c/${x.id}`)}
+                className={`cursor-pointer rounded-[4px] border border-line bg-surface p-[10px] hover:border-[#b9c2d0] ${dragId === x.id ? "opacity-50" : ""}`} style={{ borderTop: `3px solid ${x.priority ? PRIO_COLOR[x.priority] : st.color ?? "#8a93a2"}` }}>
+                <div className="flex items-center gap-[6px]"><span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{x.name}</span>{m && <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" title={m.name} style={{ background: m.color }}>{initials(m.name)}</span>}</div>
+                <div className="mt-[2px] truncate text-[12px] text-muted">{x.contacts.find((y) => y.isMain)?.value ?? x.contacts[0]?.value ?? ""}</div>
+                {req && <div className="mt-1 truncate text-[12px] text-text"><span className="rounded-[3px] px-1 text-[10.5px] font-semibold text-white" style={{ background: REQ_COLOR[req.kind] }}>{c.rq.kinds[req.kind]}</span> {reqSummary(req.kind, req.fields)}</div>}
+                {d && !d.closed && <div className="mt-1 truncate text-[11.5px] text-muted">{c.deal.stage}: {stageName(crm.stages.find((s2) => s2.id === d.stageId), t, lang)}</div>}
+                {x.nextTask && <div className={`mt-1 truncate text-[11.5px] ${over2 ? "font-semibold text-red" : "text-muted"}`}>{x.nextTask.title} · {fmtDate(x.nextTask.dueAt, lang)}</div>}
+              </div>); })}
+          </div>
+        </div>); })}
+    </div>
   );
 }

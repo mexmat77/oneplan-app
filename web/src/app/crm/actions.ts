@@ -7,21 +7,21 @@ import type { Lang } from "@/i18n";
 import { assertWrite, audit, branchesOf, crmCtx, dec, enc, hashOf, lostReasonsOf, membersOf, type Ctx } from "@/lib/crm/server";
 import { ROLE_OF_KIND, REQUEST_FIELDS } from "@/lib/crm/requestFields";
 import { newSourceToken } from "@/lib/crm/crypto";
-import type { Branch, Client, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
+import type { Branch, Client, StageScope, ClientInput, ClientRole, Contact, ContactKind, CrmEvent, CrmMe, CrmMember, CrmRequest, Deal, DealInput, DupHit, EventKind, Kvkk, MemberRole, RequestBrief, RequestInput, RequestStatus, Source, Stage, Task, TaskInput, Want } from "@/lib/crm/types";
 
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v == null ? null : String(v));
 const n = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
 // ---------- bootstrap ----------
-export async function crmBootstrap(): Promise<{ me: CrmMe; stages: Stage[]; sources: Source[] }> {
+export async function crmBootstrap(): Promise<{ me: CrmMe; stages: Stage[]; cstages: Stage[]; sources: Source[] }> {
   const c = await crmCtx();
-  const [members, stages, sources, branches, lostReasons] = await Promise.all([membersOf(c.sb, c.ws, c.me), loadStages(c), loadSources(c), branchesOf(c.sb, c.ws), lostReasonsOf(c.sb, c.ws)]);
-  return { me: { ws: c.ws, access: c.access, trialUntil: c.trialUntil, paidTo: c.paidTo, isAdmin: c.isAdmin, meId: c.me.id, role: c.role, branchId: c.branchId, members, branches, lostReasons }, stages, sources };
+  const [members, stages, cstages, sources, branches, lostReasons] = await Promise.all([membersOf(c.sb, c.ws, c.me), loadStages(c, "deal"), loadStages(c, "client"), loadSources(c), branchesOf(c.sb, c.ws), lostReasonsOf(c.sb, c.ws)]);
+  return { me: { ws: c.ws, access: c.access, trialUntil: c.trialUntil, paidTo: c.paidTo, isAdmin: c.isAdmin, meId: c.me.id, role: c.role, branchId: c.branchId, members, branches, lostReasons }, stages, cstages, sources };
 }
-async function loadStages(c: Ctx): Promise<Stage[]> {
-  const { data } = await c.sb.from("crm_stages").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("sort");
-  return (data ?? []).map((r: Row) => ({ id: r.id as string, key: r.key as string, name: (r.name as Record<Lang, string>) ?? {}, kind: r.kind as Stage["kind"], color: s(r.color), sort: r.sort as number }));
+async function loadStages(c: Ctx, scope: StageScope = "deal"): Promise<Stage[]> {
+  const { data } = await c.sb.from("crm_stages").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).eq("scope", scope).order("sort");
+  return (data ?? []).map((r: Row) => ({ id: r.id as string, key: r.key as string, name: (r.name as Record<Lang, string>) ?? {}, kind: r.kind as Stage["kind"], color: s(r.color), sort: r.sort as number, scope: (r.scope as StageScope) ?? "deal" }));
 }
 async function loadSources(c: Ctx): Promise<Source[]> {
   const { data } = await c.sb.from("crm_sources").select("id, name, kind, active, sort, token_hash").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("sort");
@@ -301,7 +301,7 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 // ---------- настройки: этапы и источники ----------
-export async function saveStages(stages: { id?: string; key: string; name: Record<string, string>; kind: Stage["kind"]; color: string | null }[]): Promise<Stage[]> {
+export async function saveStages(stages: { id?: string; key: string; name: Record<string, string>; kind: Stage["kind"]; color: string | null }[], scope: StageScope = "deal"): Promise<Stage[]> {
   const c = await crmCtx(); assertWrite(c);
   // свои имена этапов: введённое на одном языке переводится на два других (замечание пользователя 12.10.2026)
   const named = await Promise.all(stages.map(async (x) => {
@@ -311,14 +311,14 @@ export async function saveStages(stages: { id?: string; key: string; name: Recor
     if (src) for (const l of langs) if (l !== src && !name[l]?.trim()) { try { const r = await translate(name[src], l, "title"); if (!r.fallback) name[l] = r.text; } catch { /* оставим пустым — покажется исходный */ } }
     return { ...x, name };
   }));
-  const rows = named.map((x, i) => ({ id: x.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, key: x.key || `s${i}`, name: x.name, kind: x.kind, color: x.color, sort: i }));
+  const rows = named.map((x, i) => ({ id: x.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, key: x.key || `s${i}`, name: x.name, kind: x.kind, color: x.color, sort: i, scope }));
   const { error } = await c.sb.from("crm_stages").upsert(rows, { onConflict: "id" });
   if (error) throw new Error(error.message);
   const ids = rows.map((r) => r.id);
-  const { data: old } = await c.sb.from("crm_stages").select("id").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id);
+  const { data: old } = await c.sb.from("crm_stages").select("id").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).eq("scope", scope);
   const gone = (old ?? []).map((o) => o.id as string).filter((x) => !ids.includes(x));
   if (gone.length) await c.sb.from("crm_stages").delete().in("id", gone); // сделки на удалённом этапе → stage_id null
-  return loadStages(c);
+  return loadStages(c, scope);
 }
 export async function saveSource(src: { id?: string; name: string; kind: Source["kind"]; active: boolean }): Promise<Source[]> {
   const c = await crmCtx(); assertWrite(c);

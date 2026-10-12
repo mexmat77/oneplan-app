@@ -17,12 +17,11 @@ import type { Channel, Client, ClientInput, ClientRole, ClientStage, ContactKind
 import { useMahalleLoaded } from "@/lib/geo";
 import { DuePicker } from "./DuePicker";
 import { ReqFieldGroups } from "./RequestModal";
-import { PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, taskKindName, useCrm } from "./crmUi";
+import { PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
 
 type CForm = { id?: string; kind: ContactKind; value: string; label: string; isMain: boolean };
 const KINDS: ContactKind[] = ["phone", "whatsapp", "email", "telegram", "other"];
 const ROLES: ClientRole[] = ["buyer", "seller", "landlord", "tenant"];
-const STAGES: ClientStage[] = ["new", "contacted", "qualified", "unqualified"];
 const PRIOS: Priority[] = ["hot", "warm", "cold"];
 const CHANNELS: Channel[] = ["call", "whatsapp", "telegram", "email"];
 
@@ -127,7 +126,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
           {PRIOS.map((p) => <button key={p} type="button" onClick={() => set({ priority: f.priority === p ? null : p })} className={chipCls(f.priority === p)} style={f.priority === p ? { background: PRIO_COLOR[p] } : undefined}>{c.prio[p]}</button>)}
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={STAGES.map((k) => ({ value: k, label: c.cstage[k] }))} /></div>
+          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang) }))} /></div>
           <div><label className={lbl}>{c.source}</label><Select value={f.sourceId ?? ""} onChange={(v) => set({ sourceId: v || null })} options={[{ value: "", label: c.noSource }, ...crm.sources.filter((s) => s.active).map((s) => ({ value: s.id, label: sourceName(s, t) }))]} /></div>
           <div><label className={lbl}>{c.client.campaign}</label><input value={f.campaign} onChange={(e) => set({ campaign: e.target.value })} placeholder={c.client.campaignPh} className={inp} /></div>
           {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>}

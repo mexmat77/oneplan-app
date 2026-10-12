@@ -1192,7 +1192,11 @@
       "call": "Call",
       "visit": "Office visit",
       "contract": "Contract",
-      "paid": "Paid"
+      "paid": "Paid",
+      "noanswer": "No answer",
+      "selection": "Selection sent",
+      "thinking": "Thinking",
+      "unqualified": "Unqualified"
     },
     "sources": {
       "recommend": "Referral",
@@ -1218,8 +1222,8 @@
       "customColor": "Custom colour",
       "up": "Move up",
       "down": "Move down",
-      "stagesT": "Pipeline stages",
-      "stagesS": "Rename, add or remove stages. “Deal” and “Lost” stages close the deal.",
+      "stagesT": "Deal pipeline",
+      "stagesS": "Stages of a deal on a specific property. “Won” and “Lost” close the deal.",
       "addStage": "Add stage",
       "stageName": "Name",
       "stageKind": "Type",
@@ -1244,7 +1248,9 @@
       "noAudit": "No entries yet",
       "save": "Save",
       "saved": "Saved",
-      "inactive": "inactive"
+      "inactive": "inactive",
+      "clientStagesT": "Client funnel",
+      "clientStagesS": "Statuses of working with a client before a deal: changed right in the list and on the board. “Won” and “Lost” close the work."
     },
     "audit": {
       "view_client": "Opened a client card",
@@ -1498,7 +1504,11 @@
       "done": "Done",
       "saveView": "Save view",
       "viewName": "View name",
-      "deleteView": "Delete view"
+      "deleteView": "Delete view",
+      "listMode": "List",
+      "boardMode": "Board",
+      "changeStatus": "Change status",
+      "dealStage": "Deal stage"
     },
     "kb": {
       "days": "{n} d.",
