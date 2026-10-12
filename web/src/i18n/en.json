@@ -1096,7 +1096,8 @@
       "transfer": "Transfer",
       "transferT": "Transfer clients",
       "transferTo": "To whom",
-      "transferBranch": "To branch"
+      "transferBranch": "To branch",
+      "removeContact": "Remove contact"
     },
     "kinds": {
       "phone": "Phone",

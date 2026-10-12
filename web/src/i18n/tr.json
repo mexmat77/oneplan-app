@@ -1096,7 +1096,8 @@
       "transfer": "Devret",
       "transferT": "Müşterileri devret",
       "transferTo": "Kime",
-      "transferBranch": "Şubeye"
+      "transferBranch": "Şubeye",
+      "removeContact": "İletişimi kaldır"
     },
     "kinds": {
       "phone": "Telefon",

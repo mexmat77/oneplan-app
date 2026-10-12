@@ -4,14 +4,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash } from "@tabler/icons-react";
-import { addNote, crmBootstrap, deleteClient, deleteDeal, deleteRequest, doneTask, findDups, getClient, listingBriefs, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
+import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconExternalLink, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
+import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, findDups, getClient, listingBriefs, mergeClients, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { Client, ClientStage, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
+import type { Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
 import { StageMenu } from "./ClientsTable";
@@ -130,10 +130,11 @@ function Inner({ id }: { id: string }) {
                   {x.kind === "telegram" && <a href={`https://t.me/${x.value.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`} target="_blank" rel="noreferrer" title="Telegram" className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-[#229ed9] hover:bg-bg-2"><IconBrandTelegram size={14} /></a>}
                   {x.kind === "email" && <a href={`mailto:${x.value}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconMail size={13} /></a>}
                   <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
+                  {!ro && cl.contacts.length > 1 && <button type="button" title={c.client.removeContact} onClick={async () => { if (!(await confirmDialog({ text: `${x.value} — ${c.client.removeContact}?`, danger: true }))) return; setData((d) => (d ? { ...d, client: { ...d.client, contacts: d.client.contacts.filter((y) => y.id !== x.id) } } : d)); try { await removeContact(x.id); } catch (e) { err(e); load(); } }} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-red-tint hover:text-red"><IconX size={12} /></button>}
                 </div>
               ))}
-              {/* второй телефон / e-mail добавляются в форме редактирования — кнопка прямо у контактов (вопрос пользователя 11.10.2026) */}
-              <button type="button" onClick={() => setEdit(true)} disabled={ro} className="inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-[6px] border border-dashed border-line px-2 text-[12.5px] font-medium text-blue-2 hover:bg-blue-tint disabled:opacity-50"><IconPlus size={13} /> {c.client.addContact}</button>
+              {/* добавить контакт — всплывающее поле на месте, без всей формы (правило пользователя 12.10.2026) */}
+              <QuickContact clientId={cl.id} disabled={ro} onAdded={(x) => { setData((d) => (d ? { ...d, client: { ...d.client, contacts: [...d.client.contacts, x] } } : d)); load(); }} />
             </div>
             {cl.notes && <div className="mt-3 whitespace-pre-line rounded-[6px] bg-[#fafbfc] px-3 py-2 text-[12.5px] text-text">{cl.notes}</div>}
             {dups.length > 0 && (
@@ -330,6 +331,31 @@ function RequestDetails({ r, obj, onEdit }: { r: CrmRequest; obj?: ListingBrief;
         </div>
       ))}
       <div className="flex items-center gap-3 text-[11.5px] text-muted"><span>{owner ? `${c.owner}: ${owner.name} · ` : ""}{fmtDate(r.updatedAt, lang)}</span><button type="button" onClick={onEdit} className="inline-flex cursor-pointer items-center gap-1 font-semibold text-blue-2 hover:underline"><IconPencil size={12} /> {c.client.edit}</button></div>
+    </div>
+  );
+}
+
+/** «+ Добавить контакт»: маленькое поле на месте — тип, значение, подпись; Enter сохраняет, Esc закрывает. */
+function QuickContact({ clientId, disabled, onAdded }: { clientId: string; disabled: boolean; onAdded: (x: Contact) => void }) {
+  const { t } = useI18n(); const c = t.crm;
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<ContactKind>("phone");
+  const [value, setValue] = useState("");
+  const [label, setLabel] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function save() {
+    if (!value.trim() || busy) return; setBusy(true);
+    try { onAdded(await addContact(clientId, { kind, value, label })); setValue(""); setLabel(""); setOpen(false); }
+    catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setBusy(false); }
+  }
+  if (!open) return <button type="button" onClick={() => setOpen(true)} disabled={disabled} className="inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-[6px] border border-dashed border-line px-2 text-[12.5px] font-medium text-blue-2 hover:bg-blue-tint disabled:opacity-50"><IconPlus size={13} /> {c.client.addContact}</button>;
+  return (
+    <div data-crm-form="1" className="flex flex-wrap items-center gap-2 rounded-[6px] border border-sel-line bg-blue-tint/40 p-2">
+      <Select value={kind} onChange={(v) => setKind(v as ContactKind)} options={(["phone", "whatsapp", "email", "telegram", "other"] as ContactKind[]).map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" className="w-[130px]" />
+      <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : "+90 5xx xxx xx xx"} className={`${inp} w-[200px]`} />
+      <input value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} placeholder={c.client.label} className={`${inp} w-[150px]`} />
+      <button type="button" onClick={save} disabled={busy || !value.trim()} className={btnP}>{c.ev.add}</button>
+      <button type="button" onClick={() => setOpen(false)} className={btnS}>{c.cancel}</button>
     </div>
   );
 }

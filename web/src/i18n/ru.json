@@ -1051,7 +1051,8 @@
       "transfer": "Передать",
       "transferT": "Передать клиентов",
       "transferTo": "Кому",
-      "transferBranch": "В филиал"
+      "transferBranch": "В филиал",
+      "removeContact": "Убрать контакт"
     },
     "kinds": {
       "phone": "Телефон",

@@ -591,3 +591,23 @@ export async function listingBriefs(ids: string[]): Promise<Record<string, Listi
   }
   return out;
 }
+
+// ---------- контакты по одному (12.10.2026: «Добавить контакт» в карточке — без открытия всей формы) ----------
+export async function addContact(clientId: string, c0: { kind: ContactKind; value: string; label: string; isMain?: boolean }): Promise<Contact> {
+  const c = await crmCtx(); assertWrite(c);
+  const v = c0.value.trim(); if (!v) throw new Error("empty");
+  const { count } = await c.sb.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", clientId);
+  const id = crypto.randomUUID();
+  const row = { id, client_id: clientId, ws_kind: c.ws.kind, ws_id: c.ws.id, kind: c0.kind, value_enc: enc(c, "crm_contacts", "value", id, v), value_hash: hashOf(c, c0.kind, v), label: c0.label.trim() || null, is_main: !!c0.isMain || !count, sort: count ?? 0 };
+  const { error } = await c.sb.from("crm_contacts").insert(row);
+  if (error) throw new Error(error.message);
+  await addEvent(c, { clientId, kind: "contact", payload: { kind: c0.kind, add: true } });
+  return { id, kind: c0.kind, value: v, label: row.label, isMain: row.is_main };
+}
+export async function removeContact(id: string): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const { data: r } = await c.sb.from("crm_contacts").select("client_id, kind").eq("id", id).maybeSingle();
+  const { error } = await c.sb.from("crm_contacts").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  if (r) await addEvent(c, { clientId: r.client_id as string, kind: "contact", payload: { kind: r.kind, remove: true } });
+}
