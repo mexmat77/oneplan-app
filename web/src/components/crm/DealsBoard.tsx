@@ -4,7 +4,7 @@
 // «дней на этапе», фильтр по ответственному; список таблицей как второй режим.
 import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPlus } from "@tabler/icons-react";
+import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { offerCloseObject } from "./closeObject";
@@ -15,7 +15,7 @@ import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { DealModal } from "./CrmModals";
-import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
 
 const LS = "opl-crm-deals-view";
 
@@ -90,7 +90,7 @@ export function DealsBoard() {
         {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.kb.all }, { value: crm.me.meId, label: c.kb.mine }, ...crm.me.members.filter((m) => m.id !== crm.me.meId).map((m) => ({ value: m.id, label: m.name }))]} className="w-[170px]" size="sm" />}
         <div className="flex-1" />
         <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
-        <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={14} /> {c.deal.add}</button>
+
       </div>
       {deals === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : view === "board" ? (
         <div data-crm-kanban="1" className="flex overflow-x-auto rounded-[6px] border border-line bg-surface" style={{ minHeight: "calc(100vh - 200px)" }}>

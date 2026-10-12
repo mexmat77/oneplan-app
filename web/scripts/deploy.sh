@@ -19,6 +19,7 @@ rsync -az --delete --exclude .env -e "ssh -o BatchMode=yes" .next/standalone/ "$
 rsync -az --delete -e "ssh -o BatchMode=yes" .next/static/ "$HOST:$DIR/.next/static/"
 rsync -az --delete --exclude proto -e "ssh -o BatchMode=yes" public/ "$HOST:$DIR/public/"
 echo "▸ перезапуск"
-ssh -o BatchMode=yes "$HOST" "cd $DIR && set -a && . ./.env && set +a && export PORT=$PORT && (pm2 restart $APP --update-env >/dev/null 2>&1 || pm2 start server.js --name $APP >/dev/null) && pm2 save >/dev/null && sleep 3 && pm2 ls | grep -c online"
+# таймаут и закрытый stdin: pm2 иногда держал ssh-сессию открытой после успешного перезапуска (12.10.2026, висело 2,5 ч)
+ssh -o BatchMode=yes -o ServerAliveInterval=15 "$HOST" "cd $DIR && set -a && . ./.env && set +a && export PORT=$PORT && timeout 90 bash -c '(pm2 restart $APP --update-env >/dev/null 2>&1 || pm2 start server.js --name $APP >/dev/null 2>&1) && pm2 save >/dev/null 2>&1; sleep 3; pm2 ls | grep -c online' </dev/null" </dev/null || echo "▸ перезапуск: ssh завершился с ошибкой, проверяю здоровье"
 curl -s -o /dev/null -w "▸ $URL → HTTP %{http_code}\n" --max-time 30 "$URL"
 curl -s --max-time 30 "${URL}api/health"; echo

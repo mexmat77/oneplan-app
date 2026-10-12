@@ -175,7 +175,7 @@ export function ClientsTable() {
         <Segmented value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
         {mode === "list" && <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />}
         <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
-        <button type="button" onClick={() => setModal(true)} disabled={ro} className={btnP}><IconPlus size={15} /> {c.nav.create}</button>
+
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
         {(["all", "mine", "withTask", "overdue", "noDeal"] as View[]).map((v) => { const n = viewCount(v); return (

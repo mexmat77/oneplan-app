@@ -29,6 +29,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function CrmShell({ base }: { base: string }) {
   const { t, lang } = useI18n();
   const c = t.crm;
+  const CREATE_LABEL = { client: c.nav.newClient, deal: c.nav.newDeal, task: c.nav.newTask } as const;
   const router = useRouter();
   const pathname = usePathname();
   const path = pathname.startsWith(base) ? pathname.slice(base.length).split("/").filter(Boolean) : [];
@@ -63,6 +64,7 @@ export function CrmShell({ base }: { base: string }) {
 
   const wide = usePref(SIDE_LS) !== "0"; // левое меню с подписями и счётчиками (образец пользователя); сворачивается в иконки
   const section = path[0] ?? "";
+  const primary: "client" | "deal" | "task" = section === "deals" ? "deal" : section === "tasks" ? "task" : "client";
   const clientId = section === "c" ? path[1] : UUID.test(section) ? section : null;
   useEffect(() => { if (section === "clients" || clientId) return; crmCounts().then(setCounts).catch(() => {}); }, [pathname, section, clientId]); // на клиентах счётчики приходят вместе со страницей
   const me = boot?.me.members.find((m) => m.id === boot.me.meId);
@@ -130,11 +132,14 @@ export function CrmShell({ base }: { base: string }) {
               <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-12 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
             </div>
             <div className="flex-1" />
-            <div className="relative">
-              <button type="button" disabled={ro} onClick={() => setMenu((v) => !v)} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:opacity-50"><IconPlus size={14} /> {c.nav.create} <IconChevronDown size={12} /></button>
+            {/* ОДНА кнопка создания на экран (замечание пользователя 12.10.2026 «дублируются кнопки»): главное действие — по разделу
+                (клиенты → клиент, сделки → сделка, задачи → задача), стрелка — остальные два; в разделах своих кнопок нет */}
+            <div className="relative flex">
+              <button type="button" disabled={ro} onClick={() => setCreate(primary)} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-l-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:opacity-50"><IconPlus size={14} /> {CREATE_LABEL[primary]}</button>
+              <button type="button" disabled={ro} onClick={() => setMenu((v) => !v)} title={c.nav.create} className="inline-flex h-8 w-7 cursor-pointer items-center justify-center rounded-r-[6px] border-l border-white/25 bg-blue-2 text-white hover:bg-blue-3 disabled:opacity-50"><IconChevronDown size={13} /></button>
               {menu && (
                 <div className="absolute right-0 top-[calc(100%+4px)] z-30 w-[170px] overflow-hidden rounded-[6px] border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(20,36,63,.14)]" onMouseLeave={() => setMenu(false)}>
-                  {([["client", c.nav.newClient], ["deal", c.nav.newDeal], ["task", c.nav.newTask]] as const).map(([k, l]) => <button key={k} type="button" onClick={() => { setMenu(false); setCreate(k); }} className="block w-full cursor-pointer px-3 py-[7px] text-left text-[13px] text-ink hover:bg-bg-3">{l}</button>)}
+                  {(["client", "deal", "task"] as const).filter((k) => k !== primary).map((k) => <button key={k} type="button" onClick={() => { setMenu(false); setCreate(k); }} className="block w-full cursor-pointer px-3 py-[7px] text-left text-[13px] text-ink hover:bg-bg-3">{CREATE_LABEL[k]}</button>)}
                 </div>
               )}
             </div>
