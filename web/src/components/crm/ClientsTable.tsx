@@ -6,10 +6,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, clientDealSummary, listClients, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
+import { Segmented } from "@/components/ui/Segmented";
 import { useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
 import { showUndo } from "@/components/ui/toast";
@@ -138,7 +139,7 @@ export function ClientsTable() {
         <h1 className="text-[20px] font-semibold text-ink">{c.nav.clients} <span className="text-[13px] font-normal text-muted">{list ? base.length.toLocaleString("ru-RU") : ""}</span></h1>
         <div className="flex-1" />
         <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
-        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["compact", "expanded"] as const).map((d) => <button key={d} type="button" onClick={() => setPref(DENS_LS, d)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${(d === "compact") === dense ? "bg-blue-2 text-white" : "text-muted hover:text-ink"}`}>{d === "compact" ? c.tbl.compact : c.tbl.expanded}</button>)}</div>
+        <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />
         <button type="button" onClick={() => setModal(true)} disabled={ro} className={btnP}><IconPlus size={15} /> {c.nav.create}</button>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
@@ -153,7 +154,7 @@ export function ClientsTable() {
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
         {crm.cstages.map((st) => { const n = stageCount(st.key); return <button key={st.id} type="button" onClick={() => setStage(stage === st.key ? "" : st.key)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === st.key ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={stage === st.key ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
         <span className="flex-1" />
-        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["list", "board"] as const).map((m) => <button key={m} type="button" onClick={() => setPref(MODE_LS, m)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${mode === m ? "bg-blue-2 text-white" : "text-muted hover:text-ink"}`}>{m === "list" ? c.tbl.listMode : c.tbl.boardMode}</button>)}</div>
+        <Segmented value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
       </div>
       <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
       {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}

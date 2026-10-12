@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList, IconPlus } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
+import { Segmented } from "@/components/ui/Segmented";
 import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/provider";
 import type { Deal, Task } from "@/lib/crm/types";
@@ -83,9 +84,7 @@ export function DealsBoard() {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">
-          {(["board", "list"] as const).map((v) => <button key={v} type="button" title={v === "board" ? c.deal.board : c.deal.list} onClick={() => setView(v)} className={`flex h-7 w-8 cursor-pointer items-center justify-center rounded-[4px] ${view === v ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{v === "board" ? <IconLayoutKanban size={15} /> : <IconList size={15} />}</button>)}
-        </div>
+        <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
         <button type="button" onClick={() => setModal({ open: true, deal: null })} disabled={ro || !clients.length} className={btnP}><IconPlus size={14} /> {c.deal.add}</button>
         <div className="flex-1" />
         <span className="text-[13px] text-text"><b className="font-semibold text-ink">{totalSum || "—"}</b> · {shown.length} {c.nav.deals.toLowerCase()}</span>

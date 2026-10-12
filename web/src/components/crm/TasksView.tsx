@@ -3,7 +3,8 @@
 // CRM v2 — задачи: быстрый ввод в одну строку, список по группам (просрочено / сегодня / позже / выполнено) и недельная сетка.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconCheck, IconPlus } from "@tabler/icons-react";
+import { IconCalendarWeek, IconCheck, IconList, IconPlus } from "@tabler/icons-react";
+import { Segmented } from "@/components/ui/Segmented";
 import { deleteTask, doneTask, listClients, listTasks, saveTask } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { useI18n } from "@/i18n/provider";
@@ -58,7 +59,7 @@ export function TasksView() {
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         
-        <div className="inline-flex rounded-[6px] border border-line bg-surface p-[2px]">{(["list", "week"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} className={`h-7 cursor-pointer rounded-[4px] px-3 text-[12.5px] font-semibold ${view === v ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{v === "list" ? c.tk.list : c.tk.week}</button>)}</div>
+        <Segmented value={view} onChange={setView} options={[{ value: "list", label: c.tk.list, icon: <IconList size={15} /> }, { value: "week", label: c.tk.week, icon: <IconCalendarWeek size={15} /> }]} />
         <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text"><input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> {c.task.showDone}</label>
         <div className="flex-1" />
         <button type="button" onClick={() => setModal({ open: true, task: null })} disabled={ro} className={btnP}><IconPlus size={15} /> {c.task.add}</button>

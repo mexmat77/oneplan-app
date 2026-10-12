@@ -71,7 +71,9 @@
 - Новостройки: `web/src/lib/newb.ts` (проекты из `mock/newb.json`, генератор квартир, статусы), маршрут `/newb?p=<key>`,
   страница застройщика `/newb?dev=<name>`. Страница риэлтора — `/catalog?owner=<id>`, страница агентства (все его риэлторы и их объекты) — `/catalog?agency=<name>`. Сохранённый поиск — `/catalog?q=<id>`.
 - Все клиентские страницы с `useSearchParams()` обёрнуты в `<Suspense>` (требование Next 16 для сборки).
-- Общие примитивы (не дублировать): `@/components/ui/toast` (`showToast(msg)`, хост в root layout), `@/components/ui/Select`
+- Общие примитивы (не дублировать): `@/components/ui/Segmented` (переключатель видов/режимов: иконка + подпись, 32px, активный
+  синий — везде один стандарт: Список/Канбан, Компакт/Развёрнуто, Список/Неделя; замечание пользователя 12.10.2026 «в сделках иконки,
+  в клиентах текст — должен быть один стандарт»), `@/components/ui/DateRange` (`DateRange`, `DateField`), `@/components/ui/toast` (`showToast(msg)`, хост в root layout), `@/components/ui/Select`
   (стилизованный выпадающий список вместо системного `<select>` — везде, правило пользователя 07.10.2026; `options`, `size="sm"`,
   `menuWidth="auto"`, `stopPropagation` для строк таблиц), `@/components/ui/confirm` (`await confirmDialog({text, title?, ok?, cancel?, danger?})`
   вместо системного `window.confirm` — везде, хост в root layout; правило пользователя 08.10.2026), `@/components/ui/UserMenu` (аватар + меню пользователя в шапках обоих
