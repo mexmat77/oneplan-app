@@ -18,7 +18,7 @@ import { useI18n } from "@/i18n/provider";
 import type { Client } from "@/lib/crm/types";
 import type { Lang } from "@/i18n";
 import { fmt } from "@/lib/money";
-import { GEO } from "@/lib/seed";
+import { ilceName, GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
@@ -97,7 +97,8 @@ export function ClientsTable() {
   const stageCount = (key: string) => base.filter((x) => stageOf(x) === key).length;
   const allTags = useMemo(() => [...new Set(base.flatMap((x) => x.tags))].sort(), [base]);
   const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
-  const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
+  // регион заявки: «Antalya › Döşemealtı», при нескольких районах — первый и «+N» (12.10.2026: «+1» при одном районе путало)
+  const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); if (!il) return null; const ilces = g?.ilces ?? []; const first = ilces[0] ? ilceName(ilces[0]) : ""; return { name: first ? `${il.n} › ${first}` : il.n, more: Math.max(0, ilces.length - 1) }; };
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
     if (stage) r = r.filter((x) => stageOf(x) === stage);
