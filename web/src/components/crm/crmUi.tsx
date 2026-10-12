@@ -129,8 +129,17 @@ export function posBetween(prev: number | null | undefined, next: number | null 
   return (prev + next) / 2;
 }
 /** Порядок в колонке: с позицией — по ней, без позиции — после, по дате изменения (новее выше). */
-export function sortBoard<T extends { boardPos: number | null; updatedAt: string }>(list: T[]): T[] {
-  return [...list].sort((a, b) => (a.boardPos != null && b.boardPos != null ? a.boardPos - b.boardPos : a.boardPos != null ? -1 : b.boardPos != null ? 1 : b.updatedAt.localeCompare(a.updatedAt)));
+export function sortBoard<T extends { boardPos: number | null; updatedAt: string; lastActivityAt?: string }>(list: T[]): T[] {
+  const at = (x: T) => x.lastActivityAt ?? x.updatedAt;
+  return [...list].sort((a, b) => (a.boardPos != null && b.boardPos != null ? a.boardPos - b.boardPos : a.boardPos != null ? -1 : b.boardPos != null ? 1 : at(b).localeCompare(at(a))));
+}
+/** Подпись контакта (12.10.2026, «подпись обрезается»): готовые варианты как у HubSpot (личный / рабочий / домашний / другой),
+ *  хранится текстом; нестандартное значение остаётся как есть. */
+export const CONTACT_LABELS = ["personal", "work", "home", "other"] as const;
+export function contactLabelOptions(cur: string, dict: Record<string, string>, none: string) {
+  const opts = [{ value: "", label: none }, ...CONTACT_LABELS.map((k) => ({ value: dict[k], label: dict[k] }))];
+  if (cur && !opts.some((o) => o.value === cur)) opts.push({ value: cur, label: cur });
+  return opts;
 }
 /** Индекс вставки по положению курсора над карточками колонки (`[data-card]`): до середины карточки — перед ней, иначе после. */
 export function dropIndex(e: React.DragEvent, colEl: HTMLElement): number {

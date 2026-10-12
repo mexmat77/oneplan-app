@@ -69,6 +69,9 @@ export function CrmShell({ base }: { base: string }) {
   // вкладки открытых карточек (localStorage, на кабинет): [{id, name}]
   const tabsKey = `${TABS_LS}:${base}:${boot?.me.ws.id ?? ""}`; // ключ на пространство: другой пользователь в том же браузере не видит чужих вкладок
   const tabsPref = usePref(tabsKey);
+  const lastListKey = `${TABS_LS}:last:${base}`;
+  const lastList = usePref(lastListKey) || "clients";
+  useEffect(() => { if (!clientId && ["", "clients", "deals", "tasks"].includes(section)) setPref(lastListKey, section); }, [clientId, section, lastListKey]);
   const tabs: CrmTab[] = (() => { if (!boot) return []; try { const v = JSON.parse(tabsPref || "[]"); return Array.isArray(v) ? v.filter((x) => x && x.id && x.name) : []; } catch { return []; } })();
   const readTabs = useCallback((): CrmTab[] => { try { const v = JSON.parse(getPref(tabsKey) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } }, [tabsKey]);
   const openTab = useCallback((id: string, name: string) => { const cur = readTabs(); const i = cur.findIndex((x) => x.id === id); if (i >= 0) { if (cur[i].name !== name) setPref(tabsKey, JSON.stringify(cur.map((x) => (x.id === id ? { id, name } : x)))); } else setPref(tabsKey, JSON.stringify([...cur, { id, name }].slice(-12))); }, [tabsKey, readTabs]);
@@ -85,8 +88,11 @@ export function CrmShell({ base }: { base: string }) {
   if (err) return <div className="p-6 text-[13px] text-muted">{err === "no-company" ? "—" : err}</div>;
   if (!boot) return <div className="py-16 text-center text-[13px] text-muted">…</div>;
   const ctx = { me: boot.me, stages: boot.stages, cstages: boot.cstages, sources: boot.sources, base, refresh: load, setStages: (s: Stage[]) => setBoot((b) => (b ? { ...b, stages: s } : b)), setCstages: (s: Stage[]) => setBoot((b) => (b ? { ...b, cstages: s } : b)), setSources: (s: Source[]) => setBoot((b) => (b ? { ...b, sources: s } : b)), openTab, closeTab, q, setQ, setCounts };
-  const listTab = nav.find((n) => n.active && n.key !== "clients") ?? nav[1];
-  const closeAndGo = (id: string) => { closeTab(id); if (clientId === id) router.push(`${base}/clients`); };
+  // первая вкладка — СПИСОК, из которого открыли карточку (12.10.2026, вопрос пользователя «из сделок перекидывает в клиентов»):
+  // раздел запоминается, пока открыт список; с карточки вкладка и крестик возвращают туда же
+  const listSection = ["", "clients", "deals", "tasks"].includes(section) ? section : lastList;
+  const listTab = nav.find((n) => n.key === (clientId ? lastList : listSection)) ?? nav[1];
+  const closeAndGo = (id: string) => { closeTab(id); if (clientId === id) router.push(listTab.href); };
   const ro = boot.me.access !== "full";
   const submitSearch = () => { if (section !== "clients") router.push(`${base}/clients`); };
 
@@ -135,12 +141,12 @@ export function CrmShell({ base }: { base: string }) {
           </div>
           {/* вкладки: список раздела + открытые карточки (замечание пользователя 11.10.2026 — «как заявки во вкладках») */}
           <div className="sticky top-[110px] z-10 flex h-10 items-stretch gap-[2px] overflow-x-auto border-b border-line bg-[#eef0f3] px-3 pt-[6px]">
-            <Link href={clientId ? `${base}/clients` : listTab.href} className={`flex flex-none items-center gap-2 rounded-t-[6px] border border-b-0 px-3 text-[12.5px] font-medium ${!clientId ? "border-line bg-surface text-ink" : "border-transparent text-muted hover:text-ink"}`}><IconMenu2 size={14} /> {clientId || section === "clients" ? c.tbl.listOf : listTab.label}</Link>
+            <Link href={listTab.href} className={`flex flex-none items-center gap-2 rounded-t-[6px] border border-b-0 px-3 text-[12.5px] font-medium ${!clientId ? "border-line bg-surface text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}><IconMenu2 size={14} /> {listTab.key === "clients" ? c.tbl.listOf : listTab.label}</Link>
             {tabs.map((tb) => (
-              <div key={tb.id} className={`flex max-w-[220px] flex-none items-center gap-2 rounded-t-[6px] border border-b-0 pl-3 pr-1 text-[12.5px] ${clientId === tb.id ? "border-line bg-surface font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}>
+              <div key={tb.id} role="link" tabIndex={0} onClick={() => router.push(`${base}/c/${tb.id}`)} onKeyDown={(e) => { if (e.key === "Enter") router.push(`${base}/c/${tb.id}`); }} onAuxClick={(e) => { if (e.button === 1) closeAndGo(tb.id); }} title={tb.name} className={`flex min-w-[120px] max-w-[220px] flex-none cursor-pointer select-none items-center gap-2 rounded-t-[6px] border border-b-0 pl-3 pr-1 text-[12.5px] ${clientId === tb.id ? "border-line bg-surface font-medium text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}>
                 <span className={`h-[6px] w-[6px] flex-none rounded-full ${clientId === tb.id ? "bg-blue-2" : "bg-line-4"}`} />
-                <Link href={`${base}/c/${tb.id}`} className="truncate">{tb.name}</Link>
-                <button type="button" onClick={() => closeAndGo(tb.id)} title={c.close} className="flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={13} /></button>
+                <span className="min-w-0 flex-1 truncate">{tb.name}</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); closeAndGo(tb.id); }} title={c.close} className="flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={13} /></button>
               </div>
             ))}
           </div>

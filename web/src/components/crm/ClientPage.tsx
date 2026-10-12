@@ -22,7 +22,7 @@ import type { Currency } from "@/lib/types";
 import { ClientModal } from "./ClientModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { cacheGet, cacheSet, crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel } from "./crmUi";
+import { cacheGet, cacheSet, crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel, contactLabelOptions } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -361,7 +361,7 @@ function QuickContact({ clientId, disabled, onAdded }: { clientId: string; disab
     <div data-crm-form="1" className="flex flex-wrap items-center gap-2 rounded-[6px] border border-sel-line bg-blue-tint/40 p-2">
       <Select value={kind} onChange={(v) => setKind(v as ContactKind)} options={(["phone", "whatsapp", "email", "telegram", "other"] as ContactKind[]).map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" className="w-[130px]" />
       <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : "+90 5xx xxx xx xx"} className={`${inp} w-[200px]`} />
-      <input value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} placeholder={c.client.label} className={`${inp} w-[150px]`} />
+      <Select value={label} onChange={setLabel} options={contactLabelOptions(label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="w-[150px]" />
       <button type="button" onClick={save} disabled={busy || !value.trim()} className={btnP}>{c.ev.add}</button>
       <button type="button" onClick={() => setOpen(false)} className={btnS}>{c.cancel}</button>
     </div>

@@ -22,14 +22,14 @@ import { GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref, fmtDT } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; dealStage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
 type SavedView = { id: string; name: string; flt: Flt; stage: string; view: View; sort: { key: SortKey; dir: 1 | -1 } };
 const MODE_LS = "opl-crm-clients-mode";
 const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", dealStage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
-type SortKey = "name" | "updated" | "created";
+type SortKey = "name" | "activity" | "created" | "updated" | "stage" | "owner" | "source" | "next" | "region";
 const DENS_LS = "opl-crm-density";
 
 export function ClientsTable() {
@@ -57,7 +57,8 @@ export function ClientsTable() {
   const [list, setList] = useState<Client[] | null>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.list ?? null);
   const [deals, setDeals] = useState<Record<string, DealSummary>>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.deals ?? {});
   const [sel, setSel] = useState<Set<string>>(new Set());
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>(last.sort ?? { key: "updated", dir: -1 });
+  // по умолчанию — последняя активность (эталон HubSpot/Pipedrive/Attio, 0023); старая память «updated» → activity
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>(last.sort && last.sort.key !== "updated" ? last.sort : { key: "activity", dir: -1 });
   useEffect(() => { setPref(lastKey, JSON.stringify({ flt, view, stage, sort })); }, [lastKey, flt, view, stage, sort]);
   // сохранённые виды (Linear/Attio: view = сохранённые фильтры), личные, на пространство
   const viewsKey = `opl-crm-views:${crm.base}:${crm.me.ws.id}`;
@@ -95,6 +96,8 @@ export function ClientsTable() {
   const stageOf = (x: Client) => x.stage || "new"; // строка этапов и канбан — по воронке КЛИЕНТА (0018)
   const stageCount = (key: string) => base.filter((x) => stageOf(x) === key).length;
   const allTags = useMemo(() => [...new Set(base.flatMap((x) => x.tags))].sort(), [base]);
+  const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
+  const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
     if (stage) r = r.filter((x) => stageOf(x) === stage);
@@ -114,19 +117,34 @@ export function ClientsTable() {
     if (bMin || bMax) r = r.filter((x) => x.requests.some((q) => { const f = q.fields; const hi = Number(f.budgetMax ?? f.rentMax ?? f.priceList ?? f.rent ?? f.budgetMin ?? 0); const lo = Number(f.budgetMin ?? hi); return hi > 0 && (!bMin || hi >= bMin) && (!bMax || lo <= bMax); }));
     if (flt.createdFrom) r = r.filter((x) => x.createdAt >= flt.createdFrom);
     if (flt.createdTo) r = r.filter((x) => x.createdAt <= flt.createdTo + "T23:59:59");
-    const key = (x: Client) => (sort.key === "name" ? x.name.toLowerCase() : sort.key === "created" ? x.createdAt : x.updatedAt);
-    return r.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0) * sort.dir);
+    const stageIdx = new Map(crm.cstages.map((st, i) => [st.key, i]));
+    const key = (x: Client): string | number => {
+      switch (sort.key) {
+        case "name": return x.name.toLowerCase();
+        case "created": return x.createdAt;
+        case "updated": return x.updatedAt;
+        case "stage": return stageIdx.get(x.stage || "new") ?? 999;
+        case "owner": return (crm.me.members.find((m) => m.id === x.ownerId)?.name ?? "\uffff").toLowerCase();
+        case "source": return (sourceName(crm.sources.find((sr) => sr.id === x.sourceId), t) ?? "\uffff").toLowerCase();
+        case "region": return regionOf(x)?.name.toLowerCase() ?? "\uffff";
+        case "next": return x.nextTask ? x.nextTask.dueAt : "\uffff"; // без задачи — в конце при любом направлении
+        default: return x.lastActivityAt;
+      }
+    };
+    return r.sort((a, b) => {
+      const ka = key(a), kb = key(b);
+      if (sort.key === "next" && (ka === "\uffff") !== (kb === "\uffff")) return ka === "\uffff" ? 1 : -1;
+      return (ka < kb ? -1 : ka > kb ? 1 : 0) * sort.dir;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, view, stage, flt, sort, deals, now]);
-  const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
+  const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: ["name", "stage", "owner", "source", "region", "next"].includes(key) ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const err = (e: unknown) => { const m = (e as Error)?.message; if (m === "not-member") return showToast(c.team.notMember); if (m === "forbidden") return showToast(c.team.forbiddenT); crmError(e, c.errSave, c.errReadonly); };
   async function bulk(patch: Parameters<typeof bulkClients>[1]) {
     const ids = [...sel];
     try { await bulkClients(ids, patch); setSel(new Set()); load(); if (patch.status) showUndo(fill(c.undo.archived, { n: ids.length }), async () => { await bulkClients(ids, { status: patch.status === "archived" ? "active" : "archived" }); load(); }, c.undo.undo); } catch (e) { err(e); }
   }
-  const hoursAgo = (iso: string) => { const h = Math.max(1, Math.round((now - new Date(iso).getTime()) / 36e5)); return h < 24 ? `${h} ч` : `${Math.round(h / 24)} д`; };
-  const regionOf = (x: Client) => { const g = (x.requests[0]?.fields.geo as { il?: string; ilces?: string[] } | undefined) ?? x.want; const il = GEO.find((y) => y.k === g?.il); return il ? { name: il.n, more: g?.ilces?.length ?? 0 } : null; };
   const activeFilters = Object.values(flt).filter(Boolean).length;
   const th = (label: string, key?: SortKey) => (
     <th key={label} onClick={key ? () => toggleSort(key) : undefined} className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted ${key ? "cursor-pointer select-none hover:text-ink" : ""}`}>
@@ -173,10 +191,10 @@ export function ClientsTable() {
       {mode === "board" && list !== null && <ClientBoard rows={rows} deals={deals} onMove={async (id, k, pos) => { patchRow(id, { stage: k, boardPos: pos }); try { await patchClient(id, { stage: k, boardPos: pos }); } catch (e) { err(e); load(); } }} />}
       <div className={`overflow-x-auto rounded-[6px] border border-line bg-surface ${mode === "board" ? "hidden" : ""}`}>
         {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
-          <table data-crm-table="1" className="w-full min-w-[900px] text-[13px]">
+          <table data-crm-table="1" className="w-full min-w-[1100px] text-[13px]">
             <thead><tr>
               <th className="w-[56px] px-3 py-2"><input type="checkbox" checked={allSel} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /></th>
-              {th(c.tbl.cols2.client, "name")}{th(c.tbl.cols2.region)}{th(c.tbl.cols2.deal)}{th(c.tbl.cols2.status)}{th(c.tbl.cols2.source)}{th(c.tbl.cols2.team)}{th(c.tbl.updated, "updated")}<th className="w-[70px]" />
+              {th(c.tbl.cols2.client, "name")}{th(c.tbl.cols2.region, "region")}{th(c.tbl.cols2.deal)}{th(c.tbl.cols2.status, "stage")}{th(c.tbl.cols2.source, "source")}{th(c.tbl.cols2.team, "owner")}{th(c.tbl.next, "next")}{th(c.tbl.activity, "activity")}{th(c.tbl.created, "created")}<th className="w-[70px]" />
             </tr></thead>
             <tbody>
               {rows.map((x) => { const d = deals[x.id]; const m = crm.me.members.find((y) => y.id === x.ownerId); const main = x.contacts.find((y) => y.isMain) ?? x.contacts[0]; const reg = regionOf(x); const over = isOver(x); const st = crm.stages.find((s) => s.id === d?.stageId); return (
@@ -188,7 +206,9 @@ export function ClientsTable() {
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} clientId={x.id} ownerId={x.ownerId} onChange={async (k) => { patchRow(x.id, { stage: k }); try { await patchClient(x.id, { stage: k }); } catch (er) { err(er); load(); } }} disabled={ro} />{!dense && <span className="mt-[3px] block truncate text-[12px] text-muted">{d ? (d.closed ? (d.closed === "won" ? c.tbl.won : c.tbl.lost) : `${c.deal.stage}: ${stageName(st, t, lang)}`) : x.nextTask ? x.nextTask.title : ""}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { patchRow(x.id, { ownerId: v || null }); try { await patchClient(x.id, { ownerId: v || null }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
-                  <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.updatedAt, lang)}</td>
+                  <td className={`px-3 ${pad}`}>{x.nextTask ? <span className={`block truncate text-[12.5px] ${over ? "font-semibold text-red" : "text-text"}`} title={x.nextTask.title}>{fmtDT(x.nextTask.dueAt, lang)}{!dense && <span className="block truncate text-[12px] font-normal text-muted">{x.nextTask.title}</span>}</span> : <span className="text-muted">—</span>}</td>
+                  <td className={`px-3 ${pad} text-muted`} title={fmtDT(x.lastActivityAt, lang)}>{hoursAgo(x.lastActivityAt)}</td>
+                  <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.createdAt, lang)}</td>
                   <td className={`px-2 ${pad}`} onClick={(e) => e.stopPropagation()}><span className="flex items-center justify-end gap-1 opacity-0 transition group-hover:opacity-100">{main && (main.kind === "phone" || main.kind === "whatsapp") && <a href={`tel:${main.value.replace(/[^\d+]/g, "")}`} title={c.client.call} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={15} /></a>}<button type="button" onClick={() => setDrawer(x.id)} title={c.tbl.quickView} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconEye size={15} /></button><Link href={`${crm.base}/c/${x.id}`} title={c.tbl.openTab} className="flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconExternalLink size={15} /></Link></span></td>
                 </tr>); })}
             </tbody>

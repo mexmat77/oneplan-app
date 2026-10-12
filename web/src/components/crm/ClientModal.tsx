@@ -17,7 +17,7 @@ import type { Channel, Client, ClientInput, ClientRole, ClientStage, ContactKind
 import { useMahalleLoaded } from "@/lib/geo";
 import { DuePicker } from "./DuePicker";
 import { ReqFieldGroups } from "./RequestModal";
-import { crmError, PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm } from "./crmUi";
+import { crmError, PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm, contactLabelOptions } from "./crmUi";
 
 type CForm = { id?: string; kind: ContactKind; value: string; label: string; isMain: boolean };
 const KINDS: ContactKind[] = ["phone", "whatsapp", "email", "telegram", "other"];
@@ -105,10 +105,10 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         <label className={`${lbl} mt-4`}>{c.client.contacts}</label>
         <div className="flex flex-col gap-2">
           {f.contacts.map((x, i) => (
-            <div key={i} className="grid grid-cols-[120px_1fr_140px_auto_auto] items-center gap-2 max-md:grid-cols-[100px_1fr_auto_auto]">
+            <div key={i} className="grid grid-cols-[130px_1fr_150px_auto_auto] items-center gap-2 max-md:grid-cols-[100px_1fr_auto_auto]">
               <Select value={x.kind} onChange={(v) => setC(i, { kind: v as ContactKind })} options={KINDS.map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" />
               <input value={x.value} onChange={(e) => setC(i, { value: e.target.value })} placeholder={x.kind === "email" ? "name@mail.com" : x.kind === "telegram" ? "@login" : "+90 5xx xxx xx xx"} className={inp} />
-              <input value={x.label} onChange={(e) => setC(i, { label: e.target.value })} placeholder={c.client.label} className={`${inp} max-md:hidden`} />
+              <Select value={x.label} onChange={(v) => setC(i, { label: v })} options={contactLabelOptions(x.label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="max-md:hidden" />
               <button type="button" title={c.client.main} onClick={() => mainC(i)} className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] ${x.isMain ? "text-[#f5a623]" : "text-muted hover:bg-bg-3"}`}>{x.isMain ? <IconStarFilled size={16} /> : <IconStar size={16} />}</button>
               <button type="button" onClick={() => delC(i)} disabled={f.contacts.length === 1} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={16} /></button>
             </div>

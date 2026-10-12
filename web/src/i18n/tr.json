@@ -1057,7 +1057,7 @@
       "lang": "İletişim dili",
       "contacts": "İletişim",
       "addContact": "İletişim ekle",
-      "label": "Etiket (örn. «iş»)",
+      "label": "Etiket",
       "main": "ana",
       "budget": "Bütçe",
       "from": "min",
@@ -1132,7 +1132,13 @@
       "removeContact": "İletişimi kaldır",
       "transferOne": "Müşteriyi devret",
       "transferH": "Kendi ekibinizde sadece sorumlu değişir. Ekip dışı bir danışmana kart, iletişimler, talepler, işlemler ve geçmiş taşınır ve onun anahtarıyla şifrelenir; işlem belgeleri sizde kalır.",
-      "transferDone": "Müşteri devredildi: {name}"
+      "transferDone": "Müşteri devredildi: {name}",
+      "labels": {
+        "personal": "Kişisel",
+        "work": "İş",
+        "home": "Ev",
+        "other": "Diğer"
+      }
     },
     "kinds": {
       "phone": "Telefon",
@@ -1465,7 +1471,7 @@
       "owner": "Sorumlu",
       "task": "Sonraki görev",
       "updated": "Güncellendi",
-      "created": "Oluşturuldu",
+      "created": "Oluşturma",
       "tags": "Etiketler",
       "lang": "Dil",
       "noDeal": "—",
@@ -1547,7 +1553,9 @@
       "dealStage": "İşlem aşaması",
       "visitDate": "Geliş tarihi ve saati",
       "visitTask": "Müşteri ziyareti",
-      "visitSave": "Durumu ve hatırlatmayı ayarla"
+      "visitSave": "Durumu ve hatırlatmayı ayarla",
+      "activity": "Etkinlik",
+      "next": "Sonraki adım"
     },
     "kb": {
       "days": "{n} gün",

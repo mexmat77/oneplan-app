@@ -42,7 +42,7 @@ function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: n
     branchId: s(r.branch_id), kvkk: ((r.kvkk as Kvkk) ?? {}), requests, boardPos: n(r.board_pos),
     budgetMin: n(r.budget_min), budgetMax: n(r.budget_max), cur: (r.cur as string) || "TRY", want: (r.want as Want) ?? {},
     notes: dec(c, "crm_clients", "notes", id, r.notes_enc as string | null), tags: (r.tags as string[]) ?? [], consent: !!r.consent, consentAt: s(r.consent_at),
-    status: r.status as Client["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+    status: r.status as Client["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string, lastActivityAt: (r.last_activity_at as string | null) ?? (r.updated_at as string),
     contacts, dealsN, openDealsN: openN, nextTask,
   };
 }
@@ -63,7 +63,7 @@ export async function crmClientsPage(opts: { q?: string; status?: "active" | "ar
   return { list, deals, counts };
 }
 async function listClientsFor(c: Ctx, opts: { q?: string; status?: "active" | "archived"; ownerId?: string | null; branchId?: string | null }): Promise<Client[]> {
-  let q = c.sb.from("crm_clients").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", opts.status ?? "active").order("updated_at", { ascending: false }).limit(500);
+  let q = c.sb.from("crm_clients").select("*").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).is("merged_into", null).eq("status", opts.status ?? "active").order("last_activity_at", { ascending: false }).limit(500);
   if (opts.ownerId) q = q.eq("owner_id", opts.ownerId);
   if (opts.branchId) q = q.eq("branch_id", opts.branchId);
   const { data, error } = await q;

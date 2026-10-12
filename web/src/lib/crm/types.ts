@@ -42,6 +42,8 @@ export type Client = {
   budgetMin: number | null; budgetMax: number | null; cur: string; want: Want;
   notes: string; tags: string[]; consent: boolean; consentAt: string | null;
   status: "active" | "archived"; createdAt: string; updatedAt: string;
+  /** последняя реальная активность (события ленты, задачи) — сортировка списка по умолчанию (0023) */
+  lastActivityAt: string;
   contacts: Contact[];
   /** заявки клиента (кратко, для списка/карточки) */
   requests: RequestBrief[];

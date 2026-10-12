@@ -1057,7 +1057,7 @@
       "lang": "Language",
       "contacts": "Contacts",
       "addContact": "Add contact",
-      "label": "Label (e.g. “work”)",
+      "label": "Label",
       "main": "main",
       "budget": "Budget",
       "from": "from",
@@ -1132,7 +1132,13 @@
       "removeContact": "Remove contact",
       "transferOne": "Transfer client",
       "transferH": "Within your team only the owner changes. To a realtor outside the team the card, contacts, requests, deals and history move and are re-encrypted with their key; deal documents stay with you.",
-      "transferDone": "Client transferred: {name}"
+      "transferDone": "Client transferred: {name}",
+      "labels": {
+        "personal": "Personal",
+        "work": "Work",
+        "home": "Home",
+        "other": "Other"
+      }
     },
     "kinds": {
       "phone": "Phone",
@@ -1547,7 +1553,9 @@
       "dealStage": "Deal stage",
       "visitDate": "Arrival date and time",
       "visitTask": "Client visit",
-      "visitSave": "Set status and reminder"
+      "visitSave": "Set status and reminder",
+      "activity": "Activity",
+      "next": "Next action"
     },
     "kb": {
       "days": "{n} d.",
