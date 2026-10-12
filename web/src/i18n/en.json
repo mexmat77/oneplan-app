@@ -1527,7 +1527,7 @@
       "cols2": {
         "client": "Client",
         "region": "Region",
-        "deal": "Property and deal",
+        "deal": "Deal",
         "status": "Status",
         "source": "Source",
         "team": "Team",
