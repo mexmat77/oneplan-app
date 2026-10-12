@@ -45,7 +45,7 @@ export function DealsBoard() {
     const st = crm.stages.find((s) => s.id === stageId);
     const reason = st?.kind === "lost" ? window.prompt(c.deal.lostPh) ?? undefined : undefined;
     setDeals((v) => (v ?? []).map((x) => (x.id === d.id ? { ...x, stageId } : x))); // оптимистично
-    try { await moveDeal(d.id, stageId, reason); load(); } catch (e) { err(e); load(); }
+    try { await moveDeal(d.id, stageId, reason); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
   }
   async function del(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
   const shown = useMemo(() => (deals ?? []).filter((d) => !owner || d.ownerId === owner), [deals, owner]);
