@@ -158,6 +158,7 @@ function Inner({ id }: { id: string }) {
                 <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-[6px] border border-line px-3 py-2">
                   <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: REQ_COLOR[r.kind] }}>{c.rq.kinds[r.kind]}</span>
                   <button type="button" onClick={() => setReqM({ open: true, req: r })} className="min-w-0 flex-1 cursor-pointer text-left text-[13px] text-ink hover:text-blue-2">{reqSummary(r.kind, r.fields) || c.rq.details}</button>
+                  <button type="button" onClick={() => setReqM({ open: true, req: r })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
                   <button type="button" onClick={() => setOpenReq((m) => ({ ...m, [r.id]: m[r.id] === false }))} title={openReq[r.id] === false ? c.rq.show : c.rq.hide} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{openReq[r.id] === false ? <IconChevronDown size={15} /> : <IconChevronUp size={15} />}</button>
                   {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
@@ -328,7 +329,7 @@ function RequestDetails({ r, obj, onEdit }: { r: CrmRequest; obj?: ListingBrief;
           <div className="grid grid-cols-3 gap-x-4 gap-y-[6px] max-[1100px]:grid-cols-2 max-md:grid-cols-1">{rows.filter((x) => x.g === g).map((x) => <div key={x.k} className={`min-w-0 ${x.v.length > 40 ? "col-span-3 max-[1100px]:col-span-2 max-md:col-span-1" : ""}`}><div className="text-[11px] text-muted">{x.label}{x.closed ? " 🔒" : ""}</div><div className="whitespace-normal break-words text-[13px] leading-[1.4] text-ink">{x.v}</div></div>)}</div>
         </div>
       ))}
-      <div className="text-[11.5px] text-muted">{owner ? `${c.owner}: ${owner.name} · ` : ""}{fmtDate(r.updatedAt, lang)}</div>
+      <div className="flex items-center gap-3 text-[11.5px] text-muted"><span>{owner ? `${c.owner}: ${owner.name} · ` : ""}{fmtDate(r.updatedAt, lang)}</span><button type="button" onClick={onEdit} className="inline-flex cursor-pointer items-center gap-1 font-semibold text-blue-2 hover:underline"><IconPencil size={12} /> {c.client.edit}</button></div>
     </div>
   );
 }
