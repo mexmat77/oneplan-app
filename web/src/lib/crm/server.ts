@@ -42,8 +42,10 @@ async function roleOf(sb: SupabaseClient, ws: Ws, meId: string): Promise<{ role:
   const k = `${ws.kind}:${ws.id}:${meId}`; const hit = roleCache.get(k);
   if (hit && hit.exp > Date.now()) return { role: hit.role, branchId: hit.branchId };
   const { data: r } = await sb.rpc("crm_claim_member", { kind: ws.kind, ws: ws.id });
-  const { data: m } = await sb.from("crm_members").select("role, branch_id").eq("ws_kind", ws.kind).eq("ws_id", ws.id).eq("profile_id", meId).maybeSingle();
-  const role = ((m?.role as MemberRole) ?? (r as MemberRole) ?? "agent");
+  const { data: m } = await sb.from("org_members").select("role, branch_id").eq("org_kind", ws.kind).eq("org_id", ws.id).eq("profile_id", meId).maybeSingle();
+  // роли организации (0022) → роли CRM: застройщик admin → owner, editor/manager → agent; агентство — как есть
+  const raw = (m?.role as string | undefined) ?? (r as string | undefined) ?? "agent";
+  const role: MemberRole = ws.kind === "developer" ? (raw === "admin" || raw === "owner" ? "owner" : "agent") : ((["owner", "manager", "agent"].includes(raw) ? raw : "agent") as MemberRole);
   const out = { role, branchId: (m?.branch_id as string | null) ?? null };
   roleCache.set(k, { ...out, exp: Date.now() + 60_000 });
   return out;
@@ -54,8 +56,8 @@ async function roleOf(sb: SupabaseClient, ws: Ws, meId: string): Promise<{ role:
 async function wsOf(sb: SupabaseClient, me: CurrentUser): Promise<Ws> {
   if (me.role === "developer") {
     if (me.developerId) return { kind: "developer", id: me.developerId };
-    const { data } = await sb.from("developer_members").select("developer_id").eq("profile_id", me.id).limit(1).maybeSingle();
-    if (data?.developer_id) return { kind: "developer", id: data.developer_id as string };
+    const { data } = await sb.from("org_members").select("org_id").eq("org_kind", "developer").eq("profile_id", me.id).limit(1).maybeSingle();
+    if (data?.org_id) return { kind: "developer", id: data.org_id as string };
     throw new Error("no-company");
   }
   const { data: p } = await sb.from("profiles").select("agency_id").eq("id", me.id).maybeSingle();
@@ -134,7 +136,7 @@ export async function audit(sb: SupabaseClient, ws: Ws, actor: string, action: s
 }
 
 /** Участники ws (для выбора ответственного): одиночка — он сам; агентство — активные риэлторы агентства; застройщик — команда
- *  компании. Роль и филиал — из crm_members (0017; нет записи → agent без филиала). */
+ *  компании. Роль и филиал — из org_members (0022; нет записи → agent без филиала). */
 export async function membersOf(sb: SupabaseClient, ws: Ws, me: CurrentUser): Promise<CrmMember[]> {
   const map = new Map<string, CrmMember>();
   const put = (id: string, name: string, color: string) => map.set(id, { id, name: name || "—", color: color || "#4d7cfe", role: "agent", branchId: null });
@@ -145,7 +147,7 @@ export async function membersOf(sb: SupabaseClient, ws: Ws, me: CurrentUser): Pr
   } else {
     const [{ data: a }, { data: b }] = await Promise.all([
       sb.from("profiles").select("id, name, color").eq("developer_id", ws.id).eq("status", "active"),
-      sb.from("developer_members").select("profiles(id, name, color, status, platform_staff)").eq("developer_id", ws.id),
+      sb.from("org_members").select("profiles(id, name, color, status, platform_staff)").eq("org_kind", "developer").eq("org_id", ws.id),
     ]);
     (a ?? []).forEach((p) => put(p.id as string, p.name as string, p.color as string));
     (b ?? []).forEach((r) => {
@@ -155,8 +157,8 @@ export async function membersOf(sb: SupabaseClient, ws: Ws, me: CurrentUser): Pr
   }
   if (!map.has(me.id)) put(me.id, me.name || me.email, "#4d7cfe");
   if (ws.kind !== "realtor") {
-    const { data: ms } = await sb.from("crm_members").select("profile_id, role, branch_id").eq("ws_kind", ws.kind).eq("ws_id", ws.id);
-    (ms ?? []).forEach((m) => { const x = map.get(m.profile_id as string); if (x) { x.role = m.role as MemberRole; x.branchId = (m.branch_id as string | null) ?? null; } });
+    const { data: ms } = await sb.from("org_members").select("profile_id, role, branch_id").eq("org_kind", ws.kind).eq("org_id", ws.id);
+    (ms ?? []).forEach((m) => { const x = map.get(m.profile_id as string); if (x) { x.role = ws.kind === "developer" ? (m.role === "admin" ? "owner" : "agent") : (m.role as MemberRole); x.branchId = (m.branch_id as string | null) ?? null; } });
   } else { const x = map.get(me.id); if (x) x.role = "owner"; }
   return [...map.values()];
 }

@@ -569,14 +569,18 @@ export async function listTeam(): Promise<{ members: CrmMember[]; branches: Bran
 export async function setMember(profileId: string, role: MemberRole, branchId: string | null): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
   if (c.role !== "owner") throw new Error("forbidden");
-  if (profileId === c.me.id && role !== "owner") { // единственный владелец не может снять себя
-    const { count } = await c.sb.from("crm_members").select("profile_id", { count: "exact", head: true }).eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).eq("role", "owner");
+  if (c.ws.kind === "realtor") return;
+  const admin = createAdminClient();
+  // застройщик: роли CRM owner/agent ↔ роли организации admin/editor (0022); филиал — общий
+  const orgRole = c.ws.kind === "developer" ? (role === "owner" ? "admin" : "editor") : role;
+  if (profileId === c.me.id && role !== "owner") { // единственный администратор не может снять себя
+    const { count } = await admin.from("org_members").select("profile_id", { count: "exact", head: true }).eq("org_kind", c.ws.kind).eq("org_id", c.ws.id).eq("role", c.ws.kind === "developer" ? "admin" : "owner");
     if ((count ?? 0) <= 1) throw new Error("last-owner");
   }
-  const { error } = await c.sb.from("crm_members").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, profile_id: profileId, role, branch_id: branchId }, { onConflict: "ws_kind,ws_id,profile_id" });
+  const { error } = await admin.from("org_members").upsert({ org_kind: c.ws.kind, org_id: c.ws.id, profile_id: profileId, role: orgRole, branch_id: branchId }, { onConflict: "org_kind,org_id,profile_id" });
   if (error) throw new Error(error.message);
   forgetRole(c.ws, profileId);
-  await audit(c.sb, c.ws, c.me.id, "member_role", profileId, { role, branchId });
+  await audit(c.sb, c.ws, c.me.id, "member_role", profileId, { role: orgRole, branchId });
 }
 export async function saveBranch(b: { id?: string; name: string; city: string; headId: string | null }): Promise<Branch[]> {
   const c = await crmCtx(); assertWrite(c);

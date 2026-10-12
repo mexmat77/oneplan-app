@@ -8,7 +8,8 @@ export type NtfKind =
   | "access_approved" | "access_restored" | "report_resolved" | "invite_accepted" | "team_added" // пользователю
   | "dev_status" | "dev_price" | "dev_newobj"                                              // команде застройщика
   | "crm_lead"                                                                              // CRM: заявка с внешнего сайта
-  | "listing_transfer" | "client_transfer";                                                // передача объекта / клиента риэлтору
+  | "listing_transfer" | "client_transfer"                                                 // передача объекта / клиента риэлтору
+  | "role_changed";                                                                         // роль в организации изменена
 export type NtfPayload = Record<string, string | number | null | undefined>;
 
 export async function notify(userIds: string[], kind: NtfKind, payload: NtfPayload = {}): Promise<void> {
@@ -33,7 +34,7 @@ export async function notifyDeveloperStaff(developerId: string, kind: NtfKind, p
   const admin = createAdminClient();
   const [{ data: p }, { data: m }] = await Promise.all([
     admin.from("profiles").select("id").eq("developer_id", developerId).eq("status", "active"),
-    admin.from("developer_members").select("profile_id").eq("developer_id", developerId),
+    admin.from("org_members").select("profile_id").eq("org_kind", "developer").eq("org_id", developerId),
   ]);
   const ids = [...(p ?? []).map((x) => x.id as string), ...(m ?? []).map((x) => x.profile_id as string)].filter((id) => id !== exceptId);
   await notify(ids, kind, payload);

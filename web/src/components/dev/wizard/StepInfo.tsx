@@ -17,7 +17,7 @@ import type { WzStepProps } from "./wizardState";
 import { getDev } from "@/store/dev";
 
 export function wzMyCompanies(role: DevRole, companies: Company[]): Company[] {
-  // Real accounts: the companies the user belongs to (Supabase `developer_members`); prototype demo fallback otherwise.
+  // Real accounts: the companies the user belongs to (Supabase `org_members`); prototype demo fallback otherwise.
   const my = getDev().myCoIds;
   const ids = role === "superadmin" ? companies.map((c) => c.id) : my.length ? my : role === "admin" ? [1] : [1, 3];
   return companies.filter((c) => ids.includes(c.id));

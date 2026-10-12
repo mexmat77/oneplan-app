@@ -1021,6 +1021,10 @@
     "client_transfer": {
       "t": "Size müşteri devredildi",
       "s": "{name} · {from}"
+    },
+    "role_changed": {
+      "t": "Rolünüz değiştirildi",
+      "s": "{org}: {role}"
     }
   },
   "crm": {
@@ -2056,5 +2060,96 @@
     "sameTeam": "ekibiniz",
     "go": "Devret",
     "cancel": "İptal"
+  },
+  "org": {
+    "members": "Üyeler",
+    "invites": "Davetler",
+    "invite": "Davet et",
+    "inviteT": "Ekibe davet",
+    "inviteS": "E-posta girin, bağlantı hemen gönderilir. E-posta olmadan kendiniz göndereceğiniz bir bağlantı alırsınız (WhatsApp, Telegram).",
+    "inviteHint": "Kişi bağlantı ile kayıt olur ve seçilen rolle kuruluşunuza katılır. OnePlan hesabı varsa «Mevcut kullanıcıyı ekle» kullanın.",
+    "addExisting": "Mevcut kullanıcıyı ekle",
+    "add": "Ekle",
+    "added": "Ekibe eklendi",
+    "addS": {
+      "agency": "OnePlan hesabı olan danışman: e-postasını girin. Başka bir ajanstaysa size geçer.",
+      "developer": "OnePlan hesabı olan geliştirici personeli: e-postasını girin."
+    },
+    "email": "E-posta",
+    "name": "Ad",
+    "role": "Rol",
+    "mailLang": "E-posta dili",
+    "sendInvite": "Davet gönder",
+    "makeLink": "Bağlantı oluştur",
+    "mailed": "E-posta {email} adresine gönderildi. Bağlantı kayıt olana kadar geçerli.",
+    "notMailed": "E-posta gönderilemedi — bağlantıyı kendiniz paylaşın.",
+    "linkReady": "Bağlantı hazır — kişiye gönderin.",
+    "copyLink": "Bağlantı",
+    "cancelInvite": "Daveti iptal et",
+    "pending": "kayıt bekleniyor",
+    "noInvites": "Açık davet yok",
+    "noMembers": "Henüz üye yok",
+    "you": "siz",
+    "staff": "Platform personeli",
+    "remove": "Çıkar",
+    "removed": "Ekipten çıkarıldı",
+    "removeQ": "{name} kuruluştan çıkarılsın mı?",
+    "removeHintAgency": "Danışman bağımsız olur; ilanları ve müşterileri kendisinde kalır.",
+    "roleSaved": "Rol değiştirildi",
+    "noBranch": "Şube yok",
+    "lastSeen": "Son giriş",
+    "readOnly": "Rolleri, davetleri ve ekibi kuruluş yöneticisi değiştirir.",
+    "roles": {
+      "agency": {
+        "owner": "Ajans yöneticisi",
+        "manager": "Şube müdürü",
+        "agent": "Danışman"
+      },
+      "developer": {
+        "admin": "Yönetici",
+        "editor": "Editör",
+        "manager": "Satış müdürü"
+      }
+    },
+    "roleHint": {
+      "agency": "Ajans yöneticisi tüm müşterileri görür, CRM'i ayarlar, danışman davet eder ve çıkarır. Şube müdürü kendi şubesini görür. Danışman kendi ilanlarını ve müşterilerini görür.",
+      "developer": "Yönetici şirket bilgilerini ve ekibi yönetir. Editör projeleri doldurur: planlar, fotoğraflar, fiyatlar. Satış müdürü projeleri görür ve kendi müşterileriyle çalışır."
+    },
+    "err": {
+      "generic": "Kaydedilemedi",
+      "forbidden": "Yetki yok",
+      "last-admin": "Tek yönetici kaldırılamaz",
+      "not-member": "Üye değil",
+      "no-user": "Bu e-postayla kullanıcı yok — davet gönderin",
+      "wrong-type": "Bu hesap başka türde (danışman / geliştirici)",
+      "exists": "Bu e-postanın hesabı zaten var — «Mevcut kullanıcıyı ekle» kullanın",
+      "bad-role": "Geçersiz rol",
+      "not-found": "Kuruluş bulunamadı",
+      "unauthorized": "Giriş yapın",
+      "name": "Ad girin"
+    },
+    "team": {
+      "title": "Ajansım",
+      "sub": "Ajans ekibi: üyeler, roller ve davetler.",
+      "solo": "Bağımsız danışman olarak çalışıyorsunuz. Ajansı platform yöneticisi oluşturur — destekle iletişime geçin, sizi yönetici yapsınlar.",
+      "details": "Bilgiler",
+      "save": "Kaydet",
+      "saved": "Kaydedildi",
+      "orgName": "Ad",
+      "phone": "Telefon",
+      "addr": "Adres",
+      "lic": "Lisans / bilgiler",
+      "director": "Yönetici",
+      "kind": {
+        "agency": "Ajans",
+        "developer": "Geliştirici"
+      },
+      "back": "Kuruluş listesine",
+      "new": "Yeni kuruluş",
+      "create": "Oluştur",
+      "membersN": "üye",
+      "dev": "Şirket ekibi",
+      "devSub": "Geliştirici şirketinizin personeli, rolleri ve davetler."
+    }
   }
 }

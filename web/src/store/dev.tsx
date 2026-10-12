@@ -279,7 +279,7 @@ export function mutPlanTypes(objId: number, fn: (list: PlanType[]) => PlanType[]
   mutate((s) => ({ ...s, planTypes: { ...s.planTypes, [objId]: fn(s.planTypes[objId] ?? []) } }));
 }
 
-// ---- real companies from Supabase (`developers` + `developer_members`) ----
+// ---- real companies from Supabase (`developers` + `org_members`) ----
 export type RealCompany = { uuid: string; name: string; director: string; active: boolean; until: string };
 /** Merge Supabase developers into the company list (stable numeric ids from 1000) and remember the user's companies. */
 export function syncRealCompanies(list: RealCompany[], myUuids: string[] | "all" | null) {

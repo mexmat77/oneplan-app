@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   // уведомление: риэлтору — ему, компании — всем участникам (колокольчик + realtime)
   const to: string[] = ws.kind === "realtor" ? [ws.id] : [];
   if (ws.kind === "developer") {
-    const [{ data: a }, { data: b }] = await Promise.all([sb.from("profiles").select("id").eq("developer_id", ws.id).eq("status", "active"), sb.from("developer_members").select("profile_id").eq("developer_id", ws.id)]);
+    const [{ data: a }, { data: b }] = await Promise.all([sb.from("profiles").select("id").eq("developer_id", ws.id).eq("status", "active"), sb.from("org_members").select("profile_id").eq("org_kind", "developer").eq("org_id", ws.id)]);
     (a ?? []).forEach((p) => to.push(p.id as string)); (b ?? []).forEach((p) => to.push(p.profile_id as string));
   }
   const { data: srcRow } = await sb.from("crm_sources").select("name").eq("id", src.id).maybeSingle();

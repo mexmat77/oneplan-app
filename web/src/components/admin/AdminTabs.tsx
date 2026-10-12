@@ -13,7 +13,7 @@ export function AdminTabs({ reqsN = 0, reportsN = 0 }: { reqsN?: number; reports
   const tabs = [
     { href: "/admin/users", label: L("Пользователи", "Users", "Kullanıcılar"), Icon: IconUsers },
     { href: "/admin/requests", label: L("Заявки", "Requests", "Başvurular"), Icon: IconInbox, badge: reqsN },
-    { href: "/admin/companies", label: L("Агентства и застройщики", "Agencies & developers", "Ajanslar ve geliştiriciler"), Icon: IconBuilding },
+    { href: "/admin/companies", label: L("Организации", "Organizations", "Kuruluşlar"), Icon: IconBuilding },
     { href: "/admin/reports", label: L("Жалобы", "Reports", "Şikayetler"), Icon: IconFlag, badge: reportsN }, // раньше вело на /rls (демо-экран прототипа) — интерфейс «прыгал»
   ];
   return (

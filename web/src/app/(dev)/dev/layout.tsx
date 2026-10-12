@@ -25,8 +25,8 @@ export default async function DevLayout({ children }: { children: React.ReactNod
     const { data: devs } = await sb.from("developers").select("id, name, director, active, access_until").order("name");
     companies = (devs ?? []).map((d) => ({ uuid: d.id as string, name: d.name as string, director: (d.director as string) ?? "", active: d.active !== false, until: (d.access_until as string) ?? "" }));
     if (me.role !== "admin") {
-      const { data: mem } = await sb.from("developer_members").select("developer_id").eq("profile_id", me.id);
-      const ids = new Set<string>((mem ?? []).map((m) => m.developer_id as string));
+      const { data: mem } = await sb.from("org_members").select("org_id").eq("org_kind", "developer").eq("profile_id", me.id);
+      const ids = new Set<string>((mem ?? []).map((m) => m.org_id as string));
       if (me.developerId) ids.add(me.developerId);
       myCompanies = Array.from(ids);
       companies = companies.filter((c) => ids.has(c.uuid));

@@ -15,6 +15,7 @@ export type AdminUser = {
   id: string; name: string; email: string | null; phone: string | null; role: Role; status: Status;
   agency_id: string | null; agency_text: string | null; developer_id: string | null; dev_role: string | null; paid_to: string | null;
   platform_staff: boolean; color: string; last_seen: string | null; created_at: string; developer_ids?: string[];
+  agency_role?: "owner" | "manager" | "agent" | null; // роль в агентстве (org_members, 0022)
 };
 export type Company = { id: string; name: string };
 type DevRole = "admin" | "editor" | "manager";
@@ -44,7 +45,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
   const [help, setHelp] = useState(false);
   const [coQ, setCoQ] = useState("");
   const [copied, setCopied] = useState(false);
-  const [inv, setInv] = useState<null | { role: Role; agency_id: string; developer_id: string; email: string; url?: string }>(null);
+  const [inv, setInv] = useState<null | { role: Role; agency_id: string; developer_id: string; org_role: string; email: string; name: string; url?: string }>(null);
   const [pw, setPw] = useState<null | { id: string; value: string }>(null);
   const [err, setErr] = useState("");
   const [miss, setMiss] = useState<string[]>([]); // ключи незаполненных обязательных полей: name | email | devs
@@ -89,6 +90,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
       agency_id: edit.role === "realtor" ? edit.agency_id || null : null, agency_text: edit.role === "realtor" ? edit.agency_text || null : null,
       developer_ids: edit.role === "developer" ? edit.developer_ids : [], dev_role: edit.role === "developer" ? edit.dev_role : null,
       platform_staff: edit.role === "developer" ? !!edit.platform_staff : false, paid_to: edit.role === "realtor" ? edit.paid_to || null : null, lang: edit.lang,
+      agency_role: edit.role === "realtor" && edit.agency_id ? (edit.agency_role ?? "agent") : null,
       password: edit.password || undefined,
     };
     run(async () => { if (edit.id) await updateUser(edit.id, body); else await createUser(body); setEdit(null); }, edit.id ? t.rl.editDone : L("Пользователь создан", "User created", "Kullanıcı oluşturuldu"));
@@ -106,7 +108,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
       <div className="mb-[14px] flex flex-wrap gap-2">
         <div className="relative min-w-[200px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-2" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.rl.rlSearch} className={`${input} rounded-[11px] py-[10px] pl-[34px] text-[13.5px]`} /></div>
         <Select value={roleF} onChange={(v) => setRoleF(v as "" | Role)} menuWidth="auto" className="w-auto rounded-[11px] py-[10px] text-[13.5px]" options={[{ value: "", label: L("Все роли", "All roles", "Tüm roller") }, ...(["admin", "realtor", "developer"] as Role[]).map((r) => ({ value: r, label: roleL[r] }))]} />
-        <button type="button" onClick={() => setInv({ role: "realtor", agency_id: "", developer_id: "", email: "" })} className="inline-flex cursor-pointer items-center gap-1 rounded-[11px] border border-[#d8e3ff] bg-blue-tint px-4 py-[10px] text-[13px] font-bold text-blue hover:bg-[#e2ebff]"><IconLink size={15} /> {t.rl.inv}</button>
+        <button type="button" onClick={() => setInv({ role: "realtor", agency_id: "", developer_id: "", org_role: "agent", email: "", name: "" })} className="inline-flex cursor-pointer items-center gap-1 rounded-[11px] border border-[#d8e3ff] bg-blue-tint px-4 py-[10px] text-[13px] font-bold text-blue hover:bg-[#e2ebff]"><IconLink size={15} /> {t.rl.inv}</button>
         <button type="button" onClick={openNew} className="inline-flex cursor-pointer items-center gap-1 rounded-[11px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white hover:bg-blue-3"><IconPlus size={15} /> {L("Добавить пользователя", "Add user", "Kullanıcı ekle")}</button>
       </div>
       {err && !edit && <div className="mb-3 rounded-[11px] bg-red-tint px-[13px] py-[11px] text-[12.5px] text-red-2">{err}</div>}
@@ -121,7 +123,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
                 <div className="flex flex-wrap items-center gap-2 text-[14px] font-bold text-ink">{u.name || "—"}{u.platform_staff && <span className="inline-flex items-center gap-1 rounded-[7px] bg-[#efe7fb] px-2 py-[2px] text-[10.5px] font-bold text-[#7b4fd0]"><IconShieldLock size={11} /> {L("Платформа", "Platform", "Platform")}</span>}</div>
                 <div className="text-[12px] text-muted">{u.email} {u.phone ? `· ${u.phone}` : ""} · {company(u)}</div>
               </div>
-              <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold text-white" style={{ background: ROLE_C[u.role] }}>{roleL[u.role]}{u.role === "developer" && u.dev_role ? ` · ${devRoles.find((r) => r.k === u.dev_role)?.l ?? u.dev_role}` : ""}</span>
+              <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold text-white" style={{ background: ROLE_C[u.role] }}>{roleL[u.role]}{u.role === "developer" && u.dev_role ? ` · ${t.org.roles.developer[u.dev_role as "admin" | "editor" | "manager"] ?? u.dev_role}` : u.role === "realtor" && u.agency_id ? ` · ${t.org.roles.agency[u.agency_role ?? "agent"]}` : ""}</span>
               <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold" style={{ background: st[0], color: st[1] }}>{stL[u.status]}</span>
               {u.paid_to && <span className="flex-none text-[11.5px] text-muted">{t.rl.payOk} {new Date(u.paid_to).toLocaleDateString("ru-RU")}</span>}
               {u.status === "pending" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: "active" }), t.rl.apprT)} className="flex-none cursor-pointer rounded-[9px] bg-[#22c15e] px-[13px] py-2 text-[12px] font-bold text-white">{t.rl.ok}</button>}
@@ -212,8 +214,15 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
 
           {edit.role === "realtor" && (
             <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
-              <div><label className={label}>{t.rl.agL}</label><Select value={edit.agency_id ?? ""} onChange={(v) => setEdit({ ...edit, agency_id: v })} options={[{ value: "", label: t.rl.agFree }, ...agencies.map((a) => ({ value: a.id, label: a.name }))]} searchable searchPlaceholder={t.rl.agSearch} emptyText={t.chat.notFound} /></div>
+              <div><label className={label}>{t.rl.agL}</label><Select value={edit.agency_id ?? ""} onChange={(v) => setEdit({ ...edit, agency_id: v, agency_role: v ? edit.agency_role ?? "agent" : null })} options={[{ value: "", label: t.rl.agFree }, ...agencies.map((a) => ({ value: a.id, label: a.name }))]} searchable searchPlaceholder={t.rl.agSearch} emptyText={t.chat.notFound} /></div>
               <div><label className={label}>{t.rl.paidToL}</label><input type="date" value={edit.paid_to ?? ""} onChange={(e) => setEdit({ ...edit, paid_to: e.target.value })} className={input} /></div>
+            </div>
+          )}
+          {edit.role === "realtor" && edit.agency_id && (
+            <div className="mb-4">
+              <label className={label}>{t.rl.agRoleL}</label>
+              <div className="flex gap-[9px] max-md:flex-col">{(["agent", "manager", "owner"] as const).map((r) => <button key={r} type="button" onClick={() => patch({ agency_role: r })} className={seg((edit.agency_role ?? "agent") === r)}>{t.org.roles.agency[r]}</button>)}</div>
+              <div className="mt-2 text-[11.5px] text-muted">{t.org.roleHint.agency}</div>
             </div>
           )}
           {edit.role === "admin" && <div className="mb-4 rounded-[11px] bg-[#f0f4ff] px-[14px] py-3 text-[12px] leading-[1.45] text-[#4a5568]"><b className="text-ink">{roleL.admin}</b> — {L("владелец платформы: все компании, объекты и пользователи", "platform owner: all companies, projects and users", "platform sahibi: tüm şirketler, projeler ve kullanıcılar")}</div>}
@@ -242,17 +251,19 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
             <>
               <div className="mb-3 text-[12.5px] leading-[1.5] text-muted">{t.rl.mS}</div>
               <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
-                <div><label className={label}>{L("Тип", "Type", "Tür")}</label><Select value={inv.role} onChange={(v) => setInv({ ...inv, role: v as Role })} options={(["realtor", "developer"] as Role[]).map((r) => ({ value: r, label: roleL[r] }))} /></div>
+                <div><label className={label}>{L("Тип", "Type", "Tür")}</label><Select value={inv.role} onChange={(v) => setInv({ ...inv, role: v as Role, org_role: v === "developer" ? "editor" : "agent" })} options={(["realtor", "developer"] as Role[]).map((r) => ({ value: r, label: roleL[r] }))} /></div>
                 {inv.role === "developer" ? (
                   <div><label className={label}>{L("Застройщик", "Developer company", "Geliştirici firma")}</label><Select value={inv.developer_id} onChange={(v) => setInv({ ...inv, developer_id: v })} options={[{ value: "", label: "—" }, ...developers.map((d) => ({ value: d.id, label: d.name }))]} searchable searchPlaceholder={L("Поиск застройщика", "Search developer", "Geliştirici ara")} emptyText={t.chat.notFound} /></div>
                 ) : (
                   <div><label className={label}>{t.rl.agL}</label><Select value={inv.agency_id} onChange={(v) => setInv({ ...inv, agency_id: v })} options={[{ value: "", label: t.rl.agFree }, ...agencies.map((a) => ({ value: a.id, label: a.name }))]} searchable searchPlaceholder={t.rl.agSearch} emptyText={t.chat.notFound} /></div>
                 )}
-                <div className="col-span-full"><label className={label}>{t.rl.email} <span className="text-muted-2">({L("если указать — письмо со ссылкой уйдёт на почту", "if given — the link is e-mailed", "girilirse bağlantı e-postayla gider")})</span></label><input value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} placeholder="name@agency.com" className={input} /></div>
+                {(inv.role === "developer" ? !!inv.developer_id : !!inv.agency_id) && <div className="col-span-full"><label className={label}>{t.org.role}</label><div className="flex flex-wrap gap-[9px]">{(inv.role === "developer" ? (["editor", "manager", "admin"] as const) : (["agent", "manager", "owner"] as const)).map((r) => <button key={r} type="button" onClick={() => setInv({ ...inv, org_role: r })} className={`cursor-pointer rounded-[18px] border px-[13px] py-[8px] text-[12.5px] ${inv.org_role === r ? "border-sel-line bg-blue-tint font-bold text-sel-ink" : "border-line text-text hover:bg-bg-3"}`}>{inv.role === "developer" ? t.org.roles.developer[r as "editor" | "manager" | "admin"] : t.org.roles.agency[r as "agent" | "manager" | "owner"]}</button>)}</div></div>}
+                <div><label className={label}>{t.org.name}</label><input value={inv.name} onChange={(e) => setInv({ ...inv, name: e.target.value })} placeholder="Ad Soyad" className={input} /></div>
+                <div><label className={label}>{t.rl.email} <span className="text-muted-2">({L("если указать — письмо со ссылкой уйдёт на почту", "if given — the link is e-mailed", "girilirse bağlantı e-postayla gider")})</span></label><input value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} placeholder="name@agency.com" className={input} /></div>
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button type="button" onClick={() => setInv(null)} className="cursor-pointer rounded-[10px] border border-line px-4 py-[10px] text-[13px] font-semibold text-text">{t.common.cancel}</button>
-                <button type="button" disabled={pending} onClick={() => run(async () => { const r = await createInvite({ role: inv.role, email: inv.email || undefined, agency_id: inv.agency_id || null, developer_id: inv.developer_id || null, lang }); setInv({ ...inv, url: r.url }); }, inv.email ? L("Ссылка создана, письмо отправлено", "Link created, e-mail sent", "Bağlantı oluşturuldu, e-posta gönderildi") : t.rl.sent)} className="cursor-pointer rounded-[10px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white disabled:opacity-60">{L("Создать ссылку", "Create link", "Bağlantı oluştur")}</button>
+                <button type="button" disabled={pending} onClick={() => run(async () => { const r = await createInvite({ role: inv.role, email: inv.email || undefined, name: inv.name || undefined, agency_id: inv.role === "realtor" ? inv.agency_id || null : null, developer_id: inv.role === "developer" ? inv.developer_id || null : null, org_role: (inv.role === "developer" ? inv.developer_id : inv.agency_id) ? inv.org_role : null, lang }); setInv({ ...inv, url: r.url }); }, inv.email ? L("Ссылка создана, письмо отправлено", "Link created, e-mail sent", "Bağlantı oluşturuldu, e-posta gönderildi") : t.rl.sent)} className="cursor-pointer rounded-[10px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white disabled:opacity-60">{L("Создать ссылку", "Create link", "Bağlantı oluştur")}</button>
               </div>
             </>
           )}

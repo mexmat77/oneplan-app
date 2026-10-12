@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -72,7 +72,8 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     ...navItems,
     { href: "/api-access", label: t.api.title, Icon: IconApi, active: is("/api-access") },
     { href: "/billing", label: t.bil.title, Icon: IconCreditCard, active: is("/billing") },
-    ...(isAdmin && workspace === "realtors" ? [{ href: "/rls", label: t.nav.rls, Icon: IconUsers, active: is("/rls") }] : []),
+    ...(isAdmin && workspace === "realtors" ? [{ href: "/admin/users", label: t.nav.rls, Icon: IconUsers, active: is("/admin/users") }] : []),
+    ...(!isAdmin && workspace === "realtors" ? [{ href: "/team", label: t.org.team.title, Icon: IconBuilding, active: is("/team") }] : []),
   ];
   const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
   const ntfTop = ntfItems.slice(0, 4);

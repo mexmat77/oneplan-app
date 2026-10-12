@@ -29,7 +29,7 @@ export default function JoinPage() {
   const [err, setErr] = useState("");
   const [done, setDone] = useState(false);
   const [fixedMail, setFixedMail] = useState(false); // почта пришла из приглашения (письмо ушло на неё) — поле не редактируется
-  useEffect(() => { let on = true; void inviteInfo(code).then((i) => { if (on && i.ok && i.email) { setF((x) => ({ ...x, email: i.email! })); setFixedMail(true); } }); return () => { on = false; }; }, [code]);
+  useEffect(() => { let on = true; void inviteInfo(code).then((i) => { if (on && i.ok) { setF((x) => ({ ...x, email: i.email ?? x.email, name: x.name || i.name || "" })); if (i.email) setFixedMail(true); } }); return () => { on = false; }; }, [code]);
   const [pending, start] = useTransition();
   const [miss, setMiss] = useState<string[]>([]); // поля с ошибкой: name | phone | email | pass | pass2
   const set = (p: Partial<typeof f>) => { setF((x) => ({ ...x, ...p })); if (miss.length) setMiss((m) => m.filter((k) => !(k in p))); };

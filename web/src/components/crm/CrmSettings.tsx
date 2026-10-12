@@ -3,9 +3,9 @@
 // Настройки CRM: этапы воронки, источники (с токеном для внешнего сайта), выгрузка CSV, журнал доступа.
 import { useEffect, useState } from "react";
 import { IconDownload, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
-import { deleteBranch, deleteSource, exportClientsCsv, issueSourceToken, listAudit, listTeam, saveBranch, saveLostReasons, saveSource, setMember } from "@/app/crm/actions";
+import { deleteBranch, deleteSource, exportClientsCsv, issueSourceToken, listAudit, listTeam, saveBranch, saveLostReasons, saveSource } from "@/app/crm/actions";
 import { StageEditor } from "./StageEditor";
-import type { Branch, CrmMember, MemberRole } from "@/lib/crm/types";
+import type { Branch, CrmMember } from "@/lib/crm/types";
 import { CompanySettings, TemplateSettings } from "./DocSettings";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
@@ -14,6 +14,7 @@ import { useI18n } from "@/i18n/provider";
 import type { Source, SourceKind } from "@/lib/crm/types";
 import Link from "next/link";
 import { crmError, btnS, card, fill, fmtDT, inp, lbl, sourceName, useCrm } from "./crmUi";
+import { OrgTeam } from "@/components/org/OrgTeam";
 
 
 export function CrmSettings({ sub }: { sub?: string }) {
@@ -54,10 +55,6 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const [newReason, setNewReason] = useState("");
   const isOwner = crm.me.role === "owner";
   const teamErr = (e: unknown) => { const m = (e as Error).message; showToast(m === "last-owner" ? c.team.lastOwner : m === "forbidden" ? c.team.forbidden : m === "readonly" ? c.errReadonly : c.errSave); };
-  async function member(id: string, patch: { role?: MemberRole; branchId?: string | null }) {
-    const m = team?.members.find((x) => x.id === id); if (!m) return;
-    try { await setMember(id, patch.role ?? m.role, patch.branchId === undefined ? m.branchId : patch.branchId); setTeam(await listTeam()); } catch (e) { teamErr(e); }
-  }
   async function addBranch() { if (!nb.name.trim()) return; try { const branches = await saveBranch({ name: nb.name, city: nb.city, headId: null }); setTeam((v) => (v ? { ...v, branches } : v)); setNb({ name: "", city: "" }); crm.refresh(); } catch (e) { teamErr(e); } }
   async function branchHead(b: Branch, headId: string | null) { try { const branches = await saveBranch({ id: b.id, name: b.name, city: b.city ?? "", headId }); setTeam((v) => (v ? { ...v, branches } : v)); } catch (e) { teamErr(e); } }
   async function delBranch(b: Branch) { if (!(await confirmDialog({ text: `${b.name}?`, danger: true }))) return; try { const branches = await deleteBranch(b.id); setTeam((v) => (v ? { ...v, branches } : v)); crm.refresh(); } catch (e) { teamErr(e); } }
@@ -108,16 +105,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
         <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.team.sub}</p>
         {!team ? <div className="text-[13px] text-muted">…</div> : crm.me.ws.kind === "realtor" ? <div className="text-[13px] text-muted">{c.team.solo}</div> : (
           <>
-            <div className="mb-2 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.team.members} · {team.members.length}</div>
-            <div className="flex flex-col gap-1">
-              {team.members.map((m) => (
-                <div key={m.id} className="grid grid-cols-[1fr_190px_190px] items-center gap-2 rounded-[6px] border border-line px-3 py-[6px] max-md:grid-cols-1">
-                  <span className="flex min-w-0 items-center gap-2"><span className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{m.name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2)}</span><span className="truncate text-[13px] font-medium text-ink">{m.name}{m.id === crm.me.meId ? <span className="ml-1 text-[11px] font-normal text-muted">· {c.team.you}</span> : null}</span></span>
-                  <Select value={m.role} onChange={(v) => member(m.id, { role: v as MemberRole })} options={(["owner", "manager", "agent"] as MemberRole[]).map((r) => ({ value: r, label: c.team.roles[r] }))} size="sm" disabled={!isOwner || ro} />
-                  <Select value={m.branchId ?? ""} onChange={(v) => member(m.id, { branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...team.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" disabled={!isOwner || ro || team.branches.length === 0} />
-                </div>
-              ))}
-            </div>
+            <OrgTeam kind={crm.me.ws.kind as "agency" | "developer"} id={crm.me.ws.id} compact onChange={() => { crm.refresh(); listTeam().then(setTeam).catch(() => undefined); }} />
             <div className="mb-2 mt-5 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.team.branches} · {team.branches.length}</div>
             {team.branches.length === 0 && <div className="mb-2 text-[12.5px] text-muted">{c.team.noBranches}</div>}
             <div className="flex flex-col gap-1">

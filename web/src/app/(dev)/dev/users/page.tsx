@@ -1,14 +1,26 @@
-"use client";
+import { redirect } from "next/navigation";
+import { getOrg } from "@/app/org/actions";
+import { OrgCard } from "@/components/admin/OrgCard";
+import { DevUsersClient } from "@/components/dev/users/DevUsersClient";
+import { getCurrentUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
-// «Пользователи» → tab «Компании» (§1.12). For the «admin» role the screen is the card of their own company (§2.1).
-import { CompaniesScreen } from "@/components/dev/users/CompaniesScreen";
-import { CompanyCard } from "@/components/dev/users/CompanyCard";
-import { useAdminCoId, useRoleFlags, useUsersGuard } from "@/components/dev/users/shared";
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  const blocked = useUsersGuard();
-  const { isAdminView } = useRoleFlags();
-  const adminCoId = useAdminCoId();
-  if (blocked) return null;
-  return isAdminView ? <CompanyCard id={adminCoId} /> : <CompaniesScreen />;
+// «Пользователи» кабинета застройщика (12.10.2026, модель «Организации и участники»): для реального аккаунта —
+// команда своей компании (`OrgCard`: администратор правит роли и приглашает, остальные видят состав); админ платформы —
+// в «Управление → Организации»; без сессии (UI-режим) — экраны прототипа на демо-данных.
+export default async function DevUsersPage() {
+  const me = await getCurrentUser();
+  if (!me) return <DevUsersClient />;
+  if (me.role === "admin") redirect("/admin/companies");
+  let devId = me.developerId;
+  if (!devId) {
+    const sb = await createClient();
+    const { data } = await sb.from("org_members").select("org_id").eq("org_kind", "developer").eq("profile_id", me.id).limit(1).maybeSingle();
+    devId = (data?.org_id as string | undefined) ?? null;
+  }
+  if (!devId) return <DevUsersClient />;
+  const view = await getOrg("developer", devId);
+  return <OrgCard initial={view} self />;
 }

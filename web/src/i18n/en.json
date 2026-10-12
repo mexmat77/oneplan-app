@@ -1021,6 +1021,10 @@
     "client_transfer": {
       "t": "A client was transferred to you",
       "s": "{name} · from {from}"
+    },
+    "role_changed": {
+      "t": "Your role was changed",
+      "s": "{org}: {role}"
     }
   },
   "crm": {
@@ -2056,5 +2060,96 @@
     "sameTeam": "your team",
     "go": "Transfer",
     "cancel": "Cancel"
+  },
+  "org": {
+    "members": "Members",
+    "invites": "Invitations",
+    "invite": "Invite",
+    "inviteT": "Invite to the team",
+    "inviteS": "Enter an e-mail and the link is sent right away. Without an e-mail you get a link to send yourself (WhatsApp, Telegram).",
+    "inviteHint": "The person registers via the link and joins your organization with the chosen role. If they already have a OnePlan account, use “Add existing”.",
+    "addExisting": "Add existing",
+    "add": "Add",
+    "added": "Added to the team",
+    "addS": {
+      "agency": "A realtor with a OnePlan account: enter their e-mail. If they belonged to another agency, they move to yours.",
+      "developer": "A developer-side user with a OnePlan account: enter their e-mail."
+    },
+    "email": "E-mail",
+    "name": "Name",
+    "role": "Role",
+    "mailLang": "E-mail language",
+    "sendInvite": "Send invitation",
+    "makeLink": "Create link",
+    "mailed": "E-mail sent to {email}. The link works until registration.",
+    "notMailed": "E-mail was not sent — share the link yourself.",
+    "linkReady": "The link is ready — send it to the person.",
+    "copyLink": "Link",
+    "cancelInvite": "Revoke invitation",
+    "pending": "awaiting registration",
+    "noInvites": "No open invitations",
+    "noMembers": "No members yet",
+    "you": "you",
+    "staff": "Platform staff",
+    "remove": "Remove",
+    "removed": "Removed from the team",
+    "removeQ": "Remove {name} from the organization?",
+    "removeHintAgency": "The realtor becomes a free agent; their listings and clients stay with them.",
+    "roleSaved": "Role changed",
+    "noBranch": "No branch",
+    "lastSeen": "Last seen",
+    "readOnly": "Roles, invitations and membership are managed by the organization admin.",
+    "roles": {
+      "agency": {
+        "owner": "Agency admin",
+        "manager": "Branch manager",
+        "agent": "Realtor"
+      },
+      "developer": {
+        "admin": "Administrator",
+        "editor": "Editor",
+        "manager": "Sales manager"
+      }
+    },
+    "roleHint": {
+      "agency": "The agency admin sees all clients, configures the CRM, invites and removes realtors. A branch manager sees their branch. A realtor sees their own listings and clients.",
+      "developer": "The administrator manages company details and the team. The editor fills projects: plans, photos, prices. The sales manager views projects and works with their own clients."
+    },
+    "err": {
+      "generic": "Could not save",
+      "forbidden": "Not enough rights",
+      "last-admin": "You cannot remove the only admin",
+      "not-member": "Not a member",
+      "no-user": "No user with this e-mail — send an invitation",
+      "wrong-type": "This account is of another type (realtor / developer)",
+      "exists": "This e-mail already has an account — use “Add existing”",
+      "bad-role": "Invalid role",
+      "not-found": "Organization not found",
+      "unauthorized": "Please sign in",
+      "name": "Enter a name"
+    },
+    "team": {
+      "title": "My agency",
+      "sub": "Your agency team: members, roles and invitations.",
+      "solo": "You work as a free agent. Agencies are created by the platform admin — contact support and you will be made its admin.",
+      "details": "Details",
+      "save": "Save",
+      "saved": "Saved",
+      "orgName": "Name",
+      "phone": "Phone",
+      "addr": "Address",
+      "lic": "Licence / details",
+      "director": "Director",
+      "kind": {
+        "agency": "Agency",
+        "developer": "Developer"
+      },
+      "back": "Back to organizations",
+      "new": "New organization",
+      "create": "Create",
+      "membersN": "members",
+      "dev": "Company team",
+      "devSub": "Your developer company staff, roles and invitations."
+    }
   }
 }

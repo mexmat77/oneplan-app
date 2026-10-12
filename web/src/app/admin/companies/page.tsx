@@ -9,13 +9,13 @@ export default async function AdminCompaniesPage() {
     supabase.from("agencies").select("id, name, phone, addr, lic").order("name"),
     supabase.from("developers").select("id, name, phone, addr, lic").order("name"),
     supabase.from("profiles").select("id, name, email, phone, role, dev_role, status, agency_id, developer_id").order("name"),
-    supabase.from("developer_members").select("profile_id, developer_id"),
+    supabase.from("org_members").select("profile_id, org_id").eq("org_kind", "developer"),
   ]);
   // Сотрудники по компаниям: агентство — по profiles.agency_id; застройщик — основная компания + доп. членства (developer_members).
   const people = (profiles ?? []) as (StaffRow & { agency_id: string | null; developer_id: string | null })[];
   const staffOf = (key: "agency_id" | "developer_id", id: string): StaffRow[] => {
     const ids = new Set(people.filter((p) => p[key] === id).map((p) => p.id));
-    if (key === "developer_id") (dm ?? []).filter((m) => m.developer_id === id).forEach((m) => ids.add(m.profile_id as string));
+    if (key === "developer_id") (dm ?? []).filter((m) => m.org_id === id).forEach((m) => ids.add(m.profile_id as string));
     return people.filter((p) => ids.has(p.id)).map(({ id, name, email, phone, role, dev_role, status }) => ({ id, name, email, phone, role, dev_role, status }));
   };
   return (

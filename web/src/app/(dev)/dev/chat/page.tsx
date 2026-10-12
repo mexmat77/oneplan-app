@@ -17,13 +17,13 @@ export default async function Page() {
     const { data } = await sb.from("profiles").select(PROFILE_SEL).eq("role", "developer").eq("status", "active").order("name");
     colleagues = (data ?? []).map((p) => toPeer(p as unknown as Parameters<typeof toPeer>[0], supportId));
   } else {
-    const { data: mem } = await sb.from("developer_members").select("developer_id").eq("profile_id", me.id);
-    const cos = new Set<string>((mem ?? []).map((m) => m.developer_id as string)); if (me.developerId) cos.add(me.developerId);
+    const { data: mem } = await sb.from("org_members").select("org_id").eq("org_kind", "developer").eq("profile_id", me.id);
+    const cos = new Set<string>((mem ?? []).map((m) => m.org_id as string)); if (me.developerId) cos.add(me.developerId);
     if (cos.size) {
       const ids = Array.from(cos);
       const [{ data: p1 }, { data: m2 }] = await Promise.all([
         sb.from("profiles").select(`${PROFILE_SEL}, developer_id`).in("developer_id", ids).eq("status", "active"),
-        sb.from("developer_members").select("profile_id").in("developer_id", ids),
+        sb.from("org_members").select("profile_id").eq("org_kind", "developer").in("org_id", ids),
       ]);
       const extra = (m2 ?? []).map((m) => m.profile_id as string).filter((id) => id !== me.id && !(p1 ?? []).some((p) => p.id === id));
       const { data: p2 } = extra.length ? await sb.from("profiles").select(PROFILE_SEL).in("id", extra).eq("status", "active") : { data: [] };

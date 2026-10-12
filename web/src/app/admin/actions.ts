@@ -5,6 +5,8 @@ import { sendTemplateMail } from "@/lib/mail";
 import { notify, notifyAdmins } from "@/lib/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { attachMember } from "@/lib/orgServer";
+import type { OrgKind } from "@/lib/org";
 
 export type Role = "admin" | "realtor" | "developer";
 export type Status = "pending" | "active" | "paused";
@@ -12,7 +14,7 @@ export type UserInput = {
   email: string; password?: string; name: string; phone?: string; role: Role; status?: Status;
   agency_id?: string | null; agency_text?: string | null; developer_id?: string | null; dev_role?: string | null; paid_to?: string | null;
   developer_ids?: string[]; platform_staff?: boolean;
-  agency_role?: "owner" | "manager" | "agent" | null; // роль в CRM агентства (crm_members, 0017)
+  agency_role?: "owner" | "manager" | "agent" | null; // роль в агентстве (org_members, 0022): администратор / руководитель филиала / риэлтор
   lang?: "RU" | "EN" | "TR"; // язык письма-приглашения (user metadata `lang`, читают шаблоны Supabase Auth)
 };
 
@@ -35,22 +37,23 @@ function profilePatch(i: Partial<UserInput>) {
   return patch;
 }
 
-// Multi-company access for developer staff (editors/managers may work with several developers).
-async function syncMembers(admin: ReturnType<typeof createAdminClient>, id: string, ids?: string[]) {
+// Участие сотрудника застройщика в компаниях (org_members, 0022): одна роль (dev_role) на все выбранные компании.
+async function syncMembers(admin: ReturnType<typeof createAdminClient>, id: string, ids?: string[], role?: string | null) {
   if (!ids) return;
-  await admin.from("developer_members").delete().eq("profile_id", id);
+  const r = role && ["admin", "editor", "manager"].includes(role) ? role : "editor";
+  await admin.from("org_members").delete().eq("profile_id", id).eq("org_kind", "developer").not("org_id", "in", `(${ids.length ? ids.join(",") : "00000000-0000-0000-0000-000000000000"})`);
   if (ids.length) {
-    const { error } = await admin.from("developer_members").insert(ids.map((developer_id) => ({ profile_id: id, developer_id })));
+    const { error } = await admin.from("org_members").upsert(ids.map((org_id) => ({ org_kind: "developer", org_id, profile_id: id, role: r })), { onConflict: "org_kind,org_id,profile_id" });
     if (error) throw new Error(error.message);
   }
+  if (!ids.length) await admin.from("profiles").update({ developer_id: null, dev_role: null }).eq("id", id);
 }
 
-/** Роль риэлтора в CRM агентства (владелец / руководитель филиала / агент) — crm_members для ws агентства. */
+/** Участие риэлтора в агентстве (org_members, 0022): одно агентство, роль owner / manager / agent. */
 async function syncAgencyRole(admin: ReturnType<typeof createAdminClient>, id: string, agencyId: string | null, role: "owner" | "manager" | "agent" | null) {
-  if (!agencyId) { await admin.from("crm_members").delete().eq("profile_id", id).eq("ws_kind", "agency"); return; }
-  await admin.from("crm_members").delete().eq("profile_id", id).eq("ws_kind", "agency").neq("ws_id", agencyId);
-  if (!role) return;
-  const { error } = await admin.from("crm_members").upsert({ ws_kind: "agency", ws_id: agencyId, profile_id: id, role }, { onConflict: "ws_kind,ws_id,profile_id" });
+  if (!agencyId) { await admin.from("org_members").delete().eq("profile_id", id).eq("org_kind", "agency"); await admin.from("profiles").update({ agency_id: null }).eq("id", id); return; }
+  await admin.from("org_members").delete().eq("profile_id", id).eq("org_kind", "agency").neq("org_id", agencyId);
+  const { error } = await admin.from("org_members").upsert({ org_kind: "agency", org_id: agencyId, profile_id: id, role: role ?? "agent" }, { onConflict: "org_kind,org_id,profile_id" });
   if (error) throw new Error(error.message);
 }
 
@@ -73,9 +76,9 @@ export async function createUser(input: UserInput): Promise<{ id: string }> {
   }
   const { error } = await admin.from("profiles").upsert({ id, email: input.email, ...profilePatch({ ...input, status: input.status ?? "active" }) });
   if (error) throw new Error(error.message);
-  await syncMembers(admin, id, input.role === "developer" ? input.developer_ids : []);
-  revalidatePath("/admin/users");
-  if (input.agency_role !== undefined) await syncAgencyRole(admin, id, input.agency_id ?? null, input.agency_role);
+  await syncMembers(admin, id, input.role === "developer" ? input.developer_ids : [], input.dev_role);
+  if (input.role === "realtor") await syncAgencyRole(admin, id, input.agency_id ?? null, input.agency_role ?? null);
+  revalidatePath("/admin/users"); revalidatePath("/admin/companies");
   return { id };
 }
 
@@ -84,14 +87,15 @@ export async function updateUser(id: string, patch: Partial<UserInput>) {
   const admin = createAdminClient();
   const { data: before } = patch.status ? await admin.from("profiles").select("status").eq("id", id).maybeSingle() : { data: null };
   const { error } = await admin.from("profiles").update(profilePatch(patch)).eq("id", id);
-  if (!error && patch.agency_role !== undefined) await syncAgencyRole(admin, id, patch.agency_id ?? null, patch.agency_role);
   if (error) throw new Error(error.message);
+  if (patch.role === "realtor" && patch.agency_id !== undefined) await syncAgencyRole(admin, id, patch.agency_id ?? null, patch.agency_role ?? null);
+  if (patch.role && patch.role !== "realtor") await syncAgencyRole(admin, id, null, null);
   if (patch.status === "active" && before && before.status !== "active") void notify([id], "access_restored");
   if (patch.role === "developer" && patch.developer_ids?.length) {
     const { data: co } = await admin.from("developers").select("name").eq("id", patch.developer_ids[0]).maybeSingle();
     void notify([id], "team_added", { company: (co?.name as string) ?? "" });
   }
-  await syncMembers(admin, id, patch.role === "developer" ? patch.developer_ids : patch.role ? [] : undefined);
+  await syncMembers(admin, id, patch.role === "developer" ? patch.developer_ids : patch.role ? [] : undefined, patch.dev_role);
   if (patch.email) {
     // Touch Auth only when the address actually changed (the Admin API needs the service_role key).
     const { data: cur } = await admin.from("profiles").select("email").eq("id", id).maybeSingle();
@@ -101,7 +105,7 @@ export async function updateUser(id: string, patch: Partial<UserInput>) {
       await admin.from("profiles").update({ email: patch.email }).eq("id", id);
     }
   }
-  revalidatePath("/admin/users");
+  revalidatePath("/admin/users"); revalidatePath("/admin/companies");
 }
 
 export async function setUserPassword(id: string, password: string) {
@@ -118,23 +122,41 @@ export async function deleteUser(id: string) {
   revalidatePath("/admin/users");
 }
 
-// Access request → real account (invite e-mail so the person picks a password), request marked accepted.
-export async function approveRequest(requestId: string, role: Role = "realtor") {
+export type ApproveOrg = { agency_id?: string | null; developer_id?: string | null; org_role?: string | null; new_org_name?: string | null };
+/** Организация для одобренной заявки: выбранная, или новая по названию из заявки (`new_org_name`). */
+async function orgForApprove(admin: ReturnType<typeof createAdminClient>, role: Role, org?: ApproveOrg): Promise<{ kind: OrgKind; id: string } | null> {
+  if (!org) return null;
+  const kind: OrgKind = role === "developer" ? "developer" : "agency";
+  const picked = kind === "agency" ? org.agency_id : org.developer_id;
+  if (picked) return { kind, id: picked };
+  const name = org.new_org_name?.trim();
+  if (!name) return null;
+  const table = kind === "agency" ? "agencies" : "developers";
+  const { data: ex } = await admin.from(table).select("id").ilike("name", name).maybeSingle();
+  if (ex) return { kind, id: ex.id as string };
+  const { data, error } = await admin.from(table).insert({ name }).select("id").single();
+  if (error) throw new Error(error.message);
+  return { kind, id: data.id as string };
+}
+
+// Заявка на доступ → аккаунт (письмо-приглашение, человек задаёт пароль) + участие в организации с ролью; заявка принята.
+export async function approveRequest(requestId: string, role: Role = "realtor", org?: ApproveOrg) {
   await requireAdmin();
   const admin = createAdminClient();
   const { data: r, error } = await admin.from("access_requests").select("*").eq("id", requestId).single();
   if (error || !r) throw new Error(error?.message ?? "Заявка не найдена");
   const { data, error: e1 } = await admin.auth.admin.inviteUserByEmail(r.email, { data: { name: r.name, phone: r.phone, lang: r.lang ?? "RU" }, redirectTo: `${siteUrl()}/auth/callback` });
   if (e1) throw new Error(e1.message);
-  await admin.from("profiles").upsert({ id: data.user.id, email: r.email, name: r.name, phone: r.phone, role, status: "active", agency_text: r.agency ?? r.company ?? null });
+  const o = await orgForApprove(admin, role, org);
+  await admin.from("profiles").upsert({ id: data.user.id, email: r.email, name: r.name, phone: r.phone, role, status: "active", agency_text: o ? null : (r.agency ?? r.company ?? null) });
+  if (o) await attachMember(o.kind, o.id, data.user.id, org?.org_role);
   await admin.from("access_requests").update({ status: "accepted" }).eq("id", requestId);
   void notify([data.user.id], "access_approved");
-  revalidatePath("/admin/requests");
-  revalidatePath("/admin/users");
+  revalidatePath("/admin/requests"); revalidatePath("/admin/users"); revalidatePath("/admin/companies");
 }
 
-// Заявка с главной страницы (таблица `leads`, форма лендинга) → такой же аккаунт с письмом-приглашением; заявка помечается обработанной.
-export async function approveLead(leadId: string) {
+// Заявка с главной страницы (`leads`) → такой же аккаунт; заявка помечается обработанной.
+export async function approveLead(leadId: string, org?: ApproveOrg) {
   await requireAdmin();
   const admin = createAdminClient();
   const { data: r, error } = await admin.from("leads").select("*").eq("id", leadId).single();
@@ -142,11 +164,12 @@ export async function approveLead(leadId: string) {
   const role: Role = r.role === "d" ? "developer" : "realtor";
   const { data, error: e1 } = await admin.auth.admin.inviteUserByEmail(r.email, { data: { name: r.name, phone: r.phone, lang: r.lang ?? "RU" }, redirectTo: `${siteUrl()}/auth/callback` });
   if (e1) throw new Error(e1.message);
-  await admin.from("profiles").upsert({ id: data.user.id, email: r.email, name: r.name, phone: r.phone, role, status: "active", agency_text: r.company || null });
+  const o = await orgForApprove(admin, role, org);
+  await admin.from("profiles").upsert({ id: data.user.id, email: r.email, name: r.name, phone: r.phone, role, status: "active", agency_text: o ? null : (r.company || null) });
+  if (o) await attachMember(o.kind, o.id, data.user.id, org?.org_role);
   await admin.from("leads").update({ handled: true }).eq("id", leadId);
   void notify([data.user.id], "access_approved");
-  revalidatePath("/admin/requests");
-  revalidatePath("/admin/users");
+  revalidatePath("/admin/requests"); revalidatePath("/admin/users"); revalidatePath("/admin/companies");
 }
 
 export async function declineLead(leadId: string) {
@@ -177,14 +200,14 @@ export async function declineRequest(requestId: string) {
 }
 
 // Ссылка-приглашение /join/<code>; если указана почта — отправляем письмо со ссылкой (Resend) на языке админа.
-export async function createInvite(input: { role: Role; email?: string; agency_id?: string | null; developer_id?: string | null; lang?: "RU" | "EN" | "TR" }) {
+export async function createInvite(input: { role: Role; email?: string; name?: string; agency_id?: string | null; developer_id?: string | null; org_role?: string | null; lang?: "RU" | "EN" | "TR" }) {
   const me = await requireAdmin();
   const code = "OPL-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-  const { error } = await createAdminClient().from("invites").insert({ code, created_by: me.id, email: input.email ?? null, role: input.role, agency_id: input.agency_id ?? null, developer_id: input.developer_id ?? null });
+  const { error } = await createAdminClient().from("invites").insert({ code, created_by: me.id, email: input.email ?? null, name: input.name?.trim() || null, role: input.role, agency_id: input.agency_id ?? null, developer_id: input.developer_id ?? null, org_role: input.org_role ?? null });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/users");
   const url = `${siteUrl()}/join/${code}`;
-  const mailed = input.email ? await sendTemplateMail("join", input.lang ?? "RU", input.email, { link: url }) : false;
+  const mailed = input.email ? await sendTemplateMail("join", input.lang ?? "RU", input.email, { link: url, name: input.name ?? "" }) : false;
   return { code, url, mailed };
 }
 
@@ -233,14 +256,14 @@ export async function deleteCompany(kind: "agencies" | "developers", id: string)
 
 // Public: register through an invite link.
 // Публичные данные приглашения для страницы /join/<code>: почта (если письмо ушло на неё — поле фиксируется), роль, компания.
-export async function inviteInfo(code: string): Promise<{ ok: boolean; email: string | null; role: Role | null; company: string | null }> {
+export async function inviteInfo(code: string): Promise<{ ok: boolean; email: string | null; name: string | null; role: Role | null; company: string | null; orgRole: string | null }> {
   const admin = createAdminClient();
-  const { data: inv } = await admin.from("invites").select("email, role, used_by, agency_id, developer_id").eq("code", code).maybeSingle();
-  if (!inv || inv.used_by) return { ok: false, email: null, role: null, company: null };
+  const { data: inv } = await admin.from("invites").select("email, name, role, used_by, agency_id, developer_id, org_role").eq("code", code).maybeSingle();
+  if (!inv || inv.used_by) return { ok: false, email: null, name: null, role: null, company: null, orgRole: null };
   let company: string | null = null;
   if (inv.agency_id) company = (await admin.from("agencies").select("name").eq("id", inv.agency_id).maybeSingle()).data?.name ?? null;
   if (inv.developer_id) company = (await admin.from("developers").select("name").eq("id", inv.developer_id).maybeSingle()).data?.name ?? null;
-  return { ok: true, email: inv.email ?? null, role: (inv.role as Role) ?? null, company };
+  return { ok: true, email: inv.email ?? null, name: (inv.name as string | null) ?? null, role: (inv.role as Role) ?? null, company, orgRole: (inv.org_role as string | null) ?? null };
 }
 
 export async function registerByInvite(input: { code: string; name: string; phone: string; email: string; password: string; agency?: string; lang?: "RU" | "EN" | "TR" }) {
@@ -250,7 +273,10 @@ export async function registerByInvite(input: { code: string; name: string; phon
   const email = (inv.email as string | null) || input.email; // письмо ушло на конкретный адрес — регистрируем именно его
   const { data, error } = await admin.auth.admin.createUser({ email, password: input.password, email_confirm: true, user_metadata: { name: input.name, phone: input.phone, lang: input.lang ?? "RU" } });
   if (error) throw new Error(error.message);
-  await admin.from("profiles").upsert({ id: data.user.id, email, name: input.name, phone: input.phone, role: inv.role ?? "realtor", status: "active", agency_id: inv.agency_id ?? null, developer_id: inv.developer_id ?? null, agency_text: (input.agency ?? "").trim() || null });
+  await admin.from("profiles").upsert({ id: data.user.id, email, name: input.name, phone: input.phone, role: inv.role ?? "realtor", status: "active", agency_text: !inv.agency_id && !inv.developer_id ? (input.agency ?? "").trim() || null : null });
+  // участие в организации с ролью из приглашения (0022)
+  if (inv.agency_id) await attachMember("agency", inv.agency_id as string, data.user.id, inv.org_role as string | null);
+  if (inv.developer_id) await attachMember("developer", inv.developer_id as string, data.user.id, inv.org_role as string | null);
   await admin.from("invites").update({ used_by: data.user.id }).eq("code", input.code);
   void notifyAdmins("join_registered", { name: input.name, email });
   if (inv.created_by) void notify([inv.created_by as string], "invite_accepted", { name: input.name });

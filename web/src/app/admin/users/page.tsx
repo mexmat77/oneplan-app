@@ -12,13 +12,14 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     supabase.from("agencies").select("id, name").order("name"),
     supabase.from("developers").select("id, name").order("name"),
     supabase.from("invites").select("code, email, role, used_by, created_at").is("used_by", null).order("created_at", { ascending: false }),
-    supabase.from("developer_members").select("profile_id, developer_id"),
+    supabase.from("org_members").select("profile_id, org_kind, org_id, role"),
   ]);
   const byUser: Record<string, string[]> = {};
-  for (const m of members ?? []) (byUser[m.profile_id] ??= []).push(m.developer_id);
+  const agRole: Record<string, string> = {};
+  for (const m of members ?? []) { if (m.org_kind === "developer") (byUser[m.profile_id] ??= []).push(m.org_id); else agRole[m.profile_id] = m.role; }
   return (
     <UsersTable
-      users={((profiles ?? []) as AdminUser[]).map((u) => ({ ...u, developer_ids: byUser[u.id] ?? (u.developer_id ? [u.developer_id] : []) }))}
+      users={((profiles ?? []) as AdminUser[]).map((u) => ({ ...u, developer_ids: byUser[u.id] ?? (u.developer_id ? [u.developer_id] : []), agency_role: (agRole[u.id] as AdminUser["agency_role"]) ?? null }))}
       agencies={(agencies ?? []) as Company[]}
       developers={(developers ?? []) as Company[]}
       invites={(invites ?? []) as { code: string; email: string | null; role: string; created_at: string }[]}
