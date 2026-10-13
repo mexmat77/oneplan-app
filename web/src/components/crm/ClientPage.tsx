@@ -2,6 +2,7 @@
 
 // Карточка клиента: контакты, что ищет, сделки, задачи, история с заметками (перевод по кнопке того, кто смотрит).
 import Link from "next/link";
+import { DealStageChip, ReqStatusChip } from "./ChipMenu";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
@@ -11,7 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { UnitBrief, Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, RequestStatus, Source, Stage, Task } from "@/lib/crm/types";
+import type { UnitBrief, Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, Source, Stage, Task } from "@/lib/crm/types";
 import { clientNo, dealNo } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
@@ -25,7 +26,7 @@ import { ClientModal } from "./ClientModal";
 import { DossierModal } from "./DossierModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { cacheGet, cacheSet, crmError, CrmCtx, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel, contactLabelOptions } from "./crmUi";
+import { cacheGet, cacheSet, crmError, CrmCtx, DEAL_COLOR, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel, contactLabelOptions } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -59,6 +60,7 @@ function Inner({ id }: { id: string }) {
   const [units, setUnits] = useState<Record<string, UnitBrief>>(() => cacheGet<CardData>(cardKey)?.units ?? {});
   const briefs: Briefs = { objs, units };
   const [openReq, setOpenReq] = useState<Record<string, boolean>>({});
+  const [openDl, setOpenDl] = useState<Record<string, boolean>>({}); // сделки: открытые развёрнуты, закрытые свёрнуты, стрелка переключает
   const [dups, setDups] = useState<DupHit[]>(() => cacheGet<CardData>(cardKey)?.dups ?? []);
   const ro = crm.me.access !== "full";
   // оптимистично (стандарт 2026): интерфейс меняется сразу, сервер — фоном, при ошибке данные перечитываются
@@ -136,7 +138,7 @@ function Inner({ id }: { id: string }) {
           <span className={chip}>{cl.lang}</span>
           {cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}
           {cl.roles.map((r) => <span key={r} className={chip}>{c.roles[r]}</span>)}
-          {openDeal && <span className="ml-auto inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage} · {dealNo(openDeal)}</span><Select value={openDeal.stageId ?? ""} onChange={(v) => move(openDeal, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" menuWidth="auto" className="w-[170px]" disabled={ro} /></span>}
+          {openDeal && <span className="ml-auto inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage} · {dealNo(openDeal)}</span><DealStageChip deal={openDeal} onChange={(v) => move(openDeal, v)} disabled={ro} /></span>}
         </div>
       </div>
 
@@ -194,7 +196,7 @@ function Inner({ id }: { id: string }) {
                     <div className="ml-auto flex flex-none items-center gap-2">
                   {r.priority && <span className="h-2 w-2 rounded-full" title={c.prio[r.priority]} style={{ background: PRIO_COLOR[r.priority] }} />}
                   {r.deadline && <span className="text-[12px] text-muted">{c.rq.dl[r.deadline]}</span>}
-                  <Select value={r.status} onChange={async (v) => { const st = v as RequestStatus; setData((d) => (d ? { ...d, requests: d.requests.map((q) => (q.id === r.id ? { ...q, status: st } : q)) } : d)); try { await setRequestStatus(r.id, st); load(); } catch (e) { err(e); load(); } }} options={(Object.keys(c.rq.st) as RequestStatus[]).map((k) => ({ value: k, label: c.rq.st[k] }))} size="sm" className="w-[150px]" disabled={ro} />
+                  <ReqStatusChip value={r.status} onChange={async (st) => { setData((d) => (d ? { ...d, requests: d.requests.map((q) => (q.id === r.id ? { ...q, status: st } : q)) } : d)); try { await setRequestStatus(r.id, st); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
                   <button type="button" onClick={() => setReqM({ open: true, req: r })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
                   <button type="button" onClick={async () => { if (!(await confirmDialog({ text: c.rq.delQ, danger: true }))) return; try { await deleteRequest(r.id); load(); } catch (e) { err(e); } }} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
                     </div>
@@ -207,16 +209,22 @@ function Inner({ id }: { id: string }) {
           <div className={card}>
             <div className="mb-3 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.deals} · {deals.length}</div><button type="button" onClick={() => setDealM({ open: true, deal: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.deal.add}</button></div>
             {deals.length === 0 ? <div className="text-[13px] text-muted">{c.deal.none}</div> : (
-              <div className="flex flex-col gap-3">{deals.map((d) => { const st = crm.stages.find((s) => s.id === d.stageId); return (
-                <div key={d.id} className="rounded-[6px] border border-line p-3">
-                  <div className="flex flex-wrap items-start gap-2">
-                    <span className="mt-[6px] h-[9px] w-[9px] flex-none rounded-full" style={{ background: st?.color ?? "#8a93a2" }} />
-                    <Link href={`${crm.base}/d/${d.id}`} className="min-w-0 flex-1 cursor-pointer text-left"><div className="text-[13.5px] font-semibold text-ink hover:text-blue-2">{d.title || "—"} <span className="text-[11.5px] font-normal text-muted">{dealNo(d)}</span></div><div className="text-[12px] text-muted">{t.deal[d.deal as keyof typeof t.deal]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}{d.closedAt ? ` · ${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : ""}{d.lostReason ? ` · ${d.lostReason}` : ""}</div></Link>
-                    <Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} />
-                    <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
+              <div className="flex flex-col gap-2">{deals.map((d) => { const r = dealRef(d); const sum = [dealNo(d), d.amount != null ? fmt(d.amount, d.cur as Currency) : null, d.closedAt ? `${c.deal.closed} ${fmtDate(d.closedAt, lang)}` : null, d.lostReason || null].filter(Boolean).join(" · "); const exp = openDl[d.id] ?? !d.closedAt; return (
+                <div key={d.id} className="rounded-[6px] border border-line px-3 py-2">
+                  {/* как строка заявки (13.10.2026, «нативно»): тип · суть одной строкой · стрелка; справа — этап цветным чипом, карандаш, ✕ */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex min-w-[240px] flex-[1_1_320px] items-center gap-2">
+                      <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: DEAL_COLOR[d.deal] ?? "#4d7cfe" }}>{t.deal[d.deal as keyof typeof t.deal]}</span>
+                      <Link href={`${crm.base}/d/${d.id}`} className="min-w-0 flex-1 truncate text-left text-[13px] text-ink hover:text-blue-2" title={d.title}><span className="font-semibold">{d.title || "—"}</span><span className="text-muted"> · {sum}</span></Link>
+                      <button type="button" onClick={() => setOpenDl((m) => ({ ...m, [d.id]: !exp }))} title={exp ? c.rq.hide : c.rq.show} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{exp ? <IconChevronUp size={15} /> : <IconChevronDown size={15} />}</button>
+                    </div>
+                    <div className="ml-auto flex flex-none items-center gap-2">
+                      <DealStageChip deal={d} onChange={(v) => move(d, v)} disabled={ro} />
+                      <button type="button" onClick={() => setDealM({ open: true, deal: d })} disabled={ro} title={c.client.edit} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPencil size={14} /></button>
+                      <button type="button" onClick={() => delDeal(d)} disabled={ro} className="h-8 cursor-pointer px-2 text-[12px] text-muted hover:text-red">✕</button>
+                    </div>
                   </div>
-                  {(() => { const r = dealRef(d); return r ? <div className="mt-2"><ObjCard r={r} briefs={briefs} /></div> : null; })()}
-                  <DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} />
+                  {exp && <div className="mt-2 border-t border-line pt-2">{r && <div className="mb-2"><ObjCard r={r} briefs={briefs} /></div>}<DocsPanel dealId={d.id} dealKind={d.deal} onChange={load} /></div>}
                 </div>); })}</div>
             )}
           </div>

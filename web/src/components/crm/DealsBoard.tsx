@@ -15,6 +15,7 @@ import { useI18n } from "@/i18n/provider";
 import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
+import { DealStageChip } from "./ChipMenu";
 import { DealModal } from "./CrmModals";
 import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
 
@@ -79,7 +80,7 @@ export function DealsBoard() {
             <span className="ml-auto text-[11px] text-muted">{fill(c.kb.days, { n: days(d) })}</span>
           </div>
         </button>
-        <div className="px-[10px] pb-2 md:hidden"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" disabled={ro} /></div>
+        <div className="px-[10px] pb-2 md:hidden"><DealStageChip deal={d} onChange={(v) => move(d, v)} disabled={ro} /></div>
       </div>
     );
   };
@@ -112,7 +113,7 @@ export function DealsBoard() {
         <div className={`${card} overflow-x-auto p-0`}>
           {shown.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{c.deal.none}</div> : (
             <table data-crm-table="1" className="w-full min-w-[720px] text-[13px]"><thead><tr className="text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{[c.deal.title, c.deal.client, c.deal.stage, c.deal.amount, c.owner, c.tbl.task, c.client.updated, ""].map((h, i) => <th key={i} className="px-3 py-2">{h}</th>)}</tr></thead>
-              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="hover:bg-[#f7f8fa]"><td className="px-3 py-[6px]"><button type="button" onClick={() => router.push(`${crm.base}/d/${d.id}`)} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[6px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[6px]"><Select value={d.stageId ?? ""} onChange={(v) => move(d, v)} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[170px]" disabled={ro} /></td><td className="px-3 py-[6px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[6px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[6px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[6px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[6px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
+              <tbody>{shown.map((d) => { const tk = taskOf(d); return <tr key={d.id} className="hover:bg-[#f7f8fa]"><td className="px-3 py-[6px]"><button type="button" onClick={() => router.push(`${crm.base}/d/${d.id}`)} className="cursor-pointer font-bold text-ink hover:text-blue-2">{d.title || "—"}</button></td><td className="px-3 py-[6px]"><Link href={`${crm.base}/c/${d.clientId}`} className="text-blue-2 hover:underline">{d.clientName}</Link></td><td className="px-3 py-[6px]"><DealStageChip deal={d} onChange={(v) => move(d, v)} disabled={ro} /></td><td className="px-3 py-[6px] font-semibold">{d.amount != null ? fmt(d.amount, d.cur as Currency) : ""}</td><td className="px-3 py-[6px] text-muted">{crm.me.members.find((m) => m.id === d.ownerId)?.name ?? ""}</td><td className="px-3 py-[6px] text-muted">{tk ? `${fmtDT(tk.dueAt, lang)} · ${tk.title}` : "—"}</td><td className="px-3 py-[6px] text-muted">{fmtDate(d.updatedAt, lang)}</td><td className="px-3 py-[6px] text-right"><button type="button" onClick={() => del(d)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button></td></tr>; })}</tbody></table>
           )}
         </div>
       )}

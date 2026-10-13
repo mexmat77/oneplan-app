@@ -4,6 +4,7 @@
 // клиент, этап, сумма, ответственный, Редактировать/Удалить), слева данные сделки, объект, документы, задачи, справа лента
 // активности с комментарием. Открывается во вкладке из канбана/списка сделок и из карточки клиента; редактирование — модалкой.
 import Link from "next/link";
+import { DealStageChip } from "./ChipMenu";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
@@ -84,7 +85,7 @@ export function DealPage({ id }: { id: string }) {
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{d.title || "—"}</h1><span className="text-[14px] text-muted" title={d.id}>· {dealNo(d)}</span><span className={chip}>{t.deal[d.deal as keyof typeof t.deal]}</span></div>
           <div className="mt-[2px] truncate text-[13px] text-text"><Link href={`${crm.base}/c/${cl.id}`} className="font-medium text-blue-2 hover:underline">{cl.name}</Link> · {clientNo(cl)}{cl.phone ? ` · ${cl.phone}` : ""}{owner ? ` · ${owner.name}` : ""}</div>
         </div>
-        <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage}</span><Select value={d.stageId ?? ""} onChange={move} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} size="sm" className="w-[180px]" disabled={ro} /></span>
+        <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage}</span><DealStageChip deal={d} onChange={move} disabled={ro} size="md" /></span>
         {crm.me.members.length > 1 && <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.owner}</span><Select value={d.ownerId ?? ""} onChange={async (v) => { setData((x) => (x ? { ...x, deal: { ...x.deal, ownerId: v || null } } : x)); try { await patchDealOwner(d.id, v || null); } catch (e) { err(e); load(); } }} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} size="sm" menuWidth="auto" className="w-[170px]" disabled={ro} /></span>}
         <div className="text-[18px] font-semibold text-ink">{money(d.amount) ?? "—"}</div>
         <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>

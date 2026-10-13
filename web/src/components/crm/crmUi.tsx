@@ -104,6 +104,8 @@ export function reqSummary(kind: RequestKind, fields: Record<string, unknown>): 
 }
 export const PRIO_COLOR: Record<Priority, string> = { hot: "#e5484d", warm: "#f5a623", cold: "#4d7cfe" };
 export const REQ_COLOR: Record<RequestKind, string> = { buy: "#4d7cfe", sell: "#22c15e", rent_out: "#7b4fd0", rent_in: "#0ea5a4" };
+/** Цвет типа сделки — как у типа заявки (купить = buy, снять = rent_in, посуточно — оранжевый, переуступка = rent_out). */
+export const DEAL_COLOR: Record<string, string> = { sale: "#4d7cfe", rent: "#0ea5a4", daily: "#f5a623", transfer: "#7b4fd0" };
 /** Название страны по ISO-2 на языке интерфейса (без справочника — Intl). */
 export function countryName(code: string | null | undefined, lang: Lang): string {
   if (!code) return "";

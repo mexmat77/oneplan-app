@@ -4,6 +4,7 @@
 // (компакт / развёрнуто), сохранённые виды с числами, строка этапов с числами, таблица с двухстрочными ячейками
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
 import Link from "next/link";
+import { menuPos } from "./ChipMenu";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
@@ -407,14 +408,6 @@ function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: 
   );
 }
 
-/** Позиция fixed-меню под триггером: не вылезать за правый край, при нехватке места снизу — открыть вверх. */
-function menuPos(rect: { left: number; top: number; bottom: number } | null, w: number, h: number): React.CSSProperties {
-  if (!rect) return { position: "fixed", zIndex: 600 };
-  const vw = window.innerWidth || document.documentElement.clientWidth || 1600, vh = window.innerHeight || document.documentElement.clientHeight || 1000;
-  const left = Math.max(8, Math.min(rect.left, vw - w - 8));
-  const up = rect.bottom + h > vh && rect.top - h > 0;
-  return up ? { position: "fixed", zIndex: 600, left, bottom: vh - rect.top + 4 } : { position: "fixed", zIndex: 600, left, top: rect.bottom + 4 };
-}
 /** Чип этапа клиента с меню «Сменить статус» (как в современных CRM — прямо из списка). */
 export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
