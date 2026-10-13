@@ -12,6 +12,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { uploadPhotos } from "@/lib/photos";
 import { grossArea, type Listing, type ListingStatus, type Realtor } from "@/lib/types";
 import { clearLocalListings, getLocalListings, keepLocalCopy, markRemoteLoaded, seedExpMap, setListingWriteHook, setRemoteListings, getRemoteListings } from "./listings";
+import { seedNotes, setNoteHook } from "./notes";
 import { seedFavs, setFavHook } from "./prefs";
 import { seedSelections, setSelectionHook, slugOf, type Selection } from "./selections";
 import { seedReqs, setReqHook, type BaseRequest, type SavedSearch } from "./reqs";
@@ -62,7 +63,19 @@ async function loadListings() {
   const { data, error } = await sb.from("listings").select("id, owner_id, status, price, photos, cover_url, exports, data, updated_at, short_id").order("created_at", { ascending: false });
   if (error) { console.warn("[realtor sync] listings:", error.message); markRemoteLoaded(); return; }
   const rows = (data ?? []) as ListingRow[];
-  setRemoteListings(rows.map(rowToListing), true);
+  const list = rows.map(rowToListing);
+  // История цен — из таблицы price_history (пишет триггер базы); в `ph` только когда цена менялась (13.10.2026,
+  // «обновил цену, а старой цены и движения не видно»): страница объекта и карточка показывают прежнюю цену и снижение.
+  try {
+    const { data: ph } = await sb.from("price_history").select("listing_id, price, changed_at").order("changed_at", { ascending: true }).limit(20000);
+    const byId = new Map<string, [string, number][]>();
+    for (const r of (ph ?? []) as { listing_id: string; price: number; changed_at: string }[]) {
+      const d = new Date(r.changed_at); const ds = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+      const arr = byId.get(r.listing_id) ?? []; if (!arr.length || arr[arr.length - 1][1] !== Number(r.price)) arr.push([ds, Number(r.price)]); byId.set(r.listing_id, arr);
+    }
+    for (const o of list) { const arr = byId.get(o.id); if (arr && arr.length >= 2) o.ph = arr; }
+  } catch (e) { console.warn("[realtor sync] price_history:", (e as Error).message); }
+  setRemoteListings(list, true);
   const exp: Record<string, Record<string, boolean>> = {};
   rows.forEach((r) => { if (r.exports && Object.keys(r.exports).length) exp[r.id] = r.exports; });
   if (Object.keys(exp).length) seedExpMap(exp);
@@ -101,6 +114,13 @@ async function loadFavs() {
   if (!sb) return;
   const { data } = await sb.from("favorites").select("listing_id").eq("user_id", me);
   seedFavs((data ?? []).map((r) => r.listing_id as string));
+}
+// личные заметки к объектам (listing_notes, 0029)
+async function loadNotes() {
+  if (!sb) return;
+  const { data, error } = await sb.from("listing_notes").select("listing_id, text").eq("user_id", me);
+  if (error) { console.warn("[realtor sync] notes:", error.message); return; }
+  seedNotes(Object.fromEntries((data ?? []).map((r) => [r.listing_id as string, r.text as string])));
 }
 
 // ---------- подборки ----------
@@ -151,6 +171,10 @@ const err = (what: string) => (e: { message: string } | null) => { if (e) showTo
 export function startRealtorSync(meId: string) {
   if (started || !hasSupabaseEnv() || !meId || typeof window === "undefined") return;
   started = true; me = meId; sb = createClient();
+  setNoteHook((id, text) => {
+    const q = text ? sb!.from("listing_notes").upsert({ user_id: me, listing_id: id, text, updated_at: new Date().toISOString() }) : sb!.from("listing_notes").delete().eq("user_id", me).eq("listing_id", id);
+    void q.then(({ error }) => err("Заметка не сохранена")(error));
+  });
   setListingWriteHook({
     upsert: (o) => { void upsertListing(o); },
     status: (id, st) => { void sb!.from("listings").update({ status: st, updated_at: new Date().toISOString() }).eq("id", id).then(({ error }) => err("Статус не сохранён")(error)); },
@@ -172,7 +196,7 @@ export function startRealtorSync(meId: string) {
     reply: (reqId, listingId) => { void sb!.from("request_replies").upsert({ request_id: reqId, listing_id: listingId, by_id: me }).then(({ error }) => err("Ответ не сохранён")(error)); },
   });
   void (async () => {
-    await Promise.all([loadListings(), loadProfiles(), loadFavs(), loadSelections(), loadReqs()]);
+    await Promise.all([loadListings(), loadProfiles(), loadFavs(), loadSelections(), loadReqs(), loadNotes()]);
     await migrateLocal();
   })();
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { void loadListings(); void loadReqs(); } });

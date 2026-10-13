@@ -1,9 +1,26 @@
 import { ClientView } from "@/components/sel/ClientView";
-import { loadPublicSelection } from "@/lib/selectionsPublic";
+import type { Metadata } from "next";
+import { loadPublicSelection, selectionSummary } from "@/lib/selectionsPublic";
 
 // Публичная страница подборки: данные из базы грузит сервер (без входа); если подборки в базе нет (демо-режим, локальные
 // подборки до переезда) — клиент ищет её в своём сторе, как раньше. `?preview=1` — предпросмотр риэлтора.
 export const dynamic = "force-dynamic";
+
+// Превью ссылки в Telegram/WhatsApp (13.10.2026, «просто ссылки — некрасиво»): заголовок, описание и картинка
+// (app/s/[slug]/opengraph-image.tsx — обложка первого объекта, число объектов, цены, риэлтор).
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const data = await loadPublicSelection(slug);
+  if (!data) return { title: "OnePlan — подборка", robots: { index: false } };
+  const sum = selectionSummary(data);
+  return {
+    title: sum.title,
+    description: sum.description,
+    robots: { index: false, follow: false }, // персональная ссылка клиента — не для поисковиков
+    openGraph: { title: sum.title, description: sum.description, type: "website", siteName: "OnePlan", url: `/s/${slug}`, images: [{ url: `/s/${slug}/opengraph-image`, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title: sum.title, description: sum.description, images: [`/s/${slug}/opengraph-image`] },
+  };
+}
 
 export default async function SelectionPublicPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> }) {
   const { slug } = await params;

@@ -427,6 +427,7 @@
     "sortExp": "Pricier",
     "empty": "Nothing found — adjust the filters",
     "fav": "Favorite",
+    "note": "My note",
     "saveSearch": "Save search",
     "reset": "Reset all",
     "loading": "Loading more…",
@@ -607,6 +608,10 @@
     "aiFrom": "Description translated by AI, original:",
     "st": "Listing status",
     "ph": "Price history",
+    "noteT": "My note",
+    "noteS": "Visible only to you: what you liked, what to clarify, what the owner said.",
+    "notePh": "E.g.: price negotiable, keys with the neighbour, show to the Ivanovs first…",
+    "noteSaved": "Saved",
     "dropped": "Price reduced",
     "commShort": "Partner",
     "keyT": "Key parameters",
@@ -1004,6 +1009,14 @@
     "dev_status": {
       "t": "{who} changed a status",
       "s": "{obj} · {unit} → {to}"
+    },
+    "price_down": {
+      "t": "Price cut by {pct}%: {title}",
+      "s": "{old} → {new} {cur} · a listing from your favourites"
+    },
+    "price_up": {
+      "t": "Price up by {pct}%: {title}",
+      "s": "{old} → {new} {cur} · a listing from your favourites"
     },
     "dev_price": {
       "t": "{who} changed a price",

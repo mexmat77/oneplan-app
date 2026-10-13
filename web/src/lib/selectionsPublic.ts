@@ -7,6 +7,7 @@ import type { Listing } from "@/lib/types";
 import type { Profile } from "@/store/profile";
 import type { Selection } from "@/store/selections";
 import { trPhone } from "@/lib/phone";
+import { getSeedListings } from "@/lib/seed";
 
 export type PublicSelection = { s: Selection; listings: Listing[]; owner: Profile };
 const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -37,4 +38,25 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
     waFound: true, tgFound: true, tgAdded: false, waOn: !!prof?.wa_on, tgOn: !!prof?.tg_on, tgLogin: prof?.tg_login ?? "", vbOn: !!prof?.viber_on, mxOn: !!prof?.max_on, mxId: prof?.max_id ?? "", wcOn: !!prof?.wechat_on, wcId: prof?.wechat_id ?? "", tfaOn: false,
   };
   return { s, listings, owner };
+}
+
+/** Текст для превью ссылки и OG-картинки: «Подборка для Ивана · 5 объектов», цены, районы, риэлтор. */
+export function selectionSummary(d: PublicSelection) {
+  // демо-объекты прототипа (id не uuid) сервер не грузит — для превью берём их из seed, как клиент
+  const seedById = new Map(getSeedListings().map((o) => [o.id, o]));
+  const all: Listing[] = d.s.items.map((id) => d.listings.find((o) => o.id === id) ?? seedById.get(id)).filter((o): o is Listing => !!o);
+  const n = all.length;
+  const nounRu = (k: number) => (k % 10 === 1 && k % 100 !== 11 ? "объект" : k % 10 >= 2 && k % 10 <= 4 && (k % 100 < 10 || k % 100 >= 20) ? "объекта" : "объектов");
+  const who = d.s.name?.trim();
+  const title = `${who ? `Подборка для ${who}` : d.s.title?.trim() || "Подборка объектов"} · ${n} ${nounRu(n)}`;
+  const prices = all.map((o) => o.price).filter((p) => p > 0).sort((a, b) => a - b);
+  const cur = all[0]?.cur ?? "TRY";
+  const sym = cur === "EUR" ? "€" : cur === "USD" ? "$" : "₺";
+  const fmtP = (v: number) => `${Math.round(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ${sym}`;
+  const priceTxt = prices.length ? (prices.length > 1 && prices[0] !== prices[prices.length - 1] ? `${fmtP(prices[0])} – ${fmtP(prices[prices.length - 1])}` : fmtP(prices[0])) : "";
+  const places = Array.from(new Set(all.map((o) => (o.loc?.TR || o.loc?.EN || o.loc?.RU || "").split(",")[0]?.trim()).filter(Boolean) as string[])).slice(0, 2).join(" · "); // названия мест — латиницей по-турецки (правило пользователя)
+  const realtor = [d.owner.name, d.owner.agency].filter(Boolean).join(" · ");
+  const description = [priceTxt, places, realtor ? `Подготовил(а) ${realtor}` : ""].filter(Boolean).join(" · ") + ". Фото, описания и контакты — по ссылке.";
+  const photos = all.map((o) => o.photos?.[0] || o.img).filter((u): u is string => !!u).slice(0, 3);
+  return { title, description, n, priceTxt, places, realtor, photos, who };
 }

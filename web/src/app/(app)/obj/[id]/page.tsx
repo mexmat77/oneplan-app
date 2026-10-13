@@ -23,6 +23,7 @@ import { getPrevScreen, removeListing, setStOver, useAllListings, useListingMeta
 import { useRole } from "@/store/role";
 import { oldPrice, type ListingStatus } from "@/lib/types";
 import { Gallery } from "@/components/obj/Gallery";
+import { ListingNote } from "@/components/obj/ListingNote";
 import { ExportModal, expCount } from "@/components/obj/ExportModal";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
@@ -211,6 +212,9 @@ export default function ObjPage() {
               </div>
             </Card>
           )}
+
+          {/* личная заметка риэлтора — видна только ему (13.10.2026) */}
+          <div className="mt-[18px]"><ListingNote id={o.id} /></div>
 
           <Card className="mt-[18px]">
             <H2>{t.obj.descT}</H2>

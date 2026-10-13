@@ -17,6 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://one-plan.pro"), // абсолютные og:image для превью ссылок в мессенджерах
   title: "OnePlan — Риэлторы",
   description: "Закрытая база риэлторов: объекты, подборки и чат — только для участников.",
 };

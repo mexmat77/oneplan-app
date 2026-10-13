@@ -427,6 +427,7 @@
     "sortExp": "Önce pahalı",
     "empty": "Sonuç yok — filtreleri değiştirin",
     "fav": "Favorilere",
+    "note": "Notum",
     "saveSearch": "Aramayı kaydet",
     "reset": "Tümünü temizle",
     "loading": "Daha fazla yükleniyor…",
@@ -607,6 +608,10 @@
     "aiFrom": "Açıklama YZ ile çevrildi, orijinal:",
     "st": "İlan durumu",
     "ph": "Fiyat geçmişi",
+    "noteT": "Notum",
+    "noteS": "Yalnızca siz görürsünüz: neyi beğendiniz, neyi netleştirmeli, mal sahibi ne dedi.",
+    "notePh": "Örn.: pazarlık mümkün, anahtar komşuda, önce İvanov'lara gösterilecek…",
+    "noteSaved": "Kaydedildi",
     "dropped": "Fiyat düştü",
     "commShort": "Partnere",
     "keyT": "Temel özellikler",
@@ -1004,6 +1009,14 @@
     "dev_status": {
       "t": "{who} durumu değiştirdi",
       "s": "{obj} · {unit} → {to}"
+    },
+    "price_down": {
+      "t": "Fiyat %{pct} düştü: {title}",
+      "s": "{old} → {new} {cur} · favorilerinizdeki ilan"
+    },
+    "price_up": {
+      "t": "Fiyat %{pct} arttı: {title}",
+      "s": "{old} → {new} {cur} · favorilerinizdeki ilan"
     },
     "dev_price": {
       "t": "{who} fiyatı değiştirdi",

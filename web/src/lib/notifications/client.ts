@@ -71,6 +71,7 @@ const STYLE: Record<string, [string, string, string]> = {
   report_new: ["ti-flag", "#e5484d", "#fdecef"], join_registered: ["ti-user-check", "#0f9d6b", "#e4f6ee"],
   access_approved: ["ti-circle-check", "#0f9d6b", "#e4f6ee"], access_restored: ["ti-circle-check", "#0f9d6b", "#e4f6ee"], report_resolved: ["ti-flag-check", "#0f9d6b", "#e4f6ee"],
   invite_accepted: ["ti-user-check", "#7b4fd0", "#f2ecfb"], team_added: ["ti-building-community", "#4d7cfe", "#eef3ff"], role_changed: ["ti-shield-check", "#7b4fd0", "#f2ecfb"],
+  price_down: ["ti-trending-down", "#0f9d6b", "#e4f6ee"], price_up: ["ti-trending-up", "#d98a1e", "#fdf2e4"],
   dev_status: ["ti-refresh", "#7b4fd0", "#f2ecfb"], dev_price: ["ti-tag", "#4d7cfe", "#eef3ff"], dev_newobj: ["ti-building-plus", "#e5484d", "#fdecef"],
 };
 const HREF: Record<string, (p: Record<string, string | number | null>) => string | null> = {
@@ -78,11 +79,14 @@ const HREF: Record<string, (p: Record<string, string | number | null>) => string
   access_approved: () => "/catalog", access_restored: () => "/catalog", report_resolved: () => null, invite_accepted: () => "/admin/users", team_added: (p) => (p.href as string) || "/dev", role_changed: (p) => (p.href as string) || "/catalog",
   dev_status: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"), dev_price: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"), dev_newobj: (p) => (p.objId ? `/dev/objects/${p.objId}` : "/dev/objects"),
   crm_lead: (p) => (p.href ? String(p.href) : "/crm"),
+  price_down: (p) => (p.id ? `/obj/${p.id}` : "/favs"), price_up: (p) => (p.id ? `/obj/${p.id}` : "/favs"),
   listing_transfer: (p) => (p.id ? `/obj/${p.id}` : "/mine"), client_transfer: (p) => (p.href ? String(p.href) : "/crm/clients"),
 };
 export type NtfDict = Record<string, { t: string; s: string }>;
 
-const fill = (tpl: string, p: Record<string, string | number | null>) => tpl.replace(/\{(\w+)\}/g, (_m, k) => String(p[k] ?? "")).replace(/\s+·\s*$/, "").trim();
+// числа ≥ 1000 (цены) — с разделителями групп, как везде в интерфейсе
+const fmtV = (v: string | number | null) => (typeof v === "number" && Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("ru-RU").replace(/\u00a0/g, "\u202f") : String(v ?? ""));
+const fill = (tpl: string, p: Record<string, string | number | null>) => tpl.replace(/\{(\w+)\}/g, (_m, k) => fmtV(p[k])).replace(/\s+·\s*$/, "").trim();
 
 export function renderNtf(r: NtfRow, dict: NtfDict): NtfView {
   const d = dict[r.kind] ?? { t: r.kind, s: "" };

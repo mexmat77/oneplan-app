@@ -7,6 +7,7 @@ export type NtfKind =
   | "req_new" | "lead_new" | "unblock_req" | "report_new" | "join_registered"            // админам платформы
   | "access_approved" | "access_restored" | "report_resolved" | "invite_accepted" | "team_added" // пользователю
   | "dev_status" | "dev_price" | "dev_newobj"                                              // команде застройщика
+  | "price_down" | "price_up"                                                            // избранное: цена объявления изменилась (триггер 0029)
   | "crm_lead"                                                                              // CRM: заявка с внешнего сайта
   | "listing_transfer" | "client_transfer"                                                 // передача объекта / клиента риэлтору
   | "role_changed";                                                                         // роль в организации изменена

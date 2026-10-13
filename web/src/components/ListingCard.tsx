@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { IconCheck, IconFolderPlus, IconHeart, IconHeartFilled, IconLayoutGrid, IconMapPin, IconRuler, IconStairs, IconWorldUpload } from "@tabler/icons-react";
+import { IconCheck, IconFolderPlus, IconHeart, IconHeartFilled, IconLayoutGrid, IconMapPin, IconNote, IconRuler, IconStairs, IconWorldUpload } from "@tabler/icons-react";
+import { useNote } from "@/store/notes";
 import { useI18n } from "@/i18n/provider";
 import { eqOf, fmt } from "@/lib/money";
 import { useRealtor } from "@/store/realtors";
@@ -30,6 +31,7 @@ export function ListingCard({ o, currentUser }: { o: Listing; currentUser?: stri
   const [expOpen, setExpOpen] = useState(false);
   const inSel = sel.includes(o.id);
   const fav = favs.includes(o.id);
+  const note = useNote(o.id); // личная заметка риэлтора (13.10.2026) — жёлтый значок с текстом в подсказке
   const owner = realtorOf(o.owner);
   const isMine = o.owner === (currentUser ?? meId);
   const st = o.st;
@@ -63,6 +65,11 @@ export function ListingCard({ o, currentUser }: { o: Listing; currentUser?: stri
         {inSel && (
           <span className="absolute bottom-[10px] left-[10px] inline-flex items-center gap-1 rounded-[7px] bg-blue-2 px-[10px] py-1 text-[10.5px] font-bold text-white">
             <IconCheck size={11} stroke={3} /> {t.sel.inSel}
+          </span>
+        )}
+        {note && (
+          <span title={note} className={`absolute bottom-[10px] ${inSel ? "left-[118px]" : "left-[10px]"} inline-flex max-w-[60%] items-center gap-1 truncate rounded-[7px] bg-[#fff3c4] px-[9px] py-1 text-[10.5px] font-bold text-[#8a6100]`}>
+            <IconNote size={11} stroke={2.5} /> <span className="truncate">{note}</span>
           </span>
         )}
       </Link>

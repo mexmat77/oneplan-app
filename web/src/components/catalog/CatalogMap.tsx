@@ -61,6 +61,10 @@ async function loadGeo(key: string, url: string, onDone: () => void) {
   onDone();
 }
 const openHref = (href: string) => { try { sessionStorage.setItem("opl-prev-screen", "catalog"); } catch {} window.open(href, "_blank", "noopener"); };
+// Планшет/телефон (нет hover): первый тап по пину показывает всплывашку-предпросмотр, второй тап по нему или тап по
+// всплывашке открывает объект (13.10.2026, замечание пользователя «на айпаде сразу открывается объект»). На компьютере —
+// предпросмотр при наведении, клик открывает, как было.
+const touchMode = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: none)").matches;
 
 // Пристыковка: страница прокручивается так, чтобы панель фильтров `[data-fsticky]` встала к верху окна (шапка при этом
 // прячется — `AppChrome`), затем высота карты = окно − верх карты.
@@ -75,6 +79,8 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
   const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const markers = useRef<Map<string, L.Marker | L.CircleMarker>>(new Map()); // пины по id — для тапа на планшете
+  const tapped = useRef<string | null>(null); // id пина после первого тапа (предпросмотр открыт)
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
   const sig = useRef("");
@@ -96,6 +102,18 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     map.current = m;
     if (process.env.NODE_ENV !== "production") (window as unknown as { __oplMap?: L.Map }).__oplMap = m; // отладка в браузере
     layer.current = L.layerGroup().addTo(m);
+    const onPinClick = (e: MouseEvent) => {
+      if (!touchMode()) return;
+      const a = (e.target as HTMLElement).closest?.("a.opl-pin[data-id]") as HTMLAnchorElement | null;
+      if (!a) return;
+      e.preventDefault(); e.stopPropagation();
+      const id = a.dataset.id || "";
+      if (tapped.current === id) { tapped.current = null; openHref(a.getAttribute("href") || "#"); return; }
+      tapped.current = id; markers.current.forEach((mk, k) => { if (k !== id) mk.closeTooltip(); });
+      markers.current.get(id)?.openTooltip();
+    };
+    el.addEventListener("click", onPinClick, true);
+    m.on("click", () => { tapped.current = null; markers.current.forEach((mk) => mk.closeTooltip()); });
     // Размер контейнера меняется (пристыковка, окно) → пересчёт карты; без таймеров — они стреляли по уже снятой карте.
     const ro = new ResizeObserver(() => { if (map.current === m) m.invalidateSize(); });
     ro.observe(el);
@@ -112,7 +130,7 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     window.addEventListener("resize", sync);
     const onResize = () => dock(wrapRef.current, setH);
     window.addEventListener("resize", onResize);
-    return () => { ro.disconnect(); window.removeEventListener("scroll", sync); window.removeEventListener("resize", sync); window.removeEventListener("resize", onResize); map.current = null; layer.current = null; sig.current = ""; m.remove(); };
+    return () => { el.removeEventListener("click", onPinClick, true); ro.disconnect(); window.removeEventListener("scroll", sync); window.removeEventListener("resize", sync); window.removeEventListener("resize", onResize); map.current = null; layer.current = null; sig.current = ""; m.remove(); };
   }, []);
   // Вход в режим карты и смена фильтров (меняется ряд чипов над картой) → пристыковать и пересчитать высоту.
   useEffect(() => { dock(wrapRef.current, setH); }, [mapIl, mapIlce, semtsKey]);
@@ -125,15 +143,17 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     const s = `${lvl}:${mapIl}:${mapIlce}:${semtsKey}:${tick}:${h}:${objs.map((o) => o.id).join(",")}`;
     if (s === sig.current) return;
     sig.current = s;
-    lg.clearLayers();
+    lg.clearLayers(); markers.current.clear(); tapped.current = null;
     const bump = () => { sig.current = ""; setTick((x) => x + 1); };
     const fmtP = fmtShort;
     const selOutlines: L.Layer[] = []; const grpLayers: L.Layer[] = [];
     let objReady = false, grpReady = false; // полигоны уровня загружены — кадр ставится один раз, без «моргания»
     const pinOf = (o: MapItem, ll: [number, number]) => {
       const cls = "opl-pin" + (o.st === "reserved" ? " res" : o.st === "sold" ? " sold" : "");
-      const mk = L.marker(ll, { icon: L.divIcon({ className: "", html: `<a class="${cls}" href="${o.href}" target="_blank" rel="noopener">${o.pin}</a>`, iconSize: undefined }) });
-      mk.bindTooltip(o.tip, { direction: "top", opacity: 1 });
+      const mk = L.marker(ll, { icon: L.divIcon({ className: "", html: `<a class="${cls}" href="${o.href}" target="_blank" rel="noopener" data-id="${o.id}">${o.pin}</a>`, iconSize: undefined }) });
+      mk.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
+      mk.on("tooltipopen", (e) => { const t = (e as L.TooltipEvent).tooltip.getElement(); if (t) { t.style.cursor = "pointer"; t.onclick = () => openHref(o.href); } }); // тап/клик по предпросмотру открывает объект
+      markers.current.set(o.id, mk);
       return mk;
     };
 
@@ -229,8 +249,15 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
       objs.forEach((o) => {
         lls.push(o.ll);
         const d = L.circleMarker(o.ll, { radius: 5.5, color: "#fff", weight: 1.5, fillColor: o.st === "sold" ? "#8a93a2" : o.st === "reserved" ? "#f0ad00" : "#3b5fd6", fillOpacity: 0.95 });
-        d.bindTooltip(o.tip, { direction: "top", opacity: 1 });
-        d.on("click", () => openHref(o.href));
+        d.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
+        d.on("tooltipopen", (e) => { const t = (e as L.TooltipEvent).tooltip.getElement(); if (t) { t.style.cursor = "pointer"; t.onclick = () => openHref(o.href); } });
+        d.on("click", (e) => {
+          if (!touchMode()) { openHref(o.href); return; }
+          L.DomEvent.stop(e);
+          if (tapped.current === o.id) { tapped.current = null; openHref(o.href); return; }
+          tapped.current = o.id; markers.current.forEach((mk, k) => { if (k !== o.id) mk.closeTooltip(); }); d.openTooltip();
+        });
+        markers.current.set(o.id, d);
         lg.addLayer(d);
       });
     }
