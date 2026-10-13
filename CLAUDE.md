@@ -69,7 +69,8 @@
   (DEV_AUTH_BYPASS) всё по-прежнему в localStorage. Владельцы: `store/realtors.ts` (`useRealtor()` = демо `REALTORS` + `profiles`),
   свой id — `useMeId()`/`getMeId()` из `store/profile` ("me" в демо). Профиль вошедшего для SSR идёт через контекст `ProfileCtx`
   (`ProfileInit` в `(app)/layout` ОБОРАЧИВАЕТ дерево): модульная переменная стора на сервере общая для всех запросов и не
-  инициализируется, из-за чего HTML был с демо-именем и гидрация падала (10.10.2026) — `useProfile`/`useMeId` берут серверный снимок из контекста. Публичная подборка `/s/<slug>`: сервер читает базу сервисным
+  инициализируется, из-за чего HTML был с демо-именем и гидрация падала (10.10.2026) — `useProfile`/`useMeId` берут серверный снимок из контекста. ЛЮБОЙ layout, где есть `AppChrome`/`TopBar`/`UserMenu` риэлторского вида, ОБЯЗАН оборачивать дерево в `ProfileInit`
+  (13.10.2026: `/admin/*` был без него — у Константина в «Управлении» показывался демо «Alexander Morozov / AM Estate» с его реальной почтой). Публичная подборка `/s/<slug>`: сервер читает базу сервисным
   ключом (`lib/selectionsPublic.ts`), реакции/просмотры клиента — `app/s/actions.ts`; каналы связи риэлтора теперь персистятся в
   `profiles` (wa_on, tg_on, …) через `updateMyProfile`. Тестовый риэлтор для проверок на localhost: test-realtor@one-plan.pro
   (вход magic-link через `scratchpad/magic.mjs`, без пароля). Что ещё в localStorage: черновики формы, папка подборки, «назад».
