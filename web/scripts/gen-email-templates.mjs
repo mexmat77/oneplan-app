@@ -26,16 +26,16 @@ const T = {
   magic_link: {
     type: "magiclink",
     subject: { RU: "Вход в OnePlan", EN: "Sign in to OnePlan", TR: "OnePlan'a giriş" },
-    RU: { h: "Вход в OnePlan", p: "Нажмите кнопку, чтобы войти без пароля.", btn: "Войти", note: "Ссылка одноразовая и действует 1 час. Если вы не запрашивали вход, проигнорируйте письмо." },
-    EN: { h: "Sign in to OnePlan", p: "Click the button to sign in without a password.", btn: "Sign in", note: "The link is single-use and valid for 1 hour. If you did not request it, ignore this e-mail." },
-    TR: { h: "OnePlan'a giriş", p: "Şifresiz giriş yapmak için düğmeye tıklayın.", btn: "Giriş yap", note: "Bağlantı tek kullanımlıktır ve 1 saat geçerlidir. Talep etmediyseniz yok sayın." },
+    RU: { h: "Вход в OnePlan", p: "Нажмите кнопку, чтобы войти без пароля.", btn: "Войти", note: "Ссылка одноразовая и действует 24 часа. Если вы не запрашивали вход, проигнорируйте письмо." },
+    EN: { h: "Sign in to OnePlan", p: "Click the button to sign in without a password.", btn: "Sign in", note: "The link is single-use and valid for 24 hours. If you did not request it, ignore this e-mail." },
+    TR: { h: "OnePlan'a giriş", p: "Şifresiz giriş yapmak için düğmeye tıklayın.", btn: "Giriş yap", note: "Bağlantı tek kullanımlıktır ve 24 saat geçerlidir. Talep etmediyseniz yok sayın." },
   },
   recovery: {
     type: "recovery",
     subject: { RU: "Сброс пароля OnePlan", EN: "Reset your OnePlan password", TR: "OnePlan şifre sıfırlama" },
-    RU: { h: "Сброс пароля OnePlan", p: "Вы запросили сброс пароля. Нажмите кнопку и задайте новый.", btn: "Задать новый пароль", note: "Ссылка действует 1 час. Если это были не вы, ничего делать не нужно — пароль останется прежним." },
-    EN: { h: "Reset your OnePlan password", p: "You asked to reset your password. Click the button and choose a new one.", btn: "Set a new password", note: "The link is valid for 1 hour. If it wasn't you, no action is needed — your password stays the same." },
-    TR: { h: "OnePlan şifre sıfırlama", p: "Şifre sıfırlama talep ettiniz. Düğmeye tıklayın ve yeni şifre belirleyin.", btn: "Yeni şifre belirle", note: "Bağlantı 1 saat geçerlidir. Siz değilseniz bir şey yapmanıza gerek yok — şifreniz aynı kalır." },
+    RU: { h: "Сброс пароля OnePlan", p: "Вы запросили сброс пароля. Нажмите кнопку и задайте новый.", btn: "Задать новый пароль", note: "Ссылка действует 24 часа. Если это были не вы, ничего делать не нужно — пароль останется прежним." },
+    EN: { h: "Reset your OnePlan password", p: "You asked to reset your password. Click the button and choose a new one.", btn: "Set a new password", note: "The link is valid for 24 hours. If it wasn't you, no action is needed — your password stays the same." },
+    TR: { h: "OnePlan şifre sıfırlama", p: "Şifre sıfırlama talep ettiniz. Düğmeye tıklayın ve yeni şifre belirleyin.", btn: "Yeni şifre belirle", note: "Bağlantı 24 saat geçerlidir. Siz değilseniz bir şey yapmanıza gerek yok — şifreniz aynı kalır." },
   },
   confirmation: {
     type: "signup",

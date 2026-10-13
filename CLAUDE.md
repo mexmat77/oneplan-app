@@ -347,7 +347,10 @@
   (язык — из user metadata `lang`, без него письмо на трёх языках). Загружаются и SMTP настраивается через Management API
   (`SUPABASE_ACCESS_TOKEN` в `.env.local`, PATCH `/v1/projects/<ref>/config/auth`); SMTP — Resend (`RESEND_API_KEY`), отправитель
   «OnePlan <noreply@one-plan.pro>», домен one-plan.pro подтверждён в Resend 07.10.2026. На free-тарифе Supabase шаблоны редактируются
-  только при своём SMTP. Подробности — `web/supabase/email-templates/README.md`. Собственные письма (ссылка-приглашение `/join/<code>`,
+  только при своём SMTP. Подробности — `web/supabase/email-templates/README.md`. СРОК ССЫЛОК (13.10.2026, у Ольги «Email link is invalid or has
+  expired» через 66 минут после приглашения): `mailer_otp_exp` в конфиге Auth был 3600 с (по умолчанию), письма обещали 24 часа —
+  поднят до 86400 (максимум Supabase) через Management API; тексты magic_link/recovery тоже «24 часа». Заливка шаблонов —
+  `node scripts/upload-email-templates.mjs` (после каждого `gen-email-templates.mjs`). Собственные письма (ссылка-приглашение `/join/<code>`,
   повторное приглашение из админки `resendInvite`) шлёт `lib/mail.ts` через Resend API по `lib/mail/templates.generated.ts` (тот же генератор).
 - Админка на одних данных (07.10.2026): «Управление» (`/admin/*`) и экран прототипа «Риэлторы» (`/rls`) читают Supabase:
   `app/(app)/rls/page.tsx` (server) грузит profiles/agencies/reports/invites → `components/rls/RlsScreen.tsx` (`remote`), без ключей —
