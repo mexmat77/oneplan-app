@@ -29,7 +29,7 @@ export function DealsBoard() {
   const ro = crm.me.access !== "full";
   const [deals, setDeals] = useState<Deal[] | null>(() => cacheGet<Deal[]>(`${crm.base}:deals`) ?? null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string; roles?: string[] }[]>([]);
   const viewPref = usePref(LS);
   const view: "board" | "list" = viewPref === "list" ? "list" : "board";
   const setView = (v: "board" | "list") => setPref(LS, v);
@@ -42,7 +42,7 @@ export function DealsBoard() {
   const load = useCallback(() => {
     listDeals().then((v) => setDeals(cacheSet(`${crm.base}:deals`, v))).catch(() => setDeals([]));
     listTasks(true).then(setTasks).catch(() => {});
-    listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name })))).catch(() => {});
+    listClients({}).then((l) => setClients(l.map((x) => ({ id: x.id, name: x.name, roles: x.roles })))).catch(() => {});
   }, [crm.base]);
   useEffect(() => { load(); }, [load]);
   const err = (e: unknown) => crmError(e, c.errSave, c.errReadonly);

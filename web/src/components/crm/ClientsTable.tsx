@@ -7,7 +7,7 @@ import Link from "next/link";
 import { menuPos } from "./ChipMenu";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconCheck, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, crmClientsPage, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
@@ -26,10 +26,21 @@ import { ClientModal } from "./ClientModal";
 import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref, fmtDT } from "./crmUi";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
-type Flt = { owner: string; branch: string; source: string; role: string; cstage: string; dealStage: string; priority: string; lang: string; kind: string; il: string; budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; tag: string; channel: string };
+/** Поля-списки фильтра — МУЛЬТИВЫБОР «любое из» (13.10.2026, «покупает и арендует», «в работе и приедет»); бюджет и даты — диапазоны. */
+type SelKey = "owner" | "branch" | "source" | "role" | "cstage" | "dealStage" | "priority" | "lang" | "kind" | "il" | "tag" | "channel";
+const SEL_KEYS: SelKey[] = ["owner", "branch", "source", "role", "cstage", "dealStage", "priority", "lang", "kind", "il", "tag", "channel"];
+type Flt = Record<SelKey, string[]> & { budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string };
 type SavedView = { id: string; name: string; flt: Flt; stage: string; view: View; sort: { key: SortKey; dir: 1 | -1 } };
 const MODE_LS = "opl-crm-clients-mode";
-const EMPTY_FLT: Flt = { owner: "", branch: "", source: "", role: "", cstage: "", dealStage: "", priority: "", lang: "", kind: "", il: "", budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", tag: "", channel: "" };
+const EMPTY_FLT: Flt = { owner: [], branch: [], source: [], role: [], cstage: [], dealStage: [], priority: [], lang: [], kind: [], il: [], tag: [], channel: [], budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "" };
+/** Сохранённое состояние (последний вид, сохранённые виды) могло быть записано, когда значения были одиночными строками. */
+function normFlt(p: unknown): Flt {
+  const o = (p && typeof p === "object" ? p : {}) as Record<string, unknown>; const out: Flt = { ...EMPTY_FLT };
+  for (const k of SEL_KEYS) { const v = o[k]; out[k] = Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : typeof v === "string" && v ? [v] : []; }
+  for (const k of ["budgetMin", "budgetMax", "createdFrom", "createdTo"] as const) out[k] = typeof o[k] === "string" ? (o[k] as string) : "";
+  return out;
+}
+const fltActive = (f: Flt) => SEL_KEYS.filter((k) => f[k].length).length + (f.budgetMin || f.budgetMax ? 1 : 0) + (f.createdFrom || f.createdTo ? 1 : 0);
 type SortKey = "name" | "activity" | "created" | "updated" | "stage" | "owner" | "source" | "next" | "region";
 const DENS_LS = "opl-crm-density";
 
@@ -51,7 +62,7 @@ export function ClientsTable() {
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [view, setView] = useState<View>(last.view ?? "all");
   const [stage, setStage] = useState<string>(last.stage ?? ""); // "" все, "none" нет сделок, "won"/"lost", иначе id этапа
-  const [flt, setFlt] = useState<Flt>({ ...EMPTY_FLT, ...(last.flt ?? {}) });
+  const [flt, setFlt] = useState<Flt>(() => normFlt(last.flt));
   const setF = (p: Partial<Flt>) => { setFlt((v) => ({ ...v, ...p })); setCurSaved(""); };
   const [filtersOpen, setFiltersOpen] = useState(false);
   const cacheKey = `${crm.base}:clients:${status}`;
@@ -67,7 +78,7 @@ export function ClientsTable() {
   const saved: SavedView[] = (() => { try { const v = JSON.parse(savedRaw || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
   const [curSaved, setCurSaved] = useState<string>(last.flt ? "" : "");
   const saveView = async () => { const name = window.prompt(c.tbl.viewName); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage, view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
-  const applySaved = (v: SavedView) => { setFlt({ ...EMPTY_FLT, ...v.flt }); setStage(v.stage); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
+  const applySaved = (v: SavedView) => { setFlt(normFlt(v.flt)); setStage(v.stage); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
   const deleteSaved = (id: string) => { setPref(viewsKey, JSON.stringify(saved.filter((x) => x.id !== id))); if (curSaved === id) setCurSaved(""); };
   const [drawer, setDrawer] = useState<string | null>(null);
   const [modal, setModal] = useState(false);
@@ -115,18 +126,19 @@ export function ClientsTable() {
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
     if (stage) r = r.filter((x) => stageOf(x) === stage);
-    if (flt.owner) r = r.filter((x) => x.ownerId === flt.owner);
-    if (flt.source) r = r.filter((x) => x.sourceId === flt.source);
-    if (flt.tag) r = r.filter((x) => x.tags.includes(flt.tag));
-    if (flt.branch) r = r.filter((x) => x.branchId === flt.branch);
-    if (flt.role) r = r.filter((x) => x.roles.includes(flt.role as Client["roles"][number]));
-    if (flt.cstage) r = r.filter((x) => x.stage === flt.cstage);
-    if (flt.dealStage) r = r.filter((x) => dealStageOf(x) === flt.dealStage);
-    if (flt.priority) r = r.filter((x) => (flt.priority === "none" ? !x.priority : x.priority === flt.priority));
-    if (flt.lang) r = r.filter((x) => x.lang === flt.lang);
-    if (flt.channel) r = r.filter((x) => x.channel === flt.channel);
-    if (flt.kind) r = r.filter((x) => x.requests.some((q) => q.kind === flt.kind));
-    if (flt.il) r = r.filter((x) => x.requests.some((q) => (q.fields.geo as { il?: string } | undefined)?.il === flt.il) || x.want.il === flt.il);
+    // каждое поле — «любое из выбранных»; разные поля — «и»
+    if (flt.owner.length) r = r.filter((x) => flt.owner.includes(x.ownerId ?? ""));
+    if (flt.source.length) r = r.filter((x) => flt.source.includes(x.sourceId ?? ""));
+    if (flt.tag.length) r = r.filter((x) => x.tags.some((g) => flt.tag.includes(g)));
+    if (flt.branch.length) r = r.filter((x) => flt.branch.includes(x.branchId ?? ""));
+    if (flt.role.length) r = r.filter((x) => x.roles.some((g) => flt.role.includes(g)));
+    if (flt.cstage.length) r = r.filter((x) => flt.cstage.includes(x.stage));
+    if (flt.dealStage.length) r = r.filter((x) => flt.dealStage.includes(dealStageOf(x)));
+    if (flt.priority.length) r = r.filter((x) => flt.priority.includes(x.priority ?? "none"));
+    if (flt.lang.length) r = r.filter((x) => flt.lang.includes(x.lang));
+    if (flt.channel.length) r = r.filter((x) => flt.channel.includes(x.channel ?? ""));
+    if (flt.kind.length) r = r.filter((x) => x.requests.some((q) => flt.kind.includes(q.kind)));
+    if (flt.il.length) r = r.filter((x) => x.requests.some((q) => flt.il.includes((q.fields.geo as { il?: string } | undefined)?.il ?? "")) || flt.il.includes(x.want.il ?? ""));
     const bMin = +flt.budgetMin.replace(/\D/g, "") || 0, bMax = +flt.budgetMax.replace(/\D/g, "") || 0;
     if (bMin || bMax) r = r.filter((x) => x.requests.some((q) => { const f = q.fields; const hi = Number(f.budgetMax ?? f.rentMax ?? f.priceList ?? f.rent ?? f.budgetMin ?? 0); const lo = Number(f.budgetMin ?? hi); return hi > 0 && (!bMin || hi >= bMin) && (!bMax || lo <= bMax); }));
     if (flt.createdFrom) r = r.filter((x) => x.createdAt >= flt.createdFrom);
@@ -159,7 +171,7 @@ export function ClientsTable() {
     const ids = [...sel];
     try { await bulkClients(ids, patch); setSel(new Set()); load(); if (patch.status) showUndo(fill(c.undo.archived, { n: ids.length }), async () => { await bulkClients(ids, { status: patch.status === "archived" ? "active" : "archived" }); load(); }, c.undo.undo); } catch (e) { err(e); }
   }
-  const activeFilters = Object.values(flt).filter(Boolean).length;
+  const activeFilters = fltActive(flt);
   const th = (label: string, key?: SortKey) => (
     <th key={label} onClick={key ? () => toggleSort(key) : undefined} className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted ${key ? "cursor-pointer select-none hover:text-ink" : ""}`}>
       <span className="inline-flex items-center gap-1">{label}{key && (sort.key === key ? <span className="text-blue-2">{sort.dir === 1 ? "▲" : "▼"}</span> : <IconArrowsSort size={12} className="opacity-40" />)}</span>
@@ -266,16 +278,19 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
 }
 
 /** Поле фильтра для «+ Фильтр»: подпись и способ ввода значения. */
-type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string }[] };
+type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string; color?: string }[] };
+/** Цвет роли — как у типа заявки (покупатель = buy, продавец = sell, арендодатель = rent_out, арендатор = rent_in). */
+const ROLE_COLOR: Record<string, string> = { buyer: REQ_COLOR.buy, seller: REQ_COLOR.sell, landlord: REQ_COLOR.rent_out, tenant: REQ_COLOR.rent_in };
+const GREY = "#8a93a2";
 function useFieldDefs(allTags: string[]): FieldDef[] {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
-  const opt = (list: readonly string[], names: Record<string, string>) => list.map((v) => ({ value: v, label: names[v] ?? v }));
+  const opt = (list: readonly string[], names: Record<string, string>, colors?: Record<string, string>) => list.map((v) => ({ value: v, label: names[v] ?? v, color: colors ? colors[v] ?? GREY : undefined }));
   const defs: FieldDef[] = [
-    { key: "role", label: c.client.roles, kind: "select", opts: opt(ROLES_F, c.roles) },
-    { key: "cstage", label: c.client.stage, kind: "select", opts: crm.cstages.map((x) => ({ value: x.key, label: stageName(x, t, lang) })) },
-    { key: "dealStage", label: c.tbl.dealStage, kind: "select", opts: [...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang) })), { value: "won", label: c.tbl.won }, { value: "lost", label: c.tbl.lost }, { value: "none", label: c.tbl.noStage }] },
-    { key: "priority", label: c.client.priority, kind: "select", opts: opt(PRIOS_F, c.prio) },
-    { key: "kind", label: c.rq.kind, kind: "select", opts: opt(KINDS_F, c.rq.kinds) },
+    { key: "role", label: c.client.roles, kind: "select", opts: opt(ROLES_F, c.roles, ROLE_COLOR) },
+    { key: "cstage", label: c.client.stage, kind: "select", opts: crm.cstages.map((x) => ({ value: x.key, label: stageName(x, t, lang), color: x.color ?? GREY })) },
+    { key: "dealStage", label: c.tbl.dealStage, kind: "select", opts: [...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang), color: x.color ?? GREY })), { value: "won", label: c.tbl.won, color: "#22c15e" }, { value: "lost", label: c.tbl.lost, color: "#e5484d" }, { value: "none", label: c.tbl.noStage, color: GREY }] },
+    { key: "priority", label: c.client.priority, kind: "select", opts: opt(PRIOS_F, c.prio, PRIO_COLOR as Record<string, string>) },
+    { key: "kind", label: c.rq.kind, kind: "select", opts: opt(KINDS_F, c.rq.kinds, REQ_COLOR as Record<string, string>) },
     { key: "il", label: c.want.il, kind: "select", opts: GEO.map((g) => ({ value: g.k, label: g.n })) },
     { key: "budget", label: c.client.budget, kind: "budget" },
     { key: "source", label: c.source, kind: "select", opts: crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) })) },
@@ -294,11 +309,59 @@ function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"],
   for (const d of defs) {
     if (d.kind === "budget") { if (flt.budgetMin || flt.budgetMax) out.push({ key: d.key, label: d.label, value: `${flt.budgetMin ? `≥ ${Number(flt.budgetMin).toLocaleString("ru-RU")}` : ""}${flt.budgetMin && flt.budgetMax ? " " : ""}${flt.budgetMax ? `≤ ${Number(flt.budgetMax).toLocaleString("ru-RU")}` : ""}` }); }
     else if (d.kind === "dates") { if (flt.createdFrom || flt.createdTo) out.push({ key: d.key, label: d.label, value: `${fmtD(flt.createdFrom) || "…"} – ${fmtD(flt.createdTo) || "…"}` }); }
-    else { const v = flt[d.key as keyof Flt]; if (v) out.push({ key: d.key, label: d.label, value: fltLabel(d.key as keyof Flt, v, t, crm, lang) }); }
+    else { const v = flt[d.key as SelKey]; if (v.length) { const names = v.map((x) => fltLabel(d.key as keyof Flt, x, t, crm, lang)); out.push({ key: d.key, label: d.label, value: names.slice(0, 2).join(", ") + (names.length > 2 ? ` +${names.length - 2}` : "") }); } }
   }
   return out;
 }
-const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMin: "", budgetMax: "" } : key === "created" ? { createdFrom: "", createdTo: "" } : ({ [key]: "" } as Partial<Flt>));
+const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMin: "", budgetMax: "" } : key === "created" ? { createdFrom: "", createdTo: "" } : ({ [key]: [] } as Partial<Flt>));
+/** Строка значения мультивыбора: чекбокс, цветная точка, подпись — одна и та же в «+ Фильтр», в пилюле и в панели. */
+function OptRow({ on, color, label, onClick }: { on: boolean; color?: string; label: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${on ? "bg-blue-tint text-sel-ink" : "text-ink hover:bg-bg-3"}`}>
+      <span className={`flex h-[15px] w-[15px] flex-none items-center justify-center rounded-[4px] border ${on ? "border-blue-2 bg-blue-2 text-white" : "border-line bg-surface"}`}>{on && <IconCheck size={11} stroke={3} />}</span>
+      {color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: color }} />}
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+/** Список значений поля-мультивыбора с поиском (при >8 вариантах), «Сбросить» и «Готово»; применяется сразу при каждом клике. */
+function MultiList({ def, flt, setF, onDone }: { def: FieldDef; flt: Flt; setF: (p: Partial<Flt>) => void; onDone: () => void }) {
+  const { t } = useI18n(); const c = t.crm;
+  const [q, setQ] = useState("");
+  const cur = flt[def.key as SelKey];
+  const opts = (def.opts ?? []).filter((o) => !q.trim() || o.label.toLowerCase().includes(q.trim().toLowerCase()));
+  const toggle = (v: string) => setF({ [def.key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] } as Partial<Flt>);
+  return (
+    <>
+      <div className="flex items-center justify-between px-2 pb-1 pt-1"><span className="text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</span>{cur.length > 0 && <button type="button" onClick={() => setF({ [def.key]: [] } as Partial<Flt>)} className="cursor-pointer text-[11px] font-medium text-muted hover:text-red">{c.tbl.clear}</button>}</div>
+      {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
+      <div className="max-h-[280px] overflow-y-auto">{opts.map((o) => <OptRow key={o.value} on={cur.includes(o.value)} color={o.color} label={o.label} onClick={() => toggle(o.value)} />)}</div>
+      <div className="mt-1 border-t border-line pt-1"><button type="button" onClick={onDone} className="flex h-8 w-full cursor-pointer items-center justify-center rounded-[5px] text-[13px] font-semibold text-blue-2 hover:bg-bg-3">{c.tbl.done}</button></div>
+    </>
+  );
+}
+/** Поле-мультивыбор в панели «Все фильтры»: триггер как у Select (подпись поля, выбранные значения с точками), список — fixed-меню. */
+function MultiField({ def, flt, setF }: { def: FieldDef; flt: Flt; setF: (p: Partial<Flt>) => void }) {
+  const [open, setOpen] = useState(false);
+  const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
+  useEscape(open, () => setOpen(false));
+  const cur = flt[def.key as SelKey];
+  const sel = cur.map((v) => def.opts?.find((o) => o.value === v)).filter((o): o is NonNullable<typeof o> => !!o);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={(e) => { const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom }); setOpen((v) => !v); }} className={`flex h-9 w-full cursor-pointer items-center gap-2 rounded-[6px] border bg-surface px-3 text-left text-[13px] ${open ? "border-blue" : "border-line hover:border-blue/60"}`}>
+        {sel.length === 0 ? <span className="flex-1 truncate text-muted">{def.label}</span> : (
+          <span className="flex min-w-0 flex-1 items-center gap-2"><span className="flex-none text-[11px] uppercase tracking-[.04em] text-muted">{def.label}</span><span className="flex min-w-0 flex-1 items-center gap-[6px] truncate">{sel.slice(0, 3).map((o) => <span key={o.value} className="inline-flex items-center gap-1 whitespace-nowrap">{o.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}{o.label}</span>)}{sel.length > 3 && <span className="text-muted">+{sel.length - 3}</span>}</span></span>
+        )}
+        {sel.length > 0 && <span className="flex-none rounded-full bg-blue-tint px-[6px] text-[11px] font-semibold text-sel-ink">{sel.length}</span>}
+        <IconChevronDown size={14} className="flex-none text-muted" />
+      </button>
+      {open && <div style={menuPos(rect, 300, 48 + Math.min(def.opts?.length ?? 0, 8) * 32 + 40)} className="w-[300px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]"><MultiList def={def} flt={flt} setF={setF} onDone={() => setOpen(false)} /></div>}
+    </div>
+  );
+}
 
 /** Строка фильтров как у Attio/Linear: пилюли условий + «+ Фильтр» → список полей → значение. */
 function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[] }) {
@@ -322,7 +385,7 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
         <span key={p.key} className="relative inline-flex h-7 items-center rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 text-[12.5px] text-sel-ink">
           <button type="button" onClick={() => { setOpen(open?.key === p.key ? null : { mode: "value", key: p.key, anchor: p.key }); setRange({ min: flt.budgetMin, max: flt.budgetMax }); }} className="cursor-pointer"><span className="text-sel-ink/70">{p.label}:</span> <span className="font-semibold">{p.value}</span></button>
           <button type="button" onClick={() => setF(clearField(p.key))} className="ml-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full hover:bg-white/60"><IconX size={12} /></button>
-          {open?.mode === "value" && open.anchor === p.key && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} pop={pop} item={item} />}
+          {open?.mode === "value" && open.anchor === p.key && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} />}
         </span>
       ))}
       <span className="relative">
@@ -333,26 +396,15 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
             <div className="max-h-[280px] overflow-y-auto">{fields.map((d) => <button key={d.key} type="button" onClick={() => pickField(d)} className={item(false)}>{d.label}</button>)}</div>
           </div>
         )}
-        {open?.mode === "value" && open.anchor === "+" && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} pop={pop} item={item} />}
+        {open?.mode === "value" && open.anchor === "+" && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} />}
       </span>
       {pills.length > 0 && <button type="button" onClick={reset} className="ml-1 cursor-pointer text-[12.5px] font-semibold text-muted hover:text-red">{c.tbl.clear}</button>}
     </div>
   );
 }
-function ValuePop({ def, flt, range, setRange, apply, pop, item }: { def: FieldDef; flt: Flt; range: { min: string; max: string }; setRange: (r: { min: string; max: string }) => void; apply: (p: Partial<Flt>) => void; pop: string; item: (on: boolean) => string }) {
+function ValuePop({ def, flt, range, setRange, apply, setF, close, pop }: { def: FieldDef; flt: Flt; range: { min: string; max: string }; setRange: (r: { min: string; max: string }) => void; apply: (p: Partial<Flt>) => void; setF: (p: Partial<Flt>) => void; close: () => void; pop: string }) {
   const { t } = useI18n(); const c = t.crm;
-  const [q, setQ] = useState("");
-  if (def.kind === "select") {
-    const cur = flt[def.key as keyof Flt];
-    const opts = (def.opts ?? []).filter((o) => !q.trim() || o.label.toLowerCase().includes(q.trim().toLowerCase()));
-    return (
-      <div className={pop}>
-        <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
-        {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
-        <div className="max-h-[280px] overflow-y-auto">{opts.map((o) => <button key={o.value} type="button" onClick={() => apply({ [def.key]: o.value } as Partial<Flt>)} className={item(cur === o.value)}>{o.label}</button>)}</div>
-      </div>
-    );
-  }
+  if (def.kind === "select") return <div className={pop}><MultiList def={def} flt={flt} setF={setF} onDone={close} /></div>;
   if (def.kind === "budget") return (
     <div className={`${pop} p-3`}>
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
@@ -370,33 +422,22 @@ function ValuePop({ def, flt, range, setRange, apply, pop, item }: { def: FieldD
 
 /** «Все фильтры» — панель справа блоками (клиент · команда и источник · заявка · даты); таблица остаётся на месте. */
 function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[]; onClose: () => void }) {
-  const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm; const f = c.tbl.flt;
+  const { t } = useI18n(); const c = t.crm; const f = c.tbl.flt;
   useEscape(true, onClose);
   const block = (title: string, children: React.ReactNode) => <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
-  const opt = (label: string, list: readonly string[], names: Record<string, string>) => [{ value: "", label }, ...list.map((v) => ({ value: v, label: names[v] ?? v }))];
-  const active = Object.values(flt).filter(Boolean).length;
+  const defs = useFieldDefs(allTags);
+  const F = (k: string) => { const d = defs.find((x) => x.key === k); return d ? <MultiField key={k} def={d} flt={flt} setF={setF} /> : null; };
+  const active = fltActive(flt);
   return (
     <>
       <div className="fixed inset-0 z-[300] bg-ink/20" onClick={onClose} />
       <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-screen w-[420px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
         <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={17} /></button></div>
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
-          {block(f.client, <>
-            <Select value={flt.role} onChange={(v) => setF({ role: v })} options={opt(c.client.roles, ROLES_F, c.roles)} size="sm" />
-            <Select value={flt.cstage} onChange={(v) => setF({ cstage: v })} options={[{ value: "", label: c.client.stage }, ...crm.cstages.map((x) => ({ value: x.key, label: stageName(x, t, lang) }))]} size="sm" />
-            <Select value={flt.dealStage} onChange={(v) => setF({ dealStage: v })} options={[{ value: "", label: c.tbl.dealStage }, ...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang) })), { value: "won", label: c.tbl.won }, { value: "lost", label: c.tbl.lost }, { value: "none", label: c.tbl.noStage }]} size="sm" />
-            <Select value={flt.priority} onChange={(v) => setF({ priority: v })} options={opt(c.client.priority, PRIOS_F, c.prio)} size="sm" />
-            <div className="grid grid-cols-2 gap-2"><Select value={flt.lang} onChange={(v) => setF({ lang: v })} options={[{ value: "", label: c.client.lang }, ...["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))]} size="sm" /><Select value={flt.channel} onChange={(v) => setF({ channel: v })} options={opt(c.client.channel, CHANNELS_F, c.channel)} size="sm" /></div>
-          </>)}
-          {block(f.team, <>
-            {crm.me.members.length > 1 && <Select value={flt.owner} onChange={(v) => setF({ owner: v })} options={[{ value: "", label: c.owner }, ...crm.me.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" />}
-            {crm.me.branches.length > 0 && <Select value={flt.branch} onChange={(v) => setF({ branch: v })} options={[{ value: "", label: c.client.branch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" />}
-            <Select value={flt.source} onChange={(v) => setF({ source: v })} options={[{ value: "", label: c.source }, ...crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) }))]} size="sm" />
-            <Select value={flt.tag} onChange={(v) => setF({ tag: v })} options={[{ value: "", label: c.tbl.tag }, ...allTags.map((g) => ({ value: g, label: g }))]} size="sm" disabled={!allTags.length} />
-          </>)}
+          {block(f.client, <>{F("role")}{F("cstage")}{F("dealStage")}{F("priority")}<div className="grid grid-cols-2 gap-2">{F("lang")}{F("channel")}</div></>)}
+          {block(f.team, <>{F("owner")}{F("branch")}{F("source")}{F("tag")}</>)}
           {block(f.request, <>
-            <Select value={flt.kind} onChange={(v) => setF({ kind: v })} options={opt(c.rq.kind, KINDS_F, c.rq.kinds)} size="sm" />
-            <Select value={flt.il} onChange={(v) => setF({ il: v })} options={[{ value: "", label: c.want.il }, ...GEO.map((g) => ({ value: g.k, label: g.n }))]} size="sm" searchable />
+            {F("kind")}{F("il")}
             <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetTo} className={inp} /></div>
           </>)}
           {block(f.dates, <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />)}

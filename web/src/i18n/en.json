@@ -1101,7 +1101,7 @@
       "kindCompany": "Company",
       "company": "Company name",
       "roles": "Client roles",
-      "stage": "Contact status",
+      "stage": "Client status",
       "priority": "Priority",
       "country": "Country of residence",
       "citizenship": "Citizenship",
@@ -1277,13 +1277,14 @@
       "other": "Other"
     },
     "set": {
-      "color": "Stage colour",
+      "color": "Colour",
       "customColor": "Custom colour",
       "up": "Move up",
       "down": "Move down",
       "stagesT": "Deal pipeline",
       "stagesS": "Stages of a deal on a specific property. “Won” and “Lost” close the deal.",
       "addStage": "Add stage",
+      "addStatus": "Add status",
       "stageName": "Name",
       "stageKind": "Type",
       "kindOpen": "Open",
@@ -1534,7 +1535,7 @@
         "noDeal": "No deal",
         "save": "+ Save view"
       },
-      "stageRow": "Stage:",
+      "stageRow": "Status:",
       "noStage": "No deals",
       "compact": "Compact",
       "expanded": "Expanded",

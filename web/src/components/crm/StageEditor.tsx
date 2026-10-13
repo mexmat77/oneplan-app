@@ -52,7 +52,7 @@ export function StageEditor({ scope, stages, onSaved }: { scope: StageScope; sta
         ))}
       </div>
       <div className="mt-3 flex gap-2">
-        <button type="button" disabled={ro} onClick={() => setSt((v) => [...v, { key: `s${Date.now()}`, name: {}, kind: "open", color: COLORS[v.length % COLORS.length] }])} className={btnS}><IconPlus size={14} /> {c.set.addStage}</button>
+        <button type="button" disabled={ro} onClick={() => setSt((v) => [...v, { key: `s${Date.now()}`, name: {}, kind: "open", color: COLORS[v.length % COLORS.length] }])} className={btnS}><IconPlus size={14} /> {scope === "client" ? c.set.addStatus : c.set.addStage}</button>
         <button type="button" disabled={ro || busy} onClick={save} className={btnP}>{c.set.save}</button>
       </div>
     </>

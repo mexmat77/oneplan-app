@@ -15,7 +15,11 @@ import { crmError, btnP, btnS, fromLocalInput, inp, lbl, stageName, taskKindName
 import { DuePicker } from "./DuePicker";
 import { DateField } from "@/components/ui/DateRange";
 
-type ClientOpt = { id: string; name: string };
+type ClientOpt = { id: string; name: string; roles?: string[] };
+// в сделке клиент — тот, кто покупает или снимает; продавцы и арендодатели — вторая сторона (13.10.2026, решение пользователя).
+// Клиент без ролей попадает в оба списка (роль не заполнена — не прятать).
+const isBuyer = (x: ClientOpt) => !x.roles?.length || x.roles.some((r) => r === "buyer" || r === "tenant");
+const isSeller = (x: ClientOpt) => !x.roles?.length || x.roles.some((r) => r === "seller" || r === "landlord");
 
 type DealProps = { open: boolean; deal: Deal | null; clients: ClientOpt[]; clientId?: string | null; requests?: { id: string; label: string }[]; briefs?: Briefs; onClose: () => void; onSaved: () => void };
 export function DealModal(props: DealProps) {
@@ -28,8 +32,8 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
   const dev = crm.me.ws.kind === "developer";
   // стороны (0027): юрлицо из настроек (реквизиты), продавец — клиент CRM с анкетой (у застройщика продавец — сама компания)
   const [companies, setCompanies] = useState<CompanyProfile[] | null>(null);
-  const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
-  useEffect(() => { let on = true; getCompanies().then((l) => { if (on) setCompanies(l); }).catch(() => { if (on) setCompanies([]); }); if (!dev) listClients({}).then((l) => { if (on) setSellers(l.map((x) => ({ id: x.id, name: x.name }))); }).catch(() => {}); return () => { on = false; }; }, [dev]);
+  const [sellers, setSellers] = useState<ClientOpt[]>([]);
+  useEffect(() => { let on = true; getCompanies().then((l) => { if (on) setCompanies(l); }).catch(() => { if (on) setCompanies([]); }); if (!dev) listClients({}).then((l) => { if (on) setSellers(l.map((x) => ({ id: x.id, name: x.name, roles: x.roles }))); }).catch(() => {}); return () => { on = false; }; }, [dev]);
   const [f, setF] = useState<DealInput>(() => deal
     ? { clientId: deal.clientId, title: deal.title, deal: deal.deal, amount: deal.amount, cur: deal.cur, stageId: deal.stageId, ownerId: deal.ownerId, listingId: deal.listingId, projectId: deal.projectId, unitUid: deal.unitUid, selectionId: deal.selectionId, sourceId: deal.sourceId, requestId: deal.requestId, companyProfileId: deal.companyProfileId, sellerClientId: deal.sellerClientId, commission: deal.commission, commissionKind: deal.commissionKind, deposit: deal.deposit, depositAt: deal.depositAt }
     : { clientId: clientId ?? clients[0]?.id ?? "", title: "", deal: "sale", amount: null, cur: "TRY", stageId: crm.stages.find((s) => s.kind === "open")?.id ?? null, ownerId: crm.me.meId, listingId: null, projectId: null, unitUid: null, selectionId: null, sourceId: null, requestId: requests?.[0]?.id ?? null, companyProfileId: null, sellerClientId: null, commission: null, commissionKind: "pct", deposit: null, depositAt: null });
@@ -62,8 +66,8 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       <Select value={f.companyProfileId ?? (companies?.find((x) => x.isDefault) ?? companies?.[0])?.id ?? ""} onChange={(v) => set({ companyProfileId: v || null })} placeholder={companies === null ? "…" : c.deal.noCompany} options={(companies ?? []).map((x) => ({ value: x.id, label: x.label || x.fields.name || "—" }))} disabled={companies === null} />
       {companies && companies.length === 0 && <div className="mt-1 text-[11.5px] text-[#a16207]">{c.deal.noCompanyHint}</div>}
       <div className={`mt-3 grid gap-2 ${dev ? "grid-cols-1" : "grid-cols-2 max-md:grid-cols-1"}`}>
-        <div><label className={lbl}>{c.deal.buyer}</label><Select value={f.clientId} onChange={(v) => set({ clientId: v })} placeholder={c.deal.pickClient} searchable options={clients.map((x) => ({ value: x.id, label: x.name }))} disabled={!!deal} /></div>
-        {!dev && <div><label className={lbl}>{c.deal.seller}</label><Select value={f.sellerClientId ?? ""} onChange={(v) => set({ sellerClientId: v || null })} searchable placeholder={c.deal.noSeller} options={[{ value: "", label: c.deal.noSeller }, ...sellers.filter((x) => x.id !== f.clientId).map((x) => ({ value: x.id, label: x.name }))]} /></div>}
+        <div><label className={lbl}>{c.deal.buyer}</label><Select value={f.clientId} onChange={(v) => set({ clientId: v })} placeholder={c.deal.pickClient} searchable options={clients.filter((x) => x.id === f.clientId || isBuyer(x)).map((x) => ({ value: x.id, label: x.name }))} disabled={!!deal} /></div>
+        {!dev && <div><label className={lbl}>{c.deal.seller}</label><Select value={f.sellerClientId ?? ""} onChange={(v) => set({ sellerClientId: v || null })} searchable placeholder={c.deal.noSeller} options={[{ value: "", label: c.deal.noSeller }, ...sellers.filter((x) => x.id !== f.clientId && (x.id === f.sellerClientId || isSeller(x))).map((x) => ({ value: x.id, label: x.name }))]} /></div>}
       </div>
       <p className="mt-1 text-[11.5px] text-muted">{dev ? c.deal.partiesDev : c.deal.partiesHint}</p>
       <label className={`${lbl} mt-3`}>{c.deal.title}</label>

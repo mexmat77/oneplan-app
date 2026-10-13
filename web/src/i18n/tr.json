@@ -1101,7 +1101,7 @@
       "kindCompany": "Tüzel kişi",
       "company": "Şirket adı",
       "roles": "Müşteri rolleri",
-      "stage": "İletişim durumu",
+      "stage": "Müşteri durumu",
       "priority": "Öncelik",
       "country": "İkamet ülkesi",
       "citizenship": "Uyruk",
@@ -1277,13 +1277,14 @@
       "other": "Diğer"
     },
     "set": {
-      "color": "Aşama rengi",
+      "color": "Renk",
       "customColor": "Özel renk",
       "up": "Yukarı",
       "down": "Aşağı",
       "stagesT": "İşlem hunisi",
       "stagesS": "Belirli bir gayrimenkul için işlem aşamaları. «Başarı» ve «Red» işlemi kapatır.",
       "addStage": "Aşama ekle",
+      "addStatus": "Durum ekle",
       "stageName": "Ad",
       "stageKind": "Tür",
       "kindOpen": "Açık",
@@ -1534,7 +1535,7 @@
         "noDeal": "İşlemsiz",
         "save": "+ Görünümü kaydet"
       },
-      "stageRow": "Aşama:",
+      "stageRow": "Durum:",
       "noStage": "İşlem yok",
       "compact": "Kompakt",
       "expanded": "Geniş",
