@@ -23,7 +23,7 @@ function getClient(): Anthropic | null {
 // Названия мест (Lara, Ermenek, Muratpaşa) во всех языках — латиницей по-турецки, без кириллической транслитерации (правило пользователя 11.10.2026).
 const PLACES = "Turkish place names (cities, districts, neighbourhoods, complexes) must keep their Latin Turkish spelling in every language — Lara, Ermenek, Muratpaşa — never transliterate them into Cyrillic.";
 
-export async function translate(text: string, to: DevLang | "AR", kind: "chat" | "description" | "title" = "chat"): Promise<TranslateResult> {
+export async function translate(text: string, to: DevLang | "AR", kind: "chat" | "description" | "title" | "label" = "chat"): Promise<TranslateResult> {
   const src = (text || "").trim();
   if (!src) return { text: "", fallback: true };
   // Server Functions are reachable by direct POST — only signed-in users may spend tokens (UI mode without Supabase: allowed).
@@ -40,7 +40,9 @@ export async function translate(text: string, to: DevLang | "AR", kind: "chat" |
       max_tokens: 1024,
       messages: [{
         role: "user",
-        content: kind === "title"
+        content: kind === "label"
+          ? `Translate this short CRM pipeline stage / status label into ${target}. It is a UI label of 1–3 words (e.g. "Бронь" → "Booking" / "Rezervasyon"). Reply with ONLY the translated label — no explanations, no quotes, never refuse.\n\n${src}`
+          : kind === "title"
           ? `You are a professional real-estate translator. Translate the property listing title below into ${target}. Keep it short (one line), preserve numbers, units and room formulas like 2+1 exactly. ${PLACES} Reply with ONLY the translation.\n\n${src}`
           : kind === "description"
           ? `You are a professional real-estate copywriter and translator. Translate the property description below into ${target}. Keep the marketing tone, preserve numbers, names and units exactly, keep paragraphs. ${PLACES} Reply with ONLY the translation — no quotes, no notes.\n\nText:\n${src}`
@@ -49,6 +51,9 @@ export async function translate(text: string, to: DevLang | "AR", kind: "chat" |
     });
     if (res.stop_reason === "refusal") return { text: src, fallback: true, reason: "error" };
     const out = res.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim().replace(/^["'«»]+|["'«»]+$/g, "");
+    // Короткая подпись (этап/статус): модель иногда вместо перевода пишет отказ-объяснение — в базу он попадать не должен
+    // (13.10.2026: у этапа «Бронь» в EN/TR лежало «I cannot provide a translation…»). Длинный или многострочный ответ — фоллбэк.
+    if (kind === "label" && (out.includes("\n") || out.length > Math.max(40, src.length * 4) || /cannot|unable|sorry|provide/i.test(out))) return { text: src, fallback: true, reason: "error" };
     return out ? { text: out, fallback: false } : { text: src, fallback: true, reason: "error" };
   } catch (e) {
     if (e instanceof Anthropic.APIError) console.error(`[chat/translate] API error ${e.status}: ${e.message}`);

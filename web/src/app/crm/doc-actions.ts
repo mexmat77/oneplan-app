@@ -183,7 +183,7 @@ export async function docDefaults(dealId: string, companyId?: string | null): Pr
   const c = await crmCtx();
   const v: Record<string, string> = { "deal.date": today(), "deal.copies": "3", "deal.court": "Antalya", "deal.commissionWhen": "Tapu günü" };
   const companies = await loadProfiles(c);
-  const { data: d } = await c.sb.from("crm_deals").select("*, crm_clients(*)").eq("id", dealId).maybeSingle();
+  const { data: d } = await c.sb.from("crm_deals").select("*, crm_clients!crm_deals_client_id_fkey(*)").eq("id", dealId).maybeSingle();
   let stored: Record<string, string> = {};
   if (d?.extra_enc) { try { stored = JSON.parse(dec(c, "crm_deals", "extra", d.id as string, d.extra_enc as string)); } catch { stored = {}; } }
   const pickId = companyId ?? (d?.company_profile_id as string | null) ?? stored._companyId ?? null;

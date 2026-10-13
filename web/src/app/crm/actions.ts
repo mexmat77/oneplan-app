@@ -280,7 +280,7 @@ function rowDeal(r: Row, clientName: string, sellerName: string | null = null): 
     requestId: s(r.request_id), branchId: s(r.branch_id), commission: n(r.commission), commissionKind: (r.commission_kind as Deal["commissionKind"]) ?? null, deposit: n(r.deposit), depositAt: s(r.deposit_at), boardPos: n(r.board_pos), objectText: s(r.object_text), companyProfileId: s(r.company_profile_id), sellerClientId: s(r.seller_client_id), sellerName };
 }
 async function listDealsFor(c: Ctx, f: { clientId?: string }): Promise<Deal[]> {
-  let q = c.sb.from("crm_deals").select("*, crm_clients(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("updated_at", { ascending: false }).limit(1000);
+  let q = c.sb.from("crm_deals").select("*, crm_clients!crm_deals_client_id_fkey(name)").eq("ws_kind", c.ws.kind).eq("ws_id", c.ws.id).order("updated_at", { ascending: false }).limit(1000);
   if (f.clientId) q = q.eq("client_id", f.clientId);
   const { data } = await q;
   return ((data ?? []) as Row[]).map((r) => { const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null; return rowDeal(r, (cl?.name as string) ?? ""); });
@@ -352,7 +352,7 @@ export async function saveStages(stages: { id?: string; key: string; name: Recor
     const name: Record<string, string> = { ...x.name };
     const langs: Lang[] = ["RU", "EN", "TR"];
     const src = langs.find((l) => name[l]?.trim());
-    if (src) for (const l of langs) if (l !== src && !name[l]?.trim()) { try { const r = await translate(name[src], l, "title"); if (!r.fallback) name[l] = r.text; } catch { /* оставим пустым — покажется исходный */ } }
+    if (src) for (const l of langs) if (l !== src && !name[l]?.trim()) { try { const r = await translate(name[src], l, "label"); if (!r.fallback) name[l] = r.text; } catch { /* оставим пустым — покажется исходный */ } }
     return { ...x, name };
   }));
   const rows = named.map((x, i) => ({ id: x.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, key: x.key || `s${i}`, name: x.name, kind: x.kind, color: x.color, sort: i, scope }));
@@ -844,7 +844,7 @@ export async function closeDealObject(dealId: string): Promise<{ listing?: { id:
 // ---------- карточка сделки (13.10.2026): одна страница как у клиента ----------
 export async function getDeal(id: string): Promise<{ deal: Deal; client: { id: string; no: number; name: string; phone: string | null; lang: string }; events: CrmEvent[]; tasks: Task[]; objs: Record<string, ListingBrief>; units: Record<string, UnitBrief>; requests: { id: string; label: string }[] } | null> {
   const c = await crmCtx();
-  const { data: r } = await c.sb.from("crm_deals").select("*, crm_clients(id, no, name, lang)").eq("id", id).maybeSingle();
+  const { data: r } = await c.sb.from("crm_deals").select("*, crm_clients!crm_deals_client_id_fkey(id, no, name, lang)").eq("id", id).maybeSingle();
   if (!r) return null;
   const cl = (Array.isArray(r.crm_clients) ? r.crm_clients[0] : r.crm_clients) as Row | null;
   if (!cl) return null;
