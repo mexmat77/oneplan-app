@@ -956,7 +956,9 @@
     "set_btn": "Save and continue",
     "pass_short": "The password is too short — at least 8 characters",
     "pass_mismatch": "Passwords do not match",
-    "no_token": "The link carries no sign-in data"
+    "no_token": "The link carries no sign-in data",
+    "pending_hint": "No password has been set yet. Until you save a new password, the sign-in via this link is not complete and the app stays closed.",
+    "cancel_pw": "Keep the old password and sign out"
   },
   "ntfk": {
     "req_new": {

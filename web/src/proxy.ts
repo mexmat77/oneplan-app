@@ -29,6 +29,14 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  // Незавершённый вход по ссылке восстановления/приглашения (cookie opl-pw-pending, ставит /auth/callback): пока пароль не
+  // сохранён — только форма пароля; без сессии флаг снимается (13.10.2026).
+  const pending = request.cookies.get("opl-pw-pending")?.value === "1";
+  if (pending && !user) response.cookies.set("opl-pw-pending", "", { path: "/", maxAge: 0 });
+  if (pending && user && !pathname.startsWith("/auth") && !pathname.startsWith("/api/")) {
+    const next = request.nextUrl.clone(); next.pathname = "/auth/callback"; next.search = "?resume=1";
+    return NextResponse.redirect(next);
+  }
   // "/" — лендинг (главная), открыт всем
   const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 

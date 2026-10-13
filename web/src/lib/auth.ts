@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = {
@@ -11,6 +12,7 @@ export type CurrentUser = {
 // Server-side: the signed-in user and their profile row (null when not signed in or Supabase is not configured).
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+  if ((await cookies()).get("opl-pw-pending")?.value === "1") return null; // незавершённый вход по ссылке: пароль ещё не задан (см. auth/callback)
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;

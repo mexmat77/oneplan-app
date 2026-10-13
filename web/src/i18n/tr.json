@@ -956,7 +956,9 @@
     "set_btn": "Kaydet ve devam et",
     "pass_short": "Şifre çok kısa — en az 8 karakter",
     "pass_mismatch": "Şifreler eşleşmiyor",
-    "no_token": "Bağlantıda giriş verisi yok"
+    "no_token": "Bağlantıda giriş verisi yok",
+    "pending_hint": "Şifre henüz belirlenmedi. Yeni şifreyi kaydedene kadar bağlantıyla giriş tamamlanmaz ve uygulama açılmaz.",
+    "cancel_pw": "Eski şifreyi koru ve çık"
   },
   "ntfk": {
     "req_new": {

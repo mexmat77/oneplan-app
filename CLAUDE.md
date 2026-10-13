@@ -290,6 +290,13 @@
   создаёт сессию (`?code` → exchangeCodeForSession, `#access_token` → setSession), для invite/recovery/signup показывает форму
   «Задайте пароль» и уводит по роли (`developer` → `/dev`, иначе `/catalog` или `?next`). В Supabase Auth → URL Configuration должен быть
   Site URL `https://ai.one-plan.pro` и Redirect URL `https://ai.one-plan.pro/**` (+ `http://localhost:3000/**` для разработки).
+- НЕЗАВЕРШЁННЫЙ ВХОД ПО ССЫЛКЕ (13.10.2026, «дырка»: открыл письмо-приглашение, пароль не менял — оказался вошедшим):
+  ссылка recovery/invite/signup создаёт сессию при проверке токена, поэтому `/auth/callback` ДО проверки ставит cookie
+  `opl-pw-pending=1`; `proxy.ts` с этим cookie и сессией пускает только на `/auth/*` и `/api/*` (остальное →
+  `/auth/callback?resume=1` — форма пароля на той же сессии), `getCurrentUser` считает такого пользователя не вошедшим
+  (серверные экшены и layouts); cookie снимается при сохранении пароля или кнопкой «Не менять пароль и выйти» (signOut →
+  /login); без сессии proxy стирает флаг. Magic-link (type=magiclink) по-прежнему входит без пароля — это его смысл.
+  Локально проверить нельзя (DEV_AUTH_BYPASS отключает proxy) — проверено на staging ссылкой из `generateLink`.
 - Чат: у каждого участника подпись «кого представляет» — `orgLabel(peer, dict)` из `lib/chat/shared.ts` («Агентство · X», «Застройщик · Y»,
   «Свободный агент», «Команда OnePlan»); поля приходят через общий `PROFILE_SEL` (`role`, `agencies(name)`, `developers(name)`) — не писать свои select.
 - Чат на Supabase (07.10.2026, миграция 0009): `conversations` (a_id/b_id, kind dm|support) + `messages`; поддержка — сервисный

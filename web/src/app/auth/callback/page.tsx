@@ -15,6 +15,11 @@ import { LogoMark } from "@/components/Logo";
 import { mfaNeeded } from "@/components/auth/TwoFactor";
 
 type Phase = "working" | "password" | "error";
+// Сессия по ссылке восстановления/приглашения ДО сохранения пароля — «незавершённый вход» (13.10.2026, замечание пользователя:
+// открыл письмо, пароль не менял, а оказался вошедшим). Cookie-флаг ставится до проверки токена; proxy и getCurrentUser с ним
+// никуда не пускают, кроме этой страницы; снимается при сохранении пароля или по «Не менять пароль и выйти».
+const PENDING = "opl-pw-pending";
+const setPending = (on: boolean) => { document.cookie = `${PENDING}=${on ? "1" : ""}; path=/; max-age=${on ? 2592000 : 0}; SameSite=Lax`; };
 
 function Inner() {
   const t = useT();
@@ -46,10 +51,12 @@ function Inner() {
     const code = params.get("code");
     const tokenHash = params.get("token_hash"); // ссылка из наших писем: {{ .SiteURL }}/auth/callback?token_hash=…&type=…
     const type = hash.get("type") || params.get("type") || "";
-    const needPassword = type === "invite" || type === "recovery" || type === "signup";
+    const resume = params.get("resume") === "1"; // proxy вернул сюда незавершённый вход — форма пароля на уже созданной сессии
+    const needPassword = resume || type === "invite" || type === "recovery" || type === "signup";
     (async () => {
       try {
         if (hash.get("error_description") || params.get("error_description")) throw new Error(hash.get("error_description") || params.get("error_description") || "error");
+        if (needPassword && !resume) setPending(true);
         if (tokenHash) {
           const { error } = await sb.auth.verifyOtp({ token_hash: tokenHash, type: (type || "magiclink") as "invite" | "recovery" | "signup" | "magiclink" | "email" });
           if (error) throw error;
@@ -82,7 +89,14 @@ function Inner() {
     const { error } = await createClient().auth.updateUser({ password: pass });
     setBusy(false);
     if (error) { setErr(error.message); return; }
+    setPending(false);
     await goHome();
+  };
+  const cancelPassword = async () => {
+    setBusy(true);
+    try { await createClient().auth.signOut(); } catch { /* сессии уже нет */ }
+    setPending(false);
+    window.location.assign("/login");
   };
 
   const inputCls = "w-full rounded-[12px] border border-line bg-surface px-[14px] py-[12px] text-[15px] text-ink outline-none focus:border-blue";
@@ -111,6 +125,8 @@ function Inner() {
             <input type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} className={`${inputCls} mb-[16px]`} />
             {err && <div className="mb-3 rounded-[11px] bg-red-tint px-[13px] py-[10px] text-[12.5px] text-red-2">{err}</div>}
             <button type="submit" disabled={busy} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-blue py-3 text-[14px] font-bold text-white disabled:opacity-60">{busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconKey size={16} />} {t.auth.set_btn}</button>
+            <div className="mt-3 text-[12px] leading-[1.5] text-muted">{t.auth.pending_hint}</div>
+            <button type="button" onClick={cancelPassword} disabled={busy} className="mt-3 w-full cursor-pointer rounded-[12px] border border-line py-[11px] text-[13.5px] font-semibold text-text hover:bg-bg-2 disabled:opacity-60">{t.auth.cancel_pw}</button>
           </form>
         )}
       </div>
