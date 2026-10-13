@@ -73,6 +73,10 @@
   ключом (`lib/selectionsPublic.ts`), реакции/просмотры клиента — `app/s/actions.ts`; каналы связи риэлтора теперь персистятся в
   `profiles` (wa_on, tg_on, …) через `updateMyProfile`. Тестовый риэлтор для проверок на localhost: test-realtor@one-plan.pro
   (вход magic-link через `scratchpad/magic.mjs`, без пароля). Что ещё в localStorage: черновики формы, папка подборки, «назад».
+- СОХРАНЁННЫЕ ПОИСКИ = КАТАЛОГ (13.10.2026, «в базе 65 объектов, а совпадений 75»): `matchSearch` в lib/filters — обёртка над
+  `passF` с `EMPTY_FILTERS` (тип сделки «Купить/Снять», тип объекта, цена по курсу ЦБ) и правилом статуса каталога (всё, кроме
+  проданных). Своих правил подсчёта у поисков больше нет — любой счётчик по объектам считать ТОЛЬКО через `passF`
+  (тест `tests/unit/matchSearch.test.ts` сравнивает с каталогом).
 - Состояние до подключения Supabase живёт в `web/src/store/*` (все — `useSyncExternalStore` + localStorage, SSR отдаёт
   дефолты): `prefs` (избранное, папка подборки, черновик подборки), `listings` (созданные объекты + `useAllListings()`),
   `selections`, `reqs` (поиски/запросы), `chat`, `ntf`, `profile`, `admin` (участники/агентства/жалобы/инвайты), `newb`.

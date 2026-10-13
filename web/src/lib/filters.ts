@@ -113,17 +113,10 @@ export function extCount(f: Filters): number {
 }
 
 // Saved-search matching (prototype `matchOf`): only active listings, geo/rooms/price.
-export function matchSearch(o: Listing, p: Pick<Filters, "il" | "ilces" | "semts" | "rooms" | "min" | "max">): boolean {
-  if (o.st !== "active") return false;
-  if (p.il && o.il !== p.il) return false;
-  if (p.ilces.length) {
-    if (!o.ilce || !p.ilces.includes(o.ilce)) return false;
-    const ssm = p.semts.filter((k) => SEMT2ILCE[k] === o.ilce);
-    if (ssm.length && (!o.semt || !ssm.includes(o.semt))) return false;
-  }
-  if (p.rooms.length && !p.rooms.includes(o.rooms)) return false;
-  const pr = eur(o) * 48;
-  if (p.min && pr < num(p.min)) return false;
-  if (p.max && pr > num(p.max)) return false;
-  return true;
+/** Совпадения сохранённого поиска — ТОТ ЖЕ фильтр, что в каталоге (13.10.2026, «в базе 65, а совпадений 75»): раньше
+ *  считались свои правила (без типа сделки «Купить/Снять», цена по старому курсу 48), и числа расходились. Статус — как у
+ *  каталога: всё, кроме проданных. Старые поиски без deal/type получают значения по умолчанию каталога. */
+export function matchSearch(o: Listing, p: Partial<Pick<Filters, "il" | "ilces" | "semts" | "rooms" | "min" | "max" | "deal" | "type">>): boolean {
+  if (o.st === "sold") return false;
+  return passF(o, { ...EMPTY_FILTERS, ...p });
 }
