@@ -51,6 +51,17 @@ export function CrmShell({ base }: { base: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- load пересоздаётся на каждый рендер, грузим один раз на кабинет
   useEffect(() => { load(); }, [base]);
   useEffect(() => { document.documentElement.setAttribute("data-crmmode", "1"); return () => document.documentElement.removeAttribute("data-crmmode"); }, []);
+  // Высота липкой шапки кабинета → CSS-переменная --crm-top (13.10.2026): панели CRM прилипают под неё. Шапка риэлтора — 62px,
+  // шапка застройщика на узком окне переносится и выше; константа 62 давала дыру/наложение.
+  useEffect(() => {
+    const hdr = document.querySelector<HTMLElement>("header[data-topbar], [data-dev] > header");
+    if (!hdr) return;
+    const root = document.documentElement;
+    const apply = () => root.style.setProperty("--crm-top", `${Math.round(hdr.getBoundingClientRect().height)}px`);
+    apply();
+    const ro = new ResizeObserver(apply); ro.observe(hdr);
+    return () => { ro.disconnect(); root.style.removeProperty("--crm-top"); };
+  }, []);
   // «/» — фокус на поиск, Esc — закрыть меню
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -113,8 +124,8 @@ export function CrmShell({ base }: { base: string }) {
 
   return (
     <CrmCtx.Provider value={ctx}>
-      <div className="flex min-h-[calc(100vh-62px)]">
-        <aside data-crm-side="1" data-wide={wide ? "1" : "0"} className="sticky top-[62px] flex h-[calc(100vh-62px)] flex-none flex-col border-r border-line bg-surface py-3">
+      <div className="flex min-h-[calc(100vh_-_var(--crm-top,62px))]">
+        <aside data-crm-side="1" data-wide={wide ? "1" : "0"} className="sticky top-[var(--crm-top,62px)] flex h-[calc(100vh_-_var(--crm-top,62px))] flex-none flex-col border-r border-line bg-surface py-3">
           <button type="button" onClick={() => setPref(SIDE_LS, wide ? "0" : "1")} title={wide ? c.nav.collapse : c.nav.expand} className="mx-2 mb-2 flex h-9 cursor-pointer items-center gap-3 overflow-hidden whitespace-nowrap rounded-[6px] px-3 text-muted hover:bg-bg-3 hover:text-ink"><IconMenu2 size={19} className="flex-none" /><span data-crm-label="1" className="flex items-center gap-2 text-[14px] font-semibold text-ink"><span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-blue-2 text-[11px] font-bold text-white">C</span>CRM</span></button>
           <nav className="flex flex-col gap-[2px] px-2">
             {nav.map((n) => { const cnt = n.key === "clients" ? counts?.clients : n.key === "deals" ? counts?.deals : n.key === "tasks" ? counts?.tasks : undefined; return (
@@ -128,7 +139,7 @@ export function CrmShell({ base }: { base: string }) {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <div className="sticky top-[62px] z-20 flex h-12 items-center gap-2 border-b border-line bg-surface px-4">
+          <div className="sticky top-[var(--crm-top,62px)] z-20 flex h-12 items-center gap-2 border-b border-line bg-surface px-4">
             <div data-crm-mobnav="1" className="hidden gap-1 overflow-x-auto">{nav.map((n) => <Link key={n.key} href={n.href} className={`flex h-8 w-8 flex-none items-center justify-center rounded-[6px] ${n.active ? "bg-ink text-white" : "text-muted"}`}><n.Icon size={17} /></Link>)}</div>
             <div className="text-[15px] font-semibold text-ink">{nav.find((n) => n.active)?.label ?? c.title}</div>
             <div className="relative ml-2 w-[320px] max-w-[40vw]">
@@ -150,7 +161,7 @@ export function CrmShell({ base }: { base: string }) {
             </div>
           </div>
           {/* вкладки: список раздела + открытые карточки (замечание пользователя 11.10.2026 — «как заявки во вкладках») */}
-          <div className="sticky top-[110px] z-10 flex h-10 items-stretch gap-[2px] overflow-x-auto border-b border-line bg-[#eef0f3] px-3 pt-[6px]">
+          <div className="sticky top-[calc(var(--crm-top,62px)_+_48px)] z-10 flex h-10 items-stretch gap-[2px] overflow-x-auto border-b border-line bg-[#eef0f3] px-3 pt-[6px]">
             <Link href={listTab.href} className={`flex flex-none items-center gap-2 rounded-t-[6px] border border-b-0 px-3 text-[12.5px] font-medium ${!activeTab ? "border-line bg-surface text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}><IconMenu2 size={14} /> {listTab.key === "clients" ? c.tbl.listOf : listTab.label}</Link>
             {tabs.map((tb) => (
               <div key={tb.id} role="link" tabIndex={0} onClick={() => router.push(hrefOf(tb.id))} onKeyDown={(e) => { if (e.key === "Enter") router.push(hrefOf(tb.id)); }} onAuxClick={(e) => { if (e.button === 1) closeAndGo(tb.id); }} title={tb.name} className={`flex min-w-[120px] max-w-[220px] flex-none cursor-pointer select-none items-center gap-2 rounded-t-[6px] border border-b-0 pl-3 pr-1 text-[12.5px] ${activeTab === tb.id ? "border-line bg-surface font-medium text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}>

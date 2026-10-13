@@ -236,7 +236,7 @@ function Inner({ id }: { id: string }) {
         </div>
 
         {/* ---- правая колонка: лента активности с комментарием ---- */}
-        <div className={`${card} self-start min-[1101px]:sticky min-[1101px]:top-[160px]`}>
+        <div className={`${card} self-start min-[1101px]:sticky min-[1101px]:top-[calc(var(--crm-top,62px)_+_98px)]`}>
           <div className="mb-2 flex items-center justify-between"><span className="text-[13px] font-semibold text-ink">{c.card.activity}</span><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={`${btnS} h-7 px-2 text-[12px]`}><IconPlus size={13} /> {c.card.task}</button></div>
           {/* поле комментария во всю ширину колонки, кнопка под ним (замечание пользователя 11.10.2026 — «форма мелкая, текст не виден») */}
           <textarea value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendNote(); }} placeholder={c.ev.addPh} disabled={ro} className={`${inp} h-auto min-h-[84px] w-full resize-y py-2 leading-[1.45]`} rows={3} />
@@ -288,11 +288,16 @@ export function Timeline({ events }: { events: CrmEvent[] }) {
   const chips = (
     <div className="mb-3 flex flex-wrap gap-1">{Object.keys(ACT_FILTERS).map((k) => { const n = ACT_FILTERS[k] ? events.filter((e) => ACT_FILTERS[k]!.includes(e.kind)).length : events.length; return <button key={k} type="button" onClick={() => setFlt(k)} className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border px-[10px] text-[12px] font-medium ${flt === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{(c.act as Record<string, string>)[k]}<span className={flt === k ? "text-white/70" : "text-muted"}>{n}</span></button>; })}</div>
   );
-  const stName = (id: unknown) => stageName(crm.stages.find((s) => s.id === id), t, lang);
+  // имя этапа: по id из текущей воронки → своё имя из события → словарь по ключу → «—» (старые id после смены воронки)
+  const stName = (id: unknown, key?: unknown, nm?: unknown) => {
+    const st = crm.stages.find((s) => s.id === id); if (st) return stageName(st, t, lang);
+    const own = nm && typeof nm === "object" ? (nm as Record<string, string>)[lang] || (nm as Record<string, string>).RU : ""; if (own) return own;
+    const dict = t.crm.stages as Record<string, string>; return (typeof key === "string" && dict[key]) || "—";
+  };
   const label = (e: CrmEvent): string => {
     const p = e.payload as Record<string, string>;
     switch (e.kind) {
-      case "stage": return fill(c.ev.stage, { from: stName(p.from), to: stName(p.to) });
+      case "stage": { const q = e.payload as Record<string, unknown>; return fill(c.ev.stage, { from: stName(q.from, q.fromKey, q.fromName), to: stName(q.to, q.key, q.toName) }); }
       case "task": return fill(c.ev.task, { title: p.title ?? "" });
       case "deal": return fill(c.ev.deal, { title: p.title ?? "" });
       case "doc": return fill(c.ev.doc, { title: p.title ?? "" });

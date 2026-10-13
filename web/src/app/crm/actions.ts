@@ -299,12 +299,14 @@ export async function saveDeal(input: DealInput, id?: string | null): Promise<st
 }
 export async function moveDeal(id: string, stageId: string, lostReason?: string, boardPos?: number | null): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
-  const [{ data: d }, { data: st }] = await Promise.all([c.sb.from("crm_deals").select("client_id, stage_id").eq("id", id).maybeSingle(), c.sb.from("crm_stages").select("key, kind").eq("id", stageId).maybeSingle()]);
+  const [{ data: d }, { data: st }] = await Promise.all([c.sb.from("crm_deals").select("client_id, stage_id").eq("id", id).maybeSingle(), c.sb.from("crm_stages").select("key, kind, name").eq("id", stageId).maybeSingle()]);
   if (!d || !st) throw new Error("not-found");
+  // в событие пишем и ключ/имя обоих этапов: после смены воронки (0027/0028) старые id не находятся и лента показывала «Без этапа → Без этапа»
+  const { data: from } = d.stage_id ? await c.sb.from("crm_stages").select("key, name").eq("id", d.stage_id as string).maybeSingle() : { data: null };
   const closed = st.kind === "open" ? null : new Date().toISOString();
   const { error } = await c.sb.from("crm_deals").update({ stage_id: stageId, closed_at: closed, lost_reason: st.kind === "lost" ? lostReason ?? null : null, ...(boardPos !== undefined ? { board_pos: boardPos } : {}) }).eq("id", id);
   if (error) throw new Error(error.message);
-  await addEvent(c, { clientId: d.client_id as string, dealId: id, kind: "stage", payload: { from: d.stage_id, to: stageId, key: st.key } });
+  await addEvent(c, { clientId: d.client_id as string, dealId: id, kind: "stage", payload: { from: d.stage_id, to: stageId, key: st.key, toName: st.name ?? null, fromKey: from?.key ?? null, fromName: from?.name ?? null } });
 }
 export async function deleteDeal(id: string): Promise<void> {
   const c = await crmCtx(); assertWrite(c);

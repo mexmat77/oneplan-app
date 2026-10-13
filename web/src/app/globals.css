@@ -306,6 +306,9 @@ html[data-mapmode] main { padding-bottom: 0 !important; }
 /* CRM (v2, 11.10.2026): во всю ширину окна под шапкой, боковое меню слева; `data-crmmode` ставит CrmShell */
 html[data-crmmode] main { max-width: none !important; padding: 0 !important; background: #f5f6f8; }
 html[data-crmmode] body { background: #f5f6f8; }
+/* CRM в кабинете застройщика (13.10.2026, «поехала вёрстка»): шапка кабинета не была sticky и уезжала при прокрутке, а панели
+   CRM прилипают к 62px (как под шапкой риэлтора) — сверху оставалась дыра, в которую просвечивала карточка. */
+html[data-crmmode] [data-dev] > header { position: sticky; top: 0; z-index: 100; }
 [data-crm-side] { width: 60px; transition: width .22s ease; }
 [data-crm-side][data-wide="1"] { width: 228px; }
 /* подписи меню: плавно гаснут при сворачивании (свёрнутое меню — только иконки с подсказками) */
