@@ -15,6 +15,7 @@ import { NtfIcon } from "./ntf/NtfIcon";
 import { useI18n } from "@/i18n/provider";
 import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { markAllRead, useNotifications } from "@/store/ntf";
+import { renderNtf, useNotifs, type NtfDict } from "@/lib/notifications/client";
 
 type Item = { href: string; label: string; Icon: ComponentType<IconProps>; badge?: number; active: boolean };
 export type Workspace = "realtors" | "dev" | "admin";
@@ -32,15 +33,16 @@ function usePrevScreen(path: string) {
   return path.startsWith("/obj/") ? prev : "";
 }
 
-export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, adminN = 0, chatUnread = false, workspace = "realtors", hidden = false, email, avatar, sub }: {
-  name: string; isAdmin?: boolean; favsN?: number; reqsN?: number; ntfN?: number; adminN?: number; chatUnread?: boolean; workspace?: Workspace; hidden?: boolean; email?: string; avatar?: string | null; sub?: string;
+export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, adminN = 0, chatUnread = false, workspace = "realtors", hidden = false, email, avatar, sub, meId = null }: {
+  name: string; isAdmin?: boolean; favsN?: number; reqsN?: number; ntfN?: number; adminN?: number; chatUnread?: boolean; workspace?: Workspace; hidden?: boolean; email?: string; avatar?: string | null; sub?: string; meId?: string | null;
 }) {
   const { t, lang } = useI18n();
   const path = usePathname();
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [ntfOpen, setNtfOpen] = useState(false);
-  const { items: ntfItems } = useNotifications();
+  const { items: ntfItems } = useNotifications(); // демо прототипа — только без аккаунта
+  const live = useNotifs(meId); // общая подписка с AppChrome и страницей /ntf
   const prev = usePrevScreen(path);
   const is = (p: string) => path === p || path.startsWith(p + "/");
   useScrollLock(menu || ntfOpen);
@@ -76,7 +78,12 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     ...(!isAdmin && workspace === "realtors" ? [{ href: "/team", label: t.org.team.title, Icon: IconBuilding, active: is("/team") }] : []),
   ];
   const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
-  const ntfTop = ntfItems.slice(0, 4);
+  const ntfDict = t.ntfk as unknown as NtfDict;
+  // с аккаунтом — реальные уведомления (13.10.2026, «давай уберём все тестовые сообщения»), демо — только без Supabase
+  const ntfTop = meId
+    ? live.rows.slice(0, 5).map((r) => { const v = renderNtf(r, ntfDict); return { id: v.id, unread: v.unread, bg: v.bg, tone: v.tone, icon: v.icon, title: v.title, sub: v.sub, time: v.at.toLocaleTimeString(lang === "RU" ? "ru-RU" : lang === "TR" ? "tr-TR" : "en-GB", { hour: "2-digit", minute: "2-digit" }), href: v.href }; })
+    : ntfItems.slice(0, 4).map((n) => ({ id: n.id, unread: n.unread, bg: n.bg, tone: n.tone, icon: n.icon, title: n.tx[lang][0], sub: n.tx[lang][1], time: n.time, href: null as string | null }));
+  const ntfMarkAll = () => { if (meId) void live.markAll(); else markAllRead(); };
 
   return (
     <>
@@ -127,17 +134,19 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
           <div className="fixed right-4 top-[70px] z-200 w-[370px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_24px_60px_rgba(20,36,63,.18)]" style={{ animation: "opl-card .2s ease" }}>
             <div className="flex items-center border-b border-line-2 px-4 py-[14px]">
               <div className="flex-1 text-[14.5px] font-extrabold text-ink">{t.ntf.title}</div>
-              <button type="button" onClick={markAllRead} className="cursor-pointer text-[12px] font-semibold text-blue hover:text-blue-2">{t.ntf.mark}</button>
+              <button type="button" onClick={ntfMarkAll} className="cursor-pointer text-[12px] font-semibold text-blue hover:text-blue-2">{t.ntf.mark}</button>
             </div>
             {ntfTop.map((n) => (
-              <div key={n.id} className="flex gap-[11px] border-b border-[#f5f7fb] px-4 py-3" style={{ background: n.unread ? "#f8faff" : "#fff" }}>
+              <div key={n.id} onClick={() => { if (meId) { void live.markRead([n.id as number]); if (n.href) { setNtfOpen(false); router.push(n.href); } } }} className={`flex gap-[11px] border-b border-[#f5f7fb] px-4 py-3 ${meId ? "cursor-pointer hover:bg-bg-5" : ""}`} style={{ background: n.unread ? "#f8faff" : "#fff" }}>
                 <div className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] text-[16px]" style={{ background: n.bg, color: n.tone }}><NtfIcon icon={n.icon} size={16} /></div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold leading-[1.4] text-ink">{n.tx[lang][0]}</div>
-                  <div className="mt-[2px] text-[12px] text-muted">{n.tx[lang][1]} · {n.time}</div>
+                  <div className="text-[13px] font-semibold leading-[1.4] text-ink">{n.title}</div>
+                  <div className="mt-[2px] text-[12px] text-muted [overflow-wrap:anywhere]">{n.sub ? `${n.sub} · ` : ""}{n.time}</div>
                 </div>
+                {n.unread && <span className="mt-[6px] h-2 w-2 flex-none rounded-full bg-blue" />}
               </div>
             ))}
+            {meId && live.loaded && live.rows.length === 0 && <div className="px-4 py-6 text-center text-[13px] text-muted">{t.ntf.empty}</div>}
             <button type="button" onClick={() => { setNtfOpen(false); router.push("/ntf"); }} className="w-full cursor-pointer p-3 text-center text-[13px] font-semibold text-blue hover:bg-bg-3">{t.ntf.all}</button>
           </div>
         </>

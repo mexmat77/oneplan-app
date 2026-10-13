@@ -104,7 +104,7 @@ export function AppChrome({ name, isAdmin, workspace, userRole = "realtor", admi
   const roleBtn = (on: boolean) => `cursor-pointer rounded-[8px] px-[11px] py-[6px] text-[11px] font-bold hover:bg-line-2 hover:text-ink ${on ? "bg-blue-2 text-white" : "bg-dark-2 text-dark-muted"}`;
   return (
     <>
-      <TopBar name={profile.name || name} isAdmin={admin} favsN={favs.length + favU.length + watch.length} ntfN={unreadN} reqsN={reqsN} adminN={adminN} chatUnread={chatUnread} workspace={ws} hidden={hidden} email={email || profile.email} avatar={avatar} sub={agency || profile.agency || undefined} />
+      <TopBar name={profile.name || name} isAdmin={admin} favsN={favs.length + favU.length + watch.length} ntfN={unreadN} reqsN={reqsN} adminN={adminN} chatUnread={chatUnread} workspace={ws} hidden={hidden} email={email || profile.email} avatar={avatar} sub={agency || profile.agency || undefined} meId={meId ?? null} />
       {/* Demo role toggle (prototype `[data-demo]`, lines 1885–1893) — only real admins can preview as a realtor */}
       {role.realAdmin && (
         <div data-demo="1" className="fixed bottom-4 left-4 z-205 flex items-center gap-2">

@@ -312,7 +312,12 @@
   из admin/actions, lead-actions (`submitAccessRequest`, `submitUnblockRequest`), `(app)/report-actions.ts`, `(dev)/dev/notify-actions.ts`
   (события журнала шахматки из `store/devRemote.ts`). Клиент — `lib/notifications/client.ts` (`useNotifs`, `renderNtf` по словарю `ntfk`
   в `i18n/{ru,en,tr}.json`), UI: `components/ntf/NtfReal.tsx`, дропдаун `DevShell`, `dev/notifs/NotifsScreen` (`meId`).
-  У вошедших демо-уведомления и демо-чат не показываются.
+  У вошедших демо-уведомления и демо-чат не показываются. ОДНА ПОДПИСКА НА ПОЛЬЗОВАТЕЛЯ (13.10.2026, «при нажатии "Все уведомления"
+  ошибка»): `useNotifs` держит общий кэш и один realtime-канал `ntf-<uid>` на пользователя (модульная карта `entries`, счётчик
+  потребителей); раньше каждый вызов хука (шапка + страница) создавал канал заново, а supabase-js возвращал уже подписанный и
+  падал на `.on()` после `subscribe()` — страница /ntf и /dev/notifications не открывались. Выпадающий список в `TopBar`
+  (риэлтор/админ) показывает те же реальные строки (`meId` из AppChrome), клик отмечает прочитанным и ведёт по ссылке; демо
+  прототипа — только без аккаунта (UI-режим без Supabase).
 - 2FA (TOTP, Google Authenticator) — реальная на Supabase Auth MFA: `components/auth/TwoFactor.tsx` (`TwoFactorCard` в профилях
   риэлтора и застройщика — enroll/verify/unenroll; `MfaCodeForm` + `mfaNeeded()`), страница `/auth/mfa`, второй шаг на `/login`
   и после ссылок из писем. `getCurrentUser().mfaRequired` (aal1 при включённом факторе) → layouts уводят на `/auth/mfa`.
