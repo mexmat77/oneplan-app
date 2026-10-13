@@ -10,6 +10,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Сброс пароля OnePlan</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}{{ .Data.name }}, здравствуйте!{{ else }}Здравствуйте!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Вы запросили сброс пароля. Нажмите кнопку и задайте новый.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Задать новый пароль</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Ссылка действует 1 час. Если это были не вы, ничего делать не нужно — пароль останется прежним.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Если кнопка не работает, скопируйте ссылку в браузер:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery</a></p>
@@ -17,6 +18,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">OnePlan şifre sıfırlama</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}Merhaba, {{ .Data.name }}!{{ else }}Merhaba!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Şifre sıfırlama talep ettiniz. Düğmeye tıklayın ve yeni şifre belirleyin.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Yeni şifre belirle</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Bağlantı 1 saat geçerlidir. Siz değilseniz bir şey yapmanıza gerek yok — şifreniz aynı kalır.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Düğme çalışmazsa bağlantıyı tarayıcıya kopyalayın:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery</a></p>
@@ -24,6 +26,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Reset your OnePlan password</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}Hello, {{ .Data.name }}!{{ else }}Hello!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">You asked to reset your password. Click the button and choose a new one.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Set a new password</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">The link is valid for 1 hour. If it wasn't you, no action is needed — your password stays the same.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">If the button does not work, copy the link into your browser:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery</a></p>
@@ -31,16 +34,19 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Сброс пароля OnePlan</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Вы запросили сброс пароля. Нажмите кнопку и задайте новый.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Задать новый пароль</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Ссылка действует 1 час. Если это были не вы, ничего делать не нужно — пароль останется прежним.</p><hr style="border:0;border-top:1px solid #e6e9f0;margin:26px 0;">
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Reset your OnePlan password</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">You asked to reset your password. Click the button and choose a new one.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Set a new password</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">The link is valid for 1 hour. If it wasn't you, no action is needed — your password stays the same.</p><hr style="border:0;border-top:1px solid #e6e9f0;margin:26px 0;">
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">OnePlan şifre sıfırlama</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Şifre sıfırlama talep ettiniz. Düğmeye tıklayın ve yeni şifre belirleyin.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Yeni şifre belirle</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Bağlantı 1 saat geçerlidir. Siz değilseniz bir şey yapmanıza gerek yok — şifreniz aynı kalır.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Если кнопка не работает, скопируйте ссылку в браузер: · If the button does not work, copy the link into your browser: · Düğme çalışmazsa bağlantıyı tarayıcıya kopyalayın:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery</a></p>

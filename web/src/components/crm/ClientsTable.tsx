@@ -30,7 +30,7 @@ type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 type SelKey = "owner" | "branch" | "source" | "role" | "cstage" | "dealStage" | "priority" | "lang" | "kind" | "il" | "tag" | "channel";
 const SEL_KEYS: SelKey[] = ["owner", "branch", "source", "role", "cstage", "dealStage", "priority", "lang", "kind", "il", "tag", "channel"];
 type Flt = Record<SelKey, string[]> & { budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string };
-type SavedView = { id: string; name: string; flt: Flt; stage: string; view: View; sort: { key: SortKey; dir: 1 | -1 } };
+type SavedView = { id: string; name: string; flt: Flt; stage: string[]; view: View; sort: { key: SortKey; dir: 1 | -1 } };
 const MODE_LS = "opl-crm-clients-mode";
 const EMPTY_FLT: Flt = { owner: [], branch: [], source: [], role: [], cstage: [], dealStage: [], priority: [], lang: [], kind: [], il: [], tag: [], channel: [], budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "" };
 /** Сохранённое состояние (последний вид, сохранённые виды) могло быть записано, когда значения были одиночными строками. */
@@ -40,6 +40,9 @@ function normFlt(p: unknown): Flt {
   for (const k of ["budgetMin", "budgetMax", "createdFrom", "createdTo"] as const) out[k] = typeof o[k] === "string" ? (o[k] as string) : "";
   return out;
 }
+/** Строка статусов над таблицей = фильтр «Статус клиента» (`flt.cstage`), без отдельного состояния и без дубля-пилюли (13.10.2026);
+ *  в сохранённых видах и последнем состоянии раньше лежал `stage` (одна строка) — сливается в cstage. */
+const normStage = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : typeof v === "string" && v ? [v] : []);
 const fltActive = (f: Flt) => SEL_KEYS.filter((k) => f[k].length).length + (f.budgetMin || f.budgetMax ? 1 : 0) + (f.createdFrom || f.createdTo ? 1 : 0);
 type SortKey = "name" | "activity" | "created" | "updated" | "stage" | "owner" | "source" | "next" | "region";
 const DENS_LS = "opl-crm-density";
@@ -58,12 +61,12 @@ export function ClientsTable() {
   if (urlQ && !urlApplied) { setUrlApplied(true); crm.setQ(urlQ); }
   // последнее состояние списка запоминается (стандарт 2026: «persist the last view»): фильтры, вид, этап, сортировка
   const lastKey = `opl-crm-last:${crm.base}:${crm.me.ws.id}`;
-  const last = (() => { try { return JSON.parse(getPref(lastKey) || "{}") as Partial<{ flt: Flt; view: View; stage: string; sort: { key: SortKey; dir: 1 | -1 } }>; } catch { return {}; } })();
+  const last = (() => { try { return JSON.parse(getPref(lastKey) || "{}") as Partial<{ flt: Flt; view: View; stage: string[] | string; sort: { key: SortKey; dir: 1 | -1 } }>; } catch { return {}; } })();
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [view, setView] = useState<View>(last.view ?? "all");
-  const [stage, setStage] = useState<string>(last.stage ?? ""); // "" все, "none" нет сделок, "won"/"lost", иначе id этапа
-  const [flt, setFlt] = useState<Flt>(() => normFlt(last.flt));
+  const [flt, setFlt] = useState<Flt>(() => { const f0 = normFlt(last.flt); return { ...f0, cstage: [...new Set([...f0.cstage, ...normStage(last.stage)])] }; });
   const setF = (p: Partial<Flt>) => { setFlt((v) => ({ ...v, ...p })); setCurSaved(""); };
+  const stage = flt.cstage; // строка статусов над таблицей = фильтр «Статус клиента»
   const [filtersOpen, setFiltersOpen] = useState(false);
   const cacheKey = `${crm.base}:clients:${status}`;
   const [list, setList] = useState<Client[] | null>(() => cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(cacheKey)?.list ?? null);
@@ -71,14 +74,14 @@ export function ClientsTable() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   // по умолчанию — последняя активность (эталон HubSpot/Pipedrive/Attio, 0023); старая память «updated» → activity
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>(last.sort && last.sort.key !== "updated" ? last.sort : { key: "activity", dir: -1 });
-  useEffect(() => { setPref(lastKey, JSON.stringify({ flt, view, stage, sort })); }, [lastKey, flt, view, stage, sort]);
+  useEffect(() => { setPref(lastKey, JSON.stringify({ flt, view, sort })); }, [lastKey, flt, view, sort]);
   // сохранённые виды (Linear/Attio: view = сохранённые фильтры), личные, на пространство
   const viewsKey = `opl-crm-views:${crm.base}:${crm.me.ws.id}`;
   const savedRaw = usePref(viewsKey);
   const saved: SavedView[] = (() => { try { const v = JSON.parse(savedRaw || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
   const [curSaved, setCurSaved] = useState<string>(last.flt ? "" : "");
-  const saveView = async () => { const name = window.prompt(c.tbl.viewName); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage, view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
-  const applySaved = (v: SavedView) => { setFlt(normFlt(v.flt)); setStage(v.stage); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
+  const saveView = async () => { const name = window.prompt(c.tbl.viewName); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage: [], view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
+  const applySaved = (v: SavedView) => { const f0 = normFlt(v.flt); setFlt({ ...f0, cstage: [...new Set([...f0.cstage, ...normStage(v.stage)])] }); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
   const deleteSaved = (id: string) => { setPref(viewsKey, JSON.stringify(saved.filter((x) => x.id !== id))); if (curSaved === id) setCurSaved(""); };
   const [drawer, setDrawer] = useState<string | null>(null);
   const [modal, setModal] = useState(false);
@@ -125,7 +128,6 @@ export function ClientsTable() {
   };
   const rows = useMemo(() => {
     let r = base.filter((x) => matchView(x, view));
-    if (stage) r = r.filter((x) => stageOf(x) === stage);
     // каждое поле — «любое из выбранных»; разные поля — «и»
     if (flt.owner.length) r = r.filter((x) => flt.owner.includes(x.ownerId ?? ""));
     if (flt.source.length) r = r.filter((x) => flt.source.includes(x.sourceId ?? ""));
@@ -163,7 +165,7 @@ export function ClientsTable() {
       return (ka < kb ? -1 : ka > kb ? 1 : 0) * sort.dir;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, view, stage, flt, sort, deals, now]);
+  }, [base, view, flt, sort, deals, now]);
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: ["name", "stage", "owner", "source", "region", "next"].includes(key) ? 1 : -1 }));
   const allSel = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const err = (e: unknown) => { const m = (e as Error)?.message; if (m === "not-member") return showToast(c.team.notMember); if (m === "forbidden") return showToast(c.team.forbiddenT); crmError(e, c.errSave, c.errReadonly); };
@@ -194,13 +196,14 @@ export function ClientsTable() {
         {(["all", "mine", "withTask", "overdue", "noDeal"] as View[]).map((v) => { const n = viewCount(v); return (
           <button key={v} type="button" onClick={() => setView(v)} className={`-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${view === v ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}>{c.tbl.views[v]}<span className={`rounded-full px-[7px] py-[1px] text-[11px] ${v === "overdue" && n ? "bg-red-tint text-red" : "bg-bg-2 text-muted"}`}>{n}</span></button>); })}
         {saved.map((v) => <span key={v.id} className={`group/sv -mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-[13px] font-medium ${curSaved === v.id ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}><button type="button" onClick={() => applySaved(v)} className="cursor-pointer">{v.name}</button><button type="button" onClick={() => deleteSaved(v.id)} title={c.tbl.deleteView} className="cursor-pointer text-muted opacity-0 hover:text-red group-hover/sv:opacity-100"><IconX size={12} /></button></span>)}
-        {(activeFilters > 0 || stage) && !curSaved && <button type="button" onClick={saveView} className="-mb-px flex cursor-pointer items-center gap-1 border-b-2 border-transparent px-3 py-2 text-[13px] font-medium text-blue-2 hover:underline"><IconPlus size={13} /> {c.tbl.saveView}</button>}
+        {activeFilters > 0 && !curSaved && <button type="button" onClick={saveView} className="-mb-px flex cursor-pointer items-center gap-1 border-b-2 border-transparent px-3 py-2 text-[13px] font-medium text-blue-2 hover:underline"><IconPlus size={13} /> {c.tbl.saveView}</button>}
         {/* архив — отдельная вкладка справа: архивные клиенты скрыты из «Активных», но остаются для истории и поиска дублей */}
         <button type="button" onClick={() => setStatus(status === "active" ? "archived" : "active")} className={`-mb-px ml-auto flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${status === "archived" ? "border-blue-2 text-ink" : "border-transparent text-muted hover:text-ink"}`}><IconArchive size={14} /> {c.archived}{status === "archived" && list ? <span className="rounded-full bg-bg-2 px-[7px] py-[1px] text-[11px] text-muted">{base.length}</span> : null}</button>
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
-        {crm.cstages.map((st) => { const n = stageCount(st.key); return <button key={st.id} type="button" onClick={() => setStage(stage === st.key ? "" : st.key)} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${stage === st.key ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={stage === st.key ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
+        {crm.cstages.map((st) => { const n = stageCount(st.key); const on = stage.includes(st.key); return <button key={st.id} type="button" onClick={() => setF({ cstage: on ? stage.filter((k) => k !== st.key) : [...stage, st.key] })} aria-pressed={on} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${on ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={on ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
+        {stage.length > 0 && <button type="button" onClick={() => setF({ cstage: [] })} className="inline-flex h-7 cursor-pointer items-center gap-1 px-2 text-[12px] font-medium text-muted hover:text-red"><IconX size={12} /> {c.tbl.clear}</button>}
       </div>
       <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
       {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}
@@ -216,7 +219,7 @@ export function ClientsTable() {
       )}
       {mode === "board" && list !== null && <ClientBoard rows={rows} deals={deals} onMove={async (id, k, pos) => { patchRow(id, { stage: k, boardPos: pos }); try { await patchClient(id, { stage: k, boardPos: pos }); } catch (e) { err(e); load(); } }} />}
       <div className={`overflow-x-auto rounded-[6px] border border-line bg-surface ${mode === "board" ? "hidden" : ""}`}>
-        {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || stage || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
+        {list === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : rows.length === 0 ? <div className="py-12 text-center text-[13.5px] text-muted">{q || activeFilters || view !== "all" ? c.notFound : status === "archived" ? c.noArchived : c.noClients}</div> : (
           <table data-crm-table="1" className="w-full min-w-[1100px] text-[13px]">
             <thead><tr>
               <th className="w-[56px] px-3 py-2"><input type="checkbox" checked={allSel} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /></th>
@@ -307,6 +310,7 @@ function useFieldDefs(allTags: string[]): FieldDef[] {
 function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"], crm: ReturnType<typeof useCrm>, lang: Lang): { key: string; label: string; value: string }[] {
   const out: { key: string; label: string; value: string }[] = [];
   for (const d of defs) {
+    if (d.key === "cstage") continue; // статус клиента показан строкой чипов над таблицей — пилюлю не дублировать
     if (d.kind === "budget") { if (flt.budgetMin || flt.budgetMax) out.push({ key: d.key, label: d.label, value: `${flt.budgetMin ? `≥ ${Number(flt.budgetMin).toLocaleString("ru-RU")}` : ""}${flt.budgetMin && flt.budgetMax ? " " : ""}${flt.budgetMax ? `≤ ${Number(flt.budgetMax).toLocaleString("ru-RU")}` : ""}` }); }
     else if (d.kind === "dates") { if (flt.createdFrom || flt.createdTo) out.push({ key: d.key, label: d.label, value: `${fmtD(flt.createdFrom) || "…"} – ${fmtD(flt.createdTo) || "…"}` }); }
     else { const v = flt[d.key as SelKey]; if (v.length) { const names = v.map((x) => fltLabel(d.key as keyof Flt, x, t, crm, lang)); out.push({ key: d.key, label: d.label, value: names.slice(0, 2).join(", ") + (names.length > 2 ? ` +${names.length - 2}` : "") }); } }

@@ -19,7 +19,7 @@ export type AdminUser = {
 };
 export type Company = { id: string; name: string };
 type DevRole = "admin" | "editor" | "manager";
-type Draft = Partial<AdminUser> & { password?: string; developer_ids: string[]; dev_role: DevRole | null; lang?: "RU" | "EN" | "TR" };
+type Draft = Partial<AdminUser> & { password?: string; sendWelcome?: boolean; developer_ids: string[]; dev_role: DevRole | null; lang?: "RU" | "EN" | "TR" };
 
 const input = "w-full rounded-[10px] border border-line px-3 py-[11px] text-[14px] outline-none focus:border-blue";
 const label = "mb-[6px] block text-[13px] text-text-2";
@@ -46,7 +46,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
   const [coQ, setCoQ] = useState("");
   const [copied, setCopied] = useState(false);
   const [inv, setInv] = useState<null | { role: Role; agency_id: string; developer_id: string; org_role: string; email: string; name: string; url?: string }>(null);
-  const [pw, setPw] = useState<null | { id: string; value: string }>(null);
+  const [pw, setPw] = useState<null | { id: string; value: string; mail: boolean }>(null);
   const [err, setErr] = useState("");
   const [miss, setMiss] = useState<string[]>([]); // ключи незаполненных обязательных полей: name | email | devs
   const [toast, setToast] = useState("");
@@ -72,7 +72,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
     setErr("");
     start(async () => { try { await fn(); flash(ok); } catch (e) { setErr((e as Error).message); } });
   }
-  function openNew() { setEdit({ role: "realtor", status: "active", developer_ids: [], dev_role: "editor", platform_staff: false, password: "", lang }); setHelp(false); setCoQ(""); setMiss([]); setErr(""); }
+  function openNew() { setEdit({ role: "realtor", status: "active", developer_ids: [], dev_role: "editor", platform_staff: false, password: "", sendWelcome: true, lang }); setHelp(false); setCoQ(""); setMiss([]); setErr(""); }
   function openEdit(u: AdminUser) { setEdit({ ...u, developer_ids: u.developer_ids ?? [], dev_role: (u.dev_role as DevRole) ?? "editor", password: "" }); setHelp(false); setCoQ(""); setMiss([]); setErr(""); }
   const fieldL: Record<string, string> = { name: L("ФИО", "Full name", "Ad Soyad"), email: L("почта", "e-mail", "e-posta"), devs: L("доступ к застройщикам", "developer access", "geliştirici erişimi") };
   const patch = (d: Partial<Draft>) => { if (!edit) return; setEdit({ ...edit, ...d }); if (miss.length) setMiss((m) => m.filter((k) => !(k in d) && !(k === "devs" && "developer_ids" in d) && !(k === "devs" && "role" in d))); };
@@ -91,9 +91,9 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
       developer_ids: edit.role === "developer" ? edit.developer_ids : [], dev_role: edit.role === "developer" ? edit.dev_role : null,
       platform_staff: edit.role === "developer" ? !!edit.platform_staff : false, paid_to: edit.role === "realtor" ? edit.paid_to || null : null, lang: edit.lang,
       agency_role: edit.role === "realtor" && edit.agency_id ? (edit.agency_role ?? "agent") : null,
-      password: edit.password || undefined,
+      password: edit.password || undefined, send_welcome: edit.sendWelcome !== false,
     };
-    run(async () => { if (edit.id) await updateUser(edit.id, body); else await createUser(body); setEdit(null); }, edit.id ? t.rl.editDone : L("Пользователь создан", "User created", "Kullanıcı oluşturuldu"));
+    run(async () => { if (edit.id) await updateUser(edit.id, body); else await createUser(body); setEdit(null); }, edit.id ? t.rl.editDone : body.password && body.send_welcome ? L("Пользователь создан, письмо с доступами отправлено", "User created, access e-mail sent", "Kullanıcı oluşturuldu, erişim e-postası gönderildi") : L("Пользователь создан", "User created", "Kullanıcı oluşturuldu"));
   }
   const toggleCo = (id: string) => edit && patch({ developer_ids: edit.developer_ids.includes(id) ? edit.developer_ids.filter((x) => x !== id) : [...edit.developer_ids, id] });
   const coList = developers.filter((d) => !coQ.trim() || d.name.toLowerCase().includes(coQ.trim().toLowerCase()));
@@ -129,7 +129,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
               {u.status === "pending" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: "active" }), t.rl.apprT)} className="flex-none cursor-pointer rounded-[9px] bg-[#22c15e] px-[13px] py-2 text-[12px] font-bold text-white">{t.rl.ok}</button>}
               {u.status !== "pending" && u.role !== "admin" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: u.status === "active" ? "paused" : "active" }), t.rl.editDone)} className={`flex-none cursor-pointer rounded-[9px] border px-[13px] py-2 text-[12px] font-bold ${u.status === "active" ? "border-line bg-surface text-text" : "border-transparent bg-[#22c15e] text-white"}`}>{u.status === "active" ? t.rl.pause : t.rl.resume}</button>}
               {u.email && <button type="button" title={L("Отправить письмо-приглашение повторно", "Resend invitation e-mail", "Davet e-postasını yeniden gönder")} disabled={pending} onClick={() => run(() => resendInvite(u.id, lang), L("Письмо отправлено", "E-mail sent", "E-posta gönderildi"))} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-text hover:border-blue hover:text-blue disabled:opacity-60"><IconMailForward size={15} /></button>}
-              <button type="button" title={L("Задать пароль", "Set password", "Şifre belirle")} onClick={() => setPw({ id: u.id, value: "" })} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-text hover:border-blue hover:text-blue"><IconKey size={15} /></button>
+              <button type="button" title={L("Задать пароль", "Set password", "Şifre belirle")} onClick={() => setPw({ id: u.id, value: "", mail: true })} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-text hover:border-blue hover:text-blue"><IconKey size={15} /></button>
               <button type="button" title={t.rl.editB} onClick={() => openEdit(u)} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-text hover:border-blue hover:text-blue"><IconPencil size={15} /></button>
               <button type="button" title={t.sel.del} disabled={pending} onClick={() => void confirmDialog({ text: L("Удалить пользователя?", "Delete user?", "Kullanıcı silinsin mi?"), ok: t.sel.del, danger: true }).then((ok) => { if (ok) run(() => deleteUser(u.id), t.sel.delDone); })} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-red hover:bg-[#fdf1f1]"><IconTrash size={15} /></button>
             </div>
@@ -179,13 +179,16 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
                 <button type="button" onClick={() => { setEdit({ ...edit, password: genPassword() }); setCopied(false); }} className="inline-flex flex-none cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[10px] border border-blue bg-blue-tint px-[15px] text-[13px] font-bold text-[#2f5fe0] hover:bg-[#e0e9ff]"><IconRefresh size={15} /> {L("Сгенерировать", "Generate", "Oluştur")}</button>
                 {edit.password && <button type="button" onClick={() => { try { navigator.clipboard.writeText(edit.password ?? ""); } catch {} setCopied(true); }} className="inline-flex flex-none cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[10px] border border-line bg-surface px-[14px] text-[13px] font-semibold text-text hover:bg-bg-3"><IconCopy size={15} /> {copied ? t.rl.copied : t.rl.copy}</button>}
               </div>
-              {!edit.password && (
+              {edit.password && (
+                <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px] text-text"><input type="checkbox" checked={edit.sendWelcome !== false} onChange={(e) => patch({ sendWelcome: e.target.checked })} className="h-4 w-4 accent-[#4d7cfe]" />{L("Отправить логин и пароль на почту", "E-mail the login and password", "Kullanıcı adı ve şifreyi e-postayla gönder")}</label>
+              )}
+              {(
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-[13px] text-text-2">{L("Язык письма", "E-mail language", "E-posta dili")}</span>
                   <div className="flex gap-1 rounded-[9px] bg-bg-2 p-[3px]">{(["RU", "EN", "TR"] as const).map((lg) => <button key={lg} type="button" onClick={() => patch({ lang: lg })} className={`cursor-pointer rounded-[7px] px-[10px] py-[5px] text-[12px] font-bold ${(edit.lang ?? "RU") === lg ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,36,63,.12)]" : "text-muted"}`}>{lg}</button>)}</div>
                 </div>
               )}
-              <div className="mt-[7px] text-[11.5px] text-muted">{L("Пусто — придёт письмо-приглашение со ссылкой для установки пароля. С паролем — скопируйте и передайте его пользователю.", "Empty — an invite e-mail with a link to set the password is sent. With a password — copy it and hand it over.", "Boş — şifre belirleme bağlantılı davet e-postası gider. Şifreyle — kopyalayıp kullanıcıya iletin.")}</div>
+              <div className="mt-[7px] text-[11.5px] text-muted">{L("Пусто — придёт письмо-приглашение со ссылкой для установки пароля. С паролем — пользователь получит письмо с логином и паролем (или скопируйте и передайте сами).", "Empty — an invite e-mail with a link to set the password is sent. With a password — copy it and hand it over.", "Boş — şifre belirleme bağlantılı davet e-postası gider. Şifreyle — kopyalayıp kullanıcıya iletin.")}</div>
             </div>
           )}
 
@@ -237,9 +240,10 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
       {pw && (
         <Modal title={L("Новый пароль", "New password", "Yeni şifre")} onClose={() => setPw(null)}>
           <div className="flex gap-2"><input value={pw.value} onChange={(e) => setPw({ ...pw, value: e.target.value })} className={`${input} font-mono`} autoComplete="new-password" /><button type="button" onClick={() => setPw({ ...pw, value: genPassword() })} className="inline-flex flex-none cursor-pointer items-center gap-1 rounded-[10px] border border-blue bg-blue-tint px-3 text-[13px] font-bold text-[#2f5fe0]"><IconRefresh size={14} /></button></div>
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px] text-text"><input type="checkbox" checked={pw.mail} onChange={(e) => setPw({ ...pw, mail: e.target.checked })} className="h-4 w-4 accent-[#4d7cfe]" />{L("Отправить логин и пароль на почту", "E-mail the login and password", "Kullanıcı adı ve şifreyi e-postayla gönder")}</label>
           <div className="mt-4 flex justify-end gap-2">
             <button type="button" onClick={() => setPw(null)} className="cursor-pointer rounded-[10px] border border-line px-4 py-[10px] text-[13px] font-semibold text-text">{t.common.cancel}</button>
-            <button type="button" disabled={pending || pw.value.length < 6} onClick={() => run(async () => { await setUserPassword(pw.id, pw.value); setPw(null); }, t.prof.pwDone)} className="cursor-pointer rounded-[10px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white disabled:opacity-60">{t.prof.upd}</button>
+            <button type="button" disabled={pending || pw.value.length < 6} onClick={() => run(async () => { await setUserPassword(pw.id, pw.value, pw.mail); setPw(null); }, pw.mail ? L("Пароль сохранён, письмо отправлено", "Password saved, e-mail sent", "Şifre kaydedildi, e-posta gönderildi") : t.prof.pwDone)} className="cursor-pointer rounded-[10px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white disabled:opacity-60">{t.prof.upd}</button>
           </div>
         </Modal>
       )}

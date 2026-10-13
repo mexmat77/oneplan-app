@@ -17,17 +17,21 @@ export async function sendMail(to: string, subject: string, html: string): Promi
 }
 
 /** Письмо по шаблону (`join`, `invite`, `recovery`, …) на языке получателя. */
-export function renderMail(kind: MailKind, lang: MailLang, vars: { link: string; name?: string }) {
+export type MailVars = { link: string; name?: string; login?: string; password?: string };
+const escHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export function renderMail(kind: MailKind, lang: MailLang, vars: MailVars) {
   const t = MAIL_TEMPLATES[kind];
   const name = (vars.name ?? "").trim();
   const html = t.html[lang]
     .replace(/\{\{GREET:([\s\S]*?)\|([\s\S]*?)\}\}/g, (_m, a: string, b: string) => (name ? a : b))
     .replace(/\{\{NAME\}\}/g, name)
-    .replace(/\{\{LINK\}\}/g, vars.link);
+    .replace(/\{\{LINK\}\}/g, vars.link)
+    .replace(/\{\{LOGIN\}\}/g, escHtml(vars.login ?? ""))
+    .replace(/\{\{PASSWORD\}\}/g, escHtml(vars.password ?? ""));
   return { subject: t.subject[lang], html };
 }
 
-export async function sendTemplateMail(kind: MailKind, lang: MailLang, to: string, vars: { link: string; name?: string }) {
+export async function sendTemplateMail(kind: MailKind, lang: MailLang, to: string, vars: MailVars) {
   const { subject, html } = renderMail(kind, lang, vars);
   return sendMail(to, subject, html);
 }

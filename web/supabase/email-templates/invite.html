@@ -10,6 +10,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Вас пригласили в OnePlan</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}{{ .Data.name }}, здравствуйте!{{ else }}Здравствуйте!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Для вас создан аккаунт на платформе OnePlan — закрытой базе недвижимости для риэлторов и застройщиков. Нажмите кнопку, задайте пароль и войдите.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Принять приглашение</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Ссылка одноразовая и действует 24 часа. Если вы не ожидали это письмо, просто проигнорируйте его.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Если кнопка не работает, скопируйте ссылку в браузер:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>
@@ -17,6 +18,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">OnePlan'a davet edildiniz</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}Merhaba, {{ .Data.name }}!{{ else }}Merhaba!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Emlakçılar ve geliştiriciler için kapalı gayrimenkul platformu OnePlan'da sizin için bir hesap oluşturuldu. Düğmeye tıklayın, şifrenizi belirleyin ve giriş yapın.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Daveti kabul et</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Bağlantı tek kullanımlıktır ve 24 saat geçerlidir. Bu e-postayı beklemiyorsanız yok sayın.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Düğme çalışmazsa bağlantıyı tarayıcıya kopyalayın:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>
@@ -24,6 +26,7 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">You are invited to OnePlan</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">{{ if .Data.name }}Hello, {{ .Data.name }}!{{ else }}Hello!{{ end }}</p>
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">An account has been created for you on OnePlan — a private real-estate platform for realtors and developers. Click the button, set your password and sign in.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Accept invitation</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">The link is single-use and valid for 24 hours. If you did not expect this e-mail, just ignore it.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">If the button does not work, copy the link into your browser:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>
@@ -31,16 +34,19 @@
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">Вас пригласили в OnePlan</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Для вас создан аккаунт на платформе OnePlan — закрытой базе недвижимости для риэлторов и застройщиков. Нажмите кнопку, задайте пароль и войдите.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Принять приглашение</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Ссылка одноразовая и действует 24 часа. Если вы не ожидали это письмо, просто проигнорируйте его.</p><hr style="border:0;border-top:1px solid #e6e9f0;margin:26px 0;">
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">You are invited to OnePlan</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">An account has been created for you on OnePlan — a private real-estate platform for realtors and developers. Click the button, set your password and sign in.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Accept invitation</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">The link is single-use and valid for 24 hours. If you did not expect this e-mail, just ignore it.</p><hr style="border:0;border-top:1px solid #e6e9f0;margin:26px 0;">
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">OnePlan'a davet edildiniz</h1>
       
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">Emlakçılar ve geliştiriciler için kapalı gayrimenkul platformu OnePlan'da sizin için bir hesap oluşturuldu. Düğmeye tıklayın, şifrenizi belirleyin ve giriş yapın.</p>
+      
       <p style="margin:0 0 22px;"><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">Daveti kabul et</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">Bağlantı tek kullanımlıktır ve 24 saat geçerlidir. Bu e-postayı beklemiyorsanız yok sayın.</p>
       <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#98a1af;">Если кнопка не работает, скопируйте ссылку в браузер: · If the button does not work, copy the link into your browser: · Düğme çalışmazsa bağlantıyı tarayıcıya kopyalayın:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#4d7cfe;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>

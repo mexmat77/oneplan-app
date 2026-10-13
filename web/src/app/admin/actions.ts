@@ -16,6 +16,7 @@ export type UserInput = {
   developer_ids?: string[]; platform_staff?: boolean;
   agency_role?: "owner" | "manager" | "agent" | null; // роль в агентстве (org_members, 0022): администратор / руководитель филиала / риэлтор
   lang?: "RU" | "EN" | "TR"; // язык письма-приглашения (user metadata `lang`, читают шаблоны Supabase Auth)
+  send_welcome?: boolean; // с паролем: письмо «Ваш доступ в OnePlan» с логином и паролем (13.10.2026, «им бы на почту отправить»)
 };
 
 async function requireAdmin() {
@@ -69,6 +70,7 @@ export async function createUser(input: UserInput): Promise<{ id: string }> {
     const { data, error } = await admin.auth.admin.createUser({ email: input.email, password: input.password, email_confirm: true, user_metadata: meta });
     if (error) throw new Error(error.message);
     id = data.user.id;
+    if (input.send_welcome !== false) await sendWelcome(input.email, input.name, input.lang ?? "RU", input.password);
   } else {
     const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, { data: meta, redirectTo: `${siteUrl()}/auth/callback` });
     if (error) throw new Error(error.message);
@@ -108,10 +110,23 @@ export async function updateUser(id: string, patch: Partial<UserInput>) {
   revalidatePath("/admin/users"); revalidatePath("/admin/companies");
 }
 
-export async function setUserPassword(id: string, password: string) {
+export async function setUserPassword(id: string, password: string, sendMail = false) {
   await requireAdmin();
-  const { error } = await createAdminClient().auth.admin.updateUserById(id, { password });
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(id, { password });
   if (error) throw new Error(error.message);
+  if (sendMail) {
+    const { data: p } = await admin.from("profiles").select("email, name").eq("id", id).maybeSingle();
+    const { data: u } = await admin.auth.admin.getUserById(id);
+    if (!p?.email) throw new Error("У пользователя нет почты");
+    const ok = await sendWelcome(p.email, (p.name as string) ?? "", ((u?.user?.user_metadata?.lang as "RU" | "EN" | "TR" | undefined) ?? "RU"), password);
+    if (!ok) throw new Error("Пароль сохранён, но письмо не отправлено: проверьте RESEND_API_KEY на сервере");
+  }
+}
+/** Письмо «Ваш доступ в OnePlan»: логин (почта), пароль и кнопка «Войти». По просьбе пользователя 13.10.2026 (аккаунты
+ *  заводит админ вручную и сообщает доступы); в письме — совет сменить пароль после первого входа. */
+async function sendWelcome(email: string, name: string, lang: "RU" | "EN" | "TR", password: string): Promise<boolean> {
+  return sendTemplateMail("welcome", lang, email, { link: `${siteUrl()}/login`, name, login: email, password });
 }
 
 export async function deleteUser(id: string) {

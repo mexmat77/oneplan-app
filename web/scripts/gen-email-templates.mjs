@@ -44,6 +44,13 @@ const T = {
     EN: { h: "Confirm your e-mail", p: "Click the button to confirm your address and finish signing up to OnePlan.", btn: "Confirm e-mail", note: "If you did not sign up to OnePlan, ignore this e-mail." },
     TR: { h: "E-postanızı onaylayın", p: "Adresinizi onaylamak ve OnePlan kaydını tamamlamak için düğmeye tıklayın.", btn: "E-postayı onayla", note: "OnePlan'a kaydolmadıysanız bu e-postayı yok sayın." },
   },
+  welcome: {
+    type: "welcome", // не шаблон Supabase — отправляем сами (Resend) при создании пользователя с паролем / смене пароля админом
+    subject: { RU: "Ваш доступ в OnePlan", EN: "Your OnePlan access", TR: "OnePlan erişiminiz" },
+    RU: { h: "Вы зарегистрированы в OnePlan", p: "Для вас создан аккаунт на платформе OnePlan — закрытой базе недвижимости для риэлторов и застройщиков. Данные для входа:", creds: { login: "Логин", password: "Пароль" }, btn: "Войти", note: "После первого входа рекомендуем сменить пароль в профиле. Если вы не ожидали это письмо, напишите нам: support@one-plan.pro." },
+    EN: { h: "You are registered on OnePlan", p: "An account has been created for you on OnePlan — a private real-estate platform for realtors and developers. Your sign-in details:", creds: { login: "Login", password: "Password" }, btn: "Sign in", note: "We recommend changing the password in your profile after the first sign-in. If you did not expect this e-mail, contact us: support@one-plan.pro." },
+    TR: { h: "OnePlan'a kaydedildiniz", p: "Emlakçılar ve geliştiriciler için kapalı gayrimenkul platformu OnePlan'da sizin için bir hesap oluşturuldu. Giriş bilgileriniz:", creds: { login: "Kullanıcı adı", password: "Şifre" }, btn: "Giriş yap", note: "İlk girişten sonra profilinizden şifrenizi değiştirmenizi öneririz. Bu e-postayı beklemiyorsanız bize yazın: support@one-plan.pro." },
+  },
   join: {
     type: "join", // не шаблон Supabase — отправляем сами через Resend; ссылка /join/<code>
     subject: { RU: "Ссылка для регистрации в OnePlan", EN: "Your OnePlan registration link", TR: "OnePlan kayıt bağlantınız" },
@@ -65,8 +72,16 @@ const block = (L, t, link, greet) => `
       <h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;color:#14243f;">${esc(t.h)}</h1>
       ${greet ? `<p style="margin:0 0 8px;font-size:15px;line-height:1.55;color:#3c4759;">${greet}</p>` : ""}
       <p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#3c4759;">${esc(t.p)}</p>
+      ${t.creds ? creds(t.creds) : ""}
       <p style="margin:0 0 22px;"><a href="${link}" style="display:inline-block;background:#4d7cfe;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 24px;border-radius:12px;">${esc(t.btn)}</a></p>
       <p style="margin:0 0 6px;font-size:12.5px;line-height:1.5;color:#7a8597;">${esc(t.note)}</p>`;
+// Данные для входа (welcome): {{LOGIN}} / {{PASSWORD}} подставляет lib/mail.ts (с экранированием).
+const creds = (c) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border:1px solid #e6e9f0;border-radius:12px;background:#f7f8fb;">
+        <tr><td style="padding:12px 16px 4px;font-size:12px;color:#7a8597;">${esc(c.login)}</td></tr>
+        <tr><td style="padding:0 16px 10px;font-size:15px;font-weight:700;color:#14243f;">{{LOGIN}}</td></tr>
+        <tr><td style="padding:0 16px 4px;font-size:12px;color:#7a8597;">${esc(c.password)}</td></tr>
+        <tr><td style="padding:0 16px 14px;font-family:Menlo,Consolas,monospace;font-size:16px;font-weight:700;letter-spacing:.04em;color:#14243f;">{{PASSWORD}}</td></tr>
+      </table>`;
 const sep = `<hr style="border:0;border-top:1px solid #e6e9f0;margin:26px 0;">`;
 const FALL = { RU: "Если кнопка не работает, скопируйте ссылку в браузер:", EN: "If the button does not work, copy the link into your browser:", TR: "Düğme çalışmazsa bağlantıyı tarayıcıya kopyalayın:" };
 const fallback = (link, L) => `
@@ -92,7 +107,7 @@ ${inner}
 
 const ts = [];
 for (const [key, t] of Object.entries(T)) {
-  if (t.type !== "join") {
+  if (t.type !== "join" && t.type !== "welcome") {
     const link = linkGo(t.type);
     const html = page(`{{ if eq .Data.lang "RU" }}${block("RU", t.RU, link, greetGo("RU"))}${fallback(link, "RU")}
 {{ else if eq .Data.lang "TR" }}${block("TR", t.TR, link, greetGo("TR"))}${fallback(link, "TR")}
@@ -103,7 +118,7 @@ for (const [key, t] of Object.entries(T)) {
     fs.writeFileSync(path.join(out, `${key}.subject.txt`), subjectGo(t.subject) + "\n");
   }
   const own = {};
-  for (const L of ["RU", "EN", "TR"]) own[L] = page(block(L, t[L], "{{LINK}}", greetOwn(L)) + fallback("{{LINK}}", L));
+  for (const L of ["RU", "EN", "TR"]) own[L] = page(block(L, t[L], "{{LINK}}", greetOwn(L)) + (t.type === "welcome" ? "" : fallback("{{LINK}}", L)));
   ts.push(`  ${key}: { subject: ${JSON.stringify(t.subject)}, html: ${JSON.stringify(own)} }`);
 }
 fs.writeFileSync(path.join(web, "src", "lib", "mail", "templates.generated.ts"),
