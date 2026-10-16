@@ -4,8 +4,9 @@
 // «Управление → Организации → карточка» (админ платформы), «Моё агентство» (/team, администратор агентства),
 // CRM → Настройки → Команда, кабинет застройщика /dev/users. Участники с ролями, филиалы (агентство), приглашения.
 import { useEffect, useState, useTransition } from "react";
-import { IconCopy, IconLink, IconMailForward, IconPlus, IconTrash, IconUserPlus, IconX } from "@tabler/icons-react";
-import { addOrgMember, cancelInvite, getOrg, inviteToOrg, removeOrgMember, setOrgBranch, setOrgRole } from "@/app/org/actions";
+import Link from "next/link";
+import { IconCopy, IconHome2, IconLink, IconMailForward, IconMapPin, IconPlus, IconTrash, IconUserPlus, IconX } from "@tabler/icons-react";
+import { addOrgMember, cancelInvite, deleteOrgBranch, getOrg, inviteToOrg, removeOrgMember, saveOrgBranch, setOrgBranch, setOrgRole } from "@/app/org/actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
@@ -33,6 +34,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
   const [inv, setInv] = useState<null | { email: string; name: string; role: OrgRole; lang: "RU" | "EN" | "TR"; url?: string; mailed?: boolean }>(null);
   const [add, setAdd] = useState<null | { email: string; role: OrgRole }>(null);
   const [copied, setCopied] = useState("");
+  const [nb, setNb] = useState(""); // новый филиал
 
   const msg = (e: unknown) => { const m = (e as Error)?.message ?? ""; return (o.err as Record<string, string>)[m] ?? m ?? o.err.generic; };
   async function reload() { try { const v = await getOrg(kind, id); setView(v); onChange?.(v); } catch (e) { setErr(msg(e)); } }
@@ -78,6 +80,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
                 <div className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-ink">{m.name}{m.id === view.meId && <span className="text-[11px] font-semibold text-muted">· {o.you}</span>}{m.platformStaff && <span className="rounded-[6px] bg-[#efe7fb] px-[6px] py-[1px] text-[10.5px] font-bold text-[#7b4fd0]">{o.staff}</span>}</div>
                 <div className="text-[12px] text-muted">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
               </div>
+              {kind === "agency" && <Link href={`/catalog?owner=${m.id}`} title={o.objects} className="inline-flex flex-none items-center gap-1 rounded-[8px] bg-bg-2 px-[9px] py-[3px] text-[11.5px] font-bold text-text hover:bg-blue-tint hover:text-blue"><IconHome2 size={12} /> {m.listings ?? 0}</Link>}
               {canManage && !scoped
                 ? <Select value={m.role} onChange={(v) => run(() => setOrgRole(kind, id, m.id, v), o.roleSaved)} options={roleOpts} size="sm" menuWidth="auto" disabled={pending || lastAdmin} className="w-[210px]" title={lastAdmin ? o.err["last-admin"] : undefined} />
                 : <span className="rounded-[8px] bg-bg-2 px-[10px] py-1 text-[11.5px] font-bold text-text">{roles[m.role]}</span>}
@@ -92,6 +95,28 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
         })}
       </div>
 
+      {kind === "agency" && (canManage && !scoped || branches.length > 0) && (
+        <div>
+          <div className="mb-2 text-[12px] font-bold uppercase tracking-[.06em] text-muted">{o.branches} · {branches.length}</div>
+          {branches.length === 0 && <div className="mb-2 rounded-[12px] border border-dashed border-[#dfe4ec] px-4 py-3 text-[12.5px] text-muted">{o.noBranches}</div>}
+          {branches.length > 0 && (
+            <div className="overflow-hidden rounded-[14px] border border-line bg-surface">
+              {branches.map((b) => { const n = members.filter((m) => m.branchId === b.id).length; return (
+                <div key={b.id} className="flex flex-wrap items-center gap-3 border-b border-[#f5f7fb] px-4 py-2 text-[13px] last:border-b-0">
+                  <IconMapPin size={15} className="text-muted" />
+                  <div className="min-w-[180px] flex-1 font-semibold text-ink">{b.name}<span className="ml-2 text-[12px] font-normal text-muted">{n} {o.membersN}</span></div>
+                  {canManage && !scoped && <button type="button" disabled={pending || n > 0} title={n > 0 ? o.branchHasMembers : o.branchDel} onClick={() => void confirmDialog({ text: `${o.branchDel}: ${b.name}?`, ok: o.branchDel, danger: true }).then((ok) => ok && run(() => deleteOrgBranch(id, b.id)))} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconX size={15} /></button>}
+                </div>); })}
+            </div>
+          )}
+          {canManage && !scoped && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <input value={nb} onChange={(e) => setNb(e.target.value)} placeholder={o.branchName} className={`${inp} max-w-[320px]`} onKeyDown={(e) => { if (e.key === "Enter" && nb.trim()) run(async () => { await saveOrgBranch(id, { name: nb }); setNb(""); }); }} />
+              <button type="button" disabled={pending || !nb.trim()} onClick={() => run(async () => { await saveOrgBranch(id, { name: nb }); setNb(""); })} className={btnS}><IconPlus size={15} /> {o.addBranch}</button>
+            </div>
+          )}
+        </div>
+      )}
       {(invites.length > 0 || canManage) && (
         <div>
           <div className="mb-2 text-[12px] font-bold uppercase tracking-[.06em] text-muted">{o.invites} · {invites.length}</div>

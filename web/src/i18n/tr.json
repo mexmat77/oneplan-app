@@ -2243,6 +2243,14 @@
     "noBranch": "Şube yok",
     "lastSeen": "Son giriş",
     "readOnly": "Rolleri, davetleri ve ekibi kuruluş yöneticisi değiştirir.",
+    "objects": "veritabanında ilan",
+    "branches": "Şubeler",
+    "noBranches": "Şube yok — herkes tek ofiste. Şube, yöneticinin kendi ekibi ve CRM müşterileri olduğunda gerekir.",
+    "addBranch": "Şube ekle",
+    "branchName": "Şube adı, örn. Alanya",
+    "branchDel": "Şubeyi sil",
+    "branchHasMembers": "Önce çalışanları başka şubeye taşıyın",
+    "membersN": "kişi",
     "scopedHint": "«{branch}» şubesinin yöneticisisiniz: şubenize emlakçı davet eder ve eklersiniz, şubesiz emlakçıları kabul eder, kendi emlakçılarınızı çıkarırsınız. Rolleri ve şubeler arası geçişleri ajans yöneticisi değiştirir.",
     "roles": {
       "agency": {

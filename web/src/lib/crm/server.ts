@@ -14,6 +14,7 @@ export type Ctx = { sb: SupabaseClient; me: CurrentUser; ws: Ws; dek: Buffer; ac
 
 const dekCache = new Map<string, Buffer>();
 const wsCache = new Map<string, { ws: Ws; exp: number }>();
+const CRM_FREE_FOR_ALL = true;
 const accCache = new Map<string, { access: CrmAccess; trialUntil: string | null; paidTo: string | null; exp: number }>();
 
 export async function crmCtx(): Promise<Ctx> {
@@ -77,7 +78,8 @@ async function accessOf(sb: SupabaseClient, ws: Ws): Promise<{ access: CrmAccess
   const until = new Date(started); until.setMonth(until.getMonth() + TRIAL_MONTHS);
   const paidTo = (data?.crm_paid_to as string | null) ?? null;
   const now = Date.now();
-  const full = now < until.getTime() || (!!paidTo && new Date(paidTo).getTime() + 86400000 > now);
+  // ДОСТУП БЕЗ ОГРАНИЧЕНИЙ для всех (16.10.2026, решение пользователя: подписку пока убрать); срок/оплата остаются в данных
+  const full = CRM_FREE_FOR_ALL || now < until.getTime() || (!!paidTo && new Date(paidTo).getTime() + 86400000 > now);
   return { access: full ? "full" : "readonly", trialUntil: until.toISOString(), paidTo };
 }
 

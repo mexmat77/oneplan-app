@@ -2243,6 +2243,14 @@
     "noBranch": "No branch",
     "lastSeen": "Last seen",
     "readOnly": "Roles, invitations and membership are managed by the organization admin.",
+    "objects": "listings in the base",
+    "branches": "Branches",
+    "noBranches": "No branches — everyone is in one office. A branch is needed when a manager has their own team and CRM clients.",
+    "addBranch": "Add branch",
+    "branchName": "Branch name, e.g. Alanya",
+    "branchDel": "Delete branch",
+    "branchHasMembers": "Move its members to another branch first",
+    "membersN": "members",
     "scopedHint": "You manage the «{branch}» branch: invite and add agents to it, accept agents without a branch and remove your own agents. Roles and transfers between branches are set by the agency admin.",
     "roles": {
       "agency": {

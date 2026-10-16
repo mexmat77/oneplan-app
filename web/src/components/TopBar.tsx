@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconCreditCard, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -76,7 +76,6 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
   const kebabRows: Item[] = [
     ...navItems,
     { href: "/api-access", label: t.api.title, Icon: IconApi, active: is("/api-access") },
-    { href: "/billing", label: t.bil.title, Icon: IconCreditCard, active: is("/billing") },
     ...(isAdmin && workspace === "realtors" ? [{ href: "/admin/users", label: t.nav.rls, Icon: IconUsers, active: is("/admin/users") }] : []),
   ];
   const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
@@ -121,7 +120,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         </button>
         <LangSwitch className="max-md:hidden" />
         <UserMenu name={name} sub={sub} email={email} avatar={avatar} color="#2f5fe0" logoutLabel={t.prof.out}
-          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, { label: L("Подписка и оплата", "Subscription & billing", "Abonelik ve ödeme"), href: "/billing", icon: <IconCreditCard size={16} /> }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : [])]}
+          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : [])]}
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
           <IconDotsVertical size={18} />

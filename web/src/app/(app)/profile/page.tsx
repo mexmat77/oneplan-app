@@ -2,11 +2,10 @@
 
 // «Профиль» — prototype lines 1403–1534 (markup), 3680–3700 / 3824–3826 / 4243–4285 (logic).
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   IconAddressBook, IconAlertTriangle, IconAt, IconBrandApple, IconBrandGooglePlay, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp,
-  IconChevronRight, IconCircleCheck, IconExternalLink, IconCreditCard, IconEye, IconEyeOff, IconLock, IconLogout, IconPhone, IconPlus, IconWand,
+  IconCircleCheck, IconExternalLink, IconEye, IconEyeOff, IconLock, IconLogout, IconPhone, IconPlus, IconWand,
 } from "@tabler/icons-react";
 import { useT } from "@/i18n/provider";
 import { TwoFactorCard } from "@/components/auth/TwoFactor";
@@ -125,11 +124,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-[620px]">
       <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-ink">{t.prof.title}</h1>
       <p className="mb-[18px] mt-[5px] text-[14px] text-text-2 [text-wrap:pretty]">{t.prof.sub}</p>
-      <Link href="/billing" className="mb-4 flex items-center gap-3 rounded-[16px] border border-line bg-surface px-[18px] py-[15px] hover:border-blue">
-        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[11px] bg-green-tint text-green"><IconCreditCard size={18} /></span>
-        <span className="min-w-0 flex-1"><span className="block text-[14px] font-bold text-ink">{t.bil.title}</span><span className="text-[12px] font-semibold text-green">{t.bil.activeTo} 24.11.2026</span></span>
-        <IconChevronRight size={16} className="text-[#c3c9d4]" />
-      </Link>
+      {/* «Подписка и оплата» скрыта: доступ для всех без ограничений (16.10.2026, решение пользователя) */}
 
       <div className="rounded-[16px] border border-line bg-surface p-[22px] max-md:p-4">
         <div className="mb-5 flex flex-wrap items-center gap-[14px]">

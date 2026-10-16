@@ -134,7 +134,7 @@ export function CrmShell({ base }: { base: string }) {
               </Link>); })}
           </nav>
           <div className="flex-1" />
-          <div title={accessText} className={`mx-2 mb-1 flex h-8 items-center gap-2 overflow-hidden whitespace-nowrap rounded-[6px] px-[15px] text-[11px] leading-[1.3] ${boot.me.access === "readonly" ? "bg-red-tint text-red" : "text-muted"}`}><IconLock size={13} className="flex-none" /><span data-crm-label="1" className="min-w-0 truncate">{accessText}</span></div>
+          {boot.me.access === "readonly" && <div title={accessText} className={`mx-2 mb-1 flex h-8 items-center gap-2 overflow-hidden whitespace-nowrap rounded-[6px] px-[15px] text-[11px] leading-[1.3] ${boot.me.access === "readonly" ? "bg-red-tint text-red" : "text-muted"}`}><IconLock size={13} className="flex-none" /><span data-crm-label="1" className="min-w-0 truncate">{accessText}</span></div>}
           {me && <div className="mx-2 flex items-center gap-[10px] overflow-hidden whitespace-nowrap rounded-[6px] px-[6px] py-[6px]"><span className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: me.color }}>{me.name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2)}</span><span data-crm-label="1" className="min-w-0"><span className="block truncate text-[13px] font-semibold text-ink">{me.name}</span><span className="block text-[11px] text-muted">{boot.me.isAdmin ? c.tbl.role.owner : c.tbl.role.member}</span></span></div>}
         </aside>
 

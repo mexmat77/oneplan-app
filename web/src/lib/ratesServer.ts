@@ -10,10 +10,20 @@ const FALLBACK: Rates = { eur: 55.6, usd: 49.17, date: "" };
 // Свой кэш на 15 минут вместо `next: { revalidate }` (16.10.2026: прод два дня показывал бюллетень от 13.10 — кэш данных Next
 // не обновлялся); при ошибке сети отдаём последний удачный ответ, а не константы.
 let memo: { at: number; rates: Rates } | null = null;
+let inflight: Promise<Rates> | null = null;
 export async function getRates(): Promise<Rates> {
   if (memo && Date.now() - memo.at < 15 * 60_000) return memo.rates;
+  if (memo) { void refresh(); return memo.rates; } // stale-while-revalidate: страница не ждёт ЦБ (16.10.2026, «медленно»)
+  return refresh();
+}
+async function refresh(): Promise<Rates> {
+  if (inflight) return inflight;
+  inflight = fetchRates().finally(() => { inflight = null; });
+  return inflight;
+}
+async function fetchRates(): Promise<Rates> {
   try {
-    const r = await fetch("https://www.tcmb.gov.tr/kurlar/today.xml", { cache: "no-store", headers: { "User-Agent": "OnePlan/1.0 (+https://one-plan.pro)" }, signal: AbortSignal.timeout(8000) });
+    const r = await fetch("https://www.tcmb.gov.tr/kurlar/today.xml", { cache: "no-store", headers: { "User-Agent": "OnePlan/1.0 (+https://one-plan.pro)" }, signal: AbortSignal.timeout(4000) });
     if (!r.ok) throw new Error(String(r.status));
     const xml = await r.text();
     const date = /Tarih="([^"]+)"/.exec(xml)?.[1] ?? "";

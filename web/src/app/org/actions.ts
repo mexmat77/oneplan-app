@@ -83,6 +83,12 @@ export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
     kind === "agency" ? admin.from("crm_branches").select("id, name").eq("ws_kind", "agency").eq("ws_id", id).order("sort").order("name") : Promise.resolve({ data: [] as Row[] }),
   ]);
   if (!org) throw new Error("not-found");
+  // объектов в базе у каждого риэлтора агентства (16.10.2026, «показывать сколько объектов у них»)
+  const lstBy: Record<string, number> = {};
+  if (kind === "agency" && ms?.length) {
+    const { data: lst } = await admin.from("listings").select("owner_id").in("owner_id", (ms as Row[]).map((m) => String(m.profile_id))).neq("status", "sold");
+    for (const l of lst ?? []) lstBy[l.owner_id as string] = (lstBy[l.owner_id as string] ?? 0) + 1;
+  }
   const o = org as Row;
   const info: OrgInfo = { kind, id, name: String(o.name ?? ""), phone: s(o.phone), addr: s(o.addr), lic: s(o.lic), director: s(o.director), active: o.active !== false, until: s(o.access_until) };
   const members: OrgMember[] = ((ms ?? []) as Row[]).map((m) => {
@@ -90,7 +96,7 @@ export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
     return {
       id: String(m.profile_id), name: String(p?.name ?? p?.email ?? "—"), email: s(p?.email), phone: s(p?.phone), color: String(p?.color ?? "#4d7cfe"),
       status: ((p?.status as OrgMember["status"]) ?? "active"), role: m.role as OrgRole, branchId: s(m.branch_id), lastSeen: s(p?.last_seen), paidTo: s(p?.paid_to),
-      platformStaff: !!p?.platform_staff, joinedAt: String(m.created_at),
+      platformStaff: !!p?.platform_staff, joinedAt: String(m.created_at), listings: lstBy[String(m.profile_id)] ?? 0,
     };
   }).sort((a, b) => (isOrgAdminRole(kind, b.role) ? 1 : 0) - (isOrgAdminRole(kind, a.role) ? 1 : 0) || a.name.localeCompare(b.name));
   const invites: OrgInvite[] = ((inv ?? []) as Row[]).map((i) => ({ code: String(i.code), email: s(i.email), name: s(i.name), role: ((i.org_role as OrgRole) ?? DEFAULT_ORG_ROLE[kind]), createdAt: String(i.created_at), url: `${siteUrl()}/join/${i.code}` }));
@@ -206,4 +212,23 @@ export async function listOrgs(): Promise<{ agencies: { id: string; name: string
   const admin = createAdminClient();
   const [{ data: a }, { data: d }] = await Promise.all([admin.from("agencies").select("id, name").order("name"), admin.from("developers").select("id, name").order("name")]);
   return { agencies: ((a ?? []) as Row[]).map((x) => ({ id: String(x.id), name: String(x.name) })), developers: ((d ?? []) as Row[]).map((x) => ({ id: String(x.id), name: String(x.name) })) };
+}
+
+/** Филиалы агентства (crm_branches): создать / переименовать — администратор агентства или админ платформы (16.10.2026). */
+export async function saveOrgBranch(id: string, input: { id?: string; name: string; city?: string }): Promise<void> {
+  const { admin } = await manager("agency", id);
+  const name = input.name.trim(); if (!name) throw new Error("bad-name");
+  const row = { ws_kind: "agency", ws_id: id, name, city: input.city?.trim() || null };
+  const { error } = input.id ? await admin.from("crm_branches").update(row).eq("id", input.id).eq("ws_id", id) : await admin.from("crm_branches").insert(row);
+  if (error) throw new Error(error.message);
+  touch("agency", id);
+}
+/** Удалить филиал: только пустой (без участников); клиенты/сделки филиала остаются без филиала (FK set null). */
+export async function deleteOrgBranch(id: string, branchId: string): Promise<void> {
+  const { admin } = await manager("agency", id);
+  const { count } = await admin.from("org_members").select("profile_id", { count: "exact", head: true }).eq("org_kind", "agency").eq("org_id", id).eq("branch_id", branchId);
+  if (count) throw new Error("branch-has-members");
+  const { error } = await admin.from("crm_branches").delete().eq("id", branchId).eq("ws_kind", "agency").eq("ws_id", id);
+  if (error) throw new Error(error.message);
+  touch("agency", id);
 }
