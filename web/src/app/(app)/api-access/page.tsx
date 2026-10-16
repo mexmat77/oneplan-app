@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconCopy, IconHeadset, IconKey, IconPlugConnected, IconRefresh } from "@tabler/icons-react";
-import { useT } from "@/i18n/provider";
+import { useI18n } from "@/i18n/provider";
 import { confirmDialog } from "@/components/ui/confirm";
 import { showToast } from "@/components/ui/toast";
 import { getAgencyApiKey, getApiKey, rotateAgencyApiKey, rotateApiKey } from "@/app/(app)/api-actions";
@@ -19,7 +19,8 @@ const EXAMPLE = `{"total": 12, "count": 12, "realtor": "…", "agency": "…", "
 const card = "mb-[14px] rounded-[16px] border border-line bg-surface px-5 py-[18px]";
 
 export default function ApiPage() {
-  const t = useT();
+  const { t, lang } = useI18n();
+  const docs = `/api/docs?lang=${lang.toLowerCase()}`; // документация на языке интерфейса (17.10.2026)
   // Prototype `apiEps` (line 3945).
   const eps: [string, string][] = [["GET /api/v1/listings?key=…", t.api.ep1], ["GET /api/v1/listings/{uuid}?key=…", t.api.ep2], ["GET /api/v1/dictionaries?key=…", t.api.ep5], ["GET /feed/{key}.xml", t.api.ep3], ["POST {your-url} · webhook", t.api.ep4]];
   // ключ агентства (16.10.2026): общая выгрузка всех риэлторов агентства — создаёт администратор агентства
@@ -74,7 +75,7 @@ export default function ApiPage() {
         </div>
       )}
       <div className={card}>
-        <div className="mb-[11px] flex flex-wrap items-center gap-3"><span className="text-[14.5px] font-extrabold text-ink">{t.api.epT}</span><Link href="/api/docs" target="_blank" className="text-[13px] font-semibold text-blue hover:underline">{t.api.docsLink} ↗</Link></div>
+        <div className="mb-[11px] flex flex-wrap items-center gap-3"><span className="text-[14.5px] font-extrabold text-ink">{t.api.epT}</span><Link href={docs} target="_blank" className="text-[13px] font-semibold text-blue hover:underline">{t.api.docsLink} ↗</Link></div>
         <div className="flex flex-col gap-[9px]">
           {eps.map(([m, d]) => (
             <div key={m} className="flex flex-wrap items-baseline gap-3 rounded-[11px] border border-line-2 px-[13px] py-[10px]">
@@ -94,7 +95,7 @@ export default function ApiPage() {
         <div className="mb-3 rounded-[11px] border border-line-2 px-[13px] py-[10px] font-mono text-[12.5px] text-[#2c3a52] [overflow-wrap:anywhere]"><span className="font-extrabold text-blue-2">POST</span> https://one-plan.pro/api/crm/inbound · Authorization: Bearer ops_…</div>{/* статичный домен: `site` из window ломал гидрацию */}
         <div className="flex flex-wrap gap-2">
           <Link href="/crm/settings/sources" className="inline-flex items-center gap-[6px] rounded-[10px] bg-blue-2 px-[14px] py-[9px] text-[13px] font-bold text-white hover:bg-blue-3"><IconKey size={15} /> {t.api.inLink}</Link>
-          <Link href="/api/docs#crm-inbound" target="_blank" className="inline-flex items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[9px] text-[13px] font-semibold text-text hover:bg-bg-3">{t.api.inDocs}</Link>
+          <Link href={`${docs}#crm-inbound`} target="_blank" className="inline-flex items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[9px] text-[13px] font-semibold text-text hover:bg-bg-3">{t.api.inDocs}</Link>
         </div>
       </div>
       <div className="mb-4 flex items-start gap-[9px] rounded-[12px] bg-bg-3 px-[14px] py-3 text-[12.5px] leading-[1.5] text-text"><IconPlugConnected size={16} className="mt-[1px] flex-none text-blue" /><span>{t.exp.apiS}</span></div>
