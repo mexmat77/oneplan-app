@@ -28,14 +28,22 @@ async function roleIn(admin: ReturnType<typeof createAdminClient>, kind: OrgKind
   const { data } = await admin.from("org_members").select("role").eq("org_kind", kind).eq("org_id", id).eq("profile_id", profileId).maybeSingle();
   return (data?.role as OrgRole) ?? null;
 }
-/** Право управлять организацией: админ платформы или её администратор. */
-async function manager(kind: OrgKind, id: string) {
+/** Участие с ролью и филиалом (null — не участник). */
+async function memberOf(admin: ReturnType<typeof createAdminClient>, kind: OrgKind, id: string, profileId: string): Promise<{ role: OrgRole; branch: string | null } | null> {
+  const { data } = await admin.from("org_members").select("role, branch_id").eq("org_kind", kind).eq("org_id", id).eq("profile_id", profileId).maybeSingle();
+  return data ? { role: data.role as OrgRole, branch: s(data.branch_id) } : null;
+}
+/** Право управлять организацией: админ платформы или её администратор — всё (`full`); с `allowBranch` — ещё и руководитель
+ *  филиала агентства, но только в пределах своего филиала (`branch`): добавляет/приглашает риэлторов в свой филиал, принимает
+ *  в него риэлторов без филиала, исключает своих риэлторов. Роли и переводы между филиалами — только администратор (13.10.2026). */
+async function manager(kind: OrgKind, id: string, allowBranch = false) {
   const u = await me();
   const admin = createAdminClient();
-  if (u.role === "admin") return { u, admin, role: null as OrgRole | null };
-  const role = await roleIn(admin, kind, id, u.id);
-  if (!isOrgAdminRole(kind, role)) throw new Error("forbidden");
-  return { u, admin, role };
+  if (u.role === "admin") return { u, admin, role: null as OrgRole | null, full: true, branch: null as string | null };
+  const m = await memberOf(admin, kind, id, u.id);
+  if (m && isOrgAdminRole(kind, m.role)) return { u, admin, role: m.role, full: true, branch: null as string | null };
+  if (allowBranch && kind === "agency" && m?.role === "manager" && m.branch) return { u, admin, role: m.role, full: false, branch: m.branch };
+  throw new Error("forbidden");
 }
 function assertRole(kind: OrgKind, role: string): asserts role is OrgRole {
   if (!(ORG_ROLES[kind] as string[]).includes(role)) throw new Error("bad-role");
@@ -62,9 +70,12 @@ export async function myOrg(): Promise<{ kind: OrgKind; id: string; role: OrgRol
 export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
   const u = await me();
   const admin = createAdminClient();
-  const myRole = u.role === "admin" ? null : await roleIn(admin, kind, id, u.id);
+  const myM = u.role === "admin" ? null : await memberOf(admin, kind, id, u.id);
+  const myRole = myM?.role ?? null;
   if (u.role !== "admin" && !myRole) throw new Error("forbidden");
-  const canManage = u.role === "admin" || isOrgAdminRole(kind, myRole);
+  const scoped = kind === "agency" && myM?.role === "manager" && !!myM.branch; // руководитель филиала — управляет своим филиалом
+  const canManage = u.role === "admin" || isOrgAdminRole(kind, myRole) || scoped;
+  const manageBranch = u.role !== "admin" && !isOrgAdminRole(kind, myRole) && scoped ? myM!.branch : null;
   const [{ data: org }, { data: ms }, { data: inv }, { data: br }] = await Promise.all([
     admin.from(TABLE[kind]).select("*").eq("id", id).maybeSingle(),
     admin.from("org_members").select("profile_id, role, branch_id, created_at, profiles(id, name, email, phone, color, status, last_seen, paid_to, platform_staff)").eq("org_kind", kind).eq("org_id", id),
@@ -83,7 +94,7 @@ export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
     };
   }).sort((a, b) => (isOrgAdminRole(kind, b.role) ? 1 : 0) - (isOrgAdminRole(kind, a.role) ? 1 : 0) || a.name.localeCompare(b.name));
   const invites: OrgInvite[] = ((inv ?? []) as Row[]).map((i) => ({ code: String(i.code), email: s(i.email), name: s(i.name), role: ((i.org_role as OrgRole) ?? DEFAULT_ORG_ROLE[kind]), createdAt: String(i.created_at), url: `${siteUrl()}/join/${i.code}` }));
-  return { org: info, members, invites, branches: ((br ?? []) as Row[]).map((b) => ({ id: String(b.id), name: String(b.name) })), canManage, meId: u.id };
+  return { org: info, members, invites, branches: ((br ?? []) as Row[]).map((b) => ({ id: String(b.id), name: String(b.name) })), canManage, manageBranch, meId: u.id };
 }
 
 /** Реквизиты организации (создание — только админ платформы; правка — и администратор организации). */
@@ -123,7 +134,8 @@ export async function setOrgRole(kind: OrgKind, id: string, profileId: string, r
 
 /** Филиал участника (агентство, CRM). */
 export async function setOrgBranch(kind: OrgKind, id: string, profileId: string, branchId: string | null): Promise<void> {
-  const { admin } = await manager(kind, id);
+  const { admin, full, branch } = await manager(kind, id, true);
+  if (!full) { const cur = await memberOf(admin, kind, id, profileId); if (!cur || cur.role !== "agent" || branchId !== branch || (cur.branch && cur.branch !== branch)) throw new Error("forbidden"); } // руководитель: только принять риэлтора без филиала в свой
   const { error } = await admin.from("org_members").update({ branch_id: branchId }).eq("org_kind", kind).eq("org_id", id).eq("profile_id", profileId);
   if (error) throw new Error(error.message);
   touch(kind, id);
@@ -131,9 +143,11 @@ export async function setOrgBranch(kind: OrgKind, id: string, profileId: string,
 
 /** Исключить из организации: риэлтор становится свободным агентом, сотрудник застройщика теряет доступ к компании. */
 export async function removeOrgMember(kind: OrgKind, id: string, profileId: string): Promise<void> {
-  const { admin } = await manager(kind, id);
-  const cur = await roleIn(admin, kind, id, profileId);
-  if (!cur) return;
+  const { admin, full, branch } = await manager(kind, id, true);
+  const curM = await memberOf(admin, kind, id, profileId);
+  if (!curM) return;
+  const cur = curM.role;
+  if (!full && (cur !== "agent" || curM.branch !== branch)) throw new Error("forbidden"); // руководитель — только риэлторов своего филиала
   if (isOrgAdminRole(kind, cur) && (await adminsCount(admin, kind, id)) <= 1) throw new Error("last-admin");
   const { error } = await admin.from("org_members").delete().eq("org_kind", kind).eq("org_id", id).eq("profile_id", profileId);
   if (error) throw new Error(error.message);
@@ -143,11 +157,12 @@ export async function removeOrgMember(kind: OrgKind, id: string, profileId: stri
 /** Добавить существующего пользователя по почте (риэлтор переходит из прежнего агентства). */
 export async function addOrgMember(kind: OrgKind, id: string, email: string, role: string): Promise<{ profileId: string }> {
   assertRole(kind, role);
-  const { admin, u } = await manager(kind, id);
+  const { admin, u, full, branch } = await manager(kind, id, true);
+  if (!full && role !== "agent") throw new Error("forbidden"); // руководитель филиала добавляет только риэлторов — в свой филиал
   const { data: p } = await admin.from("profiles").select("id, role, name").ilike("email", email.trim()).maybeSingle();
   if (!p) throw new Error("no-user");
   if (p.role !== PLATFORM_ROLE_OF[kind]) throw new Error("wrong-type");
-  const r = await addMemberFor(admin, kind, id, p.id as string, role, u);
+  const r = await addMemberFor(admin, kind, id, p.id as string, role, u, full ? null : branch);
   touch(kind, id);
   return r;
 }
@@ -155,7 +170,8 @@ export async function addOrgMember(kind: OrgKind, id: string, email: string, rol
  *  пользователя — не приглашение, а добавление (`exists`). */
 export async function inviteToOrg(kind: OrgKind, id: string, input: { email?: string; name?: string; role: string; lang?: "RU" | "EN" | "TR" }): Promise<{ code: string; url: string; mailed: boolean }> {
   assertRole(kind, input.role);
-  const { admin, u } = await manager(kind, id);
+  const { admin, u, full, branch } = await manager(kind, id, true);
+  if (!full && input.role !== "agent") throw new Error("forbidden");
   const email = input.email?.trim().toLowerCase() || null;
   if (email) {
     const { data: p } = await admin.from("profiles").select("id").ilike("email", email).maybeSingle();
@@ -164,7 +180,7 @@ export async function inviteToOrg(kind: OrgKind, id: string, input: { email?: st
     if (old) await admin.from("invites").delete().eq("code", old.code as string);
   }
   const code = "OPL-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-  const row: Row = { code, created_by: u.id, email, name: input.name?.trim() || null, role: PLATFORM_ROLE_OF[kind], org_role: input.role, [INV_COL[kind]]: id };
+  const row: Row = { code, created_by: u.id, email, name: input.name?.trim() || null, role: PLATFORM_ROLE_OF[kind], org_role: input.role, [INV_COL[kind]]: id, ...(full ? {} : { branch_id: branch }) }; // филиал приглашения (0030) — колонка только у руководителя филиала, до миграции админов не ломает
   const { error } = await admin.from("invites").insert(row);
   if (error) throw new Error(error.message);
   const url = `${siteUrl()}/join/${code}`;
@@ -176,10 +192,10 @@ export async function inviteToOrg(kind: OrgKind, id: string, input: { email?: st
 export async function cancelInvite(code: string): Promise<void> {
   const u = await me();
   const admin = createAdminClient();
-  const { data: inv } = await admin.from("invites").select("code, agency_id, developer_id, used_by").eq("code", code).maybeSingle();
+  const { data: inv } = await admin.from("invites").select("*").eq("code", code).maybeSingle();
   if (!inv || inv.used_by) return;
   const kind: OrgKind | null = inv.agency_id ? "agency" : inv.developer_id ? "developer" : null;
-  if (u.role !== "admin") { if (!kind) throw new Error("forbidden"); await manager(kind, (inv.agency_id ?? inv.developer_id) as string); }
+  if (u.role !== "admin") { if (!kind) throw new Error("forbidden"); const mm = await manager(kind, (inv.agency_id ?? inv.developer_id) as string, true); if (!mm.full && s(inv.branch_id) !== mm.branch) throw new Error("forbidden"); } // руководитель отзывает только приглашения своего филиала
   await admin.from("invites").delete().eq("code", code);
   if (kind) touch(kind, (inv.agency_id ?? inv.developer_id) as string); else revalidatePath("/admin/users");
 }

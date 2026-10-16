@@ -33,6 +33,7 @@ export type OrgInvite = { code: string; email: string | null; name: string | nul
 export type OrgBranch = { id: string; name: string };
 export type OrgView = {
   org: OrgInfo; members: OrgMember[]; invites: OrgInvite[]; branches: OrgBranch[];
-  canManage: boolean; // администратор платформы или администратор организации
+  canManage: boolean; // администратор платформы или администратор организации, либо руководитель филиала (см. manageBranch)
+  manageBranch?: string | null; // руководитель филиала: управляет только риэлторами СВОЕГО филиала (13.10.2026)
   meId: string | null;
 };

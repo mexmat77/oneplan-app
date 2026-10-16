@@ -290,7 +290,7 @@ export async function registerByInvite(input: { code: string; name: string; phon
   if (error) throw new Error(error.message);
   await admin.from("profiles").upsert({ id: data.user.id, email, name: input.name, phone: input.phone, role: inv.role ?? "realtor", status: "active", agency_text: !inv.agency_id && !inv.developer_id ? (input.agency ?? "").trim() || null : null });
   // участие в организации с ролью из приглашения (0022)
-  if (inv.agency_id) await attachMember("agency", inv.agency_id as string, data.user.id, inv.org_role as string | null);
+  if (inv.agency_id) await attachMember("agency", inv.agency_id as string, data.user.id, inv.org_role as string | null, (inv.branch_id as string | null) ?? null); // филиал из приглашения (0030)
   if (inv.developer_id) await attachMember("developer", inv.developer_id as string, data.user.id, inv.org_role as string | null);
   await admin.from("invites").update({ used_by: data.user.id }).eq("code", input.code);
   void notifyAdmins("join_registered", { name: input.name, email });

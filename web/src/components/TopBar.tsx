@@ -57,6 +57,9 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     { href: "/sels", label: t.nav.sels, Icon: IconFolders, active: is("/sels") },
     { href: "/reqs", label: t.nav.reqs, Icon: IconBookmark, badge: reqsN, active: is("/reqs") },
     { href: "/crm", label: t.nav.crm, Icon: IconAddressBook, active: is("/crm") },
+    // «Команда и филиалы» — для риэлтора в иконках панели и в меню аватара (13.10.2026: администратор агентства не нашёл раздел,
+    // ссылка жила только в меню «⋮»)
+    ...(!isAdmin && workspace === "realtors" ? [{ href: "/team", label: t.org.team.title, Icon: IconBuilding, active: is("/team") }] : []),
   ];
 
   // Admin workspace switcher (platform extension): realtors base · developers cabinet · administration.
@@ -75,7 +78,6 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     { href: "/api-access", label: t.api.title, Icon: IconApi, active: is("/api-access") },
     { href: "/billing", label: t.bil.title, Icon: IconCreditCard, active: is("/billing") },
     ...(isAdmin && workspace === "realtors" ? [{ href: "/admin/users", label: t.nav.rls, Icon: IconUsers, active: is("/admin/users") }] : []),
-    ...(!isAdmin && workspace === "realtors" ? [{ href: "/team", label: t.org.team.title, Icon: IconBuilding, active: is("/team") }] : []),
   ];
   const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
   const ntfDict = t.ntfk as unknown as NtfDict;
@@ -102,7 +104,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
           </div>
         )}
         {navItems.map(({ href, label, Icon, badge, active }) => (
-          <Link key={href} data-nav-item="1" href={href} className={`flex shrink-0 items-center gap-[7px] rounded-[10px] px-[13px] py-[9px] text-[13.5px] font-semibold transition hover:brightness-95 max-md:hidden ${active ? "bg-ink text-white" : "text-text"}`}>
+          <Link key={href} data-nav-item="1" href={href} title={label} className={`flex shrink-0 items-center gap-[7px] rounded-[10px] px-[13px] py-[9px] text-[13.5px] font-semibold transition hover:brightness-95 max-md:hidden ${active ? "bg-ink text-white" : "text-text"}`}>
             <Icon size={17} stroke={2} />
             <span data-nav-label="1">{label}</span>
             <Badge n={badge} />
@@ -119,7 +121,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         </button>
         <LangSwitch className="max-md:hidden" />
         <UserMenu name={name} sub={sub} email={email} avatar={avatar} color="#2f5fe0" logoutLabel={t.prof.out}
-          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, { label: L("Подписка и оплата", "Subscription & billing", "Abonelik ve ödeme"), href: "/billing", icon: <IconCreditCard size={16} /> }]}
+          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, { label: L("Подписка и оплата", "Subscription & billing", "Abonelik ve ödeme"), href: "/billing", icon: <IconCreditCard size={16} /> }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : [])]}
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
           <IconDotsVertical size={18} />

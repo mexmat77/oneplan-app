@@ -49,6 +49,8 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
 
   if (!view) return <div className="py-8 text-center text-[13px] text-muted">{err || "…"}</div>;
   const { members, invites, branches, canManage } = view;
+  const scoped = canManage && !!view.manageBranch; // руководитель филиала: только риэлторы своего филиала
+  const myBranchName = branches.find((b) => b.id === view.manageBranch)?.name ?? "";
   const adminsN = members.filter((m) => isOrgAdminRole(kind, m.role)).length;
   const roleOpts = ORG_ROLES[kind].map((r) => ({ value: r, label: roles[r] }));
   const defRole: OrgRole = kind === "agency" ? "agent" : "editor";
@@ -63,6 +65,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
         {canManage && <button type="button" onClick={() => setInv({ email: "", name: "", role: defRole, lang })} className={btnP}><IconPlus size={15} /> {o.invite}</button>}
       </div>
       {!canManage && <div className="rounded-[10px] bg-bg-2 px-3 py-2 text-[12.5px] text-text-2">{o.readOnly}</div>}
+      {scoped && <div className="rounded-[10px] bg-blue-tint px-3 py-2 text-[12.5px] text-sel-ink">{o.scopedHint.replace("{branch}", myBranchName)}</div>}
       <div className="overflow-hidden rounded-[14px] border border-line bg-surface">
         {members.length === 0 && <div className="p-5 text-center text-[13px] text-muted">{o.noMembers}</div>}
         {members.map((m) => {
@@ -75,15 +78,15 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
                 <div className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-ink">{m.name}{m.id === view.meId && <span className="text-[11px] font-semibold text-muted">· {o.you}</span>}{m.platformStaff && <span className="rounded-[6px] bg-[#efe7fb] px-[6px] py-[1px] text-[10.5px] font-bold text-[#7b4fd0]">{o.staff}</span>}</div>
                 <div className="text-[12px] text-muted">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>
               </div>
-              {canManage
+              {canManage && !scoped
                 ? <Select value={m.role} onChange={(v) => run(() => setOrgRole(kind, id, m.id, v), o.roleSaved)} options={roleOpts} size="sm" menuWidth="auto" disabled={pending || lastAdmin} className="w-[210px]" title={lastAdmin ? o.err["last-admin"] : undefined} />
                 : <span className="rounded-[8px] bg-bg-2 px-[10px] py-1 text-[11.5px] font-bold text-text">{roles[m.role]}</span>}
-              {kind === "agency" && branches.length > 0 && (canManage
-                ? <Select value={m.branchId ?? ""} onChange={(v) => run(() => setOrgBranch(kind, id, m.id, v || null))} options={[{ value: "", label: o.noBranch }, ...branches.map((b) => ({ value: b.id, label: b.name }))]} size="sm" menuWidth="auto" disabled={pending} className="w-[170px]" />
+              {kind === "agency" && branches.length > 0 && (canManage && (!scoped || (m.role === "agent" && !m.branchId))
+                ? <Select value={m.branchId ?? ""} onChange={(v) => run(() => setOrgBranch(kind, id, m.id, v || null))} options={[{ value: "", label: o.noBranch }, ...branches.filter((b) => !scoped || b.id === view.manageBranch).map((b) => ({ value: b.id, label: b.name }))]} size="sm" menuWidth="auto" disabled={pending} className="w-[170px]" />
                 : <span className="text-[12px] text-muted">{branches.find((b) => b.id === m.branchId)?.name ?? o.noBranch}</span>)}
               <span className="rounded-[8px] px-[9px] py-[3px] text-[11px] font-bold" style={{ background: st[0], color: st[1] }}>{m.status === "active" ? t.rl.act : m.status === "paused" ? t.rl.pau : t.rl.pen}</span>
               {!compact && <span className="w-[92px] text-[11.5px] text-muted" title={o.lastSeen}>{fmt(m.lastSeen)}</span>}
-              {canManage && <button type="button" disabled={pending || lastAdmin} title={o.remove} onClick={() => void confirmDialog({ text: o.removeQ.replace("{name}", m.name) + (kind === "agency" ? `\n${o.removeHintAgency}` : ""), ok: o.remove, danger: true }).then((ok) => ok && run(() => removeOrgMember(kind, id, m.id), o.removed))} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={15} /></button>}
+              {canManage && (!scoped || (m.role === "agent" && m.branchId === view.manageBranch)) && <button type="button" disabled={pending || lastAdmin} title={o.remove} onClick={() => void confirmDialog({ text: o.removeQ.replace("{name}", m.name) + (kind === "agency" ? `\n${o.removeHintAgency}` : ""), ok: o.remove, danger: true }).then((ok) => ok && run(() => removeOrgMember(kind, id, m.id), o.removed))} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={15} /></button>}
             </div>
           );
         })}
@@ -124,7 +127,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
               <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
                 <div><label className={lbl}>{o.name}</label><input value={inv.name} onChange={(e) => setInv({ ...inv, name: e.target.value })} className={inp} placeholder="Ad Soyad" /></div>
                 <div><label className={lbl}>{o.email}</label><input type="email" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} className={inp} placeholder="user@mail.com" /></div>
-                <div><label className={lbl}>{o.role}</label><Select value={inv.role} onChange={(v) => setInv({ ...inv, role: v as OrgRole })} options={roleOpts} /></div>
+                <div><label className={lbl}>{o.role}</label>{scoped ? <div className={`${inp} flex items-center text-text`}>{roles.agent} · {myBranchName}</div> : <Select value={inv.role} onChange={(v) => setInv({ ...inv, role: v as OrgRole })} options={roleOpts} />}</div>
                 <div><label className={lbl}>{o.mailLang}</label><Select value={inv.lang} onChange={(v) => setInv({ ...inv, lang: v as "RU" | "EN" | "TR" })} options={(["RU", "EN", "TR"] as const).map((l) => ({ value: l, label: l }))} /></div>
               </div>
               <p className="mt-2 text-[11.5px] text-muted">{o.inviteHint}</p>
@@ -142,7 +145,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
           <p className="mb-3 text-[12.5px] text-muted">{o.addS[kind]}</p>
           <div className="grid grid-cols-[1fr_200px] gap-3 max-md:grid-cols-1">
             <div><label className={lbl}>{o.email}</label><input type="email" value={add.email} onChange={(e) => setAdd({ ...add, email: e.target.value })} className={inp} placeholder="user@mail.com" autoFocus /></div>
-            <div><label className={lbl}>{o.role}</label><Select value={add.role} onChange={(v) => setAdd({ ...add, role: v as OrgRole })} options={roleOpts} /></div>
+            <div><label className={lbl}>{o.role}</label>{scoped ? <div className={`${inp} flex items-center text-text`}>{roles.agent}</div> : <Select value={add.role} onChange={(v) => setAdd({ ...add, role: v as OrgRole })} options={roleOpts} />}</div>
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <button type="button" onClick={() => setAdd(null)} className={btnS}>{t.common.cancel}</button>

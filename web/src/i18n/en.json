@@ -2225,6 +2225,7 @@
     "noBranch": "No branch",
     "lastSeen": "Last seen",
     "readOnly": "Roles, invitations and membership are managed by the organization admin.",
+    "scopedHint": "You manage the «{branch}» branch: invite and add agents to it, accept agents without a branch and remove your own agents. Roles and transfers between branches are set by the agency admin.",
     "roles": {
       "agency": {
         "owner": "Agency admin",

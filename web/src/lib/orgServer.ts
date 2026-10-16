@@ -16,16 +16,16 @@ export async function orgName(admin: Admin, kind: OrgKind, id: string) {
 }
 
 /** Участие пользователя в организации (риэлтор — в одном агентстве: прежнее участие снимается). Уведомляет `team_added`. */
-export async function addMemberFor(admin: Admin, kind: OrgKind, id: string, profileId: string, role: OrgRole, actor: CurrentUser | null) {
+export async function addMemberFor(admin: Admin, kind: OrgKind, id: string, profileId: string, role: OrgRole, actor: CurrentUser | null, branchId: string | null = null) {
   if (kind === "agency") await admin.from("org_members").delete().eq("org_kind", "agency").eq("profile_id", profileId).neq("org_id", id);
-  const { error } = await admin.from("org_members").upsert({ org_kind: kind, org_id: id, profile_id: profileId, role }, { onConflict: "org_kind,org_id,profile_id" });
+  const { error } = await admin.from("org_members").upsert({ org_kind: kind, org_id: id, profile_id: profileId, role, ...(branchId ? { branch_id: branchId } : {}) }, { onConflict: "org_kind,org_id,profile_id" });
   if (error) throw new Error(error.message);
   if (!actor || actor.id !== profileId) void notify([profileId], "team_added", { company: await orgName(admin, kind, id), href: kind === "agency" ? "/team" : "/dev" });
   return { profileId };
 }
 
 /** Участие при регистрации по приглашению / одобрении заявки (роль по умолчанию, если не задана или неверна). */
-export async function attachMember(kind: OrgKind, id: string, profileId: string, role: string | null | undefined) {
+export async function attachMember(kind: OrgKind, id: string, profileId: string, role: string | null | undefined, branchId: string | null = null) {
   const r = role && (ORG_ROLES[kind] as string[]).includes(role) ? (role as OrgRole) : DEFAULT_ORG_ROLE[kind];
-  await addMemberFor(createAdminClient(), kind, id, profileId, r, null);
+  await addMemberFor(createAdminClient(), kind, id, profileId, r, null, branchId);
 }

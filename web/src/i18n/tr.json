@@ -2225,6 +2225,7 @@
     "noBranch": "Şube yok",
     "lastSeen": "Son giriş",
     "readOnly": "Rolleri, davetleri ve ekibi kuruluş yöneticisi değiştirir.",
+    "scopedHint": "«{branch}» şubesinin yöneticisisiniz: şubenize emlakçı davet eder ve eklersiniz, şubesiz emlakçıları kabul eder, kendi emlakçılarınızı çıkarırsınız. Rolleri ve şubeler arası geçişleri ajans yöneticisi değiştirir.",
     "roles": {
       "agency": {
         "owner": "Ajans yöneticisi",
