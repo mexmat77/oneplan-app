@@ -66,7 +66,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
   const L = (ru: string, en: string, tr: string) => (lang === "RU" ? ru : lang === "TR" ? tr : en);
   // `badge` у «Управления» — необработанные заявки (новые запросы доступа + заявки с главной), считает сервер (`countPendingRequests`).
   const spaces: { key: Workspace; href: string; label: string; Icon: ComponentType<IconProps>; badge?: number }[] = [
-    { key: "realtors", href: "/catalog", label: t.common.tag, Icon: IconUsers },
+    { key: "realtors", href: "/catalog", label: t.nav.rls, Icon: IconUsers }, // «Риэлторы» обычным регистром: капс (t.common.tag) — только бейдж у логотипа (16.10.2026)
     { key: "dev", href: "/dev", label: L("Застройщики", "Developers", "Geliştiriciler"), Icon: IconBuildingCommunity },
     { key: "admin", href: "/admin/requests", label: L("Управление", "Admin", "Yönetim"), Icon: IconSettings, badge: adminN },
   ];
