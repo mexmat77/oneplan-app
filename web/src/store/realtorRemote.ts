@@ -96,16 +96,16 @@ async function migrateLocal() {
 }
 
 // ---------- профили коллег ----------
-type ProfRow = { id: string; name: string; color: string | null; phone: string | null; city: string | null; langs: string | null; agency_text: string | null; last_seen: string | null; agencies: { name: string } | { name: string }[] | null };
+type ProfRow = { id: string; name: string; color: string | null; phone: string | null; city: string | null; langs: string | null; agency_text: string | null; last_seen: string | null; wa_on: boolean | null; tg_on: boolean | null; tg_login: string | null; viber_on: boolean | null; max_on: boolean | null; max_id: string | null; wechat_on: boolean | null; wechat_id: string | null; agencies: { name: string } | { name: string }[] | null };
 async function loadProfiles() {
   if (!sb) return;
-  const { data, error } = await sb.from("profiles").select("id, name, color, phone, city, langs, agency_text, last_seen, agencies(name)").eq("status", "active");
+  const { data, error } = await sb.from("profiles").select("id, name, color, phone, city, langs, agency_text, last_seen, wa_on, tg_on, tg_login, viber_on, max_on, max_id, wechat_on, wechat_id, agencies(name)").eq("status", "active");
   if (error) { console.warn("[realtor sync] profiles:", error.message); return; }
   const now = Date.now();
   setRealtors(((data ?? []) as ProfRow[]).map((p): Realtor => {
     const ag = Array.isArray(p.agencies) ? p.agencies[0]?.name : p.agencies?.name;
     const city = p.city ?? "";
-    return { id: p.id, name: p.name || "—", ag: ag || p.agency_text || "—", color: p.color || "#4d7cfe", phone: p.phone ?? "", city: { RU: city, EN: city, TR: city }, langs: p.langs ?? "", online: !!p.last_seen && now - Date.parse(p.last_seen) < 5 * 60 * 1000, objs: 0, sels: 0, likes: 0, la: { RU: "", EN: "", TR: "" } };
+    return { id: p.id, name: p.name || "—", ag: ag || p.agency_text || "—", color: p.color || "#4d7cfe", phone: p.phone ?? "", ch: { wa: p.wa_on !== false, tg: !!p.tg_on, tgLogin: p.tg_login ?? "", vb: !!p.viber_on, mx: !!p.max_on, mxId: p.max_id ?? "", wc: !!p.wechat_on, wcId: p.wechat_id ?? "" }, city: { RU: city, EN: city, TR: city }, langs: p.langs ?? "", online: !!p.last_seen && now - Date.parse(p.last_seen) < 5 * 60 * 1000, objs: 0, sels: 0, likes: 0, la: { RU: "", EN: "", TR: "" } };
   }));
 }
 

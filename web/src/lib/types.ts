@@ -28,12 +28,14 @@ export const ROOMS_ALL = [
   "6+1", "6+2", "6.5+1", "6+3", "6+4", "7+1", "7+2", "7+3", "8+1", "8+2", "8+3", "8+4", "9+1", "9+2", "9+3",
 ];
 
+export type RealtorChannels = { wa: boolean; tg: boolean; tgLogin: string; vb: boolean; mx: boolean; mxId: string; wc: boolean; wcId: string };
 export type Realtor = {
   id: string;
   name: string;
   ag: string;
   color: string;
   phone: string;
+  ch?: RealtorChannels; // каналы связи из profiles (wa_on, tg_on…); у демо-риэлторов нет — показываются все (16.10.2026)
   city: L10n;
   langs: string;
   online: boolean;

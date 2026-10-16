@@ -20,7 +20,7 @@ import { useRealtor, useRealtorList } from "@/store/realtors";
 import { useMeId } from "@/store/profile";
 import { getPrevScreen, removeListing, setStOver, useAllListings, useListingMeta, useListingsReady } from "@/store/listings";
 import { useRole } from "@/store/role";
-import { oldPrice, type ListingStatus } from "@/lib/types";
+import { oldPrice, type ListingStatus, type RealtorChannels } from "@/lib/types";
 import { Gallery } from "@/components/obj/Gallery";
 import { ListingNote } from "@/components/obj/ListingNote";
 import { ExportModal, expCount } from "@/components/obj/ExportModal";
@@ -55,12 +55,25 @@ const TILE_ICON = { rooms: IconLayoutGrid, area: IconRuler2, year: IconCalendar,
 const chipF = (on: boolean) =>
   `cursor-pointer rounded-[18px] border px-[13px] py-[9px] text-[12.5px] transition-[background,border-color] duration-[120ms] hover:bg-[#eef1f6] ${on ? "border-[#9db8f5] bg-blue-tint font-bold text-[#2c4a9e]" : "border-line bg-surface font-semibold text-[#3d4a5e]"}`;
 
-const Channel = ({ bg, label, children, onClick }: { bg: string; label: string; children: ReactNode; onClick?: () => void }) => (
-  <button type="button" onClick={onClick} className="flex w-[54px] cursor-pointer flex-col items-center gap-[5px] hover:brightness-[.96]">
-    <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full text-[20px] font-extrabold text-white" style={{ background: bg }}>{children}</span>
-    <span className="text-[10.5px] font-semibold text-text-2">{label}</span>
-  </button>
-);
+const Channel = ({ bg, label, children, onClick, href }: { bg: string; label: string; children: ReactNode; onClick?: () => void; href?: string }) => {
+  const inner = <><span className="flex h-[46px] w-[46px] items-center justify-center rounded-full text-[20px] font-extrabold text-white" style={{ background: bg }}>{children}</span><span className="text-[10.5px] font-semibold text-text-2">{label}</span></>;
+  const cls = "flex w-[54px] cursor-pointer flex-col items-center gap-[5px] hover:brightness-[.96]";
+  return href ? <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className={cls}>{inner}</a> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+};
+/** Каналы связи риэлтора: только включённые в профиле (16.10.2026, «тестовые мессенджеры стоят у всех»); у демо-риэлторов без
+ *  профиля — все, как в прототипе. Ссылки: tel:, wa.me, t.me/<login>, viber://, MAX — max.ru/<id>, WeChat — id в подписи. */
+function channelsOf(owner: { phone: string; ch?: RealtorChannels }, t: { call: string }) {
+  const digits = owner.phone.replace(/\D/g, "");
+  const c = owner.ch ?? { wa: true, tg: true, tgLogin: "", vb: true, mx: true, mxId: "", wc: true, wcId: "" };
+  const out: { key: string; bg: string; label: string; href?: string; right?: string; icon: ReactNode; iconSm: ReactNode }[] = [];
+  if (digits) out.push({ key: "call", bg: "#3b5fd6", label: t.call, href: `tel:+${digits}`, right: owner.phone, icon: <IconPhone size={20} />, iconSm: <IconPhone size={17} /> });
+  if (c.wa && digits) out.push({ key: "wa", bg: "#22c15e", label: "WhatsApp", href: `https://wa.me/${digits}`, icon: <IconBrandWhatsapp size={20} />, iconSm: <IconBrandWhatsapp size={17} /> });
+  if (c.tg) out.push({ key: "tg", bg: "#229ed9", label: "Telegram", href: c.tgLogin ? `https://t.me/${c.tgLogin.replace(/^@/, "")}` : digits ? `https://t.me/+${digits}` : undefined, right: c.tgLogin ? `@${c.tgLogin.replace(/^@/, "")}` : undefined, icon: <IconBrandTelegram size={20} />, iconSm: <IconBrandTelegram size={17} /> });
+  if (c.vb && digits) out.push({ key: "vb", bg: "#7360f2", label: "Viber", href: `viber://chat?number=%2B${digits}`, icon: <span className="text-[17px]">V</span>, iconSm: <span className="text-[15px]">V</span> });
+  if (c.mx) out.push({ key: "mx", bg: "#7b4fd0", label: "MAX", right: c.mxId || undefined, href: c.mxId ? `https://max.ru/${c.mxId.replace(/^@/, "")}` : undefined, icon: <span className="text-[14px]">MAX</span>, iconSm: <span className="text-[11px]">MAX</span> });
+  if (c.wc) out.push({ key: "wc", bg: "#07c160", label: "WeChat", right: c.wcId || undefined, icon: <IconBrandWechat size={20} />, iconSm: <IconBrandWechat size={17} /> });
+  return out;
+}
 
 const useHydrated = () => useSyncExternalStore(() => () => {}, () => true, () => false);
 
@@ -91,6 +104,7 @@ export default function ObjPage() {
   const d = detail(o, t);
   // владелец: демо-риэлтор или профиль из базы; если профиль ещё не загружен — заглушка без имени
   const owner = realtorOf(o.owner) ?? { id: o.owner, name: "—", ag: "", color: "#8a93a2", phone: "", city: { RU: "", EN: "", TR: "" }, langs: "", online: false, objs: 0, sels: 0, likes: 0, la: { RU: "", EN: "", TR: "" } };
+  const chans = channelsOf(owner, { call: t.obj.callL }); // только включённые в профиле каналы
   const isMine = o.owner === ME;
   const canEdit = isMine || isAdmin;
   const fav = favs.includes(o.id);
@@ -309,12 +323,7 @@ export default function ObjPage() {
               </div>
               <div className="mb-[13px] text-[18px] font-extrabold tracking-[.01em] text-ink">{owner.phone}</div>
               <div className="flex flex-wrap gap-[14px]">
-                <Channel bg="#3b5fd6" label={t.obj.callL}><IconPhone size={20} /></Channel>
-                <Channel bg="#22c15e" label="WhatsApp"><IconBrandWhatsapp size={20} /></Channel>
-                <Channel bg="#229ed9" label="Telegram"><IconBrandTelegram size={20} /></Channel>
-                <Channel bg="#7360f2" label="Viber"><span className="text-[17px]">V</span></Channel>
-                <Channel bg="#7b4fd0" label="MAX"><span className="text-[14px]">MAX</span></Channel>
-                <Channel bg="#07c160" label="WeChat"><IconBrandWechat size={20} /></Channel>
+                {chans.map((c) => <Channel key={c.key} bg={c.bg} label={c.label} href={c.href}>{c.icon}</Channel>)}
                 <Channel bg="#eef3ff" label={t.nav.chat} onClick={chatWith}><IconMessageCircle size={20} className="text-blue" /></Channel>
               </div>
             </div>
@@ -347,11 +356,12 @@ export default function ObjPage() {
           <div className="truncate text-[11px] text-muted">{eqOf(o)} · {owner.name}</div>
         </div>
         <div className="flex flex-none gap-[9px]">
-          <a href={`tel:${owner.phone.replace(/\s/g, "")}`} className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-blue-2 text-[19px] text-white"><IconPhone size={19} /></a>
-          <a href={`https://wa.me/${owner.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-[#22c15e] text-[19px] text-white"><IconBrandWhatsapp size={19} /></a>
+          {/* в нижней панели — звонок и WhatsApp, если они есть у риэлтора; «+N» — остальные каналы и чат */}
+          {chans.find((c) => c.key === "call") && <a href={chans.find((c) => c.key === "call")!.href} className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-blue-2 text-[19px] text-white"><IconPhone size={19} /></a>}
+          {chans.find((c) => c.key === "wa") && <a href={chans.find((c) => c.key === "wa")!.href} target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center rounded-[13px] bg-[#22c15e] text-[19px] text-white"><IconBrandWhatsapp size={19} /></a>}
           <span onClick={() => setContacts((v) => !v)} className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-[13px] bg-bg-2 text-[19px] text-ink hover:brightness-[.96]">
             <IconDots size={19} />
-            <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-lg bg-blue-2 px-1 text-[9.5px] font-bold text-white">+5</span>
+            <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-lg bg-blue-2 px-1 text-[9.5px] font-bold text-white">+{chans.filter((c) => c.key !== "call" && c.key !== "wa").length + 1}</span>
           </span>
         </div>
       </div>
@@ -363,21 +373,11 @@ export default function ObjPage() {
               <span className="flex-1 text-[15.5px] font-extrabold text-ink">{t.common.contact} · {owner.name}</span>
               <span onClick={() => setContacts(false)} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[11px] bg-bg-2 text-[20px] text-text hover:brightness-[.96]"><IconX size={20} /></span>
             </div>
-            {([
-              ["#3b5fd6", <IconPhone key="p" size={17} />, t.obj.callL, owner.phone, undefined],
-              ["#22c15e", <IconBrandWhatsapp key="w" size={17} />, "WhatsApp", "", undefined],
-              ["#229ed9", <IconBrandTelegram key="t" size={17} />, "Telegram", "", undefined],
-              ["#7360f2", <span key="v" className="text-[15px]">V</span>, "Viber", "", undefined],
-              ["#7b4fd0", <span key="x" className="text-[11px]">MAX</span>, "MAX", "", undefined],
-              ["#07c160", <IconBrandWechat key="c" size={17} />, "WeChat", "", undefined],
-              ["#eef3ff", <IconMessageCircle key="m" size={17} className="text-blue-2" />, t.obj.chat, "", () => { setContacts(false); chatWith(); }],
-            ] as [string, ReactNode, string, string, (() => void) | undefined][]).map(([bg, icon, label, right, onClick], i, arr) => (
-              <div key={i} onClick={onClick} className={`flex cursor-pointer items-center gap-3 px-[2px] py-3 ${i < arr.length - 1 ? "border-b border-[#f2f4f8]" : "hover:brightness-[.96]"}`}>
-                <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-[17px] font-extrabold text-white" style={{ background: bg }}>{icon}</span>
-                <span className="flex-1 text-[14px] font-semibold text-ink">{label}</span>
-                {right ? <span className="text-[13px] font-bold text-ink">{right}</span> : <IconChevronRight size={16} className="text-[#c3c9d4]" />}
-              </div>
-            ))}
+            {[...chans.map((c) => ({ key: c.key, bg: c.bg, icon: c.iconSm, label: c.label, right: c.right ?? "", href: c.href, onClick: undefined as (() => void) | undefined })), { key: "chat", bg: "#eef3ff", icon: <IconMessageCircle size={17} className="text-blue-2" />, label: t.obj.chat, right: "", href: undefined, onClick: () => { setContacts(false); chatWith(); } }].map((r, i, arr) => {
+              const row = <><span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-[17px] font-extrabold text-white" style={{ background: r.bg }}>{r.icon}</span><span className="flex-1 text-[14px] font-semibold text-ink">{r.label}</span>{r.right ? <span className="text-[13px] font-bold text-ink">{r.right}</span> : <IconChevronRight size={16} className="text-[#c3c9d4]" />}</>;
+              const cls = `flex cursor-pointer items-center gap-3 px-[2px] py-3 ${i < arr.length - 1 ? "border-b border-[#f2f4f8]" : "hover:brightness-[.96]"}`;
+              return r.href ? <a key={r.key} href={r.href} target={r.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className={cls}>{row}</a> : <div key={r.key} onClick={r.onClick} className={cls}>{row}</div>;
+            })}
           </div>
         </>
       )}
