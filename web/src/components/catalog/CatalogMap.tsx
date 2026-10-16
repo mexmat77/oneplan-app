@@ -276,7 +276,13 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
   }, [items, lvl, mapIl, mapIlce, semtsKey, f.semts, tick, h]);
 
   // Crumbs, «level up», legend (prototype lines 3230–3239)
-  const crumb = "Türkiye" + (f.il ? " › " + ilName(f.il) : "") + (f.ilces.length ? " › " + f.ilces.map(ilceName).join(", ") : "") + (f.semts.length ? " › " + f.semts.map(semtName).join(", ") : "");
+  // Крошки кликабельны (16.10.2026, вопрос пользователя про «Уровень выше»): Türkiye → вся страна, провинция → районы, район → махалле.
+  const crumbs: { label: string; go?: () => void }[] = [
+    { label: "Türkiye", go: f.il ? () => set({ il: "", ilces: [], semts: [] }) : undefined },
+    ...(f.il ? [{ label: ilName(f.il), go: f.ilces.length ? () => set({ ilces: [], semts: [] }) : undefined }] : []),
+    ...(f.ilces.length ? [{ label: f.ilces.map(ilceName).join(", "), go: f.semts.length ? () => set({ semts: [] }) : undefined }] : []),
+    ...(f.semts.length ? [{ label: f.semts.map(semtName).join(", ") }] : []),
+  ];
   const canUp = !!(f.il || f.ilces.length || f.semts.length);
   const up = () => { if (f.semts.length) set({ semts: [] }); else if (f.ilces.length) set({ ilces: [] }); else if (f.il) set({ il: "" }); };
   let legend: [string, string] | null = null;
@@ -290,10 +296,12 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     <div ref={wrapRef} className="relative z-0 mx-[calc(50%-50vw)] overflow-hidden border-y border-line bg-surface [isolation:isolate]" style={{ height: h ? h : "calc(100dvh - 88px)" }}>
       <div ref={ref} id="opl-map" className="h-full" />
       <div className="absolute left-[56px] top-3 z-800 flex max-w-[calc(100%-76px)] flex-wrap items-center gap-2">
-        <span className="max-w-full truncate rounded-[10px] bg-surface px-[13px] py-[9px] text-[12.5px] font-bold text-ink shadow-[0_4px_14px_rgba(20,36,63,.2)]">{crumb}</span>
-        {canUp && <button type="button" onClick={up} className="inline-flex cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[10px] bg-ink px-[13px] py-[9px] text-[12.5px] font-bold text-white shadow-[0_4px_14px_rgba(20,36,63,.2)] hover:bg-blue-2"><IconArrowBackUp size={15} /> {t.cat.mapUp}</button>}
+        <span className="flex max-w-full items-center gap-1 truncate rounded-[10px] bg-surface px-[13px] py-[9px] text-[12.5px] font-bold text-ink shadow-[0_4px_14px_rgba(20,36,63,.2)]">
+          {crumbs.map((c, i) => <span key={i} className="flex items-center gap-1">{i > 0 && <span className="text-muted-2">›</span>}{c.go ? <button type="button" onClick={c.go} className="cursor-pointer text-blue hover:underline">{c.label}</button> : <span>{c.label}</span>}</span>)}
+        </span>
         {hint && lvl !== "obj" && <span className="hidden max-w-[520px] rounded-[10px] bg-surface/90 px-[11px] py-[7px] text-[11.5px] leading-[1.35] text-muted shadow-[0_4px_14px_rgba(20,36,63,.14)] md:block">{hint}</span>}
       </div>
+      {canUp && <button type="button" onClick={up} title={t.cat.mapUp} aria-label={t.cat.mapUp} className="absolute bottom-[138px] right-4 z-800 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full bg-surface text-ink shadow-[0_6px_20px_rgba(20,36,63,.18)] hover:bg-[#f4f6fa] hover:text-blue-2 max-md:bottom-[198px]"><IconArrowBackUp size={22} /></button>}
       {legend && (
         <div className="absolute bottom-[14px] left-[14px] z-800 rounded-[12px] bg-surface px-[14px] py-[10px] shadow-[0_6px_20px_rgba(20,36,63,.18)]">
           <div className="mb-[6px] text-[10px] font-bold uppercase tracking-[.05em] text-muted">{t.cat.legend}</div>
