@@ -519,6 +519,10 @@
   ПЕРЕШИФРОВКОЙ под ключ получателя (`dekOfAdmin`, `wsOfProfile` в lib/crm/server; документы сделок не переносятся),
   уведомление `client_transfer`; общее окно выбора — `components/ui/TransferModal`. Роль в агентстве (crm_members) теперь
   видна и правится админом платформы в «Данные риэлтора» (`agency_role` в UserInput → `syncAgencyRole`).
+  ПЕРЕДАЧА ОТКАТЫВАЛАСЬ (16.10.2026, «передал Константину — осталось у меня»): после `transfer_listing` страница вызывала
+  `upsertLocalListing`, тот — хук записи, а `listingToRow` ставил `owner_id: me` — объект возвращался (у админа RLS это
+  пропускает). Теперь после передачи — `patchRemoteListing` (только память), а `owner_id` в строке — из `Listing.owner`
+  (админ, правящий чужое объявление, его не забирает).
   Объект передаётся ТОЛЬКО внутри агентства (решение пользователя 12.10.2026, миграция `0021_transfer_listing_agency.sql`:
   получатель — из того же агентства, одиночке — 'no-agency'); `listTransferTargets("agency")` — коллеги по агентству,
   `TransferModal scope="agency"` с подсказкой `obj.transferNone`. Клиент — по-прежнему любому риэлтору.

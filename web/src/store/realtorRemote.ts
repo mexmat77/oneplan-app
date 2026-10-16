@@ -36,7 +36,7 @@ function rowToListing(r: ListingRow): Listing {
 }
 function listingToRow(o: Listing) {
   return {
-    id: o.id, owner_id: me, title: o.t, description: o.desc, base_lang: o.base, deal: o.deal, type: o.type, status: o.st, badge: o.badge ?? null,
+    id: o.id, owner_id: isUuid(o.owner) ? o.owner : me, title: o.t, // владелец — из объявления (админ правит чужое, не забирая его) description: o.desc, base_lang: o.base, deal: o.deal, type: o.type, status: o.st, badge: o.badge ?? null,
     price: Math.round(o.price), rooms: o.rooms, area: Math.round(o.area), gross_area: grossArea(o), floor_n: o.floorN || null, floors_total: o.floorsTotal || null,
     il: o.il ?? null, ilce: o.ilce ?? null, semt: o.semt ?? null, loc: o.loc, lat: o.ll?.[0] ?? null, lng: o.ll?.[1] ?? null, cover_url: o.photos[0] ?? o.img ?? null,
     comm: o.comm ?? 0, furn: !!o.furn, feats: o.feats ?? [], vnj: !!o.vnj, cit: !!o.cit, cur: o.cur ?? "TRY", photos: o.photos, data: o, relisted_from: o.relistedFrom ?? null, updated_at: new Date().toISOString(),

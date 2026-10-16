@@ -85,6 +85,12 @@ export type ListingWriteHook = { upsert: (o: Listing) => void; status: (id: stri
 let writeHook: ListingWriteHook | null = null;
 export function setListingWriteHook(h: ListingWriteHook | null) { writeHook = h; }
 
+/** Обновить объявление ТОЛЬКО в памяти (без записи в базу) — после передачи другому риэлтору: запись уже сделала функция базы,
+ *  а повторный upsert с owner_id = me возвращал объект обратно (16.10.2026, «передал Константину — осталось у меня»). */
+export function patchRemoteListing(id: string, patch: Partial<Listing>) {
+  if (remote.active) setRemoteListings(remote.list.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  else { const cur = readLocal(); writeOf(LOCAL, cur.map((x) => (x.id === id ? { ...x, ...patch } : x))); }
+}
 export function upsertLocalListing(o: Listing) {
   if (remote.active && writeHook) {
     const i = remote.list.findIndex((x) => x.id === o.id);
