@@ -52,6 +52,7 @@
     "sold": "Sold",
     "off": "Off market"
   },
+  "dealF": {"sale": "Sale", "rent": "Rent", "daily": "Daily rent", "transfer": "Assignment"},
   "deal": {
     "sale": "Sell",
     "rent": "Rent out",

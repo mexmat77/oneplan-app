@@ -89,18 +89,15 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
   ];
   const miniBadge = (n?: number) => !!n && <span className="ml-[2px] inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{n}</span>;
   const subtabs: [string, string][] = [["main", t.tab_main], ["plans", t.tab_plans], ["io", t.tab_io], ["log", t.tab_log], ["set", t.tab_set]];
-  const menu: { icon: ReactNode; label: string; badge?: number; onClick: () => void }[] = [
-    { icon: <IconLayoutDashboard size={24} />, label: t.nav_dashboard, onClick: () => go("/dev") },
-    { icon: <IconBuildingCommunity size={24} />, label: t.nav_objects, onClick: () => go("/dev/objects") },
-    ...(canManageUsers ? [{ icon: <IconUsers size={24} />, label: t.nav_users, onClick: () => go("/dev/users") }] : []),
-    { icon: <IconAddressBook size={24} />, label: t.nav_crm, onClick: () => go("/dev/crm") },
-    { icon: <IconMessageCircle size={24} />, label: tt.chat, badge: dmUnread, onClick: () => go("/dev/chat") },
-    { icon: <IconBell size={24} />, label: tt.notif, badge: unread, onClick: () => { setSheet(false); setNotifOpen(true); } },
-    { icon: <IconUser size={24} />, label: t.prof_title, onClick: () => go("/dev/profile") },
-    ...(me.platformAdmin ? [
-      { icon: <IconUsers size={24} />, label: t.ws_realtors, onClick: () => go("/catalog") },
-      { icon: <IconSettings size={24} />, label: t.ws_admin, badge: me.adminN, onClick: () => go("/admin/requests") },
-    ] : []),
+  // мобильное меню — в том же стиле, что у риэлтора (16.10.2026): группа рабочих пространств сверху, строки 13.5px, язык внизу
+  const menu: { icon: ReactNode; label: string; badge?: number; active?: boolean; onClick: () => void }[] = [
+    { icon: <IconLayoutDashboard size={17} />, label: t.nav_dashboard, active: path === "/dev", onClick: () => go("/dev") },
+    { icon: <IconBuildingCommunity size={17} />, label: t.nav_objects, active: is("/dev/objects"), onClick: () => go("/dev/objects") },
+    ...(canManageUsers ? [{ icon: <IconUsers size={17} />, label: t.nav_users, active: is("/dev/users"), onClick: () => go("/dev/users") }] : []),
+    { icon: <IconAddressBook size={17} />, label: t.nav_crm, active: is("/dev/crm"), onClick: () => go("/dev/crm") },
+    { icon: <IconMessageCircle size={17} />, label: tt.chat, badge: dmUnread, active: is("/dev/chat"), onClick: () => go("/dev/chat") },
+    { icon: <IconBell size={17} />, label: tt.notif, badge: unread, onClick: () => { setSheet(false); setNotifOpen(true); } },
+    { icon: <IconUser size={17} />, label: t.prof_title, active: is("/dev/profile"), onClick: () => go("/dev/profile") },
   ];
   const roleChip = (r: DevRole) => `cursor-pointer whitespace-nowrap rounded-[8px] border px-[11px] py-[6px] text-[12px] font-bold ${s.viewRole === r ? "border-blue bg-blue text-white" : "border-dark-3 bg-transparent text-[#c7d0e0]"}`;
 
@@ -185,23 +182,32 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
         </>
       )}
 
-      {/* Mobile nav sheet (prototype lines 242–255) */}
+      {/* Mobile nav sheet — карточка как у риэлтора (TopBar, kebab) */}
       {sheet && (
-        <div className="fixed inset-0 z-150 flex flex-col bg-surface" style={{ animation: "opl-bg .18s ease" }}>
-          <div className="flex h-[62px] flex-none items-center justify-between border-b border-[#eef0f4] px-[14px]">
-            {logo}
-            <button type="button" onClick={() => setSheet(false)} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[19px] text-ink"><IconX size={19} /></button>
-          </div>
-          <div className="flex flex-1 flex-col gap-[2px] overflow-y-auto px-[18px] py-[22px]">
+        <>
+          <div className="fixed inset-0 z-[149] bg-[rgba(10,16,28,.25)]" onClick={() => setSheet(false)} />
+          <div className="fixed right-[10px] top-[60px] z-150 w-[252px] rounded-[16px] border border-line bg-surface p-2 shadow-[0_24px_60px_rgba(20,36,63,.2)]" style={{ animation: "opl-card .18s ease" }}>
+            <div className="flex items-center gap-2 px-[10px] pb-[10px] pt-1">
+              <span className="flex-1 text-[15px] font-extrabold text-ink">{tr.common.menu}</span>
+              <button type="button" onClick={() => setSheet(false)} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[11px] bg-bg-2 text-[20px] text-text hover:brightness-95" aria-label="Close"><IconX size={20} /></button>
+            </div>
+            {me.platformAdmin && (
+              <div className="mb-[6px] border-b border-line-2 pb-[6px]">
+                {spaces.map(({ key, href, label, Icon, badge }) => (
+                  <Link key={key} href={href} onClick={() => setSheet(false)} className={`flex items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold ${key === "dev" ? "bg-blue-tint text-blue-2" : "text-ink"}`}><Icon size={17} /><span className="flex-1">{label}</span>{miniBadge(badge)}</Link>
+                ))}
+              </div>
+            )}
             {menu.map((m) => (
-              <div key={m.label} onClick={m.onClick} className="flex cursor-pointer items-center gap-4 border-b border-bg-4 px-[10px] py-[18px] text-[24px] font-extrabold tracking-[-.01em] text-ink hover:bg-bg-3" style={{ borderRadius: 14 }}>
-                <span className="text-blue">{m.icon}</span> {m.label}
-                {!!m.badge && <span className="ml-auto flex h-6 min-w-6 items-center justify-center rounded-[12px] bg-red px-[7px] text-[14px] font-semibold text-white">{m.badge}</span>}
+              <div key={m.label} onClick={m.onClick} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${m.active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
+                {m.icon}<span className="flex-1">{m.label}</span>
+                {!!m.badge && <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{m.badge}</span>}
               </div>
             ))}
+            <div className="mx-[2px] my-[6px] border-t border-line-2" />
+            <div className="mx-1 mb-[2px] mt-1 flex gap-1 rounded-[11px] bg-bg-2 p-1">{(["RU", "EN", "TR"] as const).map((lg) => <button key={lg} type="button" onClick={() => setLang(lg)} className={`flex-1 cursor-pointer rounded-[9px] py-[7px] text-[13px] font-bold ${lang === lg ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,36,63,.12)]" : "text-muted"}`}>{lg}</button>)}</div>
           </div>
-          <div className="flex flex-none gap-2 px-[18px] pb-[30px]">{(["RU", "EN", "TR"] as const).map((lg) => langBtn(lg, true))}</div>
-        </div>
+        </>
       )}
 
       {/* Demo role switch (prototype lines 1251–1264) — platform admins only */}

@@ -52,6 +52,7 @@
     "sold": "Satıldı",
     "off": "Satıştan kaldırıldı"
   },
+  "dealF": {"sale": "Satılık", "rent": "Kiralık", "daily": "Günlük kiralık", "transfer": "Devren"},
   "deal": {
     "sale": "Satılık",
     "rent": "Kiralık",

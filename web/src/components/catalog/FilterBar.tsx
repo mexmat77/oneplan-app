@@ -119,7 +119,7 @@ export function FilterBar({ f, set, scope, resultCount, view, setView, geoLabel,
   const priceLabel = f.min && f.max ? `${kShort(f.min)} – ${kShort(f.max)} ₺` : f.min ? `${t.cat.fromS} ${kShort(f.min)} ₺` : f.max ? `${t.cat.toS} ${kShort(f.max)} ₺` : t.cat.priceB;
   const roomsLabel = f.rooms.length ? (f.rooms.length > 3 ? `${f.rooms.slice(0, 3).join(", ")} +${f.rooms.length - 3}` : f.rooms.join(", ")) : t.cat.roomsB;
   const pills: { k: Panel; on: boolean; label: string }[] = [
-    { k: "deal", on: f.deal !== "sale", label: t.deal[f.deal] }, // «Купить» — значение по умолчанию (как «Вся Турция»): не подсвечивается и без чипа
+    { k: "deal", on: f.deal !== "sale", label: t.dealF[f.deal] }, // «Купить» — значение по умолчанию (как «Вся Турция»): не подсвечивается и без чипа
     { k: "type", on: !!f.type, label: f.type ? t.typ[f.type] : t.cat.typeB },
     { k: "price", on: !!(f.min || f.max), label: priceLabel },
     ...(!isLand ? [{ k: "rooms" as Panel, on: f.rooms.length > 0, label: roomsLabel }] : []),
@@ -156,7 +156,7 @@ export function FilterBar({ f, set, scope, resultCount, view, setView, geoLabel,
   let footer = false;
   if (fp === "deal") {
     title = t.cat.dealT;
-    body = (["sale", "rent", "daily"] as Deal[]).filter((k) => dealCnt(k) > 0).map((k) => <Row key={k} on={f.deal === k} label={t.deal[k]} count={String(dealCnt(k))} onClick={() => { setDeal(k); close(); }} />);
+    body = (["sale", "rent", "daily"] as Deal[]).filter((k) => dealCnt(k) > 0).map((k) => <Row key={k} on={f.deal === k} label={t.dealF[k]} count={String(dealCnt(k))} onClick={() => { setDeal(k); close(); }} />);
   } else if (fp === "type") {
     title = t.cat.typeT;
     body = ([["", t.cat.anyL], ["flat", t.typ.flat], ["house", t.typ.house], ["comm", t.typ.comm], ["land", t.typ.land]] as [PropType | "", string][])
@@ -197,7 +197,7 @@ export function FilterBar({ f, set, scope, resultCount, view, setView, geoLabel,
           </button>
         </Group>
         <Group title={t.cat.priceT}><Range a={f.min} b={f.max} ka="min" kb="max" unit="₺" w="w-[140px] shrink-0" {...rangeProps} /></Group>
-        <Group title={t.cat.dealT}><div className="flex flex-wrap gap-[7px]">{(["sale", "rent", "daily"] as Deal[]).filter((k) => scope.some((o) => o.deal === k)).map((k) => <Chip key={k} on={f.deal === k} label={t.deal[k]} onClick={() => setDeal(k)} />)}</div></Group>
+        <Group title={t.cat.dealT}><div className="flex flex-wrap gap-[7px]">{(["sale", "rent", "daily"] as Deal[]).filter((k) => scope.some((o) => o.deal === k)).map((k) => <Chip key={k} on={f.deal === k} label={t.dealF[k]} onClick={() => setDeal(k)} />)}</div></Group>
         <Group title={t.cat.typeT}><div className="flex flex-wrap gap-[7px]">{(["flat", "house", "comm", "land"] as PropType[]).filter((k) => scope.some((o) => o.deal === f.deal && o.type === k)).map((k) => <Chip key={k} on={f.type === k} label={t.typ[k]} onClick={() => setType(f.type === k ? "" : k)} />)}</div></Group>
         <Group title={t.cat.areaT}>
           <div className="mb-[9px]"><div className="mb-[6px] text-[12.5px] text-text-2">{isLand ? t.cat.plotL : t.cat.grossL}</div><Range a={f.abMin} b={f.abMax} ka="abMin" kb="abMax" {...rangeProps} /></div>
