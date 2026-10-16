@@ -4,8 +4,9 @@
 // карточка реквизитов DOCX/PDF для контрагента) и шаблоны (таблица, предпросмотр PDF с образцами, скачать DOCX, поля,
 // переименование и тип своих шаблонов, загрузка своего).
 import { useEffect, useState } from "react";
-import { IconBuilding, IconDownload, IconEye, IconFileTypePdf, IconPencil, IconPlus, IconStar, IconStarFilled, IconTrash, IconUpload } from "@tabler/icons-react";
-import { companyCardUrl, deleteCompanyProfile, deleteTemplate, getCompanies, listTemplates, previewTemplate, saveCompanyProfile, templateUrl, updateTemplate, uploadTemplate, type Company, type CompanyProfile, type TemplateInfo, setTemplateEnabled } from "@/app/crm/doc-actions";
+import { IconBuilding, IconChevronDown, IconCodeDots, IconDownload, IconEye, IconFileTypePdf, IconPencil, IconPlus, IconStar, IconStarFilled, IconTrash, IconUpload } from "@tabler/icons-react";
+import { Switch } from "@/components/ui/Switch";
+import { companyCardUrl, deleteCompanyProfile, deleteTemplate, getCompanies, listTemplates, previewTemplate, saveCompanyProfile, templateUrl, updateTemplate, uploadTemplate, type Company, type CompanyProfile, type TemplateInfo, setTemplateEnabled, setAllBuiltinEnabled } from "@/app/crm/doc-actions";
 import { confirmDialog } from "@/components/ui/confirm";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
@@ -122,6 +123,10 @@ export function TemplateSettings() {
   const [rename, setRename] = useState<{ id: string; name: string } | null>(null);
   useEffect(() => { listTemplates(true).then(setTpls).catch(() => setTpls([])); }, []);
   async function toggle(t2: TemplateInfo) { try { await setTemplateEnabled(t2.id, !t2.enabled); setTpls((v) => (v ?? []).map((x) => (x.id === t2.id ? { ...x, enabled: !t2.enabled } : x))); } catch (e) { err(e); } }
+  // «свой комплект»: все встроенные одним движением; свои шаблоны не трогаем
+  async function bulkBuiltin(on: boolean) { setBusy("bulk"); try { await setAllBuiltinEnabled(on); setTpls((v) => (v ?? []).map((x) => (x.builtin ? { ...x, enabled: on } : x))); } catch (e) { err(e); } finally { setBusy(null); } }
+  const builtinOn = (tpls ?? []).some((x) => x.builtin && x.enabled);
+  const enabledN = (tpls ?? []).filter((x) => x.enabled).length;
   const err = (e: unknown) => showToast((e as Error).message === "readonly" ? c.errReadonly : (e as Error).message === "no-pdf" ? d.noPdf : c.errSave);
   async function preview(t2: TemplateInfo, which: "pdf" | "docx") { setBusy(t2.id); try { window.open(await previewTemplate(t2.id, which), "_blank", "noopener"); } catch (e) { err(e); } finally { setBusy(null); } }
   async function download(t2: TemplateInfo) { try { await saveSigned(await templateUrl(t2.id)); } catch (e) { err(e); } }
@@ -139,10 +144,16 @@ export function TemplateSettings() {
     <div className={card}>
       <div className="text-[15px] font-semibold text-ink">{d.templates}</div>
       <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS2} {d.enabledHint}</p>
+      {tpls && (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[12.5px] font-semibold text-text">{d.setSummary.replace("{n}", String(enabledN)).replace("{m}", String(tpls.length))}</span>
+          {tpls.some((x) => x.builtin) && <button type="button" disabled={ro || busy === "bulk"} onClick={() => bulkBuiltin(!builtinOn)} className={`${btnS} h-7 px-[10px] text-[12px]`}>{builtinOn ? d.builtinOffAll : d.builtinOnAll}</button>}
+        </div>
+      )}
       {!tpls ? <div className="text-[13px] text-muted">…</div> : (
         <div className="overflow-x-auto rounded-[6px] border border-line">
           <table data-crm-table="1" className="w-full min-w-[760px] text-[13px]">
-            <thead><tr>{[d.tplName, d.tplKind, d.tplLang, d.tplFields, d.enabled, ""].map((h, i) => <th key={i} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{h}</th>)}</tr></thead>
+            <thead><tr>{[d.tplName, d.tplKind, d.tplLang, d.tplFields, d.inSet, ""].map((h, i) => <th key={i} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{h}</th>)}</tr></thead>
             <tbody>
               {tpls.map((t2) => (
                 <tr key={t2.id} className={`group hover:bg-[#f7f8fa] ${t2.enabled ? "" : "opacity-60"}`}>
@@ -155,7 +166,7 @@ export function TemplateSettings() {
                   <td className="px-3 py-2 text-text">{t2.lang}</td>
                   <td className="px-3 py-2"><button type="button" onClick={() => setFieldsOf(fieldsOf === t2.id ? null : t2.id)} className="cursor-pointer text-[12.5px] font-semibold text-blue-2 hover:underline">{t2.fields.length} {d.fieldsN}</button>{missing(t2).length > 0 && <span className="ml-2 rounded-[4px] bg-[#fff8e6] px-[6px] text-[11px] font-semibold text-[#a16207]" title={missing(t2).join(", ")}>{missing(t2).length} {d.unknownFields}</span>}
                     {fieldsOf === t2.id && <div className="mt-1 flex max-w-[420px] flex-wrap gap-1">{t2.fields.map((k) => <code key={k} className={`rounded-[3px] px-1 text-[11px] ${FIELD_MAP[k] ? "bg-bg-2 text-text" : "bg-[#fff8e6] text-[#a16207]"}`} title={FIELD_MAP[k]?.label[lang]}>{k}</code>)}</div>}</td>
-                  <td className="px-3 py-2"><button type="button" disabled={ro} onClick={() => toggle(t2)} title={t2.enabled ? d.toggleOff : d.toggleOn} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-[10px] text-[11.5px] font-semibold ${t2.enabled ? "border-[#bfe3cf] bg-green-tint text-green" : "border-line bg-bg-2 text-muted"} disabled:opacity-50`}><span className={`h-2 w-2 rounded-full ${t2.enabled ? "bg-green" : "bg-line-4"}`} />{t2.enabled ? d.enabled : d.disabled}</button></td>
+                  <td className="px-3 py-2"><Switch checked={t2.enabled} onChange={() => toggle(t2)} disabled={ro} size="sm" label={t2.enabled ? d.enabled : d.disabled} title={t2.enabled ? d.toggleOff : d.toggleOn} /></td>
                   <td className="px-2 py-2">
                     <span className="flex items-center justify-end gap-1">
                       <button type="button" disabled={busy === t2.id} onClick={() => preview(t2, "pdf")} title={d.previewPdf} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-2 hover:text-ink disabled:opacity-40"><IconEye size={16} /></button>
@@ -179,14 +190,21 @@ export function TemplateSettings() {
         </div>
         <div className="mt-2 text-[11.5px] text-muted">{d.uploadHint}</div>
       </div>
-      <button type="button" onClick={() => setShowRef((v) => !v)} className="mt-3 cursor-pointer text-[12.5px] font-semibold text-blue-2 hover:underline">{d.fieldsRef} {showRef ? "▴" : "▾"}</button>
+      {/* справочник полей — полноценный раскрывающийся блок (16.10.2026, «низкая неудобная ссылка») */}
+      <div className={`mt-4 rounded-[6px] border border-line ${showRef ? "bg-surface" : "bg-[#fafbfc]"}`}>
+        <button type="button" onClick={() => setShowRef((v) => !v)} aria-expanded={showRef} className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[#f7f8fa]">
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[6px] bg-blue-tint text-blue-2"><IconCodeDots size={17} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-[13.5px] font-semibold text-ink">{d.fieldsRef}</span><span className="block truncate text-[12px] text-muted">{d.fieldsRefSub.replace("{n}", String(FIELDS.length)).replace("{g}", String(Object.keys(GROUP_LABELS).length))}</span></span>
+          <IconChevronDown size={18} className={`flex-none text-muted transition-transform duration-150 ${showRef ? "rotate-180" : ""}`} />
+        </button>
       {showRef && (
-        <div className="mt-2 max-h-[320px] overflow-y-auto rounded-[6px] border border-line bg-[#fafbfc] p-3 text-[12px]">
+        <div className="max-h-[520px] overflow-y-auto border-t border-line p-4 text-[12.5px]">
           {(Object.keys(GROUP_LABELS) as DocGroup[]).map((g) => (
             <div key={g} className="mb-3"><div className="mb-1 font-semibold text-ink">{GROUP_LABELS[g][lang]}</div><div className="grid grid-cols-2 gap-x-4 gap-y-[2px] max-md:grid-cols-1">{FIELDS.filter((f) => f.group === g).map((f) => <div key={f.key} className="flex gap-2 truncate"><code className="text-blue-2">{"{{" + f.key + "}}"}</code><span className="truncate text-muted">{f.label[lang]}</span></div>)}</div></div>
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

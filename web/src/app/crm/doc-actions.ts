@@ -101,6 +101,13 @@ export async function setTemplateEnabled(id: string, on: boolean): Promise<void>
     if (error) throw new Error(error.message);
   }
 }
+/** Все встроенные шаблоны разом: включить (templates_off = []) или отключить (все ключи) — «свой комплект» (16.10.2026). */
+export async function setAllBuiltinEnabled(on: boolean): Promise<void> {
+  const c = await crmCtx(); assertWrite(c);
+  const next = on ? [] : BUILTIN.filter((t) => t.for.length).map((t) => t.key);
+  const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, templates_off: next }, { onConflict: "ws_kind,ws_id" });
+  if (error) throw new Error(error.message);
+}
 export async function listTemplates(all = false): Promise<TemplateInfo[]> {
   const c = await crmCtx();
   const off = new Set(await templatesOff(c));
