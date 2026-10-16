@@ -125,7 +125,7 @@ async function loadNotes() {
 }
 
 // ---------- подборки ----------
-type SelRow = { id: string; slug: string; title: string; client_name: string | null; note: string | null; status: Selection["status"]; views: number; created_at: string; updated_at: string };
+type SelRow = { id: string; slug: string; title: string; client_name: string | null; note: string | null; status: Selection["status"]; views: number; created_at: string; updated_at: string; lang?: Selection["lang"] | null };
 type SelItem = { selection_id: string; listing_id: string; comment: string | null; sort: number; reaction: Selection["reacts"][string] | null; snap?: SelSnap | null };
 async function loadSelections() {
   if (!sb) return;
@@ -136,12 +136,12 @@ async function loadSelections() {
     const its = (byId[r.id] ?? []).sort((a, b) => a.sort - b.sort);
     const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {}; const snap: Record<string, SelSnap> = {};
     its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; if (it.snap) snap[it.listing_id] = it.snap; });
-    return { id: r.id, slug: r.slug || slugOf(r.id), title: r.title, name: r.client_name ?? "—", note: r.note ?? "", items: its.map((it) => it.listing_id), cm, snap, status: r.status, views: r.views, reacts, createdAt: r.created_at, updatedAt: r.updated_at };
+    return { id: r.id, slug: r.slug || slugOf(r.id), title: r.title, name: r.client_name ?? "—", note: r.note ?? "", items: its.map((it) => it.listing_id), cm, snap, lang: r.lang ?? undefined, status: r.status, views: r.views, reacts, createdAt: r.created_at, updatedAt: r.updated_at };
   }));
 }
 async function upsertSelection(s: Selection) {
   if (!sb) return;
-  const { error } = await sb.from("selections").upsert({ id: s.id, slug: s.slug, owner_id: me, title: s.title, client_name: s.name, note: s.note, status: s.status, views: s.views, updated_at: new Date().toISOString() }, { onConflict: "id" });
+  const { error } = await sb.from("selections").upsert({ id: s.id, slug: s.slug, owner_id: me, title: s.title, client_name: s.name, note: s.note, lang: s.lang ?? null, status: s.status, views: s.views, updated_at: new Date().toISOString() }, { onConflict: "id" });
   if (error) { showToast("Подборка не сохранена: " + error.message); return; }
   await sb.from("selection_items").delete().eq("selection_id", s.id);
   if (s.items.length) {

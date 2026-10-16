@@ -8,6 +8,8 @@ import type { Profile } from "@/store/profile";
 import type { SelSnap, Selection } from "@/store/selections";
 import { trPhone } from "@/lib/phone";
 import { getSeedListings } from "@/lib/seed";
+import { plural } from "@/lib/plural";
+import type { Lang } from "@/i18n";
 
 export type PublicSelection = { s: Selection; listings: Listing[]; owner: Profile };
 const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -24,7 +26,7 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
   const its = (items ?? []) as { listing_id: string; comment: string | null; sort: number; reaction: "like" | "maybe" | "no" | null; snap: SelSnap | null }[];
   const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {}; const snap: Record<string, SelSnap> = {};
   its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; if (it.snap) snap[it.listing_id] = it.snap; });
-  const s: Selection = { id: row.id, slug: row.slug, title: row.title, name: row.client_name ?? "—", note: row.note ?? "", items: its.map((it) => it.listing_id), cm, snap, status: row.status, views: row.views, reacts, createdAt: row.created_at, updatedAt: row.updated_at };
+  const s: Selection = { id: row.id, slug: row.slug, title: row.title, name: row.client_name ?? "—", note: row.note ?? "", items: its.map((it) => it.listing_id), cm, snap, lang: row.lang ?? undefined, status: row.status, views: row.views, reacts, createdAt: row.created_at, updatedAt: row.updated_at };
   const ids = s.items.filter(isUuid);
   const listings: Listing[] = [];
   if (ids.length) {
@@ -41,22 +43,37 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
 }
 
 /** Текст для превью ссылки и OG-картинки: «Подборка для Ивана · 5 объектов», цены, районы, риэлтор. */
-export function selectionSummary(d: PublicSelection) {
+/** Язык страницы клиента: язык подборки → Accept-Language браузера → RU. */
+export function pickSelectionLang(d: PublicSelection | null, acceptLanguage?: string | null): Lang {
+  if (d?.s.lang) return d.s.lang;
+  const a = (acceptLanguage ?? "").toLowerCase();
+  const first = a.split(",")[0]?.trim() ?? "";
+  if (first.startsWith("tr")) return "TR";
+  if (first.startsWith("ru") || first.startsWith("uk") || first.startsWith("be") || first.startsWith("kk")) return "RU";
+  if (first) return "EN";
+  return "RU";
+}
+const SUM = {
+  RU: { forWho: (w: string) => `Подборка для ${w}`, generic: "Подборка объектов", n: { one: "объект", few: "объекта", many: "объектов" }, by: (r: string) => `Подготовил(а) ${r}`, tail: "Фото, описания и контакты — по ссылке.", loc: "ru-RU" },
+  EN: { forWho: (w: string) => `Selection for ${w}`, generic: "Property selection", n: { one: "listing", other: "listings" }, by: (r: string) => `Prepared by ${r}`, tail: "Photos, details and contacts at the link.", loc: "en-GB" },
+  TR: { forWho: (w: string) => `${w} için seçki`, generic: "Konut seçkisi", n: { other: "ilan" }, by: (r: string) => `Hazırlayan: ${r}`, tail: "Fotoğraflar, açıklamalar ve iletişim bağlantıda.", loc: "tr-TR" },
+} as const;
+export function selectionSummary(d: PublicSelection, lang: Lang = pickSelectionLang(d)) {
+  const S = SUM[lang];
   // демо-объекты прототипа (id не uuid) сервер не грузит — для превью берём их из seed, как клиент
   const seedById = new Map(getSeedListings().map((o) => [o.id, o]));
   const all: Listing[] = d.s.items.map((id) => d.listings.find((o) => o.id === id) ?? seedById.get(id)).filter((o): o is Listing => !!o);
   const n = all.length;
-  const nounRu = (k: number) => (k % 10 === 1 && k % 100 !== 11 ? "объект" : k % 10 >= 2 && k % 10 <= 4 && (k % 100 < 10 || k % 100 >= 20) ? "объекта" : "объектов");
   const who = d.s.name?.trim();
-  const title = `${who ? `Подборка для ${who}` : d.s.title?.trim() || "Подборка объектов"} · ${n} ${nounRu(n)}`;
+  const title = `${who ? S.forWho(who) : d.s.title?.trim() || S.generic} · ${n} ${plural(lang, n, S.n)}`;
   const prices = all.map((o) => o.price).filter((p) => p > 0).sort((a, b) => a - b);
   const cur = all[0]?.cur ?? "TRY";
   const sym = cur === "EUR" ? "€" : cur === "USD" ? "$" : "₺";
-  const fmtP = (v: number) => `${Math.round(v).toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ${sym}`;
+  const fmtP = (v: number) => `${Math.round(v).toLocaleString(S.loc).replace(/\u00a0/g, " ")} ${sym}`;
   const priceTxt = prices.length ? (prices.length > 1 && prices[0] !== prices[prices.length - 1] ? `${fmtP(prices[0])} – ${fmtP(prices[prices.length - 1])}` : fmtP(prices[0])) : "";
   const places = Array.from(new Set(all.map((o) => (o.loc?.TR || o.loc?.EN || o.loc?.RU || "").split(",")[0]?.trim()).filter(Boolean) as string[])).slice(0, 2).join(" · "); // названия мест — латиницей по-турецки (правило пользователя)
   const realtor = [d.owner.name, d.owner.agency].filter(Boolean).join(" · ");
-  const description = [priceTxt, places, realtor ? `Подготовил(а) ${realtor}` : ""].filter(Boolean).join(" · ") + ". Фото, описания и контакты — по ссылке.";
+  const description = [priceTxt, places, realtor ? S.by(realtor) : ""].filter(Boolean).join(" · ") + ". " + S.tail;
   const photos = all.map((o) => o.photos?.[0] || o.img).filter((u): u is string => !!u).slice(0, 3);
   return { title, description, n, priceTxt, places, realtor, photos, who };
 }

@@ -7,14 +7,16 @@ type I18nCtx = { lang: Lang; t: Dict; setLang: (l: Lang) => void };
 
 const Ctx = createContext<I18nCtx | null>(null);
 
-export function I18nProvider({ initialLang, children }: { initialLang: Lang; children: ReactNode }) {
+/** `persist={false}` — вложенный провайдер страницы (публичная подборка): язык живёт только в ней и не трогает cookie приложения. */
+export function I18nProvider({ initialLang, children, persist = true }: { initialLang: Lang; children: ReactNode; persist?: boolean }) {
   const [lang, setLangState] = useState<Lang>(initialLang ?? DEFAULT_LANG);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
+    if (!persist) return;
     document.cookie = `${LANG_COOKIE}=${l}; path=/; max-age=31536000; samesite=lax`;
     document.documentElement.lang = HTML_LANG[l];
-  }, []);
+  }, [persist]);
 
   const value = useMemo(() => ({ lang, t: getDict(lang), setLang }), [lang, setLang]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

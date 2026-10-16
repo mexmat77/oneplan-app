@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { loadPublicSelection, selectionSummary } from "@/lib/selectionsPublic";
+import { loadPublicSelection, pickSelectionLang, selectionSummary } from "@/lib/selectionsPublic";
 import { ogFonts } from "@/lib/ogFonts";
 
 // OG-картинка подборки для превью ссылки в Telegram/WhatsApp (13.10.2026): обложка первого объекта, число объектов,
@@ -14,10 +14,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const { slug } = await params;
   const site = process.env.NEXT_PUBLIC_SITE_URL || "https://one-plan.pro";
   let data: Awaited<ReturnType<typeof loadPublicSelection>> = null, sum: ReturnType<typeof selectionSummary> | null = null;
-  try { data = await loadPublicSelection(slug); sum = data ? selectionSummary(data) : null; } catch (e) { console.error("[og] selection", (e as Error).stack); }
+  try { data = await loadPublicSelection(slug); sum = data ? selectionSummary(data, pickSelectionLang(data)) : null; } catch (e) { console.error("[og] selection", (e as Error).stack); }
   const fs = await ogFonts(site);
   const photos = (sum?.photos ?? []).map((u) => (u.startsWith("http") ? u : `${site}${u.startsWith("/") ? "" : "/"}${u}`)); // относительные пути демо-фото → абсолютные
-  const title = sum?.title ?? "OnePlan — подборка объектов";
+  const title = sum?.title ?? "OnePlan";
   return new ImageResponse(
     (
       <div style={{ width: 1200, height: 630, display: "flex", background: "#0f1a2e", fontFamily: fs.length ? "Manrope" : "sans-serif", color: "#fff", position: "relative" }}>

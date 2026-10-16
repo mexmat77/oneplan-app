@@ -3,6 +3,7 @@
 // Client selections («подборки»): seeded demo data + localStorage until Supabase is wired.
 import { useSyncExternalStore } from "react";
 import type { Currency, L10n } from "@/lib/types";
+import type { Lang } from "@/i18n";
 
 export type SelStatus = "draft" | "sent" | "viewed";
 export type Reaction = "like" | "maybe" | "no";
@@ -17,6 +18,7 @@ export type Selection = {
   items: string[];           // listing ids
   cm: Record<string, string>; // per-listing comments
   snap?: Record<string, SelSnap>; // снимки объектов (16.10.2026)
+  lang?: Lang;               // язык страницы клиента (16.10.2026); нет — Accept-Language клиента, иначе RU
   status: SelStatus;
   views: number;
   reacts: Record<string, Reaction>;
@@ -75,11 +77,11 @@ export const likedCount = (s: Selection) => Object.values(s.reacts).filter((r) =
 export const selectionUrl = (s: Selection) => `https://one-plan.pro/s/${s.slug}`;
 export const findBySlug = (list: Selection[], slug: string) => list.find((x) => x.slug === slug || slugOf(x.id) === slug || x.id === slug);
 
-export function createSelection(input: { title: string; name: string; note: string; items: string[]; cm: Record<string, string>; snap?: Record<string, SelSnap> }): Selection {
+export function createSelection(input: { title: string; name: string; note: string; items: string[]; cm: Record<string, string>; snap?: Record<string, SelSnap>; lang?: Lang }): Selection {
   const now = new Date().toISOString();
   const id = newSelId();
   const s: Selection = {
-    id, slug: slugOf(id), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm, snap: input.snap,
+    id, slug: slugOf(id), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm, snap: input.snap, lang: input.lang,
     status: "sent", views: 0, reacts: {}, date: { RU: "Только что", EN: "Just now", TR: "Az önce" }, createdAt: now, updatedAt: now,
   };
   write([s, ...read()]);

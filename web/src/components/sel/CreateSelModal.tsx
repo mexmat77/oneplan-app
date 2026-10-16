@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { IconBrandTelegram, IconBrandWhatsapp, IconCircleCheck, IconDeviceFloppy, IconEye, IconLink, IconTrash, IconX } from "@tabler/icons-react";
 import { Modal } from "@/components/ui/Modal";
 import { useI18n } from "@/i18n/provider";
+import { LANGS, type Lang } from "@/i18n";
 import { fmt } from "@/lib/money";
 import { useAllListings } from "@/store/listings";
 import { usePrefs } from "@/store/prefs";
@@ -24,6 +25,8 @@ export function CreateSelModal({ onClose }: { onClose: () => void }) {
   const [done, setDone] = useState<Selection | null>(null);
   const [copied, setCopied] = useState(false);
   const editing = selDraft.editingSel ? selections.find((x) => x.id === selDraft.editingSel) : null;
+  // язык страницы клиента (16.10.2026): по умолчанию — язык интерфейса риэлтора, при редактировании — язык подборки
+  const [selLang, setSelLang] = useState<Lang>(editing?.lang ?? lang);
   // живые объекты + недоступные по снимку редактируемой подборки (16.10.2026): их видно и можно убрать
   const objs = sel.map((id) => { const live = all.find((o) => o.id === id); const snap = editing?.snap?.[id]; return live ? { id, img: live.img, t: live.t, rooms: live.rooms, price: live.price, cur: live.cur, gone: live.st === "sold" || live.st === "off" } : snap ? { id, img: snap.img, t: snap.t, rooms: "", price: snap.price, cur: snap.cur, gone: true } : null; }).filter((o): o is NonNullable<typeof o> => !!o);
 
@@ -34,11 +37,11 @@ export function CreateSelModal({ onClose }: { onClose: () => void }) {
     const snap: Record<string, SelSnap> = {};
     for (const id of sel) { const live = all.find((o) => o.id === id); if (live) snap[id] = snapOf(live); else if (editing?.snap?.[id]) snap[id] = editing.snap[id]; }
     if (editing) {
-      const patch = { title: selDraft.title || selDraft.name || editing.title, name: selDraft.name || editing.name, note: selDraft.note, items: [...sel], cm, snap };
+      const patch = { title: selDraft.title || selDraft.name || editing.title, name: selDraft.name || editing.name, note: selDraft.note, items: [...sel], cm, snap, lang: selLang };
       updateSelection(editing.id, patch);
       return { ...editing, ...patch };
     }
-    return createSelection({ title: selDraft.title, name: selDraft.name, note: selDraft.note, items: [...sel], cm, snap });
+    return createSelection({ title: selDraft.title, name: selDraft.name, note: selDraft.note, items: [...sel], cm, snap, lang: selLang });
   }
   function copy(s: Selection) {
     try { navigator.clipboard.writeText(selectionUrl(s)); } catch {}
@@ -76,6 +79,10 @@ export function CreateSelModal({ onClose }: { onClose: () => void }) {
             <input value={selDraft.title} onChange={(e) => setSelDraft({ title: e.target.value })} placeholder={t.sel.fTPh} className={`${inputCls} mb-[13px]`} />
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.sel.fN} <span className="font-normal text-muted-2">— {t.sel.fNn}</span></label>
             <input value={selDraft.name} onChange={(e) => setSelDraft({ name: e.target.value })} placeholder={t.sel.fNPh} className={`${inputCls} mb-[13px]`} />
+            <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.sel.fL} <span className="font-normal text-muted-2">— {t.sel.fLn}</span></label>
+            <div className="mb-[13px] inline-flex gap-1 rounded-[9px] bg-bg-2 p-[3px]">
+              {LANGS.map((l) => <button key={l} type="button" onClick={() => setSelLang(l)} className={`cursor-pointer rounded-[7px] px-[14px] py-[6px] text-[12px] font-bold transition ${l === selLang ? "bg-surface text-ink shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>{t.sel.langNames[l]}</button>)}
+            </div>
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.sel.fM} <span className="font-normal text-muted-2">— {t.sel.fMn}</span></label>
             <textarea value={selDraft.note} onChange={(e) => setSelDraft({ note: e.target.value })} placeholder={t.sel.fMPh} className={`${inputCls} mb-[13px] min-h-[58px] resize-y`} />
             <label className="mb-2 block text-[12.5px] font-semibold text-text-2">{t.sel.fC} <span className="font-normal text-muted-2">— {t.sel.fCn}</span></label>

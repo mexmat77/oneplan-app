@@ -8,7 +8,9 @@ import {
 } from "@tabler/icons-react";
 import { Logo } from "@/components/Logo";
 import { showToast } from "@/components/ui/toast";
-import { useI18n } from "@/i18n/provider";
+import { I18nProvider, useI18n } from "@/i18n/provider";
+import type { Lang } from "@/i18n";
+import { LangSwitch } from "@/components/LangSwitch";
 import { detail, type Tile } from "@/lib/detail";
 import { eqOf, fmt } from "@/lib/money";
 import { oldPrice, type Listing } from "@/lib/types";
@@ -38,7 +40,14 @@ function channels(p: Profile) {
   return list;
 }
 
-export function ClientView({ slug, preview, data }: { slug: string; preview: boolean; data?: PublicSelection | null }) {
+/** Страница клиента живёт на языке подборки (или Accept-Language клиента): вложенный провайдер без записи cookie —
+ *  переключатель на странице меняет язык только здесь и не трогает язык приложения риэлтора в предпросмотре (16.10.2026). */
+export function ClientView(props: { slug: string; preview: boolean; data?: PublicSelection | null; lang?: Lang }) {
+  const inner = <ClientViewInner {...props} />;
+  return props.lang ? <I18nProvider initialLang={props.lang} persist={false}>{inner}</I18nProvider> : inner;
+}
+
+function ClientViewInner({ slug, preview, data }: { slug: string; preview: boolean; data?: PublicSelection | null; lang?: Lang }) {
   const { t, lang } = useI18n();
   const router = useRouter();
   const all = useAllListings();
@@ -101,6 +110,7 @@ export function ClientView({ slug, preview, data }: { slug: string; preview: boo
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-[1220px] flex-wrap items-center gap-[14px] px-6 py-[14px]">
           <Logo size={25} textSize={17} />
+          <LangSwitch />
           <div className="ml-auto flex flex-wrap items-center gap-[11px]">
             <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[12px] bg-blue-2 text-[14px] font-extrabold text-white">{myInitials}</span>
             <div><div className="text-[14px] font-bold text-ink">{p.name}</div><div className="text-[11.5px] text-muted">{t.cli.role}</div></div>
