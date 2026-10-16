@@ -60,7 +60,7 @@ async function loadGeo(key: string, url: string, onDone: () => void) {
   } catch { geoSub[key] = []; }
   onDone();
 }
-const openHref = (href: string) => { try { sessionStorage.setItem("opl-prev-screen", "catalog"); } catch {} window.open(href, "_blank", "noopener"); };
+const openHref = (href: string) => { try { sessionStorage.setItem("opl-prev-screen", "catalog"); } catch {} if (touchMode()) { window.location.assign(href); return; } window.open(href, "_blank", "noopener"); };
 // Планшет/телефон (нет hover): первый тап по пину показывает всплывашку-предпросмотр, второй тап по нему или тап по
 // всплывашке открывает объект (13.10.2026, замечание пользователя «на айпаде сразу открывается объект»). На компьютере —
 // предпросмотр при наведении, клик открывает, как было.
@@ -81,11 +81,23 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
   const wrapRef = useRef<HTMLDivElement>(null);
   const markers = useRef<Map<string, L.Marker | L.CircleMarker>>(new Map()); // пины по id — для тапа на планшете
   const tapped = useRef<string | null>(null); // id пина после первого тапа (предпросмотр открыт)
+  // Превью на тач-устройствах — отдельная закреплённая подсказка (16.10.2026): обычная закрывалась по эмулируемому mouseout
+  // раньше, чем доходил тап по ней; закрываем сами — тап по карте, другой пин, перестройка слоёв.
+  const preview = useRef<L.Tooltip | null>(null);
+  const closePreview = () => { preview.current?.remove(); preview.current = null; };
+  const showPreview = (m: L.Map, o: MapItem) => {
+    closePreview();
+    const t = L.tooltip({ direction: "top", opacity: 1, interactive: true, permanent: true, offset: [0, -10] }).setLatLng(o.ll).setContent(o.tip).addTo(m);
+    const el = t.getElement(); if (el) { el.style.cursor = "pointer"; el.onclick = (ev) => { ev.stopPropagation(); openHref(o.href); }; }
+    preview.current = t;
+  };
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
   const sig = useRef("");
   const lastFit = useRef("");
   const [tick, setTick] = useState(0); // bumped when async polygons arrive
+  const itemsRef = useRef<MapItem[]>(items); // актуальные объекты для делегированного тапа по пину
+  useEffect(() => { itemsRef.current = items; }, [items]);
   const [h, setH] = useState(0);
   const setRef = useRef(set); useEffect(() => { setRef.current = set; }, [set]);
 
@@ -109,11 +121,11 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
       e.preventDefault(); e.stopPropagation();
       const id = a.dataset.id || "";
       if (tapped.current === id) { tapped.current = null; openHref(a.getAttribute("href") || "#"); return; }
-      tapped.current = id; markers.current.forEach((mk, k) => { if (k !== id) mk.closeTooltip(); });
-      markers.current.get(id)?.openTooltip();
+      tapped.current = id; markers.current.forEach((mk) => mk.closeTooltip());
+      const o = itemsRef.current.find((x) => x.id === id); if (o) showPreview(m, o);
     };
     el.addEventListener("click", onPinClick, true);
-    m.on("click", () => { tapped.current = null; markers.current.forEach((mk) => mk.closeTooltip()); });
+    m.on("click", () => { tapped.current = null; closePreview(); markers.current.forEach((mk) => mk.closeTooltip()); });
     // Размер контейнера меняется (пристыковка, окно) → пересчёт карты; без таймеров — они стреляли по уже снятой карте.
     const ro = new ResizeObserver(() => { if (map.current === m) m.invalidateSize(); });
     ro.observe(el);
@@ -143,15 +155,15 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     const s = `${lvl}:${mapIl}:${mapIlce}:${semtsKey}:${tick}:${h}:${objs.map((o) => o.id).join(",")}`;
     if (s === sig.current) return;
     sig.current = s;
-    lg.clearLayers(); markers.current.clear(); tapped.current = null;
+    lg.clearLayers(); markers.current.clear(); tapped.current = null; closePreview();
     const bump = () => { sig.current = ""; setTick((x) => x + 1); };
     const fmtP = fmtShort;
-    const selOutlines: L.Layer[] = []; const grpLayers: L.Layer[] = [];
+    const selOutlines: L.Layer[] = []; const grpLayers: L.Layer[] = []; const fitLayers: L.Layer[] = []; // fitLayers — только зоны с объектами (16.10.2026: на телефоне кадр по всем районам провинции не приближал)
     let objReady = false, grpReady = false; // полигоны уровня загружены — кадр ставится один раз, без «моргания»
     const pinOf = (o: MapItem, ll: [number, number]) => {
       const cls = "opl-pin" + (o.st === "reserved" ? " res" : o.st === "sold" ? " sold" : "");
       const mk = L.marker(ll, { icon: L.divIcon({ className: "", html: `<a class="${cls}" href="${o.href}" target="_blank" rel="noopener" data-id="${o.id}">${o.pin}</a>`, iconSize: undefined }) });
-      mk.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
+      if (!touchMode()) mk.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
       mk.on("tooltipopen", (e) => { const t = (e as L.TooltipEvent).tooltip.getElement(); if (t) { t.style.cursor = "pointer"; t.onclick = () => openHref(o.href); } }); // тап/клик по предпросмотру открывает объект
       markers.current.set(o.id, mk);
       return mk;
@@ -205,7 +217,7 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
             onEachFeature: (ft, ly) => {
               const k = keyOf(ft); const st = k && stats[k];
               if (!st) { ly.bindTooltip(`<b>${((ft.properties || {}) as Record<string, string>).name || ilName(k || "")}</b> · 0`, { sticky: true }); return; }
-              grpLayers.push(ly);
+              grpLayers.push(ly); fitLayers.push(ly);
               ly.bindTooltip(tip(k), { sticky: true });
               ly.on("click", drill(k));
               ly.on("mouseover", () => (ly as L.Path).setStyle({ weight: 2.4, fillOpacity: 0.68 }));
@@ -242,20 +254,20 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
           pl.on("click", drill(k));
           pl.on("mouseover", () => pl.setStyle({ weight: 2.4, fillOpacity: 0.6 }));
           pl.on("mouseout", () => pl.setStyle({ weight: 1.2, fillOpacity: 0.42 }));
-          lg.addLayer(pl); grpLayers.push(pl);
+          lg.addLayer(pl); grpLayers.push(pl); fitLayers.push(pl);
         });
       }
       grpReady = lvl === "il" ? !!trGeo || trGeoDone : !!subPolys;
       objs.forEach((o) => {
         lls.push(o.ll);
         const d = L.circleMarker(o.ll, { radius: 5.5, color: "#fff", weight: 1.5, fillColor: o.st === "sold" ? "#8a93a2" : o.st === "reserved" ? "#f0ad00" : "#3b5fd6", fillOpacity: 0.95 });
-        d.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
+        if (!touchMode()) d.bindTooltip(o.tip, { direction: "top", opacity: 1, interactive: true });
         d.on("tooltipopen", (e) => { const t = (e as L.TooltipEvent).tooltip.getElement(); if (t) { t.style.cursor = "pointer"; t.onclick = () => openHref(o.href); } });
         d.on("click", (e) => {
           if (!touchMode()) { openHref(o.href); return; }
           L.DomEvent.stop(e);
           if (tapped.current === o.id) { tapped.current = null; openHref(o.href); return; }
-          tapped.current = o.id; markers.current.forEach((mk, k) => { if (k !== o.id) mk.closeTooltip(); }); d.openTooltip();
+          tapped.current = o.id; markers.current.forEach((mk) => mk.closeTooltip()); showPreview(m, o);
         });
         markers.current.set(o.id, d);
         lg.addLayer(d);
@@ -268,9 +280,10 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
     if (ready && fitKey !== lastFit.current) {
       lastFit.current = fitKey;
       m.invalidateSize({ animate: false }); // высота контейнера уже изменена пристыковкой, ResizeObserver сработает позже
+      // кадр — по зонам с объектами (fitLayers); пустые зоны рисуются, но кадр не растягивают (16.10.2026)
       const pad = { paddingTopLeft: [24, 70] as L.PointExpression, paddingBottomRight: [24, 76] as L.PointExpression };
       if (lvl === "obj" && selOutlines.length) m.fitBounds(L.featureGroup(selOutlines).getBounds(), pad);
-      else if (lvl !== "obj" && grpLayers.length) { try { m.fitBounds(L.featureGroup(grpLayers).getBounds(), pad); } catch (e) { console.warn("[map] fit", e); if (lls.length) m.fitBounds(L.latLngBounds(lls), { ...pad, maxZoom: 12 }); } }
+      else if (lvl !== "obj" && grpLayers.length) { try { m.fitBounds(L.featureGroup(fitLayers.length ? fitLayers : grpLayers).getBounds(), pad); } catch (e) { console.warn("[map] fit", e); if (lls.length) m.fitBounds(L.latLngBounds(lls), { ...pad, maxZoom: 12 }); } }
       else if (lls.length) m.fitBounds(L.latLngBounds(lls), { ...pad, maxZoom: lvl === "obj" ? 15 : lvl === "semt" ? 14 : 12 });
     }
   }, [items, lvl, mapIl, mapIlce, semtsKey, f.semts, tick, h]);

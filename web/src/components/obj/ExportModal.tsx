@@ -42,7 +42,7 @@ export function ExportModal({ id, open, onClose }: { id: string; open: boolean; 
   const { expMap } = useListingMeta();
   const pm = expMap[id] || {};
   return (
-    <Modal open={open} onClose={onClose} width={460} z={320} overlay={0.55} sheet={false} style={{ maxWidth: "min(460px, 96vw)" }}>
+    <Modal open={open} onClose={onClose} width={460} z={320} overlay={0.55} sheet="fit" style={{ maxWidth: "min(460px, 96vw)" }}>
       <div className="mb-[6px] flex items-start gap-[10px]">
         <div className="flex-1 text-[17.5px] font-extrabold text-ink">{t.exp.t}</div>
         <button type="button" onClick={onClose} aria-label="close" className="cursor-pointer p-[2px] text-[#aab1bd] hover:text-ink"><IconX size={22} /></button>
