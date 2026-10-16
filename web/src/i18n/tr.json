@@ -115,7 +115,11 @@
     "agKeyGen": "Ajans anahtarı oluştur",
     "agKeyHint": "Ajans anahtarı, tüm emlakçıların ilanlarını her birinin adı ve telefonuyla verir — ajans sitesi için. Ajans yöneticisi oluşturur ve yeniler.",
     "agKeyOnlyAdmin": "Ajans anahtarını ajans yöneticisi oluşturur ve yalnızca o görür.",
-    "docsLink": "Geliştirici belgeleri"
+    "docsLink": "Geliştirici belgeleri",
+    "inT": "Sitenizden gelen talepler → CRM",
+    "inS": "Sitedeki form talebi doğrudan CRM’nize gönderir: müşteri «Yeni» durumunda oluşturulur, kişiler şifrelenir, telefon/e-posta ile tekrarlar birleştirilir, bildirim alırsınız. Token, CRM ayarlarındaki «Site» türündeki kaynak için verilir.",
+    "inLink": "CRM’de kaynaklar ve token",
+    "inDocs": "Geliştirici belgeleri"
   },
   "newb2": {
     "salesL": {
@@ -1345,6 +1349,7 @@
       "kindLost": "Vazgeçti",
       "sourcesT": "Müşteri kaynakları",
       "sourcesS": "Müşteriler nereden geliyor. Dış web sitesi için token oluşturun — başvurular CRM'e otomatik düşer.",
+      "sourcesDoc": "Siteyi nasıl bağlarım — geliştirici belgeleri →",
       "addSource": "Kaynak ekle",
       "srcName": "Ad",
       "srcKind": "Tür",

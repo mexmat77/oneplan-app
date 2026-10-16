@@ -3,7 +3,7 @@ import { LogoMark } from "@/components/Logo";
 
 // Публичная документация API выгрузки объявлений (16.10.2026) — для разработчиков сайтов агентств и риэлторов.
 // Открыта без входа (proxy: /api/docs). Текст — ТЗ, которое риэлтор/агентство отдаёт своему разработчику.
-export const metadata = { title: "OnePlan API — выгрузка объявлений на сайт", robots: { index: false } };
+export const metadata = { title: "OnePlan API — выгрузка объявлений и заявки с сайта", robots: { index: false } };
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://one-plan.pro";
 const h2 = "mt-10 mb-3 text-[20px] font-extrabold tracking-[-0.01em] text-ink";
@@ -24,7 +24,7 @@ export default function ApiDocsPage() {
       <div className="mx-auto max-w-[900px] px-5 py-10">
         <div className="mb-6 flex items-center gap-3"><LogoMark size={28} /><span className="text-[19px] font-extrabold text-ink">OnePlan</span><span className="rounded-[8px] bg-blue-tint px-2 py-[2px] text-[11px] font-bold uppercase tracking-[.05em] text-blue">API v1</span></div>
         <h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ink">Выгрузка объявлений на ваш сайт</h1>
-        <p className={p}>Техническое задание для разработчика сайта риэлтора или агентства. OnePlan отдаёт ваши объявления в формате JSON (REST API) и XML-фид. Данные обновляются сразу после изменения в кабинете, ответы кэшируются на 5 минут (фид — 15 минут). Все адреса — <span className={code}>{SITE}</span>.</p>
+        <p className={p}>Техническое задание для разработчика сайта риэлтора или агентства. Разделы 1–8 — выгрузка объявлений на сайт, раздел 9 — приём заявок с сайта в CRM. OnePlan отдаёт ваши объявления в формате JSON (REST API) и XML-фид. Данные обновляются сразу после изменения в кабинете, ответы кэшируются на 5 минут (фид — 15 минут). Все адреса — <span className={code}>{SITE}</span>.</p>
 
         <h2 className={h2}>1. Ключ доступа</h2>
         <p className={p}>Ключ выдаётся в кабинете OnePlan → «API и выгрузка». Есть два вида:</p>
@@ -149,7 +149,49 @@ const { items } = await r.json();`}</pre>
         <h2 className={h2}>8. Что можно делать с данными</h2>
         <p className={p}>Показывать на собственном сайте риэлтора или агентства, в своих приложениях и презентациях. Нельзя: передавать фид третьим лицам, выкладывать ключ публично, выдавать объявления другого агентства за свои. Телефон и имя риэлтора в ответе — для вывода контактов на вашем сайте.</p>
 
-        <h2 className={h2}>9. Планы</h2>
+        <h2 id="crm-inbound" className={h2}>9. Заявки с вашего сайта → CRM OnePlan</h2>
+        <p className={p}>Форма на сайте («Оставить заявку», «Узнать цену», «Записаться на показ») может отправлять заявки прямо в вашу CRM: клиент появится в списке со статусом «Новый», контакты зашифруются, а вам придёт уведомление. Работает с любым сайтом: WordPress, Tilda, Wix (через серверный скрипт), собственный код.</p>
+        <h3 className={h3}>Токен</h3>
+        <p className={p}>CRM → Настройки → Источники → добавьте источник с типом «Сайт» (например, «Сайт агентства») → кнопка «Создать токен». Токен вида <span className={code}>ops_…</span> показывается один раз — скопируйте его; в OnePlan хранится только его хэш. Потеряли — «Перевыпустить», старый перестаёт работать. Токен держите на сервере сайта (переменная окружения, настройки CMS), не в JavaScript страницы: оттуда его увидит любой посетитель.</p>
+        <h3 className={h3}>Запрос</h3>
+        <pre className={pre}>{`POST ${SITE}/api/crm/inbound
+Authorization: Bearer ops_…
+Content-Type: application/json
+
+{ "name": "Mehmet Yılmaz", "phone": "+90 532 000 00 00", "email": "m@example.com",
+  "message": "Интересует 2+1 в Konyaaltı до 8 млн ₺", "lang": "TR" }`}</pre>
+        <Tbl head={["Поле", "Обязательно", "Пояснение"]} rows={[
+          ["name", "одно из трёх", "имя клиента, до 200 символов"],
+          ["phone", "одно из трёх", "в любом формате, до 40 символов; нормализуется для поиска дублей"],
+          ["email", "одно из трёх", "до 120 символов"],
+          ["message", "нет", "текст заявки, до 4000 символов — попадёт в ленту клиента"],
+          ["lang", "нет", "RU, EN или TR — язык клиента (по умолчанию RU)"],
+        ]} />
+        <h3 className={h3}>Ответы</h3>
+        <Tbl head={["Код", "Значение"]} rows={[
+          ["200 {ok:true, clientId, duplicate}", "заявка принята; duplicate=true — клиент с таким телефоном/e-mail уже есть, заявка привязана к нему"],
+          ["400 empty / json", "нет ни имени, ни телефона, ни e-mail, либо тело не JSON"],
+          ["401 token", "токена нет, он перевыпущен или источник отключён"],
+          ["409 crm-not-initialized", "владелец ещё ни разу не открывал CRM — откройте её один раз"],
+        ]} />
+        <h3 className={h3}>Что делает OnePlan</h3>
+        <p className={p}>Ищет клиента по телефону и e-mail (сравнение по хэшу — номер открыто не хранится). Нашёл — добавляет заявку в ленту существующего клиента с пометкой «дубль», ответственный не меняется. Не нашёл — создаёт клиента со статусом «Новый» и источником из токена. Контакты, текст и сырая заявка шифруются ключом вашего пространства (AES-256-GCM). Уведомление приходит в колокольчик со ссылкой на карточку.</p>
+        <h3 className={h3}>Примеры</h3>
+        <pre className={pre}>{`# curl
+curl -X POST "${SITE}/api/crm/inbound" -H "Authorization: Bearer $ONEPLAN_CRM_TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Mehmet","phone":"+90 532 000 00 00","message":"2+1 Konyaaltı"}'
+
+// Node.js / Next.js (обработчик формы на сервере)
+await fetch("${SITE}/api/crm/inbound", { method: "POST",
+  headers: { Authorization: \`Bearer \${process.env.ONEPLAN_CRM_TOKEN}\`, "Content-Type": "application/json" },
+  body: JSON.stringify({ name, phone, email, message, lang: "RU" }) });
+
+<?php // WordPress: functions.php, хук формы (Contact Form 7 — wpcf7_mail_sent)
+wp_remote_post('${SITE}/api/crm/inbound', ['headers' => ['Authorization' => 'Bearer ' . getenv('ONEPLAN_CRM_TOKEN'), 'Content-Type' => 'application/json'],
+  'body' => json_encode(['name' => $name, 'phone' => $phone, 'email' => $email, 'message' => $msg])]);`}</pre>
+        <p className={p}>Tilda, Wix и другие конструкторы: используйте их вебхук формы, направив его на небольшой серверный скрипт (PHP/Node), который добавит заголовок с токеном и перешлёт заявку — конструкторы не умеют подставлять секретный заголовок сами.</p>
+
+        <h2 className={h2}>10. Планы</h2>
         <p className={p}>Вебхуки (событие на ваш URL при создании объявления, смене цены или статуса) — по запросу в поддержку: <Link href="/chat?with=sup" className="font-semibold text-blue hover:underline">написать</Link>. Версия API: v1 (16.10.2026). Изменения, ломающие совместимость, выйдут как v2; v1 продолжит работать.</p>
       </div>
     </div>

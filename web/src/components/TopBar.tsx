@@ -122,7 +122,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         </button>
         <LangSwitch className="max-md:hidden" />
         <UserMenu name={name} sub={sub} email={email} avatar={avatar} color="#2f5fe0" logoutLabel={t.prof.out}
-          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : [])]}
+          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : []), ...(workspace === "realtors" ? [{ label: t.api.title, href: "/api-access", icon: <IconApi size={16} /> }] : [])]}
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
           <IconMenu2 size={19} />

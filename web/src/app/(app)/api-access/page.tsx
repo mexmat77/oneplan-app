@@ -88,6 +88,15 @@ export default function ApiPage() {
         <div className="mb-[11px] text-[14.5px] font-extrabold text-ink">{t.api.exT}</div>
         <pre className="overflow-x-auto rounded-[11px] bg-bg-3 px-[15px] py-[13px] font-mono text-[11.5px] leading-[1.7] text-[#2c3a52]">{EXAMPLE}</pre>
       </div>
+      <div className={card}>
+        <div className="mb-[6px] text-[14.5px] font-extrabold text-ink">{t.api.inT}</div>
+        <p className="mb-3 text-[13px] leading-[1.55] text-text-2">{t.api.inS}</p>
+        <div className="mb-3 rounded-[11px] border border-line-2 px-[13px] py-[10px] font-mono text-[12.5px] text-[#2c3a52] [overflow-wrap:anywhere]"><span className="font-extrabold text-blue-2">POST</span> https://one-plan.pro/api/crm/inbound · Authorization: Bearer ops_…</div>{/* статичный домен: `site` из window ломал гидрацию */}
+        <div className="flex flex-wrap gap-2">
+          <Link href="/crm/settings/sources" className="inline-flex items-center gap-[6px] rounded-[10px] bg-blue-2 px-[14px] py-[9px] text-[13px] font-bold text-white hover:bg-blue-3"><IconKey size={15} /> {t.api.inLink}</Link>
+          <Link href="/api/docs#crm-inbound" target="_blank" className="inline-flex items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[9px] text-[13px] font-semibold text-text hover:bg-bg-3">{t.api.inDocs}</Link>
+        </div>
+      </div>
       <div className="mb-4 flex items-start gap-[9px] rounded-[12px] bg-bg-3 px-[14px] py-3 text-[12.5px] leading-[1.5] text-text"><IconPlugConnected size={16} className="mt-[1px] flex-none text-blue" /><span>{t.exp.apiS}</span></div>
       <Link href="/chat?with=sup" className="inline-flex items-center gap-2 rounded-[12px] bg-blue-2 px-[26px] py-[13px] text-[14px] font-bold text-white hover:bg-blue-3"><IconHeadset size={18} /> {t.api.cta}</Link>
     </div>

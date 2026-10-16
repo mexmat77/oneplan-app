@@ -79,7 +79,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
 
       {show("sources") && <div className={card}>
         <div className="text-[15px] font-semibold text-ink">{c.set.sourcesT}</div>
-        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS}</p>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS} <a href="/api/docs#crm-inbound" target="_blank" rel="noreferrer" className="font-semibold text-blue-2 hover:underline">{c.set.sourcesDoc}</a></p>
         <div className="flex flex-col gap-2">
           {crm.sources.map((s) => (
             <div key={s.id} className="rounded-[12px] border border-line p-2">
