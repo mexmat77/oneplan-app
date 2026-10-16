@@ -186,7 +186,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
       {sheet && (
         <>
           <div className="fixed inset-0 z-[149] bg-[rgba(10,16,28,.25)]" onClick={() => setSheet(false)} />
-          <div className="fixed right-[10px] top-[60px] z-150 w-[252px] rounded-[16px] border border-line bg-surface p-2 shadow-[0_24px_60px_rgba(20,36,63,.2)]" style={{ animation: "opl-card .18s ease" }}>
+          <div data-kebab-menu="1" className="fixed right-[10px] top-[60px] z-150 w-[252px] rounded-[16px] border border-line bg-surface p-2 shadow-[0_24px_60px_rgba(20,36,63,.2)]" style={{ animation: "opl-card .18s ease" }}>
             <div className="flex items-center gap-2 px-[10px] pb-[10px] pt-1">
               <span className="flex-1 text-[15px] font-extrabold text-ink">{tr.common.menu}</span>
               <button type="button" onClick={() => setSheet(false)} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[11px] bg-bg-2 text-[20px] text-text hover:brightness-95" aria-label="Close"><IconX size={20} /></button>
@@ -198,14 +198,16 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
                 ))}
               </div>
             )}
-            {menu.map((m) => (
-              <div key={m.label} onClick={m.onClick} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${m.active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
-                {m.icon}<span className="flex-1">{m.label}</span>
-                {!!m.badge && <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{m.badge}</span>}
-              </div>
-            ))}
+            <div data-kebab-rows="1">
+              {menu.map((m) => (
+                <div key={m.label} onClick={m.onClick} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${m.active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
+                  {m.icon}<span className="flex-1">{m.label}</span>
+                  {!!m.badge && <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{m.badge}</span>}
+                </div>
+              ))}
+            </div>
             <div className="mx-[2px] my-[6px] border-t border-line-2" />
-            <div className="mx-1 mb-[2px] mt-1 flex gap-1 rounded-[11px] bg-bg-2 p-1">{(["RU", "EN", "TR"] as const).map((lg) => <button key={lg} type="button" onClick={() => setLang(lg)} className={`flex-1 cursor-pointer rounded-[9px] py-[7px] text-[13px] font-bold ${lang === lg ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,36,63,.12)]" : "text-muted"}`}>{lg}</button>)}</div>
+            <div data-kebab-lang="1" className="mx-1 mb-[2px] mt-1 flex gap-1 rounded-[11px] bg-bg-2 p-1">{(["RU", "EN", "TR"] as const).map((lg) => <button key={lg} type="button" onClick={() => setLang(lg)} className={`flex-1 cursor-pointer rounded-[9px] py-[7px] text-[13px] font-bold ${lang === lg ? "bg-surface text-ink shadow-[0_1px_2px_rgba(20,36,63,.12)]" : "text-muted"}`}>{lg}</button>)}</div>
           </div>
         </>
       )}
