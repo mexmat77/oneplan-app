@@ -14,7 +14,8 @@ import { grossArea, type Listing, type ListingStatus, type Realtor } from "@/lib
 import { clearLocalListings, getLocalListings, keepLocalCopy, markRemoteLoaded, seedExpMap, setListingWriteHook, setRemoteListings, getRemoteListings } from "./listings";
 import { seedNotes, setNoteHook } from "./notes";
 import { seedFavs, setFavHook } from "./prefs";
-import { seedSelections, setSelectionHook, slugOf, type Selection } from "./selections";
+import { seedSelections, setSelectionHook, slugOf, type SelSnap, type Selection } from "./selections";
+import { snapOf } from "@/lib/selectionItems";
 import { seedReqs, setReqHook, type BaseRequest, type SavedSearch } from "./reqs";
 import { setRealtors } from "./realtors";
 
@@ -125,7 +126,7 @@ async function loadNotes() {
 
 // ---------- подборки ----------
 type SelRow = { id: string; slug: string; title: string; client_name: string | null; note: string | null; status: Selection["status"]; views: number; created_at: string; updated_at: string };
-type SelItem = { selection_id: string; listing_id: string; comment: string | null; sort: number; reaction: Selection["reacts"][string] | null };
+type SelItem = { selection_id: string; listing_id: string; comment: string | null; sort: number; reaction: Selection["reacts"][string] | null; snap?: SelSnap | null };
 async function loadSelections() {
   if (!sb) return;
   const [{ data: rows }, { data: items }] = await Promise.all([sb.from("selections").select("*").eq("owner_id", me).order("created_at", { ascending: false }), sb.from("selection_items").select("*")]);
@@ -133,9 +134,9 @@ async function loadSelections() {
   ((items ?? []) as SelItem[]).forEach((it) => (byId[it.selection_id] ??= []).push(it));
   seedSelections(((rows ?? []) as SelRow[]).map((r) => {
     const its = (byId[r.id] ?? []).sort((a, b) => a.sort - b.sort);
-    const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {};
-    its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; });
-    return { id: r.id, slug: r.slug || slugOf(r.id), title: r.title, name: r.client_name ?? "—", note: r.note ?? "", items: its.map((it) => it.listing_id), cm, status: r.status, views: r.views, reacts, createdAt: r.created_at, updatedAt: r.updated_at };
+    const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {}; const snap: Record<string, SelSnap> = {};
+    its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; if (it.snap) snap[it.listing_id] = it.snap; });
+    return { id: r.id, slug: r.slug || slugOf(r.id), title: r.title, name: r.client_name ?? "—", note: r.note ?? "", items: its.map((it) => it.listing_id), cm, snap, status: r.status, views: r.views, reacts, createdAt: r.created_at, updatedAt: r.updated_at };
   }));
 }
 async function upsertSelection(s: Selection) {
@@ -144,7 +145,9 @@ async function upsertSelection(s: Selection) {
   if (error) { showToast("Подборка не сохранена: " + error.message); return; }
   await sb.from("selection_items").delete().eq("selection_id", s.id);
   if (s.items.length) {
-    const { error: e2 } = await sb.from("selection_items").insert(s.items.map((lid, i) => ({ selection_id: s.id, listing_id: lid, comment: s.cm[lid] ?? null, sort: i, reaction: s.reacts[lid] ?? null })));
+    // снимок объекта: из подборки (уже есть) или с живого объявления на момент сохранения
+    const liveOf = (lid: string) => getRemoteListings().list.find((o) => o.id === lid) ?? getLocalListings().find((o) => o.id === lid);
+    const { error: e2 } = await sb.from("selection_items").insert(s.items.map((lid, i) => { const live = liveOf(lid); return { selection_id: s.id, listing_id: lid, comment: s.cm[lid] ?? null, sort: i, reaction: s.reacts[lid] ?? null, snap: live ? snapOf(live) : s.snap?.[lid] ?? null }; }));
     if (e2) showToast("Состав подборки не сохранён: " + e2.message);
   }
 }

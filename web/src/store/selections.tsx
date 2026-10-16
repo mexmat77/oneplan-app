@@ -2,10 +2,12 @@
 
 // Client selections («подборки»): seeded demo data + localStorage until Supabase is wired.
 import { useSyncExternalStore } from "react";
-import type { L10n } from "@/lib/types";
+import type { Currency, L10n } from "@/lib/types";
 
 export type SelStatus = "draft" | "sent" | "viewed";
 export type Reaction = "like" | "maybe" | "no";
+/** Снимок объекта на момент сохранения подборки — чтобы после удаления объявления клиент видел «Снят с продажи», а не пустоту. */
+export type SelSnap = { t: L10n; loc: L10n; img: string; price: number; cur: Currency };
 export type Selection = {
   id: string;
   slug: string;              // one-plan.pro/s/<slug> — the last 6 chars of the id, upper-cased (prototype line 4299)
@@ -14,6 +16,7 @@ export type Selection = {
   note: string;
   items: string[];           // listing ids
   cm: Record<string, string>; // per-listing comments
+  snap?: Record<string, SelSnap>; // снимки объектов (16.10.2026)
   status: SelStatus;
   views: number;
   reacts: Record<string, Reaction>;
@@ -72,11 +75,11 @@ export const likedCount = (s: Selection) => Object.values(s.reacts).filter((r) =
 export const selectionUrl = (s: Selection) => `https://one-plan.pro/s/${s.slug}`;
 export const findBySlug = (list: Selection[], slug: string) => list.find((x) => x.slug === slug || slugOf(x.id) === slug || x.id === slug);
 
-export function createSelection(input: { title: string; name: string; note: string; items: string[]; cm: Record<string, string> }): Selection {
+export function createSelection(input: { title: string; name: string; note: string; items: string[]; cm: Record<string, string>; snap?: Record<string, SelSnap> }): Selection {
   const now = new Date().toISOString();
   const id = newSelId();
   const s: Selection = {
-    id, slug: slugOf(id), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm,
+    id, slug: slugOf(id), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm, snap: input.snap,
     status: "sent", views: 0, reacts: {}, date: { RU: "Только что", EN: "Just now", TR: "Az önce" }, createdAt: now, updatedAt: now,
   };
   write([s, ...read()]);

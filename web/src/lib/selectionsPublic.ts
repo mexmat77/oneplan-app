@@ -5,7 +5,7 @@ import "server-only";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import type { Listing } from "@/lib/types";
 import type { Profile } from "@/store/profile";
-import type { Selection } from "@/store/selections";
+import type { SelSnap, Selection } from "@/store/selections";
 import { trPhone } from "@/lib/phone";
 import { getSeedListings } from "@/lib/seed";
 
@@ -18,13 +18,13 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
   const { data: row } = await admin.from("selections").select("*").eq("slug", slug.toUpperCase()).maybeSingle();
   if (!row) return null;
   const [{ data: items }, { data: prof }] = await Promise.all([
-    admin.from("selection_items").select("listing_id, comment, sort, reaction").eq("selection_id", row.id).order("sort"),
+    admin.from("selection_items").select("listing_id, comment, sort, reaction, snap").eq("selection_id", row.id).order("sort"),
     admin.from("profiles").select("name, phone, agency_text, wa_on, tg_on, tg_login, viber_on, max_on, max_id, wechat_on, wechat_id, agencies(name)").eq("id", row.owner_id).maybeSingle(),
   ]);
-  const its = (items ?? []) as { listing_id: string; comment: string | null; sort: number; reaction: "like" | "maybe" | "no" | null }[];
-  const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {};
-  its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; });
-  const s: Selection = { id: row.id, slug: row.slug, title: row.title, name: row.client_name ?? "—", note: row.note ?? "", items: its.map((it) => it.listing_id), cm, status: row.status, views: row.views, reacts, createdAt: row.created_at, updatedAt: row.updated_at };
+  const its = (items ?? []) as { listing_id: string; comment: string | null; sort: number; reaction: "like" | "maybe" | "no" | null; snap: SelSnap | null }[];
+  const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {}; const snap: Record<string, SelSnap> = {};
+  its.forEach((it) => { if (it.reaction) reacts[it.listing_id] = it.reaction; if (it.comment) cm[it.listing_id] = it.comment; if (it.snap) snap[it.listing_id] = it.snap; });
+  const s: Selection = { id: row.id, slug: row.slug, title: row.title, name: row.client_name ?? "—", note: row.note ?? "", items: its.map((it) => it.listing_id), cm, snap, status: row.status, views: row.views, reacts, createdAt: row.created_at, updatedAt: row.updated_at };
   const ids = s.items.filter(isUuid);
   const listings: Listing[] = [];
   if (ids.length) {

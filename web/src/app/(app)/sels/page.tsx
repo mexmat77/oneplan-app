@@ -8,6 +8,8 @@ import { useI18n } from "@/i18n/provider";
 import { useAllListings } from "@/store/listings";
 import { usePrefs } from "@/store/prefs";
 import { likedCount, removeSelection, selectionUrl, setClientReturn, useSelections, type Selection } from "@/store/selections";
+import { resolveSelItems } from "@/lib/selectionItems";
+import { plural } from "@/lib/plural";
 
 // «Подборки для клиентов» — prototype lines 631–666, handlers 3463–3496, 3916.
 const ST: Record<Selection["status"], [string, string]> = { draft: ["#f0f2f6", "#6b7688"], sent: ["#eef3ff", "#4d7cfe"], viewed: ["#e4f6ee", "#0f9d6b"] };
@@ -71,7 +73,10 @@ export default function SelsPage() {
           const st = ST[s.status];
           const liked = likedCount(s);
           const init = (s.name || "?").split(/[\s(]/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-          const thumbs = s.items.slice(0, 4).map((id) => all.find((o) => o.id === id)?.img ?? "");
+          // объекты с учётом судьбы объявления: живые первыми, проданные/снятые/удалённые (по снимку) — в конце (16.10.2026)
+          const its = resolveSelItems(s, all);
+          const avail = its.filter((x) => !x.gone).length, gone = its.length - avail;
+          const thumbs = its.slice(0, 4).map((x) => ({ src: x.live?.img || x.snap?.img || "", gone: !!x.gone }));
           const date = s.date?.[lang] ?? relDate(s.updatedAt, lang);
           return (
             <div key={s.id} className="flex flex-col overflow-hidden rounded-[16px] border border-line bg-surface">
@@ -84,11 +89,11 @@ export default function SelsPage() {
                 <span className="flex-none whitespace-nowrap rounded-[8px] px-[10px] py-1 text-[11px] font-bold" style={{ background: st[0], color: st[1] }}>{stLabel[s.status]}</span>
               </div>
               <div className="flex gap-[6px] px-4 pb-[11px]">
-                {thumbs.map((src, i) => <span key={i} className="flex aspect-square max-w-16 flex-1 items-center justify-center rounded-[9px] bg-bg-2 bg-cover bg-center text-[12px] font-bold text-muted" style={{ backgroundImage: `url('${src}')` }} />)}
-                {s.items.length > 4 && <span className="flex aspect-square max-w-16 flex-1 items-center justify-center rounded-[9px] bg-bg-2 text-[12px] font-bold text-muted">+{s.items.length - 4}</span>}
+                {thumbs.map((th, i) => <span key={i} className={`flex aspect-square max-w-16 flex-1 items-center justify-center rounded-[9px] bg-bg-2 bg-cover bg-center text-[12px] font-bold text-muted ${th.gone ? "opacity-40 grayscale" : ""}`} style={{ backgroundImage: `url('${th.src}')` }} />)}
+                {its.length > 4 && <span className="flex aspect-square max-w-16 flex-1 items-center justify-center rounded-[9px] bg-bg-2 text-[12px] font-bold text-muted">+{its.length - 4}</span>}
               </div>
               <div className="flex flex-wrap gap-[13px] px-4 pb-[13px] text-[12.5px] text-text-2">
-                <span className="inline-flex items-center gap-1"><IconBuildingSkyscraper size={14} className="text-muted-2" /> {s.items.length} {t.sel.objs}</span>
+                <span className="inline-flex items-center gap-1"><IconBuildingSkyscraper size={14} className="text-muted-2" /> {avail} {plural(lang, avail, t.sel.objsP)}{gone > 0 && <span className="text-muted"> · {gone} {plural(lang, gone, t.sel.goneN)}</span>}</span>
                 {s.views > 0 && <span className="inline-flex items-center gap-1"><IconEye size={14} className="text-muted-2" /> {s.views} {t.sel.views}</span>}
                 {liked > 0 && <span className="inline-flex items-center gap-1 text-red"><IconHeartFilled size={14} /> {liked}</span>}
               </div>

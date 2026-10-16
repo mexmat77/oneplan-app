@@ -14,7 +14,9 @@ import { eqOf, fmt } from "@/lib/money";
 import { oldPrice, type Listing } from "@/lib/types";
 import { useAllListings } from "@/store/listings";
 import { useProfile, type Profile } from "@/store/profile";
-import { findBySlug, getClientReturn, markViewed, reactTo, useSelections, type Reaction, type Selection } from "@/store/selections";
+import { findBySlug, getClientReturn, markViewed, reactTo, useSelections, type Reaction, type SelSnap, type Selection } from "@/store/selections";
+import { resolveSelItems, type Gone } from "@/lib/selectionItems";
+import { plural } from "@/lib/plural";
 import { Gallery } from "@/components/obj/Gallery"; // та же галерея, что на странице объекта (16.10.2026, «как в обычной базе»)
 import { reactPublic, viewPublic } from "@/app/s/actions";
 import type { PublicSelection } from "@/lib/selectionsPublic";
@@ -66,10 +68,12 @@ export function ClientView({ slug, preview, data }: { slug: string; preview: boo
   const myInitials = initialsOf(p.name);
   const chans = channels(p);
   const pool = data ? [...data.listings, ...all] : all;
-  const items = s.items.map((id) => pool.find((o) => o.id === id)).filter((o): o is Listing => !!o);
+  // объекты подборки: живые → карточки; проданные/снятые → с плашкой; удалённые → по снимку (16.10.2026)
+  const rows = resolveSelItems(s, pool);
+  const items = rows.filter((x) => x.live && !x.gone).map((x) => x.live as Listing);
   const likeN = items.filter((o) => s.reacts[o.id] === "like").length;
   const cities = Array.from(new Set(items.map((o) => String(o.loc[lang]).split("·")[0].trim()).filter(Boolean)));
-  const obj = objId ? items.find((o) => o.id === objId) : null;
+  const obj = objId ? rows.find((x) => x.id === objId)?.live ?? null : null;
   const today = new Date().toLocaleDateString(lang === "RU" ? "ru-RU" : lang === "TR" ? "tr-TR" : "en-GB");
 
   const react = (id: string, r: Reaction) => {
@@ -115,12 +119,12 @@ export function ClientView({ slug, preview, data }: { slug: string; preview: boo
             {s.note && <div className="mt-3 rounded-[11px] border border-line border-l-[3px] border-l-blue bg-surface px-4 py-[13px] text-[13.5px] leading-[1.55] text-[#3d4a5e]">«{s.note}»</div>}
             <div className="mt-[13px] flex flex-wrap gap-2">
               <span className={`${mc} border-line bg-surface text-[#3d4a5e]`}><IconCalendar size={14} /> {t.cli.updL} {today}</span>
-              <span className={`${mc} border-line bg-surface text-[#3d4a5e]`}><IconHome size={14} /> {items.length} {t.geo.obj}</span>
+              <span className={`${mc} border-line bg-surface text-[#3d4a5e]`}><IconHome size={14} /> {items.length} {plural(lang, items.length, t.sel.objsP)}</span>
               {likeN > 0 && <span className={`${mc} border-[#f6c9cb] bg-red-tint text-red-2`}><IconHeart size={14} /> {likeN} {t.cli.likedL}</span>}
               {cities.map((c) => <span key={c} className={`${mc} border-line bg-surface text-[#3d4a5e]`}><IconMapPin size={14} /> {c}</span>)}
             </div>
             <div className="mt-[22px] grid grid-cols-[repeat(auto-fill,minmax(min(340px,100%),1fr))] gap-4">
-              {items.map((o) => <ClientCard key={o.id} o={o} s={s} onOpen={() => openObj(o.id)} react={react} />)}
+              {rows.map((x) => (x.live ? <ClientCard key={x.id} o={x.live} s={s} gone={x.gone} onOpen={() => openObj(x.id)} react={react} /> : <GoneCard key={x.id} id={x.id} snap={x.snap!} s={s} />))}
             </div>
           </>
         ) : (
@@ -194,7 +198,30 @@ function Reacts({ s, id, react }: { s: Selection; id: string; react: (id: string
   );
 }
 
-function ClientCard({ o, s, onOpen, react }: { o: Listing; s: Selection; onOpen: () => void; react: (id: string, r: Reaction) => void }) {
+function GoneBadge({ gone }: { gone: Exclude<Gone, null> }) {
+  const { t } = useI18n();
+  return <span className="absolute left-[10px] top-[10px] rounded-[8px] bg-[rgba(10,16,28,.78)] px-[10px] py-[5px] text-[11px] font-bold uppercase tracking-[.04em] text-white">{gone === "sold" ? t.cli.soldB : t.cli.offB}</span>;
+}
+/** Удалённое объявление — карточка по снимку: фото, заголовок, цена на момент подборки, плашка «Снят с продажи». */
+function GoneCard({ id, snap, s }: { id: string; snap: SelSnap; s: Selection }) {
+  const { t, lang } = useI18n();
+  return (
+    <div className="overflow-hidden rounded-[16px] border border-line bg-surface opacity-80">
+      <div className="relative h-[210px] bg-cover bg-center grayscale" style={{ backgroundImage: `url('${snap.img}')` }}><GoneBadge gone="off" /></div>
+      <div className="px-[15px] pt-[13px]">
+        <div className="truncate text-[14.5px] font-bold text-ink">{snap.t[lang]}</div>
+        <div className="mb-[2px] mt-[3px] text-[18.5px] font-extrabold text-muted line-through">{fmt(snap.price, snap.cur)}</div>
+        <div className="mb-[9px] flex items-center gap-1 text-[12px] text-muted"><IconMapPin size={13} /> {snap.loc[lang]}</div>
+      </div>
+      <div className="px-[15px] pb-[13px]">
+        {s.cm[id] && <div className="mt-[4px] flex items-start gap-2 rounded-[9px] border-l-[3px] border-l-line bg-bg-2 px-3 py-[9px] text-[12.5px] leading-[1.5] text-muted"><IconMessage2 size={14} className="mt-[1px] flex-none" /><span>{s.cm[id]}</span></div>}
+        <div className="mt-[11px] border-t border-bg-4 pt-[10px] text-[11.5px] text-muted">{t.cli.goneHint}</div>
+      </div>
+    </div>
+  );
+}
+
+function ClientCard({ o, s, gone = null, onOpen, react }: { o: Listing; s: Selection; gone?: Gone; onOpen: () => void; react: (id: string, r: Reaction) => void }) {
   const { t, lang } = useI18n();
   const [gi, setGi] = useState(0);
   const photos = o.photos.length ? o.photos : [o.img];
@@ -204,8 +231,9 @@ function ClientCard({ o, s, onOpen, react }: { o: Listing; s: Selection; onOpen:
   const hasOld = !!old && old > o.price;
   const arrow = "absolute top-1/2 flex h-[30px] w-[30px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[rgba(255,255,255,.92)] text-ink hover:brightness-95";
   return (
-    <div className="overflow-hidden rounded-[16px] border border-line bg-surface transition-shadow duration-150 hover:shadow-[0_12px_32px_rgba(20,36,63,.10)]">
-      <div onClick={onOpen} className="relative h-[210px] cursor-pointer bg-cover bg-center hover:brightness-95" style={{ backgroundImage: `url('${photos[i]}')` }}>
+    <div className={`overflow-hidden rounded-[16px] border border-line bg-surface transition-shadow duration-150 hover:shadow-[0_12px_32px_rgba(20,36,63,.10)] ${gone ? "opacity-80" : ""}`}>
+      <div onClick={onOpen} className={`relative h-[210px] cursor-pointer bg-cover bg-center hover:brightness-95 ${gone ? "grayscale" : ""}`} style={{ backgroundImage: `url('${photos[i]}')` }}>
+        {gone && <GoneBadge gone={gone} />}
         <span onClick={(e) => { e.stopPropagation(); setGi(i - 1); }} className={`${arrow} left-2`}><IconChevronLeft size={14} /></span>
         <span onClick={(e) => { e.stopPropagation(); setGi(i + 1); }} className={`${arrow} right-2`}><IconChevronRight size={14} /></span>
         <span className="absolute bottom-[9px] right-[10px] inline-flex items-center gap-1 rounded-[8px] bg-[rgba(10,16,28,.6)] px-2 py-[3px] text-[10.5px] font-semibold text-white"><IconPhoto size={12} /> {i + 1} / {n}</span>
@@ -232,7 +260,7 @@ function ClientCard({ o, s, onOpen, react }: { o: Listing; s: Selection; onOpen:
       </div>
       <div className="px-[15px] pb-[13px]">
         {s.cm[o.id] && <div className="mt-[11px] flex items-start gap-2 rounded-[9px] border-l-[3px] border-l-blue bg-blue-tint px-3 py-[9px] text-[12.5px] leading-[1.5] text-sel-ink"><IconMessage2 size={14} className="mt-[1px] flex-none" /><span>{s.cm[o.id]}</span></div>}
-        <div className="mt-[11px] border-t border-bg-4 pt-[10px]"><Reacts s={s} id={o.id} react={react} /></div>
+        <div className="mt-[11px] border-t border-bg-4 pt-[10px]">{gone ? <span className="text-[11.5px] text-muted">{t.cli.goneHint}</span> : <Reacts s={s} id={o.id} react={react} />}</div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { snapOf } from "@/lib/selectionItems";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { IconBrandTelegram, IconBrandWhatsapp, IconCircleCheck, IconDeviceFloppy, IconEye, IconLink, IconTrash, IconX } from "@tabler/icons-react";
@@ -8,7 +9,7 @@ import { useI18n } from "@/i18n/provider";
 import { fmt } from "@/lib/money";
 import { useAllListings } from "@/store/listings";
 import { usePrefs } from "@/store/prefs";
-import { createSelection, selectionUrl, setClientReturn, updateSelection, useSelections, type Selection } from "@/store/selections";
+import { createSelection, selectionUrl, setClientReturn, updateSelection, useSelections, type Selection, type SelSnap } from "@/store/selections";
 
 // «Новая подборка» / «Редактирование подборки» — prototype lines 1723–1765, handlers 4289–4303.
 const inputCls = "w-full rounded-[10px] border border-line px-3 py-[10px] text-[13.5px] outline-none";
@@ -23,18 +24,21 @@ export function CreateSelModal({ onClose }: { onClose: () => void }) {
   const [done, setDone] = useState<Selection | null>(null);
   const [copied, setCopied] = useState(false);
   const editing = selDraft.editingSel ? selections.find((x) => x.id === selDraft.editingSel) : null;
-  const objs = sel.map((id) => all.find((o) => o.id === id)).filter((o): o is NonNullable<typeof o> => !!o);
+  // живые объекты + недоступные по снимку редактируемой подборки (16.10.2026): их видно и можно убрать
+  const objs = sel.map((id) => { const live = all.find((o) => o.id === id); const snap = editing?.snap?.[id]; return live ? { id, img: live.img, t: live.t, rooms: live.rooms, price: live.price, cur: live.cur, gone: live.st === "sold" || live.st === "off" } : snap ? { id, img: snap.img, t: snap.t, rooms: "", price: snap.price, cur: snap.cur, gone: true } : null; }).filter((o): o is NonNullable<typeof o> => !!o);
 
   // doCreateSel (3487–3495): edit → update in place; create → new «sent» selection with «Только что».
   function doCreateSel(): Selection {
     const cm: Record<string, string> = {};
     for (const id of sel) if ((selDraft.cm[id] || "").trim()) cm[id] = selDraft.cm[id].trim();
+    const snap: Record<string, SelSnap> = {};
+    for (const id of sel) { const live = all.find((o) => o.id === id); if (live) snap[id] = snapOf(live); else if (editing?.snap?.[id]) snap[id] = editing.snap[id]; }
     if (editing) {
-      const patch = { title: selDraft.title || selDraft.name || editing.title, name: selDraft.name || editing.name, note: selDraft.note, items: [...sel], cm };
+      const patch = { title: selDraft.title || selDraft.name || editing.title, name: selDraft.name || editing.name, note: selDraft.note, items: [...sel], cm, snap };
       updateSelection(editing.id, patch);
       return { ...editing, ...patch };
     }
-    return createSelection({ title: selDraft.title, name: selDraft.name, note: selDraft.note, items: [...sel], cm });
+    return createSelection({ title: selDraft.title, name: selDraft.name, note: selDraft.note, items: [...sel], cm, snap });
   }
   function copy(s: Selection) {
     try { navigator.clipboard.writeText(selectionUrl(s)); } catch {}
@@ -79,13 +83,13 @@ export function CreateSelModal({ onClose }: { onClose: () => void }) {
               const cmt = selDraft.cm[o.id] || "";
               return (
                 <div key={o.id} className="flex gap-[10px] border-b border-dashed border-line-2 py-[10px]">
-                  <span className="h-[46px] w-[46px] flex-none rounded-[9px] bg-cover bg-center" style={{ backgroundImage: `url('${o.img}')` }} />
+                  <span className={`h-[46px] w-[46px] flex-none rounded-[9px] bg-cover bg-center ${o.gone ? "opacity-40 grayscale" : ""}`} style={{ backgroundImage: `url('${o.img}')` }} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-ink">{o.t[lang]}</div>
                       <button type="button" onClick={() => toggleSel(o.id)} className="flex h-[26px] w-[26px] flex-none cursor-pointer items-center justify-center rounded-[8px] text-muted-2 hover:bg-red-tint hover:text-red"><IconTrash size={14} /></button>
                     </div>
-                    <div className="mb-[6px] text-[11.5px] text-muted">{o.rooms} · {fmt(o.price, o.cur)}</div>
+                    <div className="mb-[6px] text-[11.5px] text-muted">{o.gone ? <span className="font-semibold text-red">{t.sel.goneRow}</span> : <>{o.rooms} · {fmt(o.price, o.cur)}</>}</div>
                     <div className="mb-[6px] flex flex-wrap gap-1">
                       {t.sel.chips.map((c) => (
                         <button key={c} type="button" onClick={() => setSelDraft({ cm: { ...selDraft.cm, [o.id]: cmt.trim() ? `${cmt.trim()}, ${c}` : c } })} className="cursor-pointer rounded-[13px] border border-line bg-[#fafbfd] px-2 py-[3px] text-[10.5px] text-text hover:border-blue hover:text-blue">+ {c}</button>
