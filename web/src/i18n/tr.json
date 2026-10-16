@@ -435,6 +435,8 @@
     "to": "—",
     "found": "ilan",
     "rls": "emlakçı",
+    "foundP": { "other": "ilan" },
+    "rlsP": { "other": "emlakçı" },
     "sortNew": "Önce yeni",
     "sortCheap": "Önce ucuz",
     "sortExp": "Önce pahalı",

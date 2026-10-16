@@ -7,6 +7,7 @@ import { IconBookmarkPlus, IconFolderPlus, IconLoader2, IconX } from "@tabler/ic
 import { useI18n } from "@/i18n/provider";
 import { fmtShort } from "@/lib/money";
 import { EMPTY_FILTERS, passF, sortListings, type Filters } from "@/lib/filters";
+import { plural } from "@/lib/plural";
 import { GeoPicker, geoLabelOf } from "@/components/GeoPicker";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
@@ -29,7 +30,7 @@ const hintClosed = () => { try { return !!sessionStorage.getItem(HINT_KEY); } ca
 const closeHint = () => { try { sessionStorage.setItem(HINT_KEY, "1"); } catch {} hintListeners.forEach((l) => l()); };
 const subHint = (l: () => void) => { hintListeners.add(l); return () => { hintListeners.delete(l); }; };
 
-// Number of realtors in the base — all non-pending, non-support members (prototype `rlCount`, line 3727).
+// Realtor counter next to the result count = distinct owners of the SHOWN objects (not the whole base).
 
 
 const ilN = (k: string) => GEO.find((x) => x.k === k)?.n ?? k;
@@ -86,11 +87,12 @@ export function CatalogGrid({
 
   // Prototype scopes: counters see everything incl. sold (`scopeAll`); the catalog hides sold, «Мои» shows them, favs are filtered too.
   const scopeAll = useMemo(() => (owner ? all.filter((o) => o.owner === owner) : owners ? all.filter((o) => owners.includes(o.owner)) : all), [all, owner, owners]);
-  const rlCount = useMemo(() => new Set(all.filter((o) => o.st !== "sold").map((o) => o.owner)).size, [all]); // риэлторов с объектами в базе (не демо-справочник)
   const filtered = useMemo(() => {
     const base = mode === "catalog" ? scopeAll.filter((o) => o.st !== "sold") : scopeAll;
     return sortListings(base.filter((o) => passF(o, f)), f.sort);
   }, [scopeAll, f, mode]);
+  // риэлторов среди ПОКАЗАННЫХ объектов (16.10.2026, «в Hurma 2 объекта от 2 риэлторов, а оба — одного»: раньше считали по всей базе)
+  const rlCount = useMemo(() => new Set(filtered.map((o) => o.owner)).size, [filtered]);
   const visible = filtered.slice(0, visN);
 
   // Infinite scroll: load more once the sentinel is within 600px of the viewport (prototype line 2557)
@@ -159,7 +161,8 @@ export function CatalogGrid({
     return { id: o.id, ll: o.ll as [number, number], price: o.price, il: o.il, ilce: o.ilce, semt: o.semt, st: o.st, pin: fmtShort(o.price), tip, href: `/obj/${o.id}` };
   })), [isMap, filtered, lang, t]);
   const fbarShow = mode !== "favs"; // prototype `fbarShow = catalog || mine`
-  const countLabel = mode === "catalog" && !owner && !owners ? `${filtered.length} ${t.cat.found} · ${rlCount} ${t.cat.rls}` : `${filtered.length} ${t.cat.found}`;
+  const nObj = `${filtered.length} ${plural(lang, filtered.length, t.cat.foundP)}`;
+  const countLabel = mode === "catalog" && !owner && !owners ? `${nObj} · ${rlCount} ${plural(lang, rlCount, t.cat.rlsP)}` : nObj;
   const gridEmpty = (mode === "catalog" && filtered.length === 0) || (mode === "favs" && filtered.length === 0 && favEmpty);
 
   return (

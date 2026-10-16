@@ -435,6 +435,8 @@
     "to": "to",
     "found": "listings",
     "rls": "realtors",
+    "foundP": { "one": "listing", "other": "listings" },
+    "rlsP": { "one": "realtor", "other": "realtors" },
     "sortNew": "New",
     "sortCheap": "Cheaper",
     "sortExp": "Pricier",
