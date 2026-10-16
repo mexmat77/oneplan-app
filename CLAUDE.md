@@ -120,6 +120,12 @@
   (`Modal` + `ModalClose`, `sheet="fit"` → bottom-sheet ≤760), `@/hooks/useScrollLock` (`useScrollLock`, `useEscape`),
   `@/lib/phone` (`trPhone`, `fmtPhone`, `normPh`, `validMail`), `@/store/role` (`useRole()` — роль + демо-переключатель
   «Риэлтор/Админ» в `AppChrome`, только для реальных админов).
+- ЛИСТЫ НА МОБИЛЬНОМ (16.10.2026, «фильтры на телефоне уехали на полэкрана»): Tailwind v4 делает `-translate-x-1/2`
+  свойством `translate` (через `--tw-translate-x`), а не `transform`, поэтому `transform: none !important` его не гасит; к тому же
+  LightningCSS при сборке сливает `translate: none` с `transform` и теряет его. Правило для `[data-sheet]`/`[data-f-sheet]` в
+  globals.css ставит `--tw-translate-x/y: 0 !important` + `translate: 0 0` и заменяет анимацию `opl-card` на `opl-fade`
+  (с `!important` на transform анимация зависала на первом кадре — opacity 0). Новые fixed-листы центрировать через left/right,
+  а не `left-1/2 -translate-x-1/2`.
 - Адаптив: брейкпоинт `md` = 761px (как в прототипе: `max-md:` = ≤760). Все `data-*`-правила прототипа (`data-sheet`,
   `data-fsticky/stuck`, `data-topbar/hdr-hidden`, `data-obj-*`, `data-nb-*`, `data-unit-*`, `.opl-chat-shell` …) лежат в
   `globals.css` — вешать атрибуты на разметку вместо собственных медиа-запросов. `AppChrome` прячет шапку при скролле и
