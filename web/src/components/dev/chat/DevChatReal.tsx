@@ -2,6 +2,7 @@
 
 // Чат кабинета застройщика на Supabase (разметка — ChatScreen прототипа): слева поддержка и коллеги по компании, справа переписка.
 // Диалог с коллегой создаётся при первом открытии. Перевод — ИИ по кнопке с выбором языка чтения (trStore).
+import { ChatInput } from "@/components/chat/ChatInput";
 import { useEffect, useRef, useState } from "react";
 import { IconArrowLeft, IconChecks, IconHeadset, IconLanguage, IconMessage2, IconSearch, IconSend, IconTrash } from "@tabler/icons-react";
 import { useDevT } from "@/i18n/dev";
@@ -130,9 +131,9 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
                 );
               })}
             </div>
-            <div className="flex flex-none items-center gap-[10px] border-t border-line-2 bg-surface px-[14px] py-3">
-              <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMsg(); } }} placeholder={tt.chat_ph} className="flex-1 rounded-[12px] border border-line bg-bg-4 px-[14px] py-[11px] text-[14px] text-ink outline-none focus:border-blue" />
-              <button type="button" onClick={() => void sendMsg()} title={tt.chat_send} className="flex h-[46px] w-[46px] flex-none cursor-pointer items-center justify-center rounded-[12px] border-0 bg-blue text-[20px] text-white hover:bg-[#3a63d4]"><IconSend size={20} /></button>
+            <div className="flex flex-none items-end gap-[10px] border-t border-line-2 bg-surface px-[14px] py-3">
+              <ChatInput value={draft} onChange={setDraft} onSend={() => void sendMsg()} placeholder={tt.chat_ph} className="bg-bg-4 text-ink" />
+              <button type="button" onClick={() => void sendMsg()} title={tt.chat_send} className="flex h-[46px] w-[46px] flex-none cursor-pointer items-center justify-center self-end rounded-[12px] border-0 bg-blue text-[20px] text-white hover:bg-[#3a63d4]"><IconSend size={20} /></button>
             </div>
           </>
         ) : (

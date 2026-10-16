@@ -15,6 +15,7 @@ import { ensureTr, trKey, useTrCache } from "@/components/dev/chat/trStore";
 import { hideConversation, listChatPeers, openDmWith, openSupport, useConversations, useThread, type ChatPeer, type Conversation } from "@/lib/chat/client";
 import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { normPh } from "@/lib/phone";
+import { ChatInput } from "@/components/chat/ChatInput";
 import { linkify } from "@/lib/shareListing";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,7 +36,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
   const [orig, setOrig] = useState<Record<number, boolean>>({});
   const [picker, setPicker] = useState<null | { q: string; list: ChatPeer[] | null }>(null);
   const msgsRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const L = (ru: string, en: string, trs: string) => (lang === "RU" ? ru : lang === "TR" ? trs : en);
 
   const openPicker = async () => { setPicker({ q: "", list: null }); const l = await listChatPeers(me.id, supportId, { isAdmin: me.isAdmin }); setPicker((p) => (p ? { ...p, list: l } : p)); };
@@ -176,9 +177,9 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
                   );
                 })}
               </div>
-              <div className="flex gap-[9px] border-t border-line-2 px-4 py-[13px]">
-                <input ref={inputRef} data-chat-input="1" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void sendMsg(); } }} placeholder={t.chat.ph} className="min-w-0 flex-1 rounded-[12px] border border-line bg-bg px-[14px] py-[11px] text-[14px] outline-none focus:border-blue" />
-                <button type="button" onClick={() => void sendMsg()} onMouseDown={(e) => e.preventDefault()} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-[12px] bg-blue-2 text-white hover:bg-blue-3"><IconSend size={18} /></button>
+              <div className="flex items-end gap-[9px] border-t border-line-2 px-4 py-[13px]">
+                <ChatInput ref={inputRef} value={input} onChange={setInput} onSend={() => void sendMsg()} placeholder={t.chat.ph} className="bg-bg" />
+                <button type="button" onClick={() => void sendMsg()} onMouseDown={(e) => e.preventDefault()} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center self-end rounded-[12px] bg-blue-2 text-white hover:bg-blue-3"><IconSend size={18} /></button>
               </div>
             </>
           ) : (
