@@ -758,6 +758,8 @@
     "updL": "Güncellendi",
     "likedL": "beğenildi",
     "soldB": "Satıldı",
+    "soldStamp": "Satıldı",
+    "offStamp": "Satıştan kaldırıldı",
     "offB": "Satıştan kaldırıldı",
     "goneHint": "Artık sunulmuyor — geçmiş için seçkide bırakıldı",
     "toSel": "Koleksiyona dön",

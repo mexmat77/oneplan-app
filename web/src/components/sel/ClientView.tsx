@@ -198,16 +198,23 @@ function Reacts({ s, id, react }: { s: Selection; id: string; react: (id: string
   );
 }
 
+/** Красный штамп наискосок поверх фото (16.10.2026, просьба пользователя: «ПРОДАНО — намекнуть клиенту, что всё быстро уходит»). */
 function GoneBadge({ gone }: { gone: Exclude<Gone, null> }) {
   const { t } = useI18n();
-  return <span className="absolute left-[10px] top-[10px] rounded-[8px] bg-[rgba(10,16,28,.78)] px-[10px] py-[5px] text-[11px] font-bold uppercase tracking-[.04em] text-white">{gone === "sold" ? t.cli.soldB : t.cli.offB}</span>;
+  const txt = gone === "sold" ? t.cli.soldStamp : t.cli.offStamp;
+  return (
+    <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <span className="rounded-[8px] border-[3px] border-[#d33a3a] bg-[rgba(255,255,255,.86)] px-[18px] py-[6px] text-center font-black uppercase leading-[1.1] text-[#d33a3a] shadow-[0_6px_20px_rgba(10,16,28,.25)]"
+        style={{ transform: "rotate(-14deg)", fontSize: txt.length > 10 ? 15 : 26, letterSpacing: ".12em", outline: "2px solid #d33a3a", outlineOffset: 3, maxWidth: "80%" }}>{txt}</span>
+    </span>
+  );
 }
 /** Удалённое объявление — карточка по снимку: фото, заголовок, цена на момент подборки, плашка «Снят с продажи». */
 function GoneCard({ id, snap, s }: { id: string; snap: SelSnap; s: Selection }) {
   const { t, lang } = useI18n();
   return (
     <div className="overflow-hidden rounded-[16px] border border-line bg-surface opacity-80">
-      <div className="relative h-[210px] bg-cover bg-center grayscale" style={{ backgroundImage: `url('${snap.img}')` }}><GoneBadge gone="off" /></div>
+      <div className="relative h-[210px] bg-cover bg-center grayscale" style={{ backgroundImage: `url('${snap.img}')` }}><GoneBadge gone="sold" /></div>
       <div className="px-[15px] pt-[13px]">
         <div className="truncate text-[14.5px] font-bold text-ink">{snap.t[lang]}</div>
         <div className="mb-[2px] mt-[3px] text-[18.5px] font-extrabold text-muted line-through">{fmt(snap.price, snap.cur)}</div>

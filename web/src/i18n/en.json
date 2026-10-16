@@ -758,6 +758,8 @@
     "updL": "Updated",
     "likedL": "liked",
     "soldB": "Sold",
+    "soldStamp": "Sold",
+    "offStamp": "Off market",
     "offB": "Off the market",
     "goneHint": "No longer offered — kept in the selection for history",
     "toSel": "Back to collection",
