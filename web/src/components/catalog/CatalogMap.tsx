@@ -301,7 +301,7 @@ export default function CatalogMap({ items, f, set, hint }: { items: MapItem[]; 
         </span>
         {hint && lvl !== "obj" && <span className="hidden max-w-[520px] rounded-[10px] bg-surface/90 px-[11px] py-[7px] text-[11.5px] leading-[1.35] text-muted shadow-[0_4px_14px_rgba(20,36,63,.14)] md:block">{hint}</span>}
       </div>
-      {canUp && <button type="button" onClick={up} title={t.cat.mapUp} aria-label={t.cat.mapUp} className="absolute bottom-[138px] right-4 z-800 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full bg-surface text-ink shadow-[0_6px_20px_rgba(20,36,63,.18)] hover:bg-[#f4f6fa] hover:text-blue-2 max-md:bottom-[198px]"><IconArrowBackUp size={22} /></button>}
+      {canUp && <button type="button" onClick={up} title={t.cat.mapUp} aria-label={t.cat.mapUp} className="absolute bottom-[150px] right-4 z-800 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full bg-surface text-ink shadow-[0_6px_20px_rgba(20,36,63,.18)] hover:bg-[#f4f6fa] hover:text-blue-2 max-md:bottom-[210px]"><IconArrowBackUp size={22} /></button>}
       {legend && (
         <div className="absolute bottom-[14px] left-[14px] z-800 rounded-[12px] bg-surface px-[14px] py-[10px] shadow-[0_6px_20px_rgba(20,36,63,.18)]">
           <div className="mb-[6px] text-[10px] font-bold uppercase tracking-[.05em] text-muted">{t.cat.legend}</div>
