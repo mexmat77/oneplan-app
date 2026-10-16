@@ -10,7 +10,7 @@ import { EMPTY_FILTERS, passF, sortListings, type Filters } from "@/lib/filters"
 import { GeoPicker, geoLabelOf } from "@/components/GeoPicker";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
-import { GEO, REALTORS, SEMT2ILCE } from "@/lib/seed";
+import { GEO, SEMT2ILCE } from "@/lib/seed";
 import { useMahalleLoaded } from "@/lib/geo";
 import type { Listing } from "@/lib/types";
 import type { MapItem } from "./CatalogMap";
@@ -30,7 +30,7 @@ const closeHint = () => { try { sessionStorage.setItem(HINT_KEY, "1"); } catch {
 const subHint = (l: () => void) => { hintListeners.add(l); return () => { hintListeners.delete(l); }; };
 
 // Number of realtors in the base — all non-pending, non-support members (prototype `rlCount`, line 3727).
-const RL_COUNT = Object.values(REALTORS).filter((r) => !r.pending && !(r as { support?: boolean }).support).length;
+
 
 const ilN = (k: string) => GEO.find((x) => x.k === k)?.n ?? k;
 const ilceN = (k: string) => GEO.flatMap((g) => g.ilces).find((x) => x.k === k)?.n ?? k;
@@ -86,6 +86,7 @@ export function CatalogGrid({
 
   // Prototype scopes: counters see everything incl. sold (`scopeAll`); the catalog hides sold, «Мои» shows them, favs are filtered too.
   const scopeAll = useMemo(() => (owner ? all.filter((o) => o.owner === owner) : owners ? all.filter((o) => owners.includes(o.owner)) : all), [all, owner, owners]);
+  const rlCount = useMemo(() => new Set(all.filter((o) => o.st !== "sold").map((o) => o.owner)).size, [all]); // риэлторов с объектами в базе (не демо-справочник)
   const filtered = useMemo(() => {
     const base = mode === "catalog" ? scopeAll.filter((o) => o.st !== "sold") : scopeAll;
     return sortListings(base.filter((o) => passF(o, f)), f.sort);
@@ -158,7 +159,7 @@ export function CatalogGrid({
     return { id: o.id, ll: o.ll as [number, number], price: o.price, il: o.il, ilce: o.ilce, semt: o.semt, st: o.st, pin: fmtShort(o.price), tip, href: `/obj/${o.id}` };
   })), [isMap, filtered, lang, t]);
   const fbarShow = mode !== "favs"; // prototype `fbarShow = catalog || mine`
-  const countLabel = mode === "catalog" && !owner && !owners ? `${filtered.length} ${t.cat.found} · ${RL_COUNT} ${t.cat.rls}` : `${filtered.length} ${t.cat.found}`;
+  const countLabel = mode === "catalog" && !owner && !owners ? `${filtered.length} ${t.cat.found} · ${rlCount} ${t.cat.rls}` : `${filtered.length} ${t.cat.found}`;
   const gridEmpty = (mode === "catalog" && filtered.length === 0) || (mode === "favs" && filtered.length === 0 && favEmpty);
 
   return (

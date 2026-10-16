@@ -138,8 +138,9 @@ export function useAllListings(): Listing[] {
   const rem = useRemoteListings();
   const { stOver } = useListingMeta();
   return useMemo(() => {
-    // с входом: демо-каталог + объявления из базы (локальные переезжают в базу при первом входе, `migrateLocal`)
-    const all = rem.active ? [...rem.list, ...getSeedListings()] : [...getSeedListings(), ...local];
+    // с входом: ТОЛЬКО объявления из базы (16.10.2026, решение пользователя «оставим только реальные» — демо-каталог
+    // прототипа больше не подмешивается); без входа (UI-режим) — демо + локальные
+    const all = rem.active ? rem.list : [...getSeedListings(), ...local];
     return Object.keys(stOver).length ? all.map((o) => (stOver[o.id] && stOver[o.id] !== o.st ? { ...o, st: stOver[o.id] } : o)) : all;
   }, [local, rem, stOver]);
 }

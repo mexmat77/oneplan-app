@@ -7,7 +7,7 @@ import { IconArrowLeft, IconBrandWhatsapp, IconBuildingSkyscraper, IconMessageCi
 import { useMemo } from "react";
 import { CatalogGrid } from "@/components/catalog/CatalogGrid";
 import { useI18n } from "@/i18n/provider";
-import { REALTORS } from "@/lib/seed";
+import { useRealtorList } from "@/store/realtors";
 import { useRealtor } from "@/store/realtors";
 import { useAdmin } from "@/store/admin";
 import { useAllListings } from "@/store/listings";
@@ -23,12 +23,13 @@ function CatalogInner() {
   const r = owner ? realtorOf(owner) ?? null : null;
   const count = r ? all.filter((o) => o.owner === owner).length : 0; // prototype `rProf.count` counts sold too
   // Страница агентства: все его риэлторы из базы и их объекты (пока данные тестовые — `REALTORS`; реквизиты из стора админки)
-  const team = useMemo(() => (agency ? Object.values(REALTORS).filter((x) => x.ag === agency) : []), [agency]);
+  const realtors = useRealtorList(); // с входом — профили из базы, демо-справочник только без входа
+  const team = useMemo(() => (agency ? realtors.filter((x) => x.ag === agency) : []), [agency, realtors]);
   const teamIds = useMemo(() => team.map((x) => x.id), [team]);
   const agMeta = useAdmin().agencies.find((a) => a.name === agency);
   const agCount = agency ? all.filter((o) => teamIds.includes(o.owner)).length : 0;
   // агентство — ссылка на его страницу только когда там есть кто-то кроме этого риэлтора (как на странице объекта)
-  const agLink = (name: string) => (!name || name === "—" ? <>{t.cat.freeAgent}</> : Object.values(REALTORS).filter((x) => x.ag === name).length > 1 ? <Link href={`/catalog?agency=${encodeURIComponent(name)}`} className="font-semibold text-blue hover:text-blue-2">{name}</Link> : <>{name}</>);
+  const agLink = (name: string) => (!name || name === "—" ? <>{t.cat.freeAgent}</> : realtors.filter((x) => x.ag === name).length > 1 ? <Link href={`/catalog?agency=${encodeURIComponent(name)}`} className="font-semibold text-blue hover:text-blue-2">{name}</Link> : <>{name}</>);
   return (
     <>
       {agency ? (

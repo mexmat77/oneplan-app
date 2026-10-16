@@ -10,6 +10,11 @@ let extra: Record<string, Realtor> = {};
 const subs = new Set<() => void>();
 export function setRealtors(list: Realtor[]) { extra = Object.fromEntries(list.map((r) => [r.id, r])); subs.forEach((l) => l()); }
 export const realtorOf = (id: string): Realtor | undefined => REALTORS[id] ?? extra[id];
+/** Список риэлторов для страниц агентств/счётчиков: с входом — профили из базы, без входа — демо-справочник (16.10.2026). */
+export function useRealtorList(): Realtor[] {
+  const ex = useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, snap, snap);
+  return Object.keys(ex).length ? Object.values(ex) : Object.values(REALTORS);
+}
 const snap = () => extra;
 /** Подписка на профили из базы: компонент перерисуется, когда они загрузятся. Возвращает функцию поиска. */
 export function useRealtor(): (id: string) => Realtor | undefined {

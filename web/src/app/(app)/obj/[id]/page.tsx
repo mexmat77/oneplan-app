@@ -16,8 +16,7 @@ import {
 import { useI18n } from "@/i18n/provider";
 import { ST_STYLE, detail, geoAddr, hasDrop, metaDates, priceHistory, priceLabel, similar } from "@/lib/detail";
 import { eqOf, fmt, useRates } from "@/lib/money";
-import { REALTORS } from "@/lib/seed";
-import { useRealtor } from "@/store/realtors";
+import { useRealtor, useRealtorList } from "@/store/realtors";
 import { useMeId } from "@/store/profile";
 import { getPrevScreen, removeListing, setStOver, useAllListings, useListingMeta, useListingsReady } from "@/store/listings";
 import { useRole } from "@/store/role";
@@ -73,6 +72,7 @@ export default function ObjPage() {
   const ME = useMeId();
   const realtorOf = useRealtor();
   const { isAdmin } = useRole();
+  const realtors = useRealtorList(); // профили из базы (демо-справочник — только без входа)
   const { favs, sel, toggleFav, toggleSel } = usePrefs();
   const { expMap } = useListingMeta();
   const hydrated = useHydrated();
@@ -105,7 +105,7 @@ export default function ObjPage() {
   const rateNote = `${t.obj.rate} ${rateD.toLocaleDateString(lang === "RU" ? "ru-RU" : lang === "TR" ? "tr-TR" : "en-GB")}`;
   const ownerAv = owner.name.split(" ").map((w) => w[0]).join("");
   const hasAg = !!owner.ag && owner.ag !== "—";
-  const agTeamN = hasAg ? Object.values(REALTORS).filter((x: { ag: string }) => x.ag === owner.ag).length : 0;
+  const agTeamN = hasAg ? realtors.filter((x) => x.ag === owner.ag).length : 0;
   const stChip = <span className="flex-none whitespace-nowrap rounded-[8px] px-[11px] py-[5px] text-[11px] font-bold" style={{ background: st.bg, color: st.c }}>{t.stt[o.st]}</span>;
   const chatWith = () => { router.push(`/chat?with=${o.owner}`); };
   const closeObj = () => { router.push(`/${getPrevScreen()}`); };

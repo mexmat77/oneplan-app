@@ -7,13 +7,15 @@ import { useSearchParams } from "next/navigation";
 import { NbCatalog } from "@/components/newb/NbCatalog";
 import { NbProject } from "@/components/newb/NbProject";
 import { getProjects } from "@/lib/newb";
+import { useMeId } from "@/store/profile";
 
 function NewbInner() {
   const params = useSearchParams();
   const pKey = params.get("p");
   const dev = params.get("dev");
   const u = params.get("u");
-  const projects = getProjects();
+  const me = useMeId();
+  const projects = me === "me" ? getProjects() : []; // с входом демо-новостройки прототипа не показываем (16.10.2026); реальные проекты застройщиков — следующий шаг
   const p = pKey ? projects.find((x) => x.k === pKey) : null;
   if (p) return <NbProject key={`${p.k}:${u ?? ""}`} p={p} dev={dev} initialUnit={u ? +u : null} />;
   return <NbCatalog projects={projects} dev={dev} />;
