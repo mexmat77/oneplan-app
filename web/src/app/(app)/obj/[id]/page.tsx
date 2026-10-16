@@ -22,6 +22,8 @@ import { getPrevScreen, removeListing, setStOver, useAllListings, useListingMeta
 import { useRole } from "@/store/role";
 import { oldPrice, type ListingStatus, type RealtorChannels } from "@/lib/types";
 import { Gallery } from "@/components/obj/Gallery";
+import { ShareListing } from "@/components/obj/ShareListing";
+import { chatShareHref, listingContactText, tgTo, waTo } from "@/lib/shareListing";
 import { ListingNote } from "@/components/obj/ListingNote";
 import { ExportModal, expCount } from "@/components/obj/ExportModal";
 import { Modal, ModalClose } from "@/components/ui/Modal";
@@ -62,13 +64,13 @@ const Channel = ({ bg, label, children, onClick, href }: { bg: string; label: st
 };
 /** Каналы связи риэлтора: только включённые в профиле (16.10.2026, «тестовые мессенджеры стоят у всех»); у демо-риэлторов без
  *  профиля — все, как в прототипе. Ссылки: tel:, wa.me, t.me/<login>, viber://, MAX — max.ru/<id>, WeChat — id в подписи. */
-function channelsOf(owner: { phone: string; ch?: RealtorChannels }, t: { call: string }) {
+function channelsOf(owner: { phone: string; ch?: RealtorChannels }, t: { call: string }, msg?: string) {
   const digits = owner.phone.replace(/\D/g, "");
   const c = owner.ch ?? { wa: true, tg: true, tgLogin: "", vb: true, mx: true, mxId: "", wc: true, wcId: "" };
   const out: { key: string; bg: string; label: string; href?: string; right?: string; icon: ReactNode; iconSm: ReactNode }[] = [];
   if (digits) out.push({ key: "call", bg: "#3b5fd6", label: t.call, href: `tel:+${digits}`, right: owner.phone, icon: <IconPhone size={20} />, iconSm: <IconPhone size={17} /> });
-  if (c.wa && digits) out.push({ key: "wa", bg: "#22c15e", label: "WhatsApp", href: `https://wa.me/${digits}`, icon: <IconBrandWhatsapp size={20} />, iconSm: <IconBrandWhatsapp size={17} /> });
-  if (c.tg) out.push({ key: "tg", bg: "#229ed9", label: "Telegram", href: c.tgLogin ? `https://t.me/${c.tgLogin.replace(/^@/, "")}` : digits ? `https://t.me/+${digits}` : undefined, right: c.tgLogin ? `@${c.tgLogin.replace(/^@/, "")}` : undefined, icon: <IconBrandTelegram size={20} />, iconSm: <IconBrandTelegram size={17} /> });
+  if (c.wa && digits) out.push({ key: "wa", bg: "#22c15e", label: "WhatsApp", href: waTo(digits, msg), icon: <IconBrandWhatsapp size={20} />, iconSm: <IconBrandWhatsapp size={17} /> });
+  if (c.tg) out.push({ key: "tg", bg: "#229ed9", label: "Telegram", href: c.tgLogin ? tgTo(c.tgLogin.replace(/^@/, ""), msg) : digits ? tgTo(`+${digits}`, msg) : undefined, right: c.tgLogin ? `@${c.tgLogin.replace(/^@/, "")}` : undefined, icon: <IconBrandTelegram size={20} />, iconSm: <IconBrandTelegram size={17} /> });
   if (c.vb && digits) out.push({ key: "vb", bg: "#7360f2", label: "Viber", href: `viber://chat?number=%2B${digits}`, icon: <span className="text-[17px]">V</span>, iconSm: <span className="text-[15px]">V</span> });
   if (c.mx) out.push({ key: "mx", bg: "#7b4fd0", label: "MAX", right: c.mxId || undefined, href: c.mxId ? `https://max.ru/${c.mxId.replace(/^@/, "")}` : undefined, icon: <span className="text-[14px]">MAX</span>, iconSm: <span className="text-[11px]">MAX</span> });
   if (c.wc) out.push({ key: "wc", bg: "#07c160", label: "WeChat", right: c.wcId || undefined, icon: <IconBrandWechat size={20} />, iconSm: <IconBrandWechat size={17} /> });
@@ -104,8 +106,8 @@ export default function ObjPage() {
   const d = detail(o, t);
   // владелец: демо-риэлтор или профиль из базы; если профиль ещё не загружен — заглушка без имени
   const owner = realtorOf(o.owner) ?? { id: o.owner, name: "—", ag: "", color: "#8a93a2", phone: "", city: { RU: "", EN: "", TR: "" }, langs: "", online: false, objs: 0, sels: 0, likes: 0, la: { RU: "", EN: "", TR: "" } };
-  const chans = channelsOf(owner, { call: t.obj.callL }); // только включённые в профиле каналы
   const isMine = o.owner === ME;
+  const chans = channelsOf(owner, { call: t.obj.callL }, isMine ? undefined : listingContactText(o, lang, t)); // только включённые в профиле каналы; WhatsApp/Telegram — с текстом
   const canEdit = isMine || isAdmin;
   const fav = favs.includes(o.id);
   const inSel = sel.includes(o.id);
@@ -121,7 +123,8 @@ export default function ObjPage() {
   const hasAg = !!owner.ag && owner.ag !== "—";
   const agTeamN = hasAg ? realtors.filter((x) => x.ag === owner.ag).length : 0;
   const stChip = <span className="flex-none whitespace-nowrap rounded-[8px] px-[11px] py-[5px] text-[11px] font-bold" style={{ background: st.bg, color: st.c }}>{t.stt[o.st]}</span>;
-  const chatWith = () => { router.push(`/chat?with=${o.owner}`); };
+  // владельцу — готовое приветствие с номером и ссылкой на объект (своё объявление — без текста)
+  const chatWith = () => { router.push(isMine ? `/chat?with=${o.owner}` : chatShareHref(listingContactText(o, lang, t), o.owner)); };
   const closeObj = () => { router.push(`/${getPrevScreen()}`); };
   // Жалоба уходит в таблицу `reports` (снимок карточки — объявления пока не в базе); без Supabase — демо-хранилище прототипа.
   const rptSend = async () => {
@@ -143,11 +146,14 @@ export default function ObjPage() {
         <button type="button" onClick={closeObj} className="inline-flex cursor-pointer items-center gap-[6px] text-[13px] font-semibold text-text-2 hover:text-blue">
           <IconArrowLeft size={16} /> {t.common.back}
         </button>
-        {!isMine && (
-          <button type="button" onClick={() => setRpt({ reason: "", text: "" })} className="inline-flex cursor-pointer items-center gap-[6px] text-[12.5px] font-semibold text-muted hover:text-red">
-            <IconFlagFilled size={14} className="text-red" /> {t.obj.rptB}
-          </button>
-        )}
+        <div className="flex items-center gap-[18px]">
+          <ShareListing o={o} />
+          {!isMine && (
+            <button type="button" onClick={() => setRpt({ reason: "", text: "" })} className="inline-flex cursor-pointer items-center gap-[6px] text-[12.5px] font-semibold text-muted hover:text-red">
+              <IconFlagFilled size={14} className="text-red" /> {t.obj.rptB}
+            </button>
+          )}
+        </div>
       </div>
 
       <div data-obj-cols="1" className="grid grid-cols-[minmax(0,1fr)_360px] items-start gap-5">

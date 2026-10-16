@@ -15,6 +15,7 @@ import { ensureTr, trKey, useTrCache } from "@/components/dev/chat/trStore";
 import { hideConversation, listChatPeers, openDmWith, openSupport, useConversations, useThread, type ChatPeer, type Conversation } from "@/lib/chat/client";
 import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { normPh } from "@/lib/phone";
+import { linkify } from "@/lib/shareListing";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TR_KEY = "oneplan-chat-tr";
@@ -37,13 +38,17 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
   const inputRef = useRef<HTMLInputElement>(null);
   const L = (ru: string, en: string, trs: string) => (lang === "RU" ? ru : lang === "TR" ? trs : en);
 
-  // ?with=sup → поддержка; ?with=<uuid> → диалог с участником
+  const openPicker = async () => { setPicker({ q: "", list: null }); const l = await listChatPeers(me.id, supportId, { isAdmin: me.isAdmin }); setPicker((p) => (p ? { ...p, list: l } : p)); };
+  // ?with=sup → поддержка; ?with=<uuid> → диалог с участником; ?text= → черновик в поле (ссылка на объект со страницы объявления),
+  // без собеседника — открывается выбор, с кем поделиться (16.10.2026)
   useEffect(() => {
-    const w = params.get("with");
-    if (!w) return;
+    const w = params.get("with"), tx = params.get("text");
+    if (!w && !tx) return;
     (async () => {
-      const id = w === "sup" ? await openSupport(me.id, supportId) : UUID.test(w) ? await openDmWith(me.id, w) : null;
+      const id = !w ? null : w === "sup" ? await openSupport(me.id, supportId) : UUID.test(w) ? await openDmWith(me.id, w) : null;
+      if (tx) setInput(tx);
       if (id) { setCur(id); setMobOpen(true); await reload(); }
+      else if (tx) void openPicker();
       router.replace("/chat");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,7 +83,6 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
     await reload();
     setTimeout(() => { inputRef.current?.focus(); const el = msgsRef.current; if (el) el.scrollTop = el.scrollHeight; }, 30);
   };
-  const openPicker = async () => { setPicker({ q: "", list: null }); const l = await listChatPeers(me.id, supportId, { isAdmin: me.isAdmin }); setPicker((p) => (p ? { ...p, list: l } : p)); };
   const startWith = async (p: ChatPeer) => { const id = await openDmWith(me.id, p.id); setPicker(null); if (id) { setCur(id); setMobOpen(true); await reload(); } };
   const removeDlg = async () => { if (!dlg) return; const isSupportInbox = !!dlg.supportOf; if (!(await confirmDialog({ title: isSupportInbox ? L("Закрыть обращение", "Close request", "Talebi kapat") : L("Удалить диалог", "Remove chat", "Sohbeti sil"), ok: isSupportInbox ? L("Закрыть", "Close", "Kapat") : L("Удалить", "Remove", "Sil"), danger: true, text: isSupportInbox ? L("Закрыть обращение? Переписка исчезнет у вас; если пользователь напишет снова, обращение появится заново только с новыми сообщениями.", "Close this request? The history disappears for you; if the user writes again, the request reappears with the new messages only.", "Talep kapatılsın mı? Yazışma sizde silinir; kullanıcı tekrar yazarsa talep yalnızca yeni mesajlarla geri gelir.") : L("Удалить переписку у себя? У собеседника она останется. Если он напишет снова, диалог появится заново только с новыми сообщениями.", "Delete this chat for you? The other party keeps it. If they write again, the chat reappears with the new messages only.", "Yazışma sizde silinsin mi? Karşı tarafta kalır. Tekrar yazarsa sohbet yalnızca yeni mesajlarla geri gelir.") }))) return; if (await hideConversation(dlg.id, me.id)) { setCur(null); setMobOpen(false); await reload(); } };
   const toggleTr = () => { setTr((v) => { try { localStorage.setItem(TR_KEY, v ? "0" : "1"); } catch {} return !v; }); };
@@ -157,7 +161,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[72%] rounded-[14px] px-[13px] py-[10px] ${mine ? "rounded-br-[4px] bg-blue-2 text-white" : "rounded-bl-[4px] border border-line bg-surface text-ink"}`}>
                         {by && <div className="mb-[3px] text-[10.5px] font-bold text-blue-2">{by}</div>}
-                        <div className="whitespace-pre-wrap break-words text-[13.5px] leading-[1.5]">{text}</div>
+                        <div className="whitespace-pre-wrap break-words text-[13.5px] leading-[1.5]">{linkify(text).map((p, i) => (typeof p === "string" ? p : <a key={i} href={p.url} target="_blank" rel="noreferrer" className="underline underline-offset-2 break-all">{p.url.replace(/^https?:\/\//, "")}</a>))}</div>
                         {tr && foreign && (
                           <div onClick={() => translated && setOrig((o) => ({ ...o, [m.id]: !o[m.id] }))} className={`mt-[5px] flex items-center gap-1 text-[10.5px] opacity-75 ${translated ? "cursor-pointer hover:brightness-95" : ""}`}>
                             <IconSparkles size={11} /> {!translated ? (e?.fallback ? `${m.lang}` : "…") : isOrig ? `${m.lang} · ${t.chat.orig} — ${t.chat.ai} ⇄` : `${m.lang} → ${lang} · ${t.chat.ai}`}
