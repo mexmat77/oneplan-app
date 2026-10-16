@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { IconFlask, IconX } from "@tabler/icons-react";
 import { TopBar, type Workspace } from "./TopBar";
 import { usePrefs } from "@/store/prefs";
+import { useAllListings } from "@/store/listings";
 import { useNotifications } from "@/store/ntf";
 import { UNREAD_SEED, useChat } from "@/store/chat";
 import { useChatUnread } from "@/lib/chat/client";
@@ -84,6 +85,10 @@ export function AppChrome({ name, isAdmin, workspace, userRole = "realtor", admi
   useEffect(() => { if (isDev && !path.startsWith("/dev") && !path.startsWith("/chat") && !path.startsWith("/ntf") && !path.startsWith("/profile")) router.replace("/dev"); }, [isDev, path, router]);
   const { favs } = usePrefs();
   const { favU, watch } = useNewbPrefs();
+  // бейдж «Избранное» — только объекты, которые реально есть (16.10.2026, у Daniel «2» при пустом избранном: в favorites лежали
+  // демо-id прототипа o1/o2); с аккаунтом демо-новостроек нет — их избранное/подписки не считаем
+  const all = useAllListings();
+  const favsN = favs.filter((id) => all.some((o) => o.id === id)).length + (meId ? 0 : favU.length + watch.length);
   const { unreadN: seedUnread } = useNotifications();
   const liveNtf = useNotifs(meId ?? null);
   const unreadN = meId ? liveNtf.unread : seedUnread; // реальные уведомления у вошедшего, демо — без аккаунта
@@ -104,7 +109,7 @@ export function AppChrome({ name, isAdmin, workspace, userRole = "realtor", admi
   const roleBtn = (on: boolean) => `cursor-pointer rounded-[8px] px-[11px] py-[6px] text-[11px] font-bold hover:bg-line-2 hover:text-ink ${on ? "bg-blue-2 text-white" : "bg-dark-2 text-dark-muted"}`;
   return (
     <>
-      <TopBar name={profile.name || name} isAdmin={admin} favsN={favs.length + favU.length + watch.length} ntfN={unreadN} reqsN={reqsN} adminN={adminN} chatUnread={chatUnread} workspace={ws} hidden={hidden} email={email || profile.email} avatar={avatar} sub={agency || profile.agency || undefined} meId={meId ?? null} />
+      <TopBar name={profile.name || name} isAdmin={admin} favsN={favsN} ntfN={unreadN} reqsN={reqsN} adminN={adminN} chatUnread={chatUnread} workspace={ws} hidden={hidden} email={email || profile.email} avatar={avatar} sub={agency || profile.agency || undefined} meId={meId ?? null} />
       {/* Demo role toggle (prototype `[data-demo]`, lines 1885–1893) — only real admins can preview as a realtor */}
       {role.realAdmin && (
         <div data-demo="1" className="fixed bottom-4 left-4 z-205 flex items-center gap-2">
