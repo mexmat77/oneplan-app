@@ -15,7 +15,7 @@ import { oldPrice, type Listing } from "@/lib/types";
 import { useAllListings } from "@/store/listings";
 import { useProfile, type Profile } from "@/store/profile";
 import { findBySlug, getClientReturn, markViewed, reactTo, useSelections, type Reaction, type Selection } from "@/store/selections";
-import { CliGallery } from "./CliGallery";
+import { Gallery } from "@/components/obj/Gallery"; // та же галерея, что на странице объекта (16.10.2026, «как в обычной базе»)
 import { reactPublic, viewPublic } from "@/app/s/actions";
 import type { PublicSelection } from "@/lib/selectionsPublic";
 
@@ -135,7 +135,7 @@ export function ClientView({ slug, preview, data }: { slug: string; preview: boo
             <div onClick={backToSel} className="mb-4 inline-flex cursor-pointer items-center gap-[7px] text-[13.5px] font-bold text-blue hover:text-blue-2"><IconArrowLeft size={16} /> {t.cli.toSel}</div>
             <div className="flex flex-wrap items-start gap-[18px]">
               <div className="min-w-[300px] flex-[2]">
-                <CliGallery photos={obj.photos.length ? obj.photos : [obj.img]} title={obj.t[lang]} />
+                <Gallery photos={obj.photos.length ? obj.photos : [obj.img]} title={obj.t[lang]} />
                 <h2 className="mt-[18px] text-[22px] font-extrabold tracking-[-0.02em] text-ink">{obj.t[lang]}</h2>
                 <div className="mt-1 text-[13.5px] text-muted"><IconMapPin size={14} className="inline align-[-2px]" /> {obj.loc[lang]}</div>
                 {s.cm[obj.id] && <div className="mt-[14px] flex items-start gap-[9px] rounded-[11px] border-l-[3px] border-l-blue bg-blue-tint px-[15px] py-3 text-[13.5px] leading-[1.55] text-sel-ink"><IconMessage2 size={15} className="mt-[1px] flex-none" /><span>{s.cm[obj.id]}</span></div>}

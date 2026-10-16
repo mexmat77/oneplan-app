@@ -20,6 +20,7 @@ import { translate, type TranslateResult } from "@/app/(dev)/dev/chat/actions";
 import { fillTranslations } from "@/app/listing-translate-actions";
 import { expandMapLink } from "@/app/geo-actions";
 import { isMapLink, parseMapLink } from "@/lib/dev/geo";
+import { shrinkImage } from "@/lib/photos";
 import { useI18n } from "@/i18n/provider";
 import { useMahalleLoaded } from "@/lib/geo";
 import { eur, fmt, useRates } from "@/lib/money";
@@ -255,13 +256,30 @@ export function AddForm() {
     if (!r) { showToast(t.add.linkBad); return; }
     pickPin([r.lat, r.lng]);
   }
-  function addFiles(files: FileList | null) {
+  // Фото: сжимаем в браузере до 1600 px сразу (29 снимков по 4–8 МБ с iPhone в виде data-URL вешали форму, 16.10.2026),
+  // по одному с прогрессом; HEIC/неизвестный тип тоже пробуем (Safari декодирует сам), при ошибке файл пропускаем с сообщением.
+  const [photoBusy, setPhotoBusy] = useState<{ done: number; total: number } | null>(null);
+  async function addFiles(files: FileList | null) {
     if (!files) return;
-    Array.from(files).filter((x) => x.type.startsWith("image/")).slice(0, 20).forEach((file) => {
-      const r = new FileReader();
-      r.onload = () => setF((p) => ({ ...p, photos: [...p.photos, String(r.result)] }));
-      r.readAsDataURL(file);
-    });
+    const list = Array.from(files).filter((x) => x.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(x.name)).slice(0, 40);
+    if (!list.length) return;
+    setPhotoBusy({ done: 0, total: list.length });
+    let failed = 0;
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      try {
+        const url = URL.createObjectURL(file);
+        let dataUrl: string;
+        try {
+          const blob = await shrinkImage(url, 1600, 0.82);
+          dataUrl = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsDataURL(blob); });
+        } finally { URL.revokeObjectURL(url); }
+        setF((p) => ({ ...p, photos: [...p.photos, dataUrl] }));
+      } catch { failed++; }
+      setPhotoBusy({ done: i + 1, total: list.length });
+    }
+    setPhotoBusy(null);
+    if (failed) showToast(t.add.photoFail.replace("{n}", String(failed)));
   }
   function genTitle() {
     const p: string[] = [];
@@ -539,7 +557,7 @@ export function AddForm() {
           >
             <IconCloudUpload size={28} className="mx-auto text-blue" />
             <div className="mt-[6px] text-[13.5px] font-bold text-ink">{t.add.upT}</div>
-            <div className="mt-[3px] text-[12px] text-muted">{t.add.upS}</div>
+            <div className="mt-[3px] text-[12px] text-muted">{photoBusy ? t.add.photoBusy.replace("{done}", String(photoBusy.done)).replace("{total}", String(photoBusy.total)) : t.add.upS}</div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" multiple id="ph-input" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
           {f.photos.length > 0 && (

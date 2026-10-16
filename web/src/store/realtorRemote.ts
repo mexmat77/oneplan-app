@@ -171,9 +171,9 @@ const err = (what: string) => (e: { message: string } | null) => { if (e) showTo
 export function startRealtorSync(meId: string) {
   if (started || !hasSupabaseEnv() || !meId || typeof window === "undefined") return;
   started = true; me = meId; sb = createClient();
-  setNoteHook((id, text) => {
-    const q = text ? sb!.from("listing_notes").upsert({ user_id: me, listing_id: id, text, updated_at: new Date().toISOString() }) : sb!.from("listing_notes").delete().eq("user_id", me).eq("listing_id", id);
-    void q.then(({ error }) => err("Заметка не сохранена")(error));
+  setNoteHook(async (id, text) => {
+    const { error } = text ? await sb!.from("listing_notes").upsert({ user_id: me, listing_id: id, text, updated_at: new Date().toISOString() }) : await sb!.from("listing_notes").delete().eq("user_id", me).eq("listing_id", id);
+    if (error) throw new Error(error.message);
   });
   setListingWriteHook({
     upsert: (o) => { void upsertListing(o); },

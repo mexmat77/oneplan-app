@@ -53,8 +53,8 @@
     "off": "Off market"
   },
   "deal": {
-    "sale": "Buy",
-    "rent": "Rent",
+    "sale": "Sell",
+    "rent": "Rent out",
     "daily": "Daily rent",
     "transfer": "Assignment"
   },
@@ -98,11 +98,17 @@
     "keyL": "Your API key",
     "epT": "Endpoints",
     "exT": "Sample response",
-    "ep1": "Listings: filters deal, type, il, ilce, price_min/max, rooms — paginated JSON",
-    "ep2": "Single listing: all parameters, photos, price history",
-    "ep3": "Full XML feed of the database, refreshed every 15 minutes",
-    "ep4": "Webhooks: listing.created · price.changed · status.changed — events pushed to your URL",
-    "cta": "Message support to get connected"
+    "cta": "Message support to get connected",
+    "keyGen": "Create API key",
+    "keyRotate": "Regenerate",
+    "keyRotateQ": "The old key stops working immediately — update it on your site. Regenerate?",
+    "keyDone": "Key is ready",
+    "keyErr": "Could not create the key",
+    "keyHint": "The key exposes only your active listings (JSON and XML feed, updated instantly). Do not publish it in your site's front-end code; regenerate if leaked.",
+    "ep1": "Your active listings: filters deal, type, il, ilce, rooms, price_min/max, limit/offset — JSON",
+    "ep2": "One listing: all parameters, photos, price history",
+    "ep3": "XML feed of all active listings for a website or aggregator",
+    "ep4": "Webhooks (listing.created · price.changed · status.changed) — on request"
   },
   "newb2": {
     "salesL": {
@@ -507,6 +513,8 @@
     "add": "Add listing"
   },
   "add": {
+    "photoBusy": "Processing photo {done} of {total}…",
+    "photoFail": "Could not add photos: {n}. Try other files or retake the photo.",
     "badgeL": "Listing label",
     "badgeNone": "No label",
     "badgeHint": "“Reserved” and “Sold” are applied automatically from the listing status and override the manual label.",
@@ -610,8 +618,12 @@
     "ph": "Price history",
     "noteT": "My note",
     "noteS": "Visible only to you: what you liked, what to clarify, what the owner said.",
-    "notePh": "E.g.: price negotiable, keys with the neighbour, show to the Ivanovs first…",
+    "notePh": "What you liked, what to clarify, what the owner said…",
     "noteSaved": "Saved",
+    "noteOnlyYou": "visible only to you",
+    "noteSaving": "Saving…",
+    "noteErr": "Could not save",
+    "noteRetry": "Retry",
     "dropped": "Price reduced",
     "commShort": "Partner",
     "keyT": "Key parameters",

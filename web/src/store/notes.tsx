@@ -10,15 +10,16 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 const EMPTY: Notes = {};
-let hook: ((id: string, text: string) => void) | null = null;
+let hook: ((id: string, text: string) => Promise<void>) | null = null;
 
 export function setNoteHook(fn: typeof hook) { hook = fn; }
 export function seedNotes(map: Notes) { notes = { ...map }; emit(); }
-export function setNote(id: string, text: string) {
+/** Сохраняет заметку; промис падает, если база не приняла (UI показывает «Не удалось сохранить · Повторить», текст остаётся). */
+export async function setNote(id: string, text: string): Promise<void> {
   const v = text.trim();
   if ((notes[id] ?? "") === v) return;
   notes = { ...notes }; if (v) notes[id] = v; else delete notes[id]; emit();
-  hook?.(id, v);
+  if (hook) await hook(id, v);
 }
 export function useNotes(): Notes { return useSyncExternalStore(subscribe, () => notes, () => EMPTY); }
 export function useNote(id: string): string { return useNotes()[id] ?? ""; }

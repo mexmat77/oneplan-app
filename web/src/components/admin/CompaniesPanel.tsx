@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IconBuilding, IconBuildingCommunity, IconChevronRight, IconPlus, IconTrash, IconUsers } from "@tabler/icons-react";
+import { IconBuilding, IconBuildingCommunity, IconChevronRight, IconHome2, IconPlus, IconTrash, IconUsers } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
 import { deleteCompany } from "@/app/admin/actions";
 import { saveOrg } from "@/app/org/actions";
@@ -11,7 +11,7 @@ import { Modal } from "./UsersTable";
 import { confirmDialog } from "@/components/ui/confirm";
 
 export type StaffRow = { id: string; name: string; email: string | null; phone: string | null; role: string; dev_role: string | null; status: string };
-export type CompanyRow = { id: string; name: string; phone: string | null; addr: string | null; lic: string | null; members?: number; staff?: StaffRow[] };
+export type CompanyRow = { id: string; name: string; phone: string | null; addr: string | null; lic: string | null; members?: number; staff?: StaffRow[]; listings?: number };
 type Kind = "agencies" | "developers";
 const input = "w-full rounded-[10px] border border-line px-3 py-[10px] text-[13.5px] outline-none focus:border-blue";
 const label = "mb-[6px] block text-[12.5px] font-semibold text-text-2";
@@ -47,6 +47,7 @@ export function CompaniesPanel({ agencies, developers }: { agencies: CompanyRow[
             <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[11px] bg-blue-tint text-blue-2">{kind === "agencies" ? <IconBuilding size={17} /> : <IconBuildingCommunity size={17} />}</span>
             <div className="min-w-[180px] flex-1"><div className="text-[13.5px] font-bold text-ink">{a.name}</div><div className="text-[12px] text-muted">{[a.addr, a.phone, a.lic && `${t.rl.agLicL}: ${a.lic}`].filter(Boolean).join(" · ") || "—"}</div></div>
             <span className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text"><IconUsers size={13} /> {a.members ?? 0}</span>
+            <span title={kind === "agencies" ? t.cat.agObjs : L("проектов", "projects", "proje")} className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text"><IconHome2 size={13} /> {a.listings ?? 0}</span>
             <button type="button" disabled={pending || (a.members ?? 0) > 0} title={t.rl.agDelH} onClick={(e) => { e.preventDefault(); e.stopPropagation(); void confirmDialog({ text: `${a.name}?`, ok: t.sel.del, danger: true }).then((ok) => ok && run(() => deleteCompany(kind, a.id), t.rl.agDone)); }} className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={14} /></button>
             <IconChevronRight size={16} className="text-muted-2" />
           </Link>

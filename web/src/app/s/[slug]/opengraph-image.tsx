@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { loadPublicSelection, selectionSummary } from "@/lib/selectionsPublic";
+import { ogFonts } from "@/lib/ogFonts";
 
 // OG-картинка подборки для превью ссылки в Telegram/WhatsApp (13.10.2026): обложка первого объекта, число объектов,
 // диапазон цен, районы, риэлтор и агентство, логотип. Шрифт Manrope (кириллица) — с Google Fonts, TTF кэшируется в процессе.
@@ -9,33 +10,12 @@ export const alt = "Подборка объектов OnePlan";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Manrope 500/800 (woff, поддержка кириллицы) лежат в public/fonts — без обращения к Google при каждом превью; читаем с диска,
-// при другом cwd (standalone) — по публичному адресу сайта.
-let fontsP: Promise<{ name: string; data: ArrayBuffer; weight: 500 | 800 }[]> | null = null;
-async function fonts(site: string) {
-  if (!fontsP) fontsP = (async () => {
-    const out: { name: string; data: ArrayBuffer; weight: 500 | 800 }[] = [];
-    for (const w of [500, 800] as const) {
-      try {
-        const [{ readFile }, path] = await Promise.all([import("node:fs/promises"), import("node:path")]);
-        const buf = await readFile(path.join(process.cwd(), "public", "fonts", `manrope-${w}.woff`));
-        out.push({ name: "Manrope", data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer, weight: w });
-      } catch {
-        try { out.push({ name: "Manrope", data: await fetch(`${site}/fonts/manrope-${w}.woff`).then((r) => r.arrayBuffer()), weight: w }); } catch { /* без шрифта картинка не соберётся — ошибка уйдёт в лог ниже */ }
-      }
-    }
-    if (!out.length) fontsP = null; // следующий запрос попробует снова
-    return out;
-  })();
-  return fontsP;
-}
-
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const site = process.env.NEXT_PUBLIC_SITE_URL || "https://one-plan.pro";
   let data: Awaited<ReturnType<typeof loadPublicSelection>> = null, sum: ReturnType<typeof selectionSummary> | null = null;
   try { data = await loadPublicSelection(slug); sum = data ? selectionSummary(data) : null; } catch (e) { console.error("[og] selection", (e as Error).stack); }
-  const fs = await fonts(site);
+  const fs = await ogFonts(site);
   const photos = (sum?.photos ?? []).map((u) => (u.startsWith("http") ? u : `${site}${u.startsWith("/") ? "" : "/"}${u}`)); // относительные пути демо-фото → абсолютные
   const title = sum?.title ?? "OnePlan — подборка объектов";
   return new ImageResponse(

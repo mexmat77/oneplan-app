@@ -72,7 +72,7 @@ function CatalogInner() {
             <span className="flex h-16 w-16 flex-none items-center justify-center rounded-full text-[20px] font-extrabold text-white" style={{ background: r.color }}>{r.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>
             <div className="min-w-[200px] flex-1">
               <div className="text-[19px] font-extrabold leading-[1.25] tracking-[-0.01em] text-ink">{r.name}</div>
-              <div className="mt-[3px] text-[13px] leading-[1.4] text-muted">{agLink(r.ag)} · {r.city[lang]} · {r.langs}</div>
+              <div className="mt-[3px] text-[13px] leading-[1.4] text-muted">{agLink(r.ag)}{[r.city?.[lang], r.langs].filter(Boolean).map((x, i) => <span key={i}> · {x}</span>)}</div>
               <div className="mt-[2px] text-[12.5px] leading-[1.4] text-text-2"><span className="font-bold text-ink">{count}</span> {t.cat.profObjs}</div>
             </div>
             <div className="flex flex-wrap items-center gap-3">

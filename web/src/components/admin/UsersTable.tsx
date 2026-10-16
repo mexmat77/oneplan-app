@@ -5,8 +5,9 @@ import { useState, useTransition } from "react";
 import { Select } from "@/components/ui/Select";
 import {
   IconAlertTriangle, IconCheck, IconCopy, IconKey, IconLink, IconPencil, IconPlus, IconRefresh, IconSearch, IconShieldLock, IconTrash,
-  IconMailForward, IconUserPlus, IconX,
+  IconMailForward, IconUserPlus, IconX, IconHome2,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import { useI18n } from "@/i18n/provider";
 import { validMail } from "@/lib/phone";
 import { createInvite, createUser, deleteUser, resendInvite, setUserPassword, updateUser, type Role, type Status, type UserInput } from "@/app/admin/actions";
@@ -36,7 +37,7 @@ function Tick({ on }: { on: boolean }) {
   return <span className={`flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[6px] border text-white ${on ? "border-blue-2 bg-blue-2" : "border-[#c9d0dc] bg-surface"}`}>{on && <IconCheck size={14} stroke={3} />}</span>;
 }
 
-export function UsersTable({ users, agencies, developers, invites, serviceRole, initialQ }: { users: AdminUser[]; agencies: Company[]; developers: Company[]; invites: { code: string; email: string | null; role: string; created_at: string }[]; serviceRole: boolean; initialQ?: string }) {
+export function UsersTable({ users, agencies, developers, invites, serviceRole, initialQ, listingsBy = {} }: { users: AdminUser[]; agencies: Company[]; developers: Company[]; invites: { code: string; email: string | null; role: string; created_at: string }[]; serviceRole: boolean; initialQ?: string; listingsBy?: Record<string, number> }) {
   const { t, lang } = useI18n();
   const L = (ru: string, en: string, tr: string) => (lang === "RU" ? ru : lang === "TR" ? tr : en);
   const [q, setQ] = useState(initialQ ?? "");
@@ -125,6 +126,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
               </div>
               <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold text-white" style={{ background: ROLE_C[u.role] }}>{roleL[u.role]}{u.role === "developer" && u.dev_role ? ` · ${t.org.roles.developer[u.dev_role as "admin" | "editor" | "manager"] ?? u.dev_role}` : u.role === "realtor" && u.agency_id ? ` · ${t.org.roles.agency[u.agency_role ?? "agent"]}` : ""}</span>
               <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold" style={{ background: st[0], color: st[1] }}>{stL[u.status]}</span>
+              {u.role === "realtor" && <Link href={`/catalog?owner=${u.id}`} title={t.cat.profObjs} className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text hover:bg-blue-tint hover:text-blue"><IconHome2 size={13} /> {listingsBy[u.id] ?? 0}</Link>}
               {u.paid_to && <span className="flex-none text-[11.5px] text-muted">{t.rl.payOk} {new Date(u.paid_to).toLocaleDateString("ru-RU")}</span>}
               {u.status === "pending" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: "active" }), t.rl.apprT)} className="flex-none cursor-pointer rounded-[9px] bg-[#22c15e] px-[13px] py-2 text-[12px] font-bold text-white">{t.rl.ok}</button>}
               {u.status !== "pending" && u.role !== "admin" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: u.status === "active" ? "paused" : "active" }), t.rl.editDone)} className={`flex-none cursor-pointer rounded-[9px] border px-[13px] py-2 text-[12px] font-bold ${u.status === "active" ? "border-line bg-surface text-text" : "border-transparent bg-[#22c15e] text-white"}`}>{u.status === "active" ? t.rl.pause : t.rl.resume}</button>}

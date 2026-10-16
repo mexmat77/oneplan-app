@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/api/health", "/api/crm/inbound", "/login", "/auth", "/s/", "/join/", "/p/", "/d/", "/api/rates", "/api/geo", "/geo/", "/maplibre-gl-worker.mjs"]; // курсы валют — публичные данные ЕЦБ; география (справочник, полигоны OSM) — публичная
+const PUBLIC_PREFIXES = ["/api/health", "/api/crm/inbound", "/api/v1/", "/feed/", "/share/", "/login", "/auth", "/s/", "/join/", "/p/", "/d/", "/api/rates", "/api/geo", "/geo/", "/maplibre-gl-worker.mjs"]; // курсы валют — публичные данные ЕЦБ; география (справочник, полигоны OSM) — публичная
 
 // Refreshes the Supabase session cookie and guards app routes.
 // When Supabase env is missing (local UI work), everything is allowed through.
@@ -40,6 +40,12 @@ export async function proxy(request: NextRequest) {
   // "/" — лендинг (главная), открыт всем
   const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 
+  // Превью ссылки на объект в мессенджерах (16.10.2026): бот без сессии получает публичную обложку /share/obj/<id>
+  // (заголовок, цена, фото, риэлтор), человек — вход как раньше.
+  if (!user && /^\/obj\/[0-9a-f-]{36}$/i.test(pathname) && /Telegram|WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|vkShare|Viber|Skype|iMessage|Applebot|Googlebot|bingbot|TelegramBot/i.test(request.headers.get("user-agent") ?? "")) {
+    const url = request.nextUrl.clone(); url.pathname = `/share${pathname}`; url.search = "";
+    return NextResponse.rewrite(url);
+  }
   if (!user && !isPublic) {
     const next = request.nextUrl.clone();
     next.pathname = "/login";

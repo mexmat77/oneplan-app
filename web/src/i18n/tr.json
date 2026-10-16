@@ -98,11 +98,17 @@
     "keyL": "API anahtarınız",
     "epT": "Uç noktalar",
     "exT": "Örnek yanıt",
-    "ep1": "İlan listesi: deal, type, il, ilce, price_min/max, rooms filtreleri — sayfalı JSON",
-    "ep2": "İlan kartı: tüm parametreler, fotoğraflar, fiyat geçmişi",
-    "ep3": "Tüm veritabanının XML akışı, 15 dakikada bir güncellenir",
-    "ep4": "Webhooklar: listing.created · price.changed · status.changed — olaylar URL’nize gönderilir",
-    "cta": "Bağlantı için desteğe yazın"
+    "cta": "Bağlantı için desteğe yazın",
+    "keyGen": "API anahtarı oluştur",
+    "keyRotate": "Yenile",
+    "keyRotateQ": "Eski anahtar hemen devre dışı kalır — sitenizde güncelleyin. Yenilensin mi?",
+    "keyDone": "Anahtar hazır",
+    "keyErr": "Anahtar oluşturulamadı",
+    "keyHint": "Anahtar yalnızca aktif ilanlarınızı açar (JSON ve XML akışı, anında güncellenir). Sitenizin açık kodunda yayınlamayın; sızarsa yenileyin.",
+    "ep1": "Aktif ilanlarınız: deal, type, il, ilce, rooms, price_min/max, limit/offset filtreleri — JSON",
+    "ep2": "Tek ilan: tüm parametreler, fotoğraflar, fiyat geçmişi",
+    "ep3": "Site veya toplayıcı için tüm aktif ilanların XML akışı",
+    "ep4": "Webhook'lar (listing.created · price.changed · status.changed) — talep üzerine"
   },
   "newb2": {
     "salesL": {
@@ -507,6 +513,8 @@
     "add": "İlan ekle"
   },
   "add": {
+    "photoBusy": "Fotoğraf işleniyor {done} / {total}…",
+    "photoFail": "Fotoğraf eklenemedi: {n}. Başka dosya deneyin veya yeniden çekin.",
     "badgeL": "İlan etiketi",
     "badgeNone": "Etiketsiz",
     "badgeHint": "“Rezerve” ve “Satıldı” ilan durumundan otomatik uygulanır ve manuel etiketi geçersiz kılar.",
@@ -610,8 +618,12 @@
     "ph": "Fiyat geçmişi",
     "noteT": "Notum",
     "noteS": "Yalnızca siz görürsünüz: neyi beğendiniz, neyi netleştirmeli, mal sahibi ne dedi.",
-    "notePh": "Örn.: pazarlık mümkün, anahtar komşuda, önce İvanov'lara gösterilecek…",
+    "notePh": "Neyi beğendiniz, neyi netleştirmeli, mal sahibi ne dedi…",
     "noteSaved": "Kaydedildi",
+    "noteOnlyYou": "yalnızca siz görürsünüz",
+    "noteSaving": "Kaydediliyor…",
+    "noteErr": "Kaydedilemedi",
+    "noteRetry": "Tekrar dene",
     "dropped": "Fiyat düştü",
     "commShort": "Partnere",
     "keyT": "Temel özellikler",
