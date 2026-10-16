@@ -10,6 +10,7 @@ import {
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
 import { createClient } from "@/lib/supabase/client";
+import { useCatUi } from "@/store/catalogUi";
 import { LangSwitch } from "./LangSwitch";
 import { NtfIcon } from "./ntf/NtfIcon";
 import { useI18n } from "@/i18n/provider";
@@ -38,6 +39,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
 }) {
   const { t, lang } = useI18n();
   const path = usePathname();
+  const { setView } = useCatUi(); // «База объектов» в меню всегда открывает список, даже если была карта (16.10.2026)
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [ntfOpen, setNtfOpen] = useState(false);
@@ -103,7 +105,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
           </div>
         )}
         {navItems.map(({ href, label, Icon, badge, active }) => (
-          <Link key={href} data-nav-item="1" href={href} title={label} className={`flex shrink-0 items-center gap-[7px] rounded-[10px] px-[13px] py-[9px] text-[13.5px] font-semibold transition hover:brightness-95 max-md:hidden ${active ? "bg-ink text-white" : "text-text"}`}>
+          <Link key={href} data-nav-item="1" href={href} title={label} onClick={() => { if (href === "/catalog") setView("list"); }} className={`flex shrink-0 items-center gap-[7px] rounded-[10px] px-[13px] py-[9px] text-[13.5px] font-semibold transition hover:brightness-95 max-md:hidden ${active ? "bg-ink text-white" : "text-text"}`}>
             <Icon size={17} stroke={2} />
             <span data-nav-label="1">{label}</span>
             <Badge n={badge} />
@@ -171,7 +173,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
             )}
             <div data-kebab-rows="1">
               {kebabRows.map(({ href, label, Icon, badge, active }) => (
-                <Link key={href} href={href} onClick={() => setMenu(false)} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
+                <Link key={href} href={href} onClick={() => { setMenu(false); if (href === "/catalog") setView("list"); }} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
                   <Icon size={17} />
                   <span className="flex-1">{label}</span>
                   {!!badge && <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-red px-1 text-[10px] font-bold text-white">{badge}</span>}

@@ -337,6 +337,13 @@
   Разметка и логика СГЕНЕРИРОВАНЫ из прототипа: `cd web && node scripts/gen-landing.mjs` → `LandingView.jsx`, `landingLogic.js`,
   `landingHover.css`, `src/i18n/landing/{ru,en,tr}.json` (руками не править — править прототип/генератор). Рукописные: `Landing.tsx`
   (состояние; язык общий с приложением, аудитория в `localStorage['oneplan-lp-prefs']`), `LandingIcon.tsx`, `landingStyle.ts`, `landing.css`.
+  БЛОК «БЕСПЛАТНО И БЕЗОПАСНО» (16.10.2026, просьба пользователя для рекламы: «коротко, ясно, громко»): в прототипе после
+  «Возможностей» — заголовок «Бесплатно для всех риэлторов. CRM — тоже.» и 4 карточки `trustCards` (0 ₺ навсегда · CRM:
+  клиенты не теряются · Шифрование AES-256 (конвертное AES-256-GCM, свой ключ у агентства, мастер-ключ не в базе, 2FA
+  Google Authenticator) · Документы за минуту: DOCX/PDF на печать); ключи `trust_*`, `tr1..4_t/d` в i18n() прототипа RU/EN/TR.
+  Правки — в прототипе + `node scripts/gen-landing.mjs`.
+- «БАЗА ОБЪЕКТОВ» В МЕНЮ = СПИСОК (16.10.2026): клик по пункту в шапке и в мобильном меню ставит `setView("list")` в
+  `store/catalogUi` — даже если до этого была открыта карта; «Назад» со страницы объекта по-прежнему возвращает на карту.
   Шрифты Manrope/PT Sans — `next/font` в `app/page.tsx`; картинки — `public/landing/`. «Войти» → `/login`. Заявка → `app/lead-actions.ts`
   → таблица `leads` (миграция `supabase/migrations/0005_leads.sql`). `/` открыт без входа (`proxy.ts`).
 - Данные кабинета застройщика в Supabase (миграция `web/supabase/migrations/0006_dev_objects.sql`: таблицы `dev_objects`

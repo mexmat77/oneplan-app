@@ -119,6 +119,7 @@ const C = {
       ],
       pFeatsA:[p.f1_t,p.f2_t].map((ft,i)=>({icon:featIcons[i],t:ft,d:[p.f1_d,p.f2_d][i],iconStyle})),
       pFeatsB:[p.f3_t,p.f4_t].map((ft,i)=>({icon:featIcons[i+2],t:ft,d:[p.f3_d,p.f4_d][i],iconStyle})),
+      trustCards:[1,2,3,4].map(i=>({icon:['ti-gift','ti-users-group','ti-shield-lock','ti-file-type-pdf'][i-1],t:t['tr'+i+'_t'],d:t['tr'+i+'_d'],iconStyle})),
       gotoApp:()=>this.gotoApp(),
       scrollToForm:()=>{const el=document.getElementById('lp-lead');if(el)window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-70);},
       pickRoleR:()=>this.setState({role:'r'}),

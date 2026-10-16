@@ -1,12 +1,12 @@
 // СГЕНЕРИРОВАНО `scripts/gen-landing.mjs` из прототипа «OnePlan Главная.dc.html» — не править руками, править генератор/прототип.
-// Разметка лендинга 1:1 с прототипом (строки 28–423). Стили — строки CSS прототипа через `S()`.
+// Разметка лендинга 1:1 с прототипом (строки 28–440). Стили — строки CSS прототипа через `S()`.
 import { Fragment } from "react";
 import { A, S } from "./landingStyle";
 import { Ti } from "./LandingIcon";
 import { LogoMark } from "@/components/Logo";
 
 export function LandingView({ v }) {
-  const { t, p, langBtns, isR, isD, pickR, pickD, switchAud, togRStyle, togDStyle, glowStyle, ctaStyle, noteStyle, eyebrowStyle, hlStyle, steps, faqs, stepNumStyle, otherBtnStyle, heroBoard, chTyping1, chMsg1, chTyping2, chMsg2, chLink, devIsBoard, devIsDocs, devIsPub, tabBoardStyle, tabDocsStyle, tabPubStyle, devTabBoard, devTabDocs, devTabPub, pubCards, docs, spotIcon, legalOpen, legalTitle, legalParas, openKvkk, openPriv, closeLegal, stopProp, selNo, selRooms, selM2, selPrice, selStatus, selChip, mockObjects, pFeatsA, pFeatsB, gotoApp, scrollToForm, pickRoleR, pickRoleD, roleRStyle, roleDStyle, formGlowStyle, leadFormShow, leadDone, leadName, leadCo, leadPhone, leadMail, leadMsg, onLeadName, onLeadCo, onLeadMail, onLeadMsg, onLeadPhone, leadPhoneFmt, leadInputStyle, leadPhoneStyle, leadMailStyle, toggleLeadC, leadChk, leadBtnStyle, submitLead } = v;
+  const { t, p, langBtns, isR, isD, pickR, pickD, switchAud, togRStyle, togDStyle, glowStyle, ctaStyle, noteStyle, eyebrowStyle, hlStyle, steps, faqs, stepNumStyle, otherBtnStyle, heroBoard, chTyping1, chMsg1, chTyping2, chMsg2, chLink, devIsBoard, devIsDocs, devIsPub, tabBoardStyle, tabDocsStyle, tabPubStyle, devTabBoard, devTabDocs, devTabPub, pubCards, docs, spotIcon, legalOpen, legalTitle, legalParas, openKvkk, openPriv, closeLegal, stopProp, selNo, selRooms, selM2, selPrice, selStatus, selChip, mockObjects, pFeatsA, pFeatsB, trustCards, gotoApp, scrollToForm, pickRoleR, pickRoleD, roleRStyle, roleDStyle, formGlowStyle, leadFormShow, leadDone, leadName, leadCo, leadPhone, leadMail, leadMsg, onLeadName, onLeadCo, onLeadMail, onLeadMsg, onLeadPhone, leadPhoneFmt, leadInputStyle, leadPhoneStyle, leadMailStyle, toggleLeadC, leadChk, leadBtnStyle, submitLead } = v;
   return (
     <div style={S("min-height:100vh;background:#fff;position:relative;overflow-x:hidden")}>
     
@@ -237,6 +237,23 @@ export function LandingView({ v }) {
           </div>
         </div>
       </div>
+      </div>
+    
+      <div style={S("max-width:1120px;margin:0 auto;padding:clamp(44px,6vw,76px) clamp(16px,5vw,48px) 0")}>
+        <div style={S("text-align:center;margin-bottom:clamp(26px,3.5vw,40px)")}>
+          <span style={S(eyebrowStyle)}>{t.trust_eyebrow}</span>
+          <h2 style={S("font-size:clamp(26px,4.4vw,40px);font-weight:800;color:#14243f;letter-spacing:-.03em;line-height:1.08;text-wrap:balance")}>{t.trust_title}</h2>
+          <p style={S("font-size:clamp(15px,2vw,18px);color:#5a6472;line-height:1.55;max-width:620px;margin:12px auto 0;text-wrap:pretty")}>{t.trust_sub}</p>
+        </div>
+        <div style={S("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:16px")}>
+          {(trustCards).map((f, f_i) => (<Fragment key={f_i}>
+          <div style={S("background:#fff;border:1px solid #e6e9f0;border-radius:18px;padding:clamp(20px,2.6vw,26px);transition:transform .18s,box-shadow .18s")} className="lph-5">
+            <span style={S(f.iconStyle)}><Ti n={f.icon} /></span>
+            <div style={S("font-size:17px;font-weight:800;color:#14243f;letter-spacing:-.01em;margin-bottom:7px;text-wrap:balance")}>{f.t}</div>
+            <div style={S("font-size:13.5px;color:#6b7688;line-height:1.55;text-wrap:pretty")}>{f.d}</div>
+          </div>
+          </Fragment>))}
+        </div>
       </div>
     
       <div style={S("max-width:1060px;margin:0 auto;padding:clamp(48px,7vw,84px) clamp(16px,5vw,48px) 0")}>
