@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconDotsVertical, IconFolders, IconGlobe, IconHeart, IconHome2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFolders, IconGlobe, IconHeart, IconHome2, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -123,7 +123,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
           items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : [])]}
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
-          <IconDotsVertical size={18} />
+          <IconMenu2 size={19} />
           {reqsN > 0 && <span className="absolute -right-[3px] -top-[3px] h-[10px] w-[10px] rounded-full border-2 border-surface bg-red" />}
         </button>
       </header>

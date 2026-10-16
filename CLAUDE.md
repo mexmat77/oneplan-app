@@ -404,6 +404,8 @@
   realtorRemote; тип `RealtorChannels` в lib/types). Помощник `channelsOf(owner)` в `obj/[id]/page.tsx` даёт иконки и ссылки
   (tel:, wa.me, t.me/<login> или t.me/+номер, viber://chat, max.ru/<id>, WeChat — id подписью) для ряда иконок, мобильной
   шторки и нижней панели (звонок/WhatsApp — если есть, «+N» — остальные + чат). Демо-риэлторы без профиля — все каналы.
+- ИКОНКА МОБИЛЬНОГО МЕНЮ — ОДНА (16.10.2026): три горизонтальные линии `IconMenu2` в шапках обоих кабинетов (риэлтор `TopBar`,
+  застройщик `DevShell`); три точки не использовать.
 - Чат: у каждого участника подпись «кого представляет» — `orgLabel(peer, dict)` из `lib/chat/shared.ts` («Агентство · X», «Застройщик · Y»,
   «Свободный агент», «Команда OnePlan»); поля приходят через общий `PROFILE_SEL` (`role`, `agencies(name)`, `developers(name)`) — не писать свои select.
 - Чат на Supabase (07.10.2026, миграция 0009): `conversations` (a_id/b_id, kind dm|support) + `messages`; поддержка — сервисный
