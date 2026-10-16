@@ -126,6 +126,9 @@
   globals.css ставит `--tw-translate-x/y: 0 !important` + `translate: 0 0` и заменяет анимацию `opl-card` на `opl-fade`
   (с `!important` на transform анимация зависала на первом кадре — opacity 0). Новые fixed-листы центрировать через left/right,
   а не `left-1/2 -translate-x-1/2`.
+  ВЫСОТА ЛИСТОВ — dvh (16.10.2026, «на iPhone 13 Pro Max не видно крестика в поиске»): в iOS Safari `100vh` больше видимой
+  области (адресная строка), лист `92vh` с `bottom: 0` уезжал заголовком за верх экрана; `[data-f-sheet]`, `[data-geo-panel]`,
+  `[data-unit-sheet]` — `92dvh` (LightningCSS оставляет только dvh-объявление; поддержка iOS 15.4+). Новые листы — только dvh/svh.
 - Адаптив: брейкпоинт `md` = 761px (как в прототипе: `max-md:` = ≤760). Все `data-*`-правила прототипа (`data-sheet`,
   `data-fsticky/stuck`, `data-topbar/hdr-hidden`, `data-obj-*`, `data-nb-*`, `data-unit-*`, `.opl-chat-shell` …) лежат в
   `globals.css` — вешать атрибуты на разметку вместо собственных медиа-запросов. `AppChrome` прячет шапку при скролле и
