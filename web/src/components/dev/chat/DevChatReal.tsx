@@ -3,6 +3,8 @@
 // Чат кабинета застройщика на Supabase (разметка — ChatScreen прототипа): слева поддержка и коллеги по компании, справа переписка.
 // Диалог с коллегой создаётся при первом открытии. Перевод — ИИ по кнопке с выбором языка чтения (trStore).
 import { ChatInput } from "@/components/chat/ChatInput";
+import { LinkCard, firstOplLink } from "@/components/chat/LinkPreview";
+import { linkify } from "@/lib/shareListing";
 import { useEffect, useRef, useState } from "react";
 import { IconArrowLeft, IconChecks, IconHeadset, IconLanguage, IconMessage2, IconSearch, IconSend, IconTrash } from "@tabler/icons-react";
 import { useDevT } from "@/i18n/dev";
@@ -121,7 +123,7 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
                     <Avatar name={mine ? me.name : names[m.senderId] ?? "?"} size={32} color={mine ? "#4d7cfe" : curPeer.support ? "#14243f" : curPeer.color} />
                     <div className={`flex min-w-0 max-w-[min(560px,74%)] flex-col ${mine ? "items-end" : "items-start"}`}>
                       {by && <div className="mb-[2px] text-[10.5px] font-bold text-blue-2">{by}</div>}
-                      <div className={`w-fit max-w-full whitespace-pre-wrap break-words rounded-[14px] px-[13px] py-[9px] text-[14px] leading-[1.45] ${mine ? "rounded-br-[5px] bg-blue text-white" : "rounded-bl-[5px] border border-line bg-surface text-ink"}`}>{text}</div>
+                      <div className={`w-fit max-w-full whitespace-pre-wrap break-words rounded-[14px] px-[13px] py-[9px] text-[14px] leading-[1.45] ${mine ? "rounded-br-[5px] bg-blue text-white" : "rounded-bl-[5px] border border-line bg-surface text-ink"}`}>{linkify(text).map((p, i) => (typeof p === "string" ? p : <a key={i} href={p.url} target="_blank" rel="noreferrer" className="underline underline-offset-2 break-all">{p.url.replace(/^https?:\/\//, "")}</a>))}{(() => { const u = firstOplLink(linkify(text).filter((p): p is { url: string } => typeof p !== "string").map((p) => p.url)); return u ? <LinkCard url={u} mine={mine} /> : null; })()}</div>
                       <div className={`mx-[2px] mt-[3px] flex items-center gap-1 text-[11px] text-[#98a1af] ${mine ? "flex-row-reverse" : ""}`}><span>{when(m.createdAt)}</span>{mine && <IconChecks size={14} className={m.readAt ? "text-blue" : "text-[#b3bcc9]"} />}</div>
                       {trState === "loading" && <div className={infoCls}><IconLanguage size={12} />{tt.tr_loading}</div>}
                       {trState === "fallback" && <div className={infoCls}><IconLanguage size={12} />{t.px.tr_fallback}</div>}

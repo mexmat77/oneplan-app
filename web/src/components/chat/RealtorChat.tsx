@@ -16,6 +16,7 @@ import { hideConversation, listChatPeers, openDmWith, openSupport, useConversati
 import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { normPh } from "@/lib/phone";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { LinkCard, firstOplLink } from "@/components/chat/LinkPreview";
 import { linkify } from "@/lib/shareListing";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -163,6 +164,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
                       <div className={`max-w-[72%] rounded-[14px] px-[13px] py-[10px] ${mine ? "rounded-br-[4px] bg-blue-2 text-white" : "rounded-bl-[4px] border border-line bg-surface text-ink"}`}>
                         {by && <div className="mb-[3px] text-[10.5px] font-bold text-blue-2">{by}</div>}
                         <div className="whitespace-pre-wrap break-words text-[13.5px] leading-[1.5]">{linkify(text).map((p, i) => (typeof p === "string" ? p : <a key={i} href={p.url} target="_blank" rel="noreferrer" className="underline underline-offset-2 break-all">{p.url.replace(/^https?:\/\//, "")}</a>))}</div>
+                        {(() => { const u = firstOplLink(linkify(text).filter((p): p is { url: string } => typeof p !== "string").map((p) => p.url)); return u ? <LinkCard url={u} mine={mine} /> : null; })()}
                         {tr && foreign && (
                           <div onClick={() => translated && setOrig((o) => ({ ...o, [m.id]: !o[m.id] }))} className={`mt-[5px] flex items-center gap-1 text-[10.5px] opacity-75 ${translated ? "cursor-pointer hover:brightness-95" : ""}`}>
                             <IconSparkles size={11} /> {!translated ? (e?.fallback ? `${m.lang}` : "…") : isOrig ? `${m.lang} · ${t.chat.orig} — ${t.chat.ai} ⇄` : `${m.lang} → ${lang} · ${t.chat.ai}`}
