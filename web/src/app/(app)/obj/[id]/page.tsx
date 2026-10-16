@@ -29,7 +29,7 @@ import { showToast } from "@/components/ui/toast";
 import { confirmDialog } from "@/components/ui/confirm";
 import { TransferModal } from "@/components/ui/TransferModal";
 import { transferListing } from "@/app/(app)/transfer-actions";
-import { patchRemoteListing, upsertLocalListing } from "@/store/listings";
+import { clearExp, patchRemoteListing, upsertLocalListing } from "@/store/listings";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { usePrefs } from "@/store/prefs";
 import { addReport, type ReportReason } from "@/store/admin";
@@ -399,7 +399,7 @@ export default function ObjPage() {
       </Modal>
 
       <ExportModal id={o.id} open={exp} onClose={() => setExp(false)} />
-      <TransferModal open={transfer} scope={isAdmin ? "all" : "agency"} emptyText={t.obj.transferNone} title={t.obj.transferT} hint={t.obj.transferH} busy={trBusy} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { await transferListing(o.id, toId); patchRemoteListing(o.id, { owner: toId }); setTransfer(false); showToast(t.obj.transferDone.replace("{name}", target?.name ?? "")); router.push("/mine"); } catch (e) { showToast((e as Error).message); } finally { setTrBusy(false); } }} />
+      <TransferModal open={transfer} scope={isAdmin ? "all" : "agency"} emptyText={t.obj.transferNone} title={t.obj.transferT} hint={t.obj.transferH} busy={trBusy} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { await transferListing(o.id, toId); patchRemoteListing(o.id, { owner: toId }); clearExp(o.id); setTransfer(false); showToast(t.obj.transferDone.replace("{name}", target?.name ?? "")); router.push("/mine"); } catch (e) { showToast((e as Error).message); } finally { setTrBusy(false); } }} />
     </div>
   );
 }

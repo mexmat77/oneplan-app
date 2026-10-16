@@ -1,8 +1,10 @@
 "use server";
 
-// API-ключ риэлтора для выгрузки объявлений (0031): показать / создать / перевыпустить. Ключ хранится в profiles.api_key.
+// API-ключи для выгрузки объявлений: риэлтора (profiles.api_key, 0031) и агентства (agencies.api_key, 0032 — только
+// администратор агентства). Показать / создать / перевыпустить.
 import { randomBytes } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getApiKey(): Promise<string | null> {
@@ -11,12 +13,34 @@ export async function getApiKey(): Promise<string | null> {
   const { data } = await sb.from("profiles").select("api_key").eq("id", me.id).maybeSingle();
   return (data?.api_key as string | null) ?? null;
 }
-/** Новый ключ (старый перестаёт действовать сразу). */
 export async function rotateApiKey(): Promise<string> {
   const me = await getCurrentUser(); if (!me) throw new Error("no-session");
   const key = `opl_live_${randomBytes(16).toString("hex")}`;
   const sb = await createClient();
   const { error } = await sb.from("profiles").update({ api_key: key }).eq("id", me.id);
+  if (error) throw new Error(error.message);
+  return key;
+}
+/** Агентство текущего пользователя и его право на ключ агентства (администратор агентства или админ платформы). */
+async function agencyCtx() {
+  const me = await getCurrentUser(); if (!me) return null;
+  const admin = createAdminClient();
+  const { data: p } = await admin.from("profiles").select("agency_id").eq("id", me.id).maybeSingle();
+  const agencyId = (p?.agency_id as string | null) ?? null;
+  if (!agencyId) return null;
+  const { data: m } = await admin.from("org_members").select("role").eq("org_kind", "agency").eq("org_id", agencyId).eq("profile_id", me.id).maybeSingle();
+  const canManage = me.role === "admin" || m?.role === "owner";
+  const { data: ag } = await admin.from("agencies").select("name, api_key").eq("id", agencyId).maybeSingle();
+  return { admin, agencyId, canManage, name: String(ag?.name ?? ""), key: (ag?.api_key as string | null) ?? null };
+}
+export async function getAgencyApiKey(): Promise<{ name: string; key: string | null; canManage: boolean } | null> {
+  const c = await agencyCtx(); if (!c) return null;
+  return { name: c.name, key: c.canManage ? c.key : null, canManage: c.canManage };
+}
+export async function rotateAgencyApiKey(): Promise<string> {
+  const c = await agencyCtx(); if (!c || !c.canManage) throw new Error("forbidden");
+  const key = `opl_agency_${randomBytes(16).toString("hex")}`;
+  const { error } = await c.admin.from("agencies").update({ api_key: key }).eq("id", c.agencyId);
   if (error) throw new Error(error.message);
   return key;
 }

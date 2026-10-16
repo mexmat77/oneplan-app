@@ -352,7 +352,16 @@
   `(app)/api-actions.ts` (getApiKey/rotateApiKey), страница «API и выгрузка» показывает ключ, создаёт/перевыпускает, даёт готовые
   ссылки; маршруты `/api/v1/listings` (JSON, фильтры deal/type/il/ilce/rooms/price_min/max/limit/offset, CORS *),
   `/api/v1/listings/<uuid>`, `/feed/<key>.xml`; общая логика `lib/apiListings.ts` (только активные объявления владельца ключа);
-  публичные пути в proxy; 7) админ платформы передаёт объект любому активному риэлтору, в т. ч. в другое агентство
+  публичные пути в proxy. ВЫГРУЗКА v1 ДОДЕЛАНА (16.10.2026, «напишем выгрузку агентствам и ТЗ на API»): ключ АГЕНТСТВА
+  `agencies.api_key` (`opl_agency_…`, 0032; создаёт администратор агентства — `getAgencyApiKey/rotateAgencyApiKey`, блок
+  «Ключ агентства» в «API и выгрузка») отдаёт объявления всех риэлторов агентства с именем/телефоном каждого; `scopeByKey` в
+  lib/apiListings различает ключи; ответ расширен (status, badge, original_lang/machine_translated, location с mahalle_name и
+  sea_distance_m, building, terms, cover, realtor); параметры status (active|reserved|sold|off|all), updated_since, realtor,
+  deal/type/ilce через запятую; `/api/v1/dictionaries` — подписи кодов RU/EN/TR + география + rooms/currencies; CORS и OPTIONS.
+  ПУБЛИЧНАЯ ДОКУМЕНТАЦИЯ-ТЗ для разработчиков сайтов — `/api/docs` (app/api/docs/page.tsx, RU, без входа, ссылка со страницы
+  «API и выгрузка»); при изменении API править её же. ПЕРЕДАЧА СБРАСЫВАЕТ ПОРТАЛЫ: `transfer_listing` (0032) ставит
+  `exports = '{}'`, страница — `clearExp(id)` (у каждого риэлтора свои кабинеты в классифайдах — решение пользователя);
+  7) админ платформы передаёт объект любому активному риэлтору, в т. ч. в другое агентство
   (`transfer_listing` в 0031; `TransferModal scope="all"` для админа на странице объекта); 8) «ONETEAM · ·» на странице
   риэлтора — пустые город/языки больше не рисуют разделители; 9) «Управление → Пользователи»: у риэлтора чип с числом активных
   объектов (ссылка на его страницу), «Организации»: у агентства — объекты его риэлторов, у застройщика — проекты в кабинете;

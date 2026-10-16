@@ -132,6 +132,8 @@ export function toggleExp(id: string, portal: string) {
   writeOf(META, { ...cur, expMap: { ...cur.expMap, [id]: next } });
   if (remote.active && writeHook && remote.list.some((x) => x.id === id)) writeHook.exports(id, next);
 }
+/** Сброс отметок порталов у объявления (после передачи другому риэлтору — база сбрасывает сама, 0032). */
+export function clearExp(id: string) { const cur = readMeta(); const m = { ...cur.expMap }; delete m[id]; writeOf(META, { ...cur, expMap: m }); }
 /** Экспорт на порталы из базы → в meta (при загрузке объявлений). */
 export function seedExpMap(map: Record<string, Record<string, boolean>>) {
   const cur = readMeta();

@@ -108,7 +108,13 @@
     "ep1": "Aktif ilanlarınız: deal, type, il, ilce, rooms, price_min/max, limit/offset filtreleri — JSON",
     "ep2": "Tek ilan: tüm parametreler, fotoğraflar, fiyat geçmişi",
     "ep3": "Site veya toplayıcı için tüm aktif ilanların XML akışı",
-    "ep4": "Webhook'lar (listing.created · price.changed · status.changed) — talep üzerine"
+    "ep4": "Webhook'lar (listing.created · price.changed · status.changed) — talep üzerine",
+    "ep5": "Sözlükler: kodların RU/EN/TR etiketleri, coğrafya, oda sayıları, para birimleri",
+    "agKeyL": "Ajans anahtarı",
+    "agKeyGen": "Ajans anahtarı oluştur",
+    "agKeyHint": "Ajans anahtarı, tüm emlakçıların ilanlarını her birinin adı ve telefonuyla verir — ajans sitesi için. Ajans yöneticisi oluşturur ve yeniler.",
+    "agKeyOnlyAdmin": "Ajans anahtarını ajans yöneticisi oluşturur ve yalnızca o görür.",
+    "docsLink": "Geliştirici belgeleri"
   },
   "newb2": {
     "salesL": {
