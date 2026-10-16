@@ -9,6 +9,7 @@ import { deleteCompany } from "@/app/admin/actions";
 import { saveOrg } from "@/app/org/actions";
 import { Modal } from "./UsersTable";
 import { confirmDialog } from "@/components/ui/confirm";
+import { showToast } from "@/components/ui/toast";
 
 export type StaffRow = { id: string; name: string; email: string | null; phone: string | null; role: string; dev_role: string | null; status: string };
 export type CompanyRow = { id: string; name: string; phone: string | null; addr: string | null; lic: string | null; members?: number; staff?: StaffRow[]; listings?: number };
@@ -48,7 +49,7 @@ export function CompaniesPanel({ agencies, developers }: { agencies: CompanyRow[
             <div className="min-w-[180px] flex-1"><div className="text-[13.5px] font-bold text-ink">{a.name}</div><div className="text-[12px] text-muted">{[a.addr, a.phone, a.lic && `${t.rl.agLicL}: ${a.lic}`].filter(Boolean).join(" · ") || "—"}</div></div>
             <span className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text"><IconUsers size={13} /> {a.members ?? 0}</span>
             <span title={kind === "agencies" ? t.cat.agObjs : L("проектов", "projects", "proje")} className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text"><IconHome2 size={13} /> {a.listings ?? 0}</span>
-            <button type="button" disabled={pending || (a.members ?? 0) > 0} title={t.rl.agDelH} onClick={(e) => { e.preventDefault(); e.stopPropagation(); void confirmDialog({ text: `${a.name}?`, ok: t.sel.del, danger: true }).then((ok) => ok && run(() => deleteCompany(kind, a.id), t.rl.agDone)); }} className="flex h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-red hover:bg-[#fdf1f1] disabled:cursor-default disabled:opacity-30"><IconTrash size={15} /></button>
+            <button type="button" disabled={pending} title={(a.members ?? 0) > 0 ? t.rl.agDelH : t.sel.del} onClick={(e) => { e.preventDefault(); e.stopPropagation(); if ((a.members ?? 0) > 0) { showToast(t.rl.agDelH); return; } void confirmDialog({ text: `${a.name}?`, ok: t.sel.del, danger: true }).then((ok) => ok && run(() => deleteCompany(kind, a.id), t.rl.agDone)); }} className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red"><IconTrash size={15} /></button>
             <IconChevronRight size={16} className="text-muted-2" />
           </Link>
         ))}
