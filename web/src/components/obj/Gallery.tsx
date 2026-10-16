@@ -5,7 +5,7 @@
 // 3441–3448 / 4308–4313 (shared `galIdx`, side photos, 1600×1000 lightbox URL).
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconChevronLeft, IconChevronRight, IconPhoto, IconX } from "@tabler/icons-react";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useScrollLock } from "@/hooks/useScrollLock";
 
 const ARROW = "absolute top-1/2 flex h-[42px] w-[42px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[rgba(255,255,255,.95)] text-[18px] text-ink shadow-[0_4px_14px_rgba(20,36,63,.18)] hover:bg-white";
 const LB_ARROW = "absolute top-1/2 flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[rgba(255,255,255,.14)] text-[21px] text-white hover:bg-[rgba(255,255,255,.28)]";
@@ -22,6 +22,8 @@ export function Gallery({ photos, title, overlay }: { photos: string[]; title: s
   const sw = useRef({ x: 0, y: 0, drag: false, w: 1, i: 0 });
 
   useScrollLock(lb || mg);
+  useBackClose(lb, () => setLb(false));
+  useBackClose(mg, () => setMg(false));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

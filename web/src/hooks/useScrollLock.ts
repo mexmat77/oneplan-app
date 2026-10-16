@@ -3,7 +3,7 @@
 // Body scroll-lock exactly like the prototype (lines 2582–2586): while any modal is open the body is
 // `position:fixed; top:-scrollY` and the scroll position is restored on unlock. Several modals may be
 // open at once, so locks are counted.
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 let locks = 0;
 let lockY = 0;
@@ -45,4 +45,25 @@ export function useEscape(active: boolean, onEsc: () => void) {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [active, onEsc]);
+}
+
+/** «Назад» браузера (кнопка / свайп на телефоне) закрывает открытый оверлей, а не уходит со страницы (16.10.2026,
+ *  правило пользователя: галерея фото закрывается как крестиком). Пока `open`, в историю добавляется запись с меткой;
+ *  popstate → `onClose`; закрытие крестиком/Esc снимает нашу запись через `history.back()`, чтобы история не засорялась.
+ *  Запись копирует состояние Next (`__NA`), иначе роутер при возврате перезагружал бы страницу. */
+export function useBackClose(open: boolean, onClose: () => void) {
+  const ref = useRef(onClose);
+  useEffect(() => { ref.current = onClose; });
+  useEffect(() => {
+    if (!open) return;
+    const tag = `ovl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    let popped = false;
+    try { window.history.pushState({ ...(window.history.state ?? {}), oplOverlay: tag }, "", window.location.href); } catch { return; }
+    const onPop = () => { popped = true; ref.current(); };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (!popped && (window.history.state as { oplOverlay?: string } | null)?.oplOverlay === tag) window.history.back();
+    };
+  }, [open]);
 }

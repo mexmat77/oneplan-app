@@ -6,7 +6,7 @@ import {
   IconBuildingCommunity, IconBuildingSkyscraper, IconCalendarDollar, IconChevronLeft, IconChevronRight, IconHeart, IconKey, IconMessageCircle,
   IconPhoto, IconRuler2, IconRulerMeasure, IconStairsUp, IconX,
 } from "@tabler/icons-react";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useScrollLock } from "@/hooks/useScrollLock";
 import { useI18n } from "@/i18n/provider";
 import { eqOf, fmt } from "@/lib/money";
 import { TAG_L, UNIT_ST, unitPhotos, type Project, type Unit, type UnitStatus } from "@/lib/newb";
@@ -32,6 +32,8 @@ export function UnitSheet({ p, u, fav, onFav, onClose, onReq }: Props) {
   const go = (d: number) => setIdx((ui + d + up.length) % up.length);
   const swipe = useSwipe((d) => go(d));
   useScrollLock(true);
+  useBackClose(true, onClose);
+  useBackClose(mg, () => setMg(false));
   const na = u.st === "sold" || u.st === "na";
   const rows: [ReactNode, string, string][] = [
     [<IconBuildingSkyscraper key="b" size={20} />, t.newb.head.bl, p.bl > 1 ? `B${u.bl}` : "—"],

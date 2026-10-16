@@ -4,7 +4,7 @@
 // logic 3995–4007 / 4013–4015. Photos change with the category chips: the parent re-keys this component by category.
 import { useEffect, useState, type ReactNode } from "react";
 import { IconChevronLeft, IconChevronRight, IconPhoto, IconX } from "@tabler/icons-react";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useScrollLock } from "@/hooks/useScrollLock";
 import { MobileStack } from "./MobileStack";
 import { useSwipe } from "./swipe";
 
@@ -22,6 +22,8 @@ export function NbGallery({ photos, title, badge, watch }: Props) {
   // Prototype `openLb`: ≤760 opens the stack, otherwise the lightbox at the given index.
   const open = (idx: number) => { if (window.innerWidth <= 760) setMg(true); else setLb(idx); };
   useScrollLock(lb >= 0 || mg);
+  useBackClose(lb >= 0, () => setLb(-1));
+  useBackClose(mg, () => setMg(false));
 
   // Prototype `_onKey` (2560–2572): Esc closes the stack, then the lightbox; ←/→ page the lightbox.
   useEffect(() => {
