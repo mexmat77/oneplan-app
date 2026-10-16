@@ -24,7 +24,8 @@ function CatalogInner() {
   const count = r ? all.filter((o) => o.owner === owner).length : 0; // prototype `rProf.count` counts sold too
   // Страница агентства: все его риэлторы из базы и их объекты (пока данные тестовые — `REALTORS`; реквизиты из стора админки)
   const realtors = useRealtorList(); // с входом — профили из базы, демо-справочник только без входа
-  const team = useMemo(() => (agency ? realtors.filter((x) => x.ag === agency) : []), [agency, realtors]);
+  // на странице агентства — только риэлторы с объектами в базе (16.10.2026, «если 0 квартир — не показывать»)
+  const team = useMemo(() => (agency ? realtors.filter((x) => x.ag === agency && all.some((o) => o.owner === x.id)) : []), [agency, realtors, all]);
   const teamIds = useMemo(() => team.map((x) => x.id), [team]);
   const agMeta = useAdmin().agencies.find((a) => a.name === agency);
   const agCount = agency ? all.filter((o) => teamIds.includes(o.owner)).length : 0;
