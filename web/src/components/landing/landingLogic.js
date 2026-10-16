@@ -120,6 +120,17 @@ const C = {
       pFeatsA:[p.f1_t,p.f2_t].map((ft,i)=>({icon:featIcons[i],t:ft,d:[p.f1_d,p.f2_d][i],iconStyle})),
       pFeatsB:[p.f3_t,p.f4_t].map((ft,i)=>({icon:featIcons[i+2],t:ft,d:[p.f3_d,p.f4_d][i],iconStyle})),
       trustCards:[1,2,3,4].map(i=>({icon:['ti-gift','ti-users-group','ti-shield-lock','ti-file-type-pdf'][i-1],t:t['tr'+i+'_t'],d:t['tr'+i+'_d'],iconStyle})),
+      crmTabs:[{l:t.crm_over,n:'',on:false},{l:t.crm_cl,n:'4',on:true},{l:t.crm_dl,n:'2',on:false},{l:t.crm_tk,n:'3',on:false}].map(x=>({l:x.l,n:x.n,st:'display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;border-radius:8px;padding:6px 10px;white-space:nowrap;'+(x.on?'background:#14243f;color:#fff':'color:#6b7688;background:#f4f6f9')})),
+      crmRows:(()=>{const k=s.tick%8;const pulse=';animation:opPulse 1.5s ease infinite';
+        const base=[
+          {ini:'MA',bg:'#4d7cfe',name:'Mehmet A.',ph:'+90 5•• ••• 55 12',st:t.cst_work,stc:'#1565c0',stb:'#e7f0fd',dl:t.cdl_open,dlc:'#0f9d6b',dlb:'#e4f6ee',act:t.cact_1},
+          {ini:'OK',bg:'#c9a35b',name:'Olga K.',ph:'+90 5•• ••• 83 40',st:t.cst_show,stc:'#7b4fd0',stb:'#efe7fb',dl:k>=6?t.cdl_open:t.cdl_none,dlc:k>=6?'#0f9d6b':'#8a93a2',dlb:k>=6?'#e4f6ee':'#f0f2f6',dlx:k>=6?pulse:'',act:k>=4?t.cact_2b:t.cact_2},
+          {ini:'DS',bg:'#0f9d6b',name:'Daniel S.',ph:'+49 1•• ••• 77 21',st:k>=5?t.cst_show:k>=2?t.cst_work:t.cst_new,stc:k>=5?'#7b4fd0':k>=2?'#1565c0':'#9c7420',stb:k>=5?'#efe7fb':k>=2?'#e7f0fd':'#fdf5df',stx:(k===2||k===5)?pulse:'',dl:t.cdl_none,dlc:'#8a93a2',dlb:'#f0f2f6',act:t.cact_3},
+          {ini:'NR',bg:'#e5484d',name:'Natalya R.',ph:'+7 9•• ••• 14 06',st:t.cst_visit,stc:'#c2410c',stb:'#feeadb',dl:t.cdl_open,dlc:'#0f9d6b',dlb:'#e4f6ee',act:t.cact_4}
+        ];
+        const lead={ini:'AT',bg:'#7b4fd0',name:'Ayşe T.',ph:'+90 5•• ••• 20 97',st:t.cst_lead,stc:'#b42318',stb:'#fde8e8',stx:pulse,dl:t.cdl_none,dlc:'#8a93a2',dlb:'#f0f2f6',act:t.cact_0,live:true};
+        const rows=k>=1?[lead,...base.slice(0,3)]:base;
+        return rows.map((r,i)=>({...r,stx:r.stx||'',dlx:r.dlx||'',live:!!r.live,d:(i*80)+'ms'}));})(),
       gotoApp:()=>this.gotoApp(),
       scrollToForm:()=>{const el=document.getElementById('lp-lead');if(el)window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-70);},
       pickRoleR:()=>this.setState({role:'r'}),

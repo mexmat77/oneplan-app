@@ -1,12 +1,12 @@
 // СГЕНЕРИРОВАНО `scripts/gen-landing.mjs` из прототипа «OnePlan Главная.dc.html» — не править руками, править генератор/прототип.
-// Разметка лендинга 1:1 с прототипом (строки 28–440). Стили — строки CSS прототипа через `S()`.
+// Разметка лендинга 1:1 с прототипом (строки 28–467). Стили — строки CSS прототипа через `S()`.
 import { Fragment } from "react";
 import { A, S } from "./landingStyle";
 import { Ti } from "./LandingIcon";
 import { LogoMark } from "@/components/Logo";
 
 export function LandingView({ v }) {
-  const { t, p, langBtns, isR, isD, pickR, pickD, switchAud, togRStyle, togDStyle, glowStyle, ctaStyle, noteStyle, eyebrowStyle, hlStyle, steps, faqs, stepNumStyle, otherBtnStyle, heroBoard, chTyping1, chMsg1, chTyping2, chMsg2, chLink, devIsBoard, devIsDocs, devIsPub, tabBoardStyle, tabDocsStyle, tabPubStyle, devTabBoard, devTabDocs, devTabPub, pubCards, docs, spotIcon, legalOpen, legalTitle, legalParas, openKvkk, openPriv, closeLegal, stopProp, selNo, selRooms, selM2, selPrice, selStatus, selChip, mockObjects, pFeatsA, pFeatsB, trustCards, gotoApp, scrollToForm, pickRoleR, pickRoleD, roleRStyle, roleDStyle, formGlowStyle, leadFormShow, leadDone, leadName, leadCo, leadPhone, leadMail, leadMsg, onLeadName, onLeadCo, onLeadMail, onLeadMsg, onLeadPhone, leadPhoneFmt, leadInputStyle, leadPhoneStyle, leadMailStyle, toggleLeadC, leadChk, leadBtnStyle, submitLead } = v;
+  const { t, p, langBtns, isR, isD, pickR, pickD, switchAud, togRStyle, togDStyle, glowStyle, ctaStyle, noteStyle, eyebrowStyle, hlStyle, steps, faqs, stepNumStyle, otherBtnStyle, heroBoard, chTyping1, chMsg1, chTyping2, chMsg2, chLink, devIsBoard, devIsDocs, devIsPub, tabBoardStyle, tabDocsStyle, tabPubStyle, devTabBoard, devTabDocs, devTabPub, pubCards, docs, spotIcon, legalOpen, legalTitle, legalParas, openKvkk, openPriv, closeLegal, stopProp, selNo, selRooms, selM2, selPrice, selStatus, selChip, mockObjects, pFeatsA, pFeatsB, trustCards, crmTabs, crmRows, gotoApp, scrollToForm, pickRoleR, pickRoleD, roleRStyle, roleDStyle, formGlowStyle, leadFormShow, leadDone, leadName, leadCo, leadPhone, leadMail, leadMsg, onLeadName, onLeadCo, onLeadMail, onLeadMsg, onLeadPhone, leadPhoneFmt, leadInputStyle, leadPhoneStyle, leadMailStyle, toggleLeadC, leadChk, leadBtnStyle, submitLead } = v;
   return (
     <div style={S("min-height:100vh;background:#fff;position:relative;overflow-x:hidden")}>
     
@@ -253,6 +253,33 @@ export function LandingView({ v }) {
             <div style={S("font-size:13.5px;color:#6b7688;line-height:1.55;text-wrap:pretty")}>{f.d}</div>
           </div>
           </Fragment>))}
+        </div>
+        <div style={S("max-width:920px;margin:clamp(26px,3.5vw,40px) auto 0")}>
+          <div style={S("border:1px solid #e6e9f0;border-radius:16px;overflow:hidden;box-shadow:0 30px 70px rgba(20,36,63,.14);background:#fff")}>
+            <div style={S("height:40px;background:#f0f2f6;border-bottom:1px solid #e6e9f0;display:flex;align-items:center;gap:6px;padding:0 15px")}><span style={S("width:11px;height:11px;border-radius:50%;background:#e5484d")}></span><span style={S("width:11px;height:11px;border-radius:50%;background:#f0ad00")}></span><span style={S("width:11px;height:11px;border-radius:50%;background:#43a047")}></span><span style={S("flex:1")}></span><span style={S("font-size:11px;color:#9aa4b5")}>one-plan.pro/crm</span></div>
+            <div style={S("background:#fff;padding:clamp(14px,2.6vw,22px);display:flex;flex-direction:column;gap:12px;animation:opRise .35s ease both")}>
+              <div style={S("display:flex;align-items:center;gap:6px;flex-wrap:wrap")}>
+                {(crmTabs).map((tb, tb_i) => (<Fragment key={tb_i}><span style={S(tb.st)}>{tb.l}{(tb.n) ? (<><span style={S("opacity:.7")}>{tb.n}</span></>) : null}</span></Fragment>))}
+                <span style={S("flex:1")}></span>
+                <span style={S("display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:#0f9d6b;background:#e4f6ee;border-radius:100px;padding:4px 10px;white-space:nowrap")}><Ti n={"ti-shield-lock"} /> {t.crm_enc}</span>
+              </div>
+              <div style={S("display:flex;flex-direction:column;border:1px solid #e6e9f0;border-radius:12px;overflow:hidden")}>
+                {(crmRows).map((r, r_i) => (<Fragment key={r_i}>
+                <div style={S(`display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid #eef1f6;animation:opRise .3s ease both;animation-delay:${r.d}`)}>
+                  <span style={S(`width:34px;height:34px;border-radius:50%;background:${r.bg};color:#fff;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800`)}>{r.ini}</span>
+                  <span style={S("flex:1;min-width:0;display:flex;flex-direction:column;gap:2px")}>
+                    <span style={S("font-size:12.5px;font-weight:700;color:#14243f;font-family:'Manrope',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
+                    <span style={S("display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#8a93a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}><Ti n={"ti-lock"} style={S("font-size:11px")} /> {r.ph}</span>
+                  </span>
+                  <span style={S(`font-size:10.5px;font-weight:700;border-radius:100px;padding:4px 9px;white-space:nowrap;color:${r.stc};background:${r.stb}${r.stx}`)}>{(r.live) ? (<><span style={S("display:inline-block;width:6px;height:6px;border-radius:50%;background:#e5484d;margin-right:5px;animation:opBlink 1s infinite")}></span></>) : null}{r.st}</span>
+                  <span style={S(`font-size:10.5px;font-weight:700;border-radius:100px;padding:4px 9px;white-space:nowrap;color:${r.dlc};background:${r.dlb}${r.dlx}`)}>{r.dl}</span>
+                  <span style={S("font-size:11px;color:#6b7688;white-space:nowrap;flex:none;min-width:120px;text-align:right")}>{r.act}</span>
+                </div>
+                </Fragment>))}
+              </div>
+              <div style={S("display:flex;align-items:center;gap:6px;font-size:11px;color:#8a93a2")}><Ti n={"ti-lock"} style={S("color:#0f9d6b")} /> {t.crm_hint}</div>
+            </div>
+          </div>
         </div>
       </div>
     
