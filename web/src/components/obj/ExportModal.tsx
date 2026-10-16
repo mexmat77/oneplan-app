@@ -12,7 +12,7 @@ import { showToast } from "@/components/ui/toast";
 import { toggleExp, useListingMeta } from "@/store/listings";
 import portalsJson from "@/mock/portals.json";
 
-export type Portal = { k: string; name: string; bg: string; akd?: boolean; op?: boolean };
+export type Portal = { k: string; name: string; bg: string; akd?: boolean; op?: boolean; noImport?: boolean };
 export const PORTALS = portalsJson as Portal[];
 export const isLivePortal = (p: Portal) => !!(p.op || p.akd);
 /** Number of live portals switched on for a listing (prototype `expActive` / `expN`). */
@@ -50,6 +50,7 @@ export function ExportModal({ id, open, onClose }: { id: string; open: boolean; 
       <p className="mb-4 text-[13px] leading-[1.55] text-text-2 [text-wrap:pretty]">{t.exp.s}</p>
       <div className="flex flex-col gap-[9px]">
         {PORTALS.map((p) => {
+          const noImp = !!p.noImport; // портал не принимает объявления из внешних систем (Sahibinden, 17.10.2026) — честно, без «скоро»
           const soon = !isLivePortal(p);
           const on = !soon && !!pm[p.k];
           return (
@@ -59,14 +60,14 @@ export function ExportModal({ id, open, onClose }: { id: string; open: boolean; 
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-[7px] text-[13.5px] font-bold text-ink">
-                  {p.name} {soon ? <span className="rounded-[8px] bg-bg-2 px-[7px] py-[2px] text-[10px] font-extrabold uppercase tracking-[.04em] text-muted">{t.exp.soonB}</span> : <LiveB label={t.exp.liveB} />}
+                  {p.name} {noImp ? <span className="rounded-[8px] bg-red-tint px-[7px] py-[2px] text-[10px] font-extrabold uppercase tracking-[.04em] text-red">{t.exp.noImpB}</span> : soon ? <span className="rounded-[8px] bg-bg-2 px-[7px] py-[2px] text-[10px] font-extrabold uppercase tracking-[.04em] text-muted">{t.exp.soonB}</span> : <LiveB label={t.exp.liveB} />}
                 </div>
-                <div className="text-[11.5px]" style={{ color: soon ? "#aab1bd" : on ? "#0f9d6b" : "#aab1bd" }}>{soon ? t.exp.soonS : on ? t.exp.on : t.exp.off}</div>
+                <div className="text-[11.5px]" style={{ color: soon ? "#aab1bd" : on ? "#0f9d6b" : "#aab1bd" }}>{noImp ? t.exp.noImpS : soon ? t.exp.soonS : on ? t.exp.on : t.exp.off}</div>
               </div>
               <div
                 role="switch"
                 aria-checked={on}
-                onClick={() => { if (soon) { showToast(t.exp.soonT); return; } toggleExp(id, p.k); }}
+                onClick={() => { if (noImp) { showToast(t.exp.noImpT); return; } if (soon) { showToast(t.exp.soonT); return; } toggleExp(id, p.k); }}
                 className="relative h-6 w-10 flex-none rounded-[12px] transition-[background] duration-150 hover:brightness-[.96]"
                 style={{ cursor: soon ? "not-allowed" : "pointer", background: on ? "#22c15e" : "#d5dce6" }}
               >

@@ -2,7 +2,8 @@
   {
     "k": "sah",
     "name": "Sahibinden",
-    "bg": "#f0ad00"
+    "bg": "#f0ad00",
+    "noImport": true
   },
   {
     "k": "hep",
