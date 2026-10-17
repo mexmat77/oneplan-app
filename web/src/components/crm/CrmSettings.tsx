@@ -23,6 +23,8 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const c = t.crm;
   const crm = useCrm();
   const ro = crm.me.access !== "full";
+  const isOwner = crm.me.role === "owner";
+  const roAdm = ro || !isOwner; // источники, токены — администратор агентства
   const [src, setSrc] = useState<{ name: string; kind: SourceKind }>({ name: "", kind: "manual" });
   const [token, setToken] = useState<{ id: string; token: string } | null>(null);
   const [audit, setAudit] = useState<Awaited<ReturnType<typeof listAudit>> | null>(null);
@@ -53,7 +55,6 @@ export function CrmSettings({ sub }: { sub?: string }) {
   const [nb, setNb] = useState({ name: "", city: "" });
   const [reasons, setReasons] = useState<string[]>(() => crm.me.lostReasons);
   const [newReason, setNewReason] = useState("");
-  const isOwner = crm.me.role === "owner";
   const teamErr = (e: unknown) => { const m = (e as Error).message; showToast(m === "last-owner" ? c.team.lastOwner : m === "forbidden" ? c.team.forbidden : m === "readonly" ? c.errReadonly : c.errSave); };
   async function addBranch() { if (!nb.name.trim()) return; try { const branches = await saveBranch({ name: nb.name, city: nb.city, headId: null }); setTeam((v) => (v ? { ...v, branches } : v)); setNb({ name: "", city: "" }); crm.refresh(); } catch (e) { teamErr(e); } }
   async function branchHead(b: Branch, headId: string | null) { try { const branches = await saveBranch({ id: b.id, name: b.name, city: b.city ?? "", headId }); setTeam((v) => (v ? { ...v, branches } : v)); } catch (e) { teamErr(e); } }
@@ -79,24 +80,24 @@ export function CrmSettings({ sub }: { sub?: string }) {
 
       {show("sources") && <div className={card}>
         <div className="text-[15px] font-semibold text-ink">{c.set.sourcesT}</div>
-        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS} <a href={`/api/docs?lang=${lang.toLowerCase()}#crm-inbound`} target="_blank" rel="noreferrer" className="font-semibold text-blue-2 hover:underline">{c.set.sourcesDoc}</a></p>
+        <p className="mb-3 mt-1 text-[12.5px] text-muted">{c.set.sourcesS}{!isOwner && <> <span className="font-semibold text-text">{c.set.ownerOnly}</span></>} <a href={`/api/docs?lang=${lang.toLowerCase()}#crm-inbound`} target="_blank" rel="noreferrer" className="font-semibold text-blue-2 hover:underline">{c.set.sourcesDoc}</a></p>
         <div className="flex flex-col gap-2">
           {crm.sources.map((s) => (
             <div key={s.id} className="rounded-[12px] border border-line p-2">
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={s.active} onChange={() => toggleSrc(s)} disabled={ro} /></label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={s.active} onChange={() => toggleSrc(s)} disabled={roAdm} /></label>
                 <span className={`flex-1 text-[13.5px] font-semibold ${s.active ? "text-ink" : "text-muted line-through"}`}>{sourceName(s, t)} <span className="text-[11.5px] font-normal text-muted">· {c.srcKinds[s.kind]}</span></span>
-                {s.kind === "site" && <button type="button" disabled={ro} onClick={() => newToken(s)} title={c.set.token} className={`${btnS} px-3 py-[6px] text-[12px]`}><IconKey size={13} /> {s.hasToken ? c.set.tokenHave : c.set.tokenNew}</button>}
-                <button type="button" disabled={ro} onClick={() => delSrc(s)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red"><IconTrash size={14} /></button>
+                {s.kind === "site" && <button type="button" disabled={roAdm} onClick={() => newToken(s)} title={c.set.token} className={`${btnS} px-3 py-[6px] text-[12px]`}><IconKey size={13} /> {s.hasToken ? c.set.tokenHave : c.set.tokenNew}</button>}
+                <button type="button" disabled={roAdm} onClick={() => delSrc(s)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-muted hover:bg-red-tint hover:text-red"><IconTrash size={14} /></button>
               </div>
               {token?.id === s.id && <div className="mt-2 rounded-[10px] bg-bg-2 p-3 text-[12.5px]"><div className="mb-1 font-bold text-ink">{c.set.tokenShow}</div><code className="block break-all rounded bg-surface px-2 py-1 text-[12px]">{token.token}</code><div className="mt-2 text-muted">{fill(c.set.tokenHow, { url: inboundUrl })}</div></div>}
             </div>
           ))}
         </div>
         <div className="mt-3 grid grid-cols-[1fr_140px_auto] gap-2">
-          <input value={src.name} onChange={(e) => setSrc({ ...src, name: e.target.value })} placeholder={c.set.srcName} disabled={ro} className={inp} />
-          <Select value={src.kind} onChange={(v) => setSrc({ ...src, kind: v as SourceKind })} options={(Object.keys(c.srcKinds) as SourceKind[]).map((k) => ({ value: k, label: c.srcKinds[k] }))} size="sm" disabled={ro} />
-          <button type="button" disabled={ro} onClick={addSrc} className={btnS}><IconPlus size={14} /></button>
+          <input value={src.name} onChange={(e) => setSrc({ ...src, name: e.target.value })} placeholder={c.set.srcName} disabled={roAdm} className={inp} />
+          <Select value={src.kind} onChange={(v) => setSrc({ ...src, kind: v as SourceKind })} options={(Object.keys(c.srcKinds) as SourceKind[]).map((k) => ({ value: k, label: c.srcKinds[k] }))} size="sm" disabled={roAdm} />
+          <button type="button" disabled={roAdm} onClick={addSrc} className={btnS}><IconPlus size={14} /></button>
         </div>
       </div>}
 

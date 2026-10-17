@@ -186,6 +186,12 @@ export const hashOf = (c: Ctx, kind: string, raw: string) => valueHash(c.ws.kind
 export function assertWrite(c: Ctx) {
   if (c.access !== "full") throw new Error("readonly");
 }
+/** Настройки всего пространства (реквизиты, шаблоны, источники и токены, воронки, причины отказа) меняет только администратор
+ *  агентства / владелец; риэлторы и руководители филиалов их видят и используют (17.10.2026, вопрос пользователя «все видят реквизиты?»). */
+export function assertOwner(c: Ctx) {
+  assertWrite(c);
+  if (c.role !== "owner") throw new Error("forbidden");
+}
 
 /** Ключ данных ЧУЖОГО пространства сервисным клиентом (перенос клиента другому риэлтору, 12.10.2026): создаёт при отсутствии. */
 export async function dekOfAdmin(admin: SupabaseClient, ws: Ws, actor: string): Promise<Buffer> {

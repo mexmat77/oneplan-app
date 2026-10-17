@@ -25,7 +25,7 @@ export function CompanySettings() {
   const { t } = useI18n();
   const c = t.crm; const d = c.docs;
   const crm = useCrm();
-  const ro = crm.me.access !== "full";
+  const ro = crm.me.access !== "full" || !crm.me.isAdmin; // реквизиты/шаблоны правит администратор агентства, команда видит и использует
   const [list, setList] = useState<CompanyProfile[] | null>(null);
   const [edit, setEdit] = useState<{ open: boolean; pr: CompanyProfile | null }>({ open: false, pr: null });
   useEffect(() => { getCompanies().then(setList).catch(() => setList([])); }, []);
@@ -36,7 +36,7 @@ export function CompanySettings() {
   return (
     <div className={card}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div><div className="text-[15px] font-semibold text-ink">{d.company}</div><p className="mt-1 text-[12.5px] text-muted">{d.companyS2}</p></div>
+        <div><div className="text-[15px] font-semibold text-ink">{d.company}</div><p className="mt-1 text-[12.5px] text-muted">{d.companyS2}{!crm.me.isAdmin && <> <span className="font-semibold text-text">{d.ownerOnly}</span></>}</p></div>
         <button type="button" disabled={ro} onClick={() => setEdit({ open: true, pr: null })} className={btnP}><IconPlus size={14} /> {d.addCompany}</button>
       </div>
       {!list ? <div className="mt-3 text-[13px] text-muted">…</div> : list.length === 0 ? (
@@ -114,7 +114,7 @@ export function TemplateSettings() {
   const { t, lang } = useI18n();
   const c = t.crm; const d = c.docs;
   const crm = useCrm();
-  const ro = crm.me.access !== "full";
+  const ro = crm.me.access !== "full" || !crm.me.isAdmin; // реквизиты/шаблоны правит администратор агентства, команда видит и использует
   const [tpls, setTpls] = useState<TemplateInfo[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [fieldsOf, setFieldsOf] = useState<string | null>(null);
@@ -143,7 +143,7 @@ export function TemplateSettings() {
   return (
     <div className={card}>
       <div className="text-[15px] font-semibold text-ink">{d.templates}</div>
-      <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS2} {d.enabledHint}</p>
+      <p className="mb-3 mt-1 text-[12.5px] text-muted">{d.templatesS2} {d.enabledHint}{!crm.me.isAdmin && <> <span className="font-semibold text-text">{d.ownerOnly}</span></>}</p>
       {tpls && (
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[12.5px] font-semibold text-text">{d.setSummary.replace("{n}", String(enabledN)).replace("{m}", String(tpls.length))}</span>

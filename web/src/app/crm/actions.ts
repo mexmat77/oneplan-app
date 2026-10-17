@@ -4,7 +4,7 @@
 // здесь, на сервере (ключ в .env). В браузер уходят уже расшифрованные значения только тех записей, что разрешены RLS.
 import { translate } from "@/app/(dev)/dev/chat/actions";
 import type { Lang } from "@/i18n";
-import { assertWrite, audit, branchesOf, crmCtx, dec, dekOfAdmin, enc, forgetRole, hashOf, lostReasonsOf, membersOf, wsOfProfile, type Ctx } from "@/lib/crm/server";
+import { assertWrite, audit, branchesOf, crmCtx, dec, dekOfAdmin, enc, forgetRole, hashOf, lostReasonsOf, membersOf, wsOfProfile, type Ctx, assertOwner } from "@/lib/crm/server";
 import { decField, encField, normalizeContact, valueHash } from "@/lib/crm/crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notify } from "@/lib/notify";
@@ -348,7 +348,7 @@ export async function deleteTask(id: string): Promise<void> {
 
 // ---------- настройки: этапы и источники ----------
 export async function saveStages(stages: { id?: string; key: string; name: Record<string, string>; kind: Stage["kind"]; color: string | null }[], scope: StageScope = "deal"): Promise<Stage[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   // свои имена этапов: введённое на одном языке переводится на два других (замечание пользователя 12.10.2026)
   const named = await Promise.all(stages.map(async (x) => {
     const name: Record<string, string> = { ...x.name };
@@ -367,19 +367,19 @@ export async function saveStages(stages: { id?: string; key: string; name: Recor
   return loadStages(c, scope);
 }
 export async function saveSource(src: { id?: string; name: string; kind: Source["kind"]; active: boolean }): Promise<Source[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const { error } = await c.sb.from("crm_sources").upsert({ id: src.id || crypto.randomUUID(), ws_kind: c.ws.kind, ws_id: c.ws.id, name: src.name.trim(), kind: src.kind, active: src.active }, { onConflict: "id" });
   if (error) throw new Error(error.message);
   return loadSources(c);
 }
 export async function deleteSource(id: string): Promise<Source[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   await c.sb.from("crm_sources").delete().eq("id", id);
   return loadSources(c);
 }
 /** Токен для внешнего сайта (показывается один раз). */
 export async function issueSourceToken(id: string): Promise<string> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const { token, hash } = newSourceToken();
   const { error } = await c.sb.from("crm_sources").update({ token_hash: hash }).eq("id", id);
   if (error) throw new Error(error.message);
@@ -618,7 +618,7 @@ export async function deleteBranch(id: string): Promise<Branch[]> {
   return branchesOf(c.sb, c.ws);
 }
 export async function saveLostReasons(list: string[]): Promise<string[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   if (c.role !== "owner") throw new Error("forbidden");
   const clean = [...new Set(list.map((x) => x.trim()).filter(Boolean))];
   const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, lost_reasons: clean }, { onConflict: "ws_kind,ws_id" });

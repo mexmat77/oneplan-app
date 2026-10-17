@@ -2,7 +2,7 @@
 
 // Документы CRM: реквизиты компании, шаблоны (встроенные + свои DOCX), генерация DOCX/PDF из сделки, свои файлы, ссылки.
 // Файлы — закрытый bucket "crm" (путь <ws_kind>/<ws_id>/…, RLS хранилища по ws), параметры документа — зашифрованы.
-import { assertWrite, audit, crmCtx, dec, enc, type Ctx } from "@/lib/crm/server";
+import { assertWrite, audit, crmCtx, dec, enc, type Ctx, assertOwner } from "@/lib/crm/server";
 import { BUILTIN, BUILTIN_MAP, FIELD_MAP } from "@/lib/crm/docFields";
 import { builtinTemplate, docxToPdf, listPlaceholders, pdfAvailable, prepareData, renderDocx } from "@/lib/crm/docs";
 import { GEO } from "@/lib/seed";
@@ -41,7 +41,7 @@ export async function getCompany(): Promise<Company> {
   return (list.find((x) => x.isDefault) ?? list[0])?.fields ?? {};
 }
 export async function saveCompanyProfile(pr: { id?: string; label: string; isDefault: boolean; fields: Company }): Promise<CompanyProfile[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const clean: Company = {}; for (const [k, v] of Object.entries(pr.fields)) if (v?.trim()) clean[k] = v.trim();
   const list = await loadProfiles(c);
   const id = pr.id || crypto.randomUUID();
@@ -53,7 +53,7 @@ export async function saveCompanyProfile(pr: { id?: string; label: string; isDef
   return final;
 }
 export async function deleteCompanyProfile(id: string): Promise<CompanyProfile[]> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const list = (await loadProfiles(c)).filter((x) => x.id !== id);
   if (list.length && !list.some((x) => x.isDefault)) list[0].isDefault = true;
   await storeProfiles(c, list);
@@ -90,7 +90,7 @@ async function templatesOff(c: Ctx): Promise<string[]> {
 }
 /** Встроенный шаблон включить/выключить в пространстве (0025); свой — поле active. */
 export async function setTemplateEnabled(id: string, on: boolean): Promise<void> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   if (id.startsWith("builtin:")) {
     const key = id.slice(8); const cur = await templatesOff(c);
     const next = on ? cur.filter((k) => k !== key) : [...new Set([...cur, key])];
@@ -103,7 +103,7 @@ export async function setTemplateEnabled(id: string, on: boolean): Promise<void>
 }
 /** Все встроенные шаблоны разом: включить (templates_off = []) или отключить (все ключи) — «свой комплект» (16.10.2026). */
 export async function setAllBuiltinEnabled(on: boolean): Promise<void> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const next = on ? [] : BUILTIN.filter((t) => t.for.length).map((t) => t.key);
   const { error } = await c.sb.from("crm_settings").upsert({ ws_kind: c.ws.kind, ws_id: c.ws.id, templates_off: next }, { onConflict: "ws_kind,ws_id" });
   if (error) throw new Error(error.message);
@@ -120,7 +120,7 @@ export async function listTemplates(all = false): Promise<TemplateInfo[]> {
 }
 /** Свой шаблон: DOCX с {{group.key}}; поля определяются по плейсхолдерам (неизвестные ключи — тоже поля, тип text). */
 export async function uploadTemplate(fd: FormData): Promise<TemplateInfo> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const file = fd.get("file") as File | null;
   const name = String(fd.get("name") ?? "").trim() || (file?.name ?? "template").replace(/\.docx$/i, "");
   const kind = String(fd.get("kind") ?? "other");
@@ -161,13 +161,13 @@ export async function templateUrl(id: string): Promise<string> {
   return tmpFileUrl(c, `tpl-${id}`, t.buf, "docx", t.name);
 }
 export async function updateTemplate(id: string, patch: { name?: string; kind?: string }): Promise<void> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const upd: Record<string, unknown> = {}; if (patch.name?.trim()) upd.name = patch.name.trim(); if (patch.kind) upd.kind = patch.kind;
   const { error } = await c.sb.from("crm_doc_templates").update(upd).eq("id", id);
   if (error) throw new Error(error.message);
 }
 export async function deleteTemplate(id: string): Promise<void> {
-  const c = await crmCtx(); assertWrite(c);
+  const c = await crmCtx(); assertOwner(c);
   const { data } = await c.sb.from("crm_doc_templates").select("path").eq("id", id).maybeSingle();
   if (data?.path) await c.sb.storage.from("crm").remove([data.path as string]);
   await c.sb.from("crm_doc_templates").delete().eq("id", id);
