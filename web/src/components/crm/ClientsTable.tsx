@@ -209,7 +209,7 @@ export function ClientsTable() {
         {/* архив — отдельная вкладка справа: архивные клиенты скрыты из «Активных», но остаются для истории и поиска дублей */}
         <button type="button" onClick={() => setStatus(status === "active" ? "archived" : "active")} className={`-mb-px ml-auto flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${status === "archived" ? "border-blue-2 text-ink" : "border-transparent text-muted hover:text-ink"}`}><IconArchive size={14} /> {c.archived}{status === "archived" && list ? <span className="rounded-full bg-bg-2 px-[7px] py-[1px] text-[11px] text-muted">{base.length}</span> : null}</button>
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px]">
+      <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px] max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
         <span className="mr-1 text-muted">{c.tbl.stageRow}</span>
         {crm.cstages.map((st) => { const n = stageCount(st.key); const on = stage.includes(st.key); return <button key={st.id} type="button" onClick={() => setF({ cstage: on ? stage.filter((k) => k !== st.key) : [...stage, st.key] })} aria-pressed={on} className={`inline-flex h-7 cursor-pointer items-center gap-[6px] rounded-full border px-3 ${on ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}><span className="h-2 w-2 rounded-full" style={{ background: st.color ?? "#8a93a2" }} />{stageName(st, t, lang)}<span className={on ? "text-white/70" : "text-muted"}>{n}</span></button>; })}
         {stage.length > 0 && <button type="button" onClick={() => setF({ cstage: [] })} className="inline-flex h-7 cursor-pointer items-center gap-1 px-2 text-[12px] font-medium text-muted hover:text-red"><IconX size={12} /> {c.tbl.clear}</button>}
@@ -395,7 +395,7 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
   const pop = "absolute left-0 top-[calc(100%+4px)] z-30 w-[260px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]";
   const item = (on: boolean) => `flex h-8 w-full cursor-pointer items-center rounded-[5px] px-2 text-left text-[13px] ${on ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`;
   return (
-    <div ref={ref} className="mb-3 flex flex-wrap items-center gap-[6px]">
+    <div ref={ref} className="mb-3 flex flex-wrap items-center gap-[6px] max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
       {pills.map((p) => (
         <span key={p.key} className="relative inline-flex h-7 items-center rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 text-[12.5px] text-sel-ink">
           <button type="button" onClick={() => { setOpen(open?.key === p.key ? null : { mode: "value", key: p.key, anchor: p.key }); setRange({ min: flt.budgetMin, max: flt.budgetMax }); }} className="cursor-pointer"><span className="text-sel-ink/70">{p.label}:</span> <span className="font-semibold">{p.value}</span></button>
