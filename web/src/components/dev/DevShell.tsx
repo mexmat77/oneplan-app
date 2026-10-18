@@ -124,7 +124,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
         <button type="button" onClick={() => setNotifOpen((v) => !v)} title={tt.notif} className={`${iconBtn()} max-md:h-10 max-md:w-10 max-md:text-ink`}><IconBell size={19} />{badge(unread)}</button>
         <div className="flex flex-none gap-1 rounded-[9px] bg-bg-2 p-[3px] max-md:hidden">{(["RU", "EN", "TR"] as const).map((lg) => langBtn(lg))}</div>
         <UserMenu className="max-md:hidden" name={me.name} sub={roles[role]} email={me.email} avatar={me.avatar} logoutLabel={t.btn_logout}
-          items={[{ label: t.prof_title, href: "/dev/profile", icon: <IconUser size={16} /> }, { label: tt.notif, href: "/dev/notifications", icon: <IconBell size={16} />, badge: unread }, { label: tt.chat, href: "/dev/chat", icon: <IconMessageCircle size={16} />, badge: dmUnread }]}
+          items={[{ label: t.prof_title, href: "/dev/profile", icon: <IconUser size={16} /> }, { label: tt.chat, href: "/dev/chat", icon: <IconMessageCircle size={16} />, badge: dmUnread }]}
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" onClick={() => setSheet(true)} className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[19px] text-ink md:hidden" aria-label={t.nav_objects}><IconMenu2 size={19} /></button>
       </header>
