@@ -893,6 +893,10 @@
     "copied": "Copied",
     "sent": "Invitation sent",
     "apprT": "Access granted",
+    "autoT": "Auto-approve requests",
+    "autoS": "Requests from the sign-in form and the landing page are approved instantly: the account is created and the “set your password” e-mail is sent automatically; you assign the organization and role later in “Users”. If the e-mail is already registered, the request stays for manual review.",
+    "autoOn": "On — requests are approved instantly",
+    "autoOff": "Off — requests wait for an administrator",
     "declT": "Application declined",
     "mailFromInvite": "Address from the invitation — the e-mail was sent here, it cannot be changed",
     "invMake": "Create link",
@@ -1014,6 +1018,10 @@
     "req_new": {
       "t": "Access request",
       "s": "{name} · {email}"
+    },
+    "req_auto": {
+      "t": "Request approved automatically",
+      "s": "{name} · {email} — attach to an organization in “Users”"
     },
     "lead_new": {
       "t": "Request from the landing page",

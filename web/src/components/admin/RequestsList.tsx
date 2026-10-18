@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { IconCheck, IconClock, IconX } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
-import { approveLead, approveRequest, declineLead, declineRequest, restoreAccess, type ApproveOrg, type Role } from "@/app/admin/actions";
+import { approveLead, approveRequest, declineLead, declineRequest, restoreAccess, setAutoApprove, type ApproveOrg, type Role } from "@/app/admin/actions";
+import { Switch } from "@/components/ui/Switch";
+import { IconUserCheck } from "@tabler/icons-react";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 
@@ -11,10 +13,13 @@ import { Select } from "@/components/ui/Select";
 export type AccessRequest = { id: string; name: string; phone: string; email: string; agency: string | null; company: string | null; role: Role; lang: string; status: string; created_at: string; src: "login" | "site"; message?: string ; kind?: "access" | "unblock" };
 
 type Org = { id: string; name: string };
-export function RequestsList({ rows, orgs }: { rows: AccessRequest[]; orgs: { agencies: Org[]; developers: Org[] } }) {
+export function RequestsList({ rows, orgs, autoOn = false }: { rows: AccessRequest[]; orgs: { agencies: Org[]; developers: Org[] }; autoOn?: boolean }) {
   const { t, lang } = useI18n();
   const L = (ru: string, en: string, tr: string) => (lang === "RU" ? ru : lang === "TR" ? tr : en);
   const [err, setErr] = useState("");
+  // автопринятие (18.10.2026): тумблер в шапке раздела, состояние оптимистично
+  const [auto, setAuto] = useState(autoOn);
+  const toggleAuto = (v: boolean) => { setAuto(v); setErr(""); setAutoApprove(v).catch((e) => { setAuto(!v); setErr((e as Error).message); }); };
   const [toast, setToast] = useState("");
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<unknown>, ok: string) => { setErr(""); start(async () => { try { await fn(); setToast(ok); setTimeout(() => setToast(""), 2600); } catch (e) { setErr((e as Error).message); } }); };
@@ -41,6 +46,14 @@ export function RequestsList({ rows, orgs }: { rows: AccessRequest[]; orgs: { ag
   return (
     <>
       <p className="mb-[14px] text-[13px] text-text-2">{L("Заявки с главной страницы и с формы входа. «Принять» создаёт аккаунт и отправляет письмо со ссылкой для установки пароля.", "Requests from the home page and the login form. “Accept” creates the account and e-mails a link to set the password.", "Ana sayfadan ve giriş formundan gelen başvurular. “Kabul” hesabı oluşturur ve şifre bağlantısı gönderir.")}</p>
+      <div className={`mb-[14px] flex flex-wrap items-start gap-[14px] rounded-[14px] border px-4 py-[14px] ${auto ? "border-[#bfe3cf] bg-green-tint" : "border-line bg-surface"}`}>
+        <span className={`flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[10px] ${auto ? "bg-green text-white" : "bg-bg-2 text-muted"}`}><IconUserCheck size={19} /></span>
+        <div className="min-w-[240px] flex-1">
+          <div className="text-[14px] font-bold text-ink">{t.rl.autoT}</div>
+          <div className="mt-[3px] text-[12.5px] leading-[1.5] text-text-2">{t.rl.autoS}</div>
+        </div>
+        <Switch checked={auto} onChange={toggleAuto} label={auto ? t.rl.autoOn : t.rl.autoOff} />
+      </div>
       {err && <div className="mb-3 rounded-[11px] bg-red-tint px-[13px] py-[11px] text-[12.5px] text-red-2">{err}</div>}
       {list.length === 0 && <div className="rounded-[14px] border border-dashed border-[#dfe4ec] bg-surface p-[26px] text-center text-[13px] text-muted">{L("Заявок пока нет", "No requests yet", "Henüz başvuru yok")}</div>}
       <div className="flex flex-col gap-[10px]">

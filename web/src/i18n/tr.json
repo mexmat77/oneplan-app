@@ -893,6 +893,10 @@
     "copied": "Kopyalandı",
     "sent": "Davet gönderildi",
     "apprT": "Erişim açıldı",
+    "autoT": "Başvuruları otomatik kabul et",
+    "autoS": "Giriş formundan ve ana sayfadan gelen başvurular hemen kabul edilir: hesap oluşturulur, «şifre belirleyin» e-postası otomatik gider; kurum ve rolü sonra «Kullanıcılar»da atarsınız. E-posta zaten kayıtlıysa başvuru elle karara kalır.",
+    "autoOn": "Açık — başvurular hemen kabul edilir",
+    "autoOff": "Kapalı — başvurular yönetici kararını bekler",
     "declT": "Başvuru reddedildi",
     "mailFromInvite": "Davetteki adres — e-posta buraya gönderildi, değiştirilemez",
     "invMake": "Bağlantı oluştur",
@@ -1014,6 +1018,10 @@
     "req_new": {
       "t": "Erişim başvurusu",
       "s": "{name} · {email}"
+    },
+    "req_auto": {
+      "t": "Başvuru otomatik kabul edildi",
+      "s": "{name} · {email} — «Kullanıcılar»da kuruma bağlayın"
     },
     "lead_new": {
       "t": "Ana sayfadan başvuru",

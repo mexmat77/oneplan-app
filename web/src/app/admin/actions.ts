@@ -154,6 +154,19 @@ async function orgForApprove(admin: ReturnType<typeof createAdminClient>, role: 
   return { kind, id: data.id as string };
 }
 
+// Автопринятие заявок (18.10.2026): настройка платформы `app_settings.auto_approve` — см. lib/autoApprove.ts.
+export async function getAutoApprove(): Promise<boolean> {
+  await requireAdmin();
+  const { data } = await createAdminClient().from("app_settings").select("value").eq("key", "auto_approve").maybeSingle();
+  return !!(data?.value as { on?: boolean } | null)?.on;
+}
+export async function setAutoApprove(on: boolean): Promise<void> {
+  const me = await requireAdmin();
+  const { error } = await createAdminClient().from("app_settings").upsert({ key: "auto_approve", value: { on, by: me?.id ?? null, at: new Date().toISOString() }, updated_at: new Date().toISOString() }, { onConflict: "key" });
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/requests");
+}
+
 // Заявка на доступ → аккаунт (письмо-приглашение, человек задаёт пароль) + участие в организации с ролью; заявка принята.
 export async function approveRequest(requestId: string, role: Role = "realtor", org?: ApproveOrg) {
   await requireAdmin();

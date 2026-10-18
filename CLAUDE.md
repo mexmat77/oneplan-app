@@ -522,6 +522,14 @@
   поднят до 86400 (максимум Supabase) через Management API; тексты magic_link/recovery тоже «24 часа». Заливка шаблонов —
   `node scripts/upload-email-templates.mjs` (после каждого `gen-email-templates.mjs`). Собственные письма (ссылка-приглашение `/join/<code>`,
   повторное приглашение из админки `resendInvite`) шлёт `lib/mail.ts` через Resend API по `lib/mail/templates.generated.ts` (тот же генератор).
+- АВТОПРИНЯТИЕ ЗАЯВОК (18.10.2026, решение пользователя «сейчас принимать всех подряд, отвечать будем долго»): таблица
+  `app_settings` (миграция 0036, key → jsonb, RLS is_admin()), ключ `auto_approve` {on}. Тумблер «Автопринятие заявок»
+  вверху «Управление → Заявки» (`RequestsList`, `getAutoApprove/setAutoApprove` в admin/actions). При включённом —
+  `lib/autoApprove.ts` (`isAutoApproveOn`, `autoApproveAccount`) из `submitAccessRequest` и `submitLead`: приглашение
+  «задайте пароль», профиль с ролью из заявки и `agency_text`, заявка accepted / lead handled, уведомление админам
+  `req_auto` (ссылка в «Пользователи»), пользователю — `access_approved`. В организацию НЕ добавляем (чужой не должен
+  попасть в CRM агентства по совпадению названия) — админ привязывает потом. Занятая почта → заявка остаётся «новой» и
+  идёт обычное `req_new`.
 - Админка на одних данных (07.10.2026): «Управление» (`/admin/*`) и экран прототипа «Риэлторы» (`/rls`) читают Supabase:
   `app/(app)/rls/page.tsx` (server) грузит profiles/agencies/reports/invites → `components/rls/RlsScreen.tsx` (`remote`), без ключей —
   демо-стор `store/admin`. Действия в обоих экранах — `app/admin/actions.ts` (`updateUser`, `createUser`, `saveCompany`, `createInvite`,

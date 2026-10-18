@@ -4,6 +4,7 @@ import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 // Уведомления (таблица `notifications`, RLS «только свои»): пишет сервер сервисным ключом, читает клиент (`lib/notifications/client.ts`).
 // `kind` + `payload` — текст собирается на клиенте по словарю `ntfk` на языке получателя.
 export type NtfKind =
+  | "req_auto"
   | "req_new" | "lead_new" | "unblock_req" | "report_new" | "join_registered"            // админам платформы
   | "access_approved" | "access_restored" | "report_resolved" | "invite_accepted" | "team_added" // пользователю
   | "dev_status" | "dev_price" | "dev_newobj"                                              // команде застройщика
