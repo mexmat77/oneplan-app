@@ -57,10 +57,13 @@ export function CrmShell({ base }: { base: string }) {
     const hdr = document.querySelector<HTMLElement>("header[data-topbar], [data-dev] > header");
     if (!hdr) return;
     const root = document.documentElement;
-    const apply = () => root.style.setProperty("--crm-top", `${Math.round(hdr.getBoundingClientRect().height)}px`);
+    // шапка риэлтора на телефоне прячется при прокрутке (data-hdr-hidden) — тогда панели CRM прилипают к самому верху,
+    // иначе над ними оставалась «дыра» в 62px, сквозь которую ехало содержимое (18.10.2026, «вёрстка в мобильном поехала»)
+    const apply = () => root.style.setProperty("--crm-top", hdr.dataset.hdrHidden === "1" ? "0px" : `${Math.round(hdr.getBoundingClientRect().height)}px`);
     apply();
     const ro = new ResizeObserver(apply); ro.observe(hdr);
-    return () => { ro.disconnect(); root.style.removeProperty("--crm-top"); };
+    const mo = new MutationObserver(apply); mo.observe(hdr, { attributes: true, attributeFilter: ["data-hdr-hidden"] });
+    return () => { ro.disconnect(); mo.disconnect(); root.style.removeProperty("--crm-top"); };
   }, []);
   // «/» — фокус на поиск, Esc — закрыть меню
   useEffect(() => {

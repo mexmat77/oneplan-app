@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { DealStageChip, ReqStatusChip } from "./ChipMenu";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
 import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { confirmDialog } from "@/components/ui/confirm";
@@ -260,10 +260,13 @@ function PriorityChip({ value, onChange, disabled }: { value: Priority | null; o
   const { t } = useI18n();
   const c = t.crm;
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLSpanElement>(null);
+  // клик/тап мимо и Esc закрывают меню (18.10.2026, «по пустому месту тыкаешь — не убирается»); раньше — только уход мыши
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent | TouchEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); }; const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); }; document.addEventListener("mousedown", h, true); document.addEventListener("touchstart", h, true); document.addEventListener("keydown", k, true); return () => { document.removeEventListener("mousedown", h, true); document.removeEventListener("touchstart", h, true); document.removeEventListener("keydown", k, true); }; }, [open]);
   const col = value ? PRIO_COLOR[value] : "#8a93a2";
   const opts: (Priority | null)[] = ["hot", "warm", "cold", null];
   return (
-    <span className="relative inline-block">
+    <span ref={box} className="relative inline-block">
       <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95 disabled:cursor-default" style={{ background: col + "1f", color: col }}><span className="h-[7px] w-[7px] rounded-full" style={{ background: col }} />{value ? c.prio[value] : c.prio.none}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
       {open && (
         <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-[180px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]" onMouseLeave={() => setOpen(false)}>
