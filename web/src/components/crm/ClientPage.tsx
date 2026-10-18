@@ -216,7 +216,7 @@ function Inner({ id }: { id: string }) {
                   {/* как строка заявки (13.10.2026, «нативно»): тип · суть одной строкой · стрелка; справа — этап цветным чипом, карандаш, ✕ */}
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex min-w-[240px] flex-[1_1_320px] items-center gap-2">
-                      <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: DEAL_COLOR[d.deal] ?? "#4d7cfe" }}>{t.deal[d.deal as keyof typeof t.deal]}</span>
+                      <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11.5px] font-semibold text-white" style={{ background: DEAL_COLOR[d.deal] ?? "#4d7cfe" }}>{t.dealF[d.deal as keyof typeof t.dealF]}</span>
                       <Link href={`${crm.base}/d/${d.id}`} className="min-w-0 flex-1 truncate text-left text-[13px] text-ink hover:text-blue-2" title={d.title}><span className="font-semibold">{d.title || "—"}</span><span className="text-muted"> · {sum}</span></Link>
                       <button type="button" onClick={() => setOpenDl((m) => ({ ...m, [d.id]: !exp }))} title={exp ? c.rq.hide : c.rq.show} className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink">{exp ? <IconChevronUp size={15} /> : <IconChevronDown size={15} />}</button>
                     </div>

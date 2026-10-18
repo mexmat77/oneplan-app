@@ -82,7 +82,7 @@ export function DealPage({ id }: { id: string }) {
       <div className="-mx-4 -mt-4 mb-4 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-5 py-3">
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-[13px] font-bold text-white" style={{ background: stCol }}>{initialsOf(d.title || dealNo(d))}</span>
         <div className="min-w-[220px] flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{d.title || "—"}</h1><span className="text-[14px] text-muted" title={d.id}>· {dealNo(d)}</span><span className={chip}>{t.deal[d.deal as keyof typeof t.deal]}</span></div>
+          <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{d.title || "—"}</h1><span className="text-[14px] text-muted" title={d.id}>· {dealNo(d)}</span><span className={chip}>{t.dealF[d.deal as keyof typeof t.dealF]}</span></div>
           <div className="mt-[2px] truncate text-[13px] text-text"><Link href={`${crm.base}/c/${cl.id}`} className="font-medium text-blue-2 hover:underline">{cl.name}</Link> · {clientNo(cl)}{cl.phone ? ` · ${cl.phone}` : ""}{owner ? ` · ${owner.name}` : ""}</div>
         </div>
         <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage}</span><DealStageChip deal={d} onChange={move} disabled={ro} size="md" /></span>
@@ -99,7 +99,7 @@ export function DealPage({ id }: { id: string }) {
             <div className="grid grid-cols-4 gap-x-4 gap-y-3 max-md:grid-cols-2">
               {field(c.deal.company, companies.find((x) => x.id === d.companyProfileId)?.label ?? companies.find((x) => x.id === d.companyProfileId)?.fields.name ?? null)}
               {field(c.deal.buyer, cl.name)}{field(c.deal.seller, d.sellerName ?? (crm.me.ws.kind === "developer" ? c.deal.sellerDev : null))}
-              {field(dc.type, t.deal[d.deal as keyof typeof t.deal])}{field(c.deal.amount, money(d.amount))}
+              {field(dc.type, t.dealF[d.deal as keyof typeof t.dealF])}{field(c.deal.amount, money(d.amount))}
               {field(c.deal.commission, d.commission != null ? (d.commissionKind === "pct" ? `${d.commission} %` : money(d.commission)) : null)}
               {field(c.deal.deposit, money(d.deposit))}{field(c.deal.depositAt, d.depositAt ? fmtDate(d.depositAt, lang) : null)}
               {field(c.client.created, fmtDate(d.createdAt, lang))}{field(dc.closed, d.closedAt ? fmtDate(d.closedAt, lang) : null)}{field(c.deal.lost, d.lostReason)}

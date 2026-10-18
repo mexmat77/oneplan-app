@@ -74,7 +74,7 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       <label className={`${lbl} mt-3`}>{c.deal.title}</label>
       <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.deal.titlePh} className={inp} autoFocus={kbAutoFocus()} />
       <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2">
-        <div><label className={lbl}>{t.cat.dealT}</label><Select value={f.deal} onChange={(v) => set({ deal: v })} options={(["sale", "rent", "daily"] as const).map((d) => ({ value: d, label: t.deal[d] }))} /></div>
+        <div><label className={lbl}>{t.cat.dealT}</label><Select value={f.deal} onChange={(v) => set({ deal: v })} options={(["sale", "rent", "daily"] as const).map((d) => ({ value: d, label: t.dealF[d] }))} /></div>
         <div><label className={lbl}>{c.deal.stage}</label><Select value={f.stageId ?? ""} onChange={(v) => set({ stageId: v || null })} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang), color: s.color ?? undefined }))} /></div>
       </div>
       <label className={`${lbl} mt-3`}>{c.deal.amount}</label>
