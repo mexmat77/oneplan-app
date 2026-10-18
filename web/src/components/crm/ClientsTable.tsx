@@ -200,7 +200,8 @@ export function ClientsTable() {
         <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
 
       </div>
-      <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line">
+      {/* виды — на телефоне одной строкой с прокруткой и затуханием справа (18.10.2026, решение пользователя: «в одну строку со скроллом») */}
+      <div className="mb-2 flex flex-wrap items-center gap-1 border-b border-line max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
         {(["all", "mine", "withTask", "overdue", "noDeal"] as View[]).map((v) => { const n = viewCount(v); return (
           <button key={v} type="button" onClick={() => setView(v)} className={`-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-[13px] font-medium ${view === v ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}>{c.tbl.views[v]}<span className={`rounded-full px-[7px] py-[1px] text-[11px] ${v === "overdue" && n ? "bg-red-tint text-red" : "bg-bg-2 text-muted"}`}>{n}</span></button>); })}
         {saved.map((v) => <span key={v.id} className={`group/sv -mb-px flex items-center gap-1 border-b-2 px-3 py-2 text-[13px] font-medium ${curSaved === v.id ? "border-blue-2 text-ink" : "border-transparent text-text hover:text-ink"}`}><button type="button" onClick={() => applySaved(v)} className="cursor-pointer">{v.name}</button><button type="button" onClick={() => deleteSaved(v.id)} title={c.tbl.deleteView} className="cursor-pointer text-muted opacity-0 hover:text-red group-hover/sv:opacity-100"><IconX size={12} /></button></span>)}
