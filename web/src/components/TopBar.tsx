@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFolders, IconGlobe, IconHeart, IconHome2, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFlag, IconFolders, IconGlobe, IconHeart, IconHome2, IconInbox, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -34,8 +34,8 @@ function usePrevScreen(path: string) {
   return path.startsWith("/obj/") ? prev : "";
 }
 
-export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, adminN = 0, chatUnread = false, workspace = "realtors", hidden = false, email, avatar, sub, meId = null }: {
-  name: string; isAdmin?: boolean; favsN?: number; reqsN?: number; ntfN?: number; adminN?: number; chatUnread?: boolean; workspace?: Workspace; hidden?: boolean; email?: string; avatar?: string | null; sub?: string; meId?: string | null;
+export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, adminN = 0, adminReqN = 0, adminRepN = 0, chatUnread = false, workspace = "realtors", hidden = false, email, avatar, sub, meId = null }: {
+  name: string; isAdmin?: boolean; favsN?: number; reqsN?: number; ntfN?: number; adminN?: number; adminReqN?: number; adminRepN?: number; chatUnread?: boolean; workspace?: Workspace; hidden?: boolean; email?: string; avatar?: string | null; sub?: string; meId?: string | null;
 }) {
   const { t, lang } = useI18n();
   const path = usePathname();
@@ -73,7 +73,15 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     { key: "admin", href: "/admin/requests", label: L("Управление", "Admin", "Yönetim"), Icon: IconSettings, badge: adminN },
   ];
   const devItems: Item[] = [{ href: "/dev", label: L("Проекты", "Projects", "Projeler"), Icon: IconBuildingCommunity, active: is("/dev") }];
-  const navItems = workspace === "realtors" ? items : workspace === "dev" ? devItems : [];
+  // разделы «Управления» — в той же навигации и в том же мобильном меню, что у остальных кабинетов (18.10.2026, «если зайти в
+  // управление, меню меняется и путается»): раньше для admin navItems был пуст, вкладки жили только на странице
+  const adminItems: Item[] = [
+    { href: "/admin/users", label: L("Пользователи", "Users", "Kullanıcılar"), Icon: IconUsers, active: is("/admin/users") },
+    { href: "/admin/requests", label: L("Заявки", "Requests", "Başvurular"), Icon: IconInbox, badge: adminReqN, active: is("/admin/requests") },
+    { href: "/admin/companies", label: L("Организации", "Organizations", "Kuruluşlar"), Icon: IconBuilding, active: is("/admin/companies") },
+    { href: "/admin/reports", label: L("Жалобы", "Reports", "Şikayetler"), Icon: IconFlag, badge: adminRepN, active: is("/admin/reports") },
+  ];
+  const navItems = workspace === "realtors" ? items : workspace === "dev" ? devItems : workspace === "admin" ? adminItems : [];
   // Kebab rows — prototype order (line 3753): catalog, mine, favs, sels, reqs, api, billing, then rls for admins.
   const kebabRows: Item[] = [
     ...navItems,

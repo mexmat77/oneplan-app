@@ -20,9 +20,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* ProfileInit — как в (app)/layout: без него TopBar/UserMenu берут демо-профиль прототипа («Alexander Morozov / AM Estate»)
           из store/profile (замечание пользователя 13.10.2026: у Константина в «Управлении» вылезали тестовые данные). */}
       <ProfileInit me={me ? { id: me.id, name: me.name, email: me.email, phone: me.phone, agency: me.agency } : null}>
-      <AppChrome name={me?.name || "Admin"} isAdmin workspace="admin" adminN={adminN} email={me?.email} avatar={me?.avatar ?? null} agency={me?.agency} meId={me?.id ?? null} supportId={supportId} />
+      <AppChrome name={me?.name || "Admin"} isAdmin workspace="admin" adminN={adminN} adminReqN={pend.requests} adminRepN={pend.reports} email={me?.email} avatar={me?.avatar ?? null} agency={me?.agency} meId={me?.id ?? null} supportId={supportId} />
       <main className="mx-auto w-full max-w-[1220px] px-[clamp(14px,4vw,28px)] pb-[110px] pt-[26px] max-md:px-2 max-md:pt-[76px]">
-        <AdminTabs reqsN={pend.requests} reportsN={pend.reports} />
+        <AdminTabs />
         {children}
       </main>
       </ProfileInit>
