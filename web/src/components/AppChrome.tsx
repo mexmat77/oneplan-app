@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { IconFlask, IconX } from "@tabler/icons-react";
 import { TopBar, type Workspace } from "./TopBar";
 import { usePrefs } from "@/store/prefs";
-import { useAllListings } from "@/store/listings";
+import { useAllListings, useRemoteListings } from "@/store/listings";
 import { useNotifications } from "@/store/ntf";
 import { UNREAD_SEED, useChat } from "@/store/chat";
 import { useChatUnread } from "@/lib/chat/client";
@@ -103,7 +103,10 @@ export function AppChrome({ name, isAdmin, workspace, userRole = "realtor", admi
   // Role is initialised synchronously so child pages (e.g. /rls guard) see it on their first render.
   if (typeof window !== "undefined") initRole(isAdmin);
   const admin = role.realAdmin ? role.isAdmin : isAdmin;
-  const reqsN = searches.reduce((a, s) => a + s.newN, 0);
+  // бейдж «новых в поисках»: с аккаунтом — только после загрузки из базы (18.10.2026, «при обновлении страницы на долю секунды
+  // моргает красный кружок»: SSR и первый рендер отдавали демо-поиски прототипа с их счётчиками)
+  const remoteReady = useRemoteListings().loaded;
+  const reqsN = meId && !remoteReady ? 0 : searches.reduce((a, s) => a + s.newN, 0);
   const liveUnread = useChatUnread(meId ?? null, supportId ?? "", isAdmin); // реальный чат (Supabase); демо-точка — только без аккаунта
   const chatUnread = meId ? liveUnread > 0 : Object.keys(UNREAD_SEED).some((id) => !read.includes(id));
   const roleBtn = (on: boolean) => `cursor-pointer rounded-[8px] px-[11px] py-[6px] text-[11px] font-bold hover:bg-line-2 hover:text-ink ${on ? "bg-blue-2 text-white" : "bg-dark-2 text-dark-muted"}`;
