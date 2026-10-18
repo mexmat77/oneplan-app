@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { DEFAULT_LANG, HTML_LANG, LANG_COOKIE, isLang } from "@/i18n";
@@ -15,6 +15,11 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+
+// Клавиатура на Android уменьшает вьюпорт (18.10.2026, «тыкаешь в поиск шторки — ничего не видно»): по умолчанию Chrome
+// (interactive-widget=resizes-visual) оставляет fixed-шторки под клавиатурой; resizes-content сжимает layout-вьюпорт и 100dvh,
+// шторка с поиском поднимается над клавиатурой. iOS Safari параметр игнорирует (там сам прокручивает к полю).
+export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://one-plan.pro"), // абсолютные og:image для превью ссылок в мессенджерах

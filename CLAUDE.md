@@ -864,7 +864,11 @@
   `lib/touch.ts` — `isTouch()` ((hover: none), общий для ChatInput и CatalogMap) и `kbAutoFocus()`; `autoFocus={kbAutoFocus()}`
   у поиска в Select (фокус в useEffect тоже), MultiList, «+ Фильтр», CommandPalette, ObjectPicker, выбор собеседника чата,
   поиск квартир в редакторе плана и у первых полей форм (клиент, сделка, задача, быстрый контакт, участник команды, мастер
-  импорта, имя поиска в каталоге, переименование шаблона, правка запроса). Любой новый autoFocus — только через `kbAutoFocus()`.
+  импорта, имя поиска в каталоге, переименование шаблона, правка запроса). Любой новый autoFocus — только через `kbAutoFocus()`. КЛАВИАТУРА И ШТОРКИ НА ANDROID (18.10.2026,
+  «тыкаешь в поиск шторки — ничего не видно»): в `app/layout.tsx` `export const viewport` с `interactiveWidget: "resizes-content"`
+  (meta `interactive-widget=resizes-content`): Chrome по умолчанию оставляет fixed-шторки под клавиатурой, в этом режиме
+  layout-вьюпорт и 100dvh сжимаются, шторка с поиском поднимается над клавиатурой. iOS Safari параметр игнорирует. В окне
+  «Расположение» в режиме `showAll` (заявка CRM) число объектов у «Вся Турция» не показывается.
   КЛАВИАТУРА ПОД ПОЛЕ (18.10.2026, «в форме телефона сразу циферблат»): у полей телефона `inputMode="tel"` (+ autoComplete
   tel), e-mail — `inputMode="email"`, деньги/числа — `decimal` (ClientModal, QuickContact, DossierModal, DocsPanel, админка,
   профиль, join/login). Новое поле с номером или почтой — всегда с inputMode. События смены этапа пишут и ключ/имя обоих этапов

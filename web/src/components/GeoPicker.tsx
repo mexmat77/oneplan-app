@@ -121,7 +121,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
             <>
               {!isAdd && (
                 <button type="button" onClick={() => onApply({ il: "", ilces: [], semts: [] })} className={blueRow}>
-                  <IconWorld size={17} /> {t.geo.all} <span className={`ml-auto ${count}`}>{scopeAll.length}</span>
+                  <IconWorld size={17} /> {t.geo.all} <span className={`ml-auto ${count}`}>{isAdd || showAll ? "" : scopeAll.length}</span>{/* в заявке CRM (showAll) число объектов неуместно (18.10.2026) */}
                 </button>
               )}
               {GEO.filter((g) => match(g.n) && (isAdd || showAll || (cnt.byIl[g.k] || 0) > 0)).map((g) => ( // showAll: все 81 провинция (в CRM показывалась одна Antalya, 18.10.2026)
