@@ -55,6 +55,7 @@ export function useEscape(active: boolean, onEsc: () => void) {
  *  только помечается «мёртвой» (`dead`), а глобальный обработчик popstate пропускает такие записи: уход с мёртвой записи
  *  или приземление на неё даёт ещё один `history.back()` — одно нажатие «назад» ведёт туда, куда и должно. */
 const dead = new Set<string>();
+const stack: string[] = []; // открытые оверлеи по порядку: «назад» закрывает только верхний (вложенные шторки в панели фильтров, 18.10.2026)
 let topTag: string | null = null;
 let skipping = false;
 let installed = false;
@@ -91,10 +92,12 @@ export function useBackClose(open: boolean, onClose: () => void) {
     const tag = `ovl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     let popped = false;
     try { window.history.pushState({ ...(window.history.state ?? {}), oplOverlay: tag }, "", window.location.href); } catch { return; }
-    const onPop = () => { popped = true; ref.current(); };
+    stack.push(tag);
+    const onPop = () => { if (stack[stack.length - 1] !== tag) return; popped = true; ref.current(); };
     window.addEventListener("popstate", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
+      const i = stack.lastIndexOf(tag); if (i >= 0) stack.splice(i, 1);
       if (!popped) dead.add(tag); // закрыто из интерфейса — запись мёртвая, «назад» её пропустит
     };
   }, [open]);
