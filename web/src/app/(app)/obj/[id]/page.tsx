@@ -32,7 +32,7 @@ import { confirmDialog } from "@/components/ui/confirm";
 import { TransferModal } from "@/components/ui/TransferModal";
 import { transferListing } from "@/app/(app)/transfer-actions";
 import { clearExp, patchRemoteListing, upsertLocalListing } from "@/store/listings";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useScrollLock } from "@/hooks/useScrollLock";
 import { usePrefs } from "@/store/prefs";
 import { addReport, type ReportReason } from "@/store/admin";
 import { hasSupabaseEnv } from "@/lib/supabase/client";
@@ -97,6 +97,7 @@ export default function ObjPage() {
   const [transfer, setTransfer] = useState(false);
   const [trBusy, setTrBusy] = useState(false);
   useScrollLock(contacts);
+  useBackClose(contacts, () => setContacts(false));
 
   const all = useAllListings();
   const ready = useListingsReady(ME);

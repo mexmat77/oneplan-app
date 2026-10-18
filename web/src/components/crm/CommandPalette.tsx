@@ -2,6 +2,7 @@
 
 // Cmd+K / Ctrl+K (12.10.2026, стандарт Linear/Attio/Notion): поиск клиентов, переходы по разделам, создание, настройки.
 // Стрелки/Enter/Esc, подсказки сочетаний; мышь тоже работает. Монтируется из CrmShell.
+import { useBackClose } from "@/hooks/useScrollLock";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IconCalendarCheck, IconLayoutDashboard, IconLayoutKanban, IconPlus, IconSearch, IconSettings, IconUser, IconUsers } from "@tabler/icons-react";
@@ -12,6 +13,7 @@ import { initials, useCrm } from "./crmUi";
 type Item = { id: string; group: "clients" | "go" | "create" | "settings"; label: string; sub?: string; icon: React.ReactNode; run: () => void; kbd?: string };
 
 export function CommandPalette({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: (k: "client" | "deal" | "task") => void }) {
+  useBackClose(open, onClose);
   const { t } = useI18n();
   const c = t.crm;
   const crm = useCrm();

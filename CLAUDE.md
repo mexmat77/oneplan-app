@@ -141,6 +141,10 @@
   хук `useBackClose(open, onClose)` в `hooks/useScrollLock.ts` — пока оверлей открыт, в историю добавлена запись с меткой
   (копия состояния Next, иначе роутер перезагружал страницу), popstate закрывает, закрытие крестиком снимает запись
   `history.back()`. Подключено: `obj/Gallery` (лайтбокс и мобильная галерея), `newb/NbGallery`, `newb/UnitSheet`.
+  18.10.2026 («назад должен закрывать поиск, во всех разделах»): хук подключён в `ui/Modal` (все модалки и мобильные листы
+  разом), панелях фильтров `catalog/FilterBar` и `newb/NbCatalog`, окне `GeoPicker`, мобильных меню `TopBar` и `DevShell`,
+  шторке контактов объекта, `crm/CommandPalette` и панели «Все фильтры» `ClientsTable`. Проверка: `history.state.oplOverlay`
+  появляется при открытии, «назад» закрывает панель, адрес не меняется.
   Любой новый полноэкранный оверлей/лист на телефоне — через этот хук.
 - Адаптив: брейкпоинт `md` = 761px (как в прототипе: `max-md:` = ≤760). Все `data-*`-правила прототипа (`data-sheet`,
   `data-fsticky/stuck`, `data-topbar/hdr-hidden`, `data-obj-*`, `data-nb-*`, `data-unit-*`, `.opl-chat-shell` …) лежат в

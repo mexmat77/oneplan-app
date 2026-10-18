@@ -5,7 +5,7 @@
 // `add` / `req`: single pick il › ilçe › semt (listing form / new-request sheet); the caller closes its own modal.
 import { useMemo, useState } from "react";
 import { IconArrowLeft, IconCheck, IconChevronRight, IconMap, IconMapPin, IconSearch, IconWorld, IconX } from "@tabler/icons-react";
-import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { useT } from "@/i18n/provider";
 import { nbGeoOk, type Project } from "@/lib/newb";
 import { GEO, SEMT2ILCE } from "@/lib/seed";
@@ -47,6 +47,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
   const [q, setQ] = useState("");
   useScrollLock(true);
   useEscape(true, onClose);
+  useBackClose(true, onClose);
 
   const cnt = useMemo(() => {
     const byIl: Record<string, number> = {}, byIlce: Record<string, number> = {}, bySemt: Record<string, number> = {};

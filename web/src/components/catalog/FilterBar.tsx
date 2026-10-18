@@ -10,7 +10,7 @@ import {
   IconSortAscending, IconSortDescending, IconX,
 } from "@tabler/icons-react";
 import { useT } from "@/i18n/provider";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useScrollLock } from "@/hooks/useScrollLock";
 import { EMPTY_FILTERS, LAND_CLEAR, TYPE_CLEAR, extCount, type Filters } from "@/lib/filters";
 import { kShort } from "@/lib/money";
 import { FEATS, ROOMS_ALL, ROOMS_BASIC, type Deal, type Listing, type PropType, type SortKey } from "@/lib/types";
@@ -108,6 +108,7 @@ export function FilterBar({ f, set, scope, resultCount, view, setView, geoLabel,
     setFp((cur) => (cur === k ? "" : k));
   };
   const close = () => setFp("");
+  useBackClose(!!fp, close); // «назад» на телефоне закрывает панель фильтра (18.10.2026)
   // Prototype `_fTop` (line 2528): after picking a filter scroll the page to the top
   const fTop = () => { if (view !== "map" && window.scrollY > 180) setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 60); };
   const upd = (patch: Partial<Filters>) => { set(patch); fTop(); };

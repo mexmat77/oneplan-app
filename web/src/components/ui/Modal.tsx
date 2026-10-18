@@ -4,7 +4,7 @@
 // `sheet="fit"` reproduces `data-sheet="fit"` — on ≤760px the window becomes a bottom sheet
 // (rules live in globals.css). Markup inside is left to the caller so each modal matches its prototype.
 import type { CSSProperties, ReactNode } from "react";
-import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 
 type Props = {
   open: boolean;
@@ -24,6 +24,7 @@ type Props = {
 
 export function Modal({ open, onClose, children, width = 460, z = 410, overlay = 0.55, sheet = "fit", anim = "opl-card .2s ease", padding = "22px 24px", className = "", style, lock = true }: Props) {
   useScrollLock(open && lock);
+  useBackClose(open, onClose); // «назад» закрывает окно, а не уходит со страницы (18.10.2026)
   useEscape(open, onClose);
   if (!open) return null;
   return (

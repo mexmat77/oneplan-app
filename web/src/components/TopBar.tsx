@@ -14,7 +14,7 @@ import { useCatUi } from "@/store/catalogUi";
 import { LangSwitch } from "./LangSwitch";
 import { NtfIcon } from "./ntf/NtfIcon";
 import { useI18n } from "@/i18n/provider";
-import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { markAllRead, useNotifications } from "@/store/ntf";
 import { renderNtf, useNotifs, type NtfDict } from "@/lib/notifications/client";
 
@@ -49,6 +49,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
   const is = (p: string) => path === p || path.startsWith(p + "/");
   useScrollLock(menu || ntfOpen);
   useEscape(menu, () => setMenu(false));
+  useBackClose(menu, () => setMenu(false));
   useEscape(ntfOpen, () => setNtfOpen(false));
 
   const isObj = is("/obj");

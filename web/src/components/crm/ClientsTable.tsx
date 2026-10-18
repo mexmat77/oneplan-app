@@ -12,7 +12,7 @@ import { bulkClients, crmClientsPage, patchClient, saveTask, type DealSummary } 
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { Segmented } from "@/components/ui/Segmented";
-import { useEscape } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape } from "@/hooks/useScrollLock";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
@@ -84,6 +84,7 @@ export function ClientsTable() {
   const applySaved = (v: SavedView) => { const f0 = normFlt(v.flt); setFlt({ ...f0, cstage: [...new Set([...f0.cstage, ...normStage(v.stage)])] }); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
   const deleteSaved = (id: string) => { setPref(viewsKey, JSON.stringify(saved.filter((x) => x.id !== id))); if (curSaved === id) setCurSaved(""); };
   const [drawer, setDrawer] = useState<string | null>(null);
+  useBackClose(!!drawer, () => setDrawer(null));
   const [modal, setModal] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const dense = usePref(DENS_LS) !== "expanded";

@@ -10,7 +10,7 @@ import { IconAddressBook,
   IconMessageCircle, IconSettings, IconUser, IconUsers, IconX,
 } from "@tabler/icons-react";
 import { useDevT } from "@/i18n/dev";
-import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { CHAT_PEERS, DM_UNREAD } from "@/lib/dev/data";
 import { agoText, buildNotifs } from "@/lib/dev/notifs";
 import { nowMs, renderNtf, useNotifs, type NtfDict } from "@/lib/notifications/client";
@@ -38,6 +38,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
   useScrollLock(sheet);
   useEscape(notifOpen, () => setNotifOpen(false));
   useEscape(sheet, () => setSheet(false));
+  useBackClose(sheet, () => setSheet(false));
   // Real role from Supabase seeds the view role once; platform admins may switch it with the demo widget.
   // (тоже в эффекте: при первом входе не-админа пишет роль в стор; сам экран роль не-админа берёт из `me.role`, не из стора)
   useEffect(() => { initViewRole(me.role, me.platformAdmin); }, [me.role, me.platformAdmin]);

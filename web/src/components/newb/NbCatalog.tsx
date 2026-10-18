@@ -12,7 +12,7 @@ import {
 import { GeoPicker, geoLabelOf } from "@/components/GeoPicker";
 import { fgeo, fgeoBox, ficon, fpill } from "@/components/catalog/fpill";
 import { LogoMark } from "@/components/Logo";
-import { useEscape, useScrollLock } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { useI18n } from "@/i18n/provider";
 import { fmt, fmtShort } from "@/lib/money";
 import { GEO, SEMT2ILCE, geoKeysOf } from "@/lib/seed";
@@ -53,6 +53,7 @@ export function NbCatalog({ projects, dev }: { projects: Project[]; dev: string 
   });
   void mahalleReady; void lang;
   const closePanel = () => setPanel("");
+  useBackClose(!!panel, closePanel);
   useScrollLock(panel === "more");
   useScrollLock(!!panel && panel !== "more", true);
   useEscape(!!panel, closePanel);
