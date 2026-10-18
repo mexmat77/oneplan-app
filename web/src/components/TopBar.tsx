@@ -93,11 +93,9 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
   ];
   const spaceMenu: Record<Workspace, Item[]> = { realtors: items, dev: devMenu, admin: adminItems };
   // Kebab rows — prototype order (line 3753): catalog, mine, favs, sels, reqs, api, billing, then rls for admins.
-  const kebabRows: Item[] = [
-    ...navItems,
-    { href: "/api-access", label: t.api.title, Icon: IconApi, active: is("/api-access") },
-    ...(isAdmin && workspace === "realtors" ? [{ href: "/admin/users", label: t.nav.rls, Icon: IconUsers, active: is("/admin/users") }] : []),
-  ];
+  // гамбургер = навигация по разделам текущего кабинета; «API и выгрузка» — в меню аватара, кабинеты админа — пилюлями выше
+  // (18.10.2026, «два меню путают, пункты дублируются»)
+  const kebabRows: Item[] = [...navItems];
   const iconBtn = "relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-[11px] border border-line bg-surface text-[18px] text-text transition hover:border-blue hover:text-blue";
   const ntfDict = t.ntfk as unknown as NtfDict;
   // с аккаунтом — реальные уведомления (13.10.2026, «давай уберём все тестовые сообщения»), демо — только без Supabase
@@ -153,7 +151,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         </button>
         <LangSwitch className="max-md:hidden" />
         <UserMenu name={name} sub={sub} email={email} avatar={avatar} color="#2f5fe0" logoutLabel={t.prof.out}
-          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(!isAdmin && workspace === "realtors" ? [{ label: sub ? `${L("Моё агентство", "My agency", "Ajansım")} · ${sub}` : t.org.team.title, href: "/team", icon: <IconBuilding size={16} /> }] : []), ...(workspace === "realtors" ? [{ label: t.api.title, href: "/api-access", icon: <IconApi size={16} /> }] : [])]}
+          items={[{ label: L("Профиль", "Profile", "Profil"), href: "/profile", icon: <IconUser size={16} /> }, { label: t.nav.ntf, href: "/ntf", icon: <IconBell size={16} />, badge: ntfN }, ...(workspace === "realtors" ? [{ label: t.api.title, href: "/api-access", icon: <IconApi size={16} /> }] : [])]} /* меню аватара = аккаунт (профиль, уведомления, API, выход); разделы — в навигации, без дублей (18.10.2026) */
           onLogout={async () => { try { await createClient().auth.signOut(); } catch {} window.location.assign("/login"); }} />
         <button type="button" data-kebab="1" onClick={() => setMenu(true)} className={`${iconBtn} hover:border-line hover:text-text hover:brightness-95 md:hidden`} aria-label={t.common.menu}>
           <IconMenu2 size={19} />
