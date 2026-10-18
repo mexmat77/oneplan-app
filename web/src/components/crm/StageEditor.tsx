@@ -33,7 +33,7 @@ export function StageEditor({ scope, stages, onSaved }: { scope: StageScope; sta
     <>
       <div className="flex flex-col gap-2">
         {st.map((s, i) => (
-          <div key={s.id ?? i} className="grid grid-cols-[28px_minmax(160px,1fr)_130px_auto] items-center gap-2">
+          <div key={s.id ?? i} className="grid grid-cols-[28px_minmax(160px,1fr)_130px_auto] items-center gap-2 max-md:grid-cols-[22px_minmax(0,1fr)_104px_auto] max-md:gap-1">
             <button type="button" disabled={ro} onClick={() => setColorFor(colorFor === i ? null : i)} title={c.set.color} className="h-6 w-6 cursor-pointer rounded-full border-2 border-surface shadow" style={{ background: s.color ?? "#8a93a2" }} />
             <input value={s.name[lang] ?? ""} onChange={(e) => setRow(i, { name: { ...s.name, [lang]: e.target.value } })} placeholder={stageName({ ...s, id: s.id ?? "", sort: i, scope } as Stage, t, lang)} disabled={ro} className={inp} />
             <Select value={s.kind} onChange={(v) => setRow(i, { kind: v as StageKind })} options={[["open", c.set.kindOpen], ["won", c.set.kindWon], ["lost", c.set.kindLost]].map(([v, l]) => ({ value: v, label: l }))} size="sm" disabled={ro} />

@@ -789,6 +789,10 @@
   вместо полоски иконок в шапке раздела — `nav[data-crm-bottom]` внизу экрана (Обзор · Клиенты · Сделки · Задачи ·
   Настройки, иконка + подпись + счётчик, активный синий, safe-area), как у Pipedrive/HubSpot в мобильном вебе;
   `html[data-crmmode] main` на телефоне получает padding-bottom 64px, кнопка демо-режима `[data-demo]` поднята над панелью.
+  Там же: на телефоне шапка `[data-topbar]` fixed (не в потоке), а CRM-режим обнулял padding `main` — первые 62px содержимого
+  (заголовок раздела, Список/Канбан, тулбар) уходили под липкие панели; теперь `padding-top: 62px` на ≤760. Строки
+  `StageEditor` на телефоне — компактная сетка (`max-md:grid-cols-[22px_minmax(0,1fr)_104px_auto]`), контент CRM
+  `max-md:overflow-x-hidden`. Клавиатура контактов: tel только у телефона/WhatsApp, email у e-mail, Telegram и «другое» — обычная.
   КЛАВИАТУРА ПОД ПОЛЕ (18.10.2026, «в форме телефона сразу циферблат»): у полей телефона `inputMode="tel"` (+ autoComplete
   tel), e-mail — `inputMode="email"`, деньги/числа — `decimal` (ClientModal, QuickContact, DossierModal, DocsPanel, админка,
   профиль, join/login). Новое поле с номером или почтой — всегда с inputMode. События смены этапа пишут и ключ/имя обоих этапов

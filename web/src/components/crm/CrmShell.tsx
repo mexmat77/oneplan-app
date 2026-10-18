@@ -173,7 +173,7 @@ export function CrmShell({ base }: { base: string }) {
               </div>
             ))}
           </div>
-          <div className="px-4 py-4">{page}</div>
+          <div className="px-4 py-4 max-md:overflow-x-hidden">{page}</div>
         </div>
       </div>
 
