@@ -6,7 +6,7 @@
 // Значения — строки YYYY-MM-DD; показ — дд.мм.гггг. Без системного <input type="date"> (разная высота, нет пресетов).
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconCalendar, IconChevronLeft, IconChevronRight, IconX } from "@tabler/icons-react";
-import { useEscape } from "@/hooks/useScrollLock";
+import { useBackClose, useEscape } from "@/hooks/useScrollLock";
 import { useI18n } from "@/i18n/provider";
 
 const LOC: Record<string, string> = { RU: "ru-RU", EN: "en-GB", TR: "tr-TR" };
@@ -82,7 +82,12 @@ function Pop({ rect, anchor, width, onClose, children }: { rect: Rect | null; an
   let left = r ? r.left : 0;
   if (r && left + width > window.innerWidth - 8) left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
   const top = r ? (r.bottom + 340 > window.innerHeight ? Math.max(8, r.top - 8 - 330) : r.bottom + 6) : 0;
-  return <div ref={ref} style={{ position: "fixed", left, top, zIndex: 600 }} className="rounded-[8px] border border-line bg-surface p-3 shadow-[0_12px_40px_rgba(20,36,63,.18)]">{children}</div>;
+  return (
+    <>
+      <div className="fixed inset-0 z-[599] bg-[rgba(10,16,28,.35)] md:hidden" onClick={onClose} />
+      <div ref={ref} data-sheet="fit" style={{ position: "fixed", left, top, zIndex: 600 }} className="rounded-[8px] border border-line bg-surface p-3 shadow-[0_12px_40px_rgba(20,36,63,.18)] max-md:max-h-[85dvh] max-md:overflow-y-auto max-md:p-4 max-md:pb-[max(16px,env(safe-area-inset-bottom))]">{children}</div>
+    </>
+  );
 }
 
 const trig = "inline-flex h-9 w-full cursor-pointer items-center gap-2 rounded-[6px] border border-line bg-surface px-[10px] text-left text-[13px] text-ink hover:border-blue data-[open=true]:border-blue";
@@ -92,6 +97,7 @@ export function DateRange({ from, to, onChange, placeholder, className = "" }: {
   const { t, lang } = useI18n();
   const d = t.dr;
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const [hover, setHover] = useState<Date | null>(null);
   const [draft, setDraft] = useState<{ from: Date | null; to: Date | null }>({ from: parse(from), to: parse(to) });
   const base = parse(from) ?? today();
@@ -117,16 +123,16 @@ export function DateRange({ from, to, onChange, placeholder, className = "" }: {
       </button>
       {open && (
         <Pop rect={rect} anchor={btn} width={700} onClose={() => setOpen(false)}>
-          <div className="flex gap-3">
-            <div className="flex w-[150px] flex-col gap-[2px] border-r border-line pr-3">
-              {pl.map((p) => <button key={p.key} type="button" onClick={() => apply(p.r)} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] ${cur === p.key ? "bg-blue-tint font-semibold text-sel-ink" : "text-text hover:bg-bg-3"}`}>{(d.p as Record<string, string>)[p.key]}</button>)}
+          <div className="flex gap-3 max-md:flex-col">
+            <div className="flex w-[150px] flex-col gap-[2px] border-r border-line pr-3 max-md:w-auto max-md:flex-row max-md:flex-wrap max-md:gap-[6px] max-md:border-b max-md:border-r-0 max-md:pb-3 max-md:pr-0">
+              {pl.map((p) => <button key={p.key} type="button" onClick={() => apply(p.r)} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] max-md:h-8 max-md:rounded-full max-md:border max-md:px-3 ${cur === p.key ? "bg-blue-tint font-semibold text-sel-ink max-md:border-sel-line" : "text-text hover:bg-bg-3 max-md:border-line"}`}>{(d.p as Record<string, string>)[p.key]}</button>)}
             </div>
             <div>
               <div className="relative flex gap-5">
                 <button type="button" onClick={() => shift(-1)} className="absolute -left-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronLeft size={16} /></button>
                 <button type="button" onClick={() => shift(1)} className="absolute -right-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronRight size={16} /></button>
                 <Month year={view.y} month={view.m} lang={lang} from={draft.from} to={draft.to} hover={hover} onPick={pick} onHover={setHover} />
-                <Month year={new Date(view.y, view.m + 1, 1).getFullYear()} month={new Date(view.y, view.m + 1, 1).getMonth()} lang={lang} from={draft.from} to={draft.to} hover={hover} onPick={pick} onHover={setHover} />
+                <div className="max-md:hidden"><Month year={new Date(view.y, view.m + 1, 1).getFullYear()} month={new Date(view.y, view.m + 1, 1).getMonth()} lang={lang} from={draft.from} to={draft.to} hover={hover} onPick={pick} onHover={setHover} /></div>
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[12px] text-muted">
                 <span>{draft.from ? `${fmtD(iso(draft.from))} – ${draft.to ? fmtD(iso(draft.to)) : d.pickTo}` : d.pickFrom}</span>
@@ -145,6 +151,7 @@ export function DateField({ value, onChange, placeholder, className = "", cleara
   const { t, lang } = useI18n();
   const d = t.dr;
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const base = parse(value) ?? today();
   const [view, setView] = useState({ y: base.getFullYear(), m: base.getMonth() });
   const btn = useRef<HTMLButtonElement>(null);
