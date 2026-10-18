@@ -87,6 +87,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
     finally { setBusy(false); }
   }
 
+  const chipRow = "contents max-md:flex max-md:w-full max-md:min-w-0 max-md:flex-nowrap max-md:gap-[6px] max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none";
   const fr = f.firstRequest;
   return (
     <div data-crm-form="1">
@@ -119,12 +120,17 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
 
         {/* ---- классификация: роли, статус, приоритет, источник, ответственный ---- */}
         <div className={sec}>{c.client.section.classify}</div>
-        <div className="mt-2 flex flex-wrap items-center gap-[6px]">
-          <span className="mr-1 text-[12px] text-muted">{c.client.roles}:</span>
-          {ROLES.map((r) => <button key={r} type="button" onClick={() => toggleRole(r)} className={chipCls(f.roles.includes(r))} style={f.roles.includes(r) ? { background: "#14243f" } : undefined}>{c.roles[r]}</button>)}
-          <span className="mx-1 h-4 w-px bg-line" />
-          <span className="mr-1 text-[12px] text-muted">{c.client.priority}:</span>
-          {PRIOS.map((p) => <button key={p} type="button" onClick={() => set({ priority: f.priority === p ? null : p })} className={chipCls(f.priority === p)} style={f.priority === p ? { background: PRIO_COLOR[p] } : undefined}>{c.prio[p]}</button>)}
+        {/* на телефоне — каждая группа с новой строки: подпись над чипами, чипы одной строкой с прокруткой (18.10.2026, «всё в куче») */}
+        <div className="mt-2 flex flex-wrap items-center gap-[6px] max-md:flex-col max-md:flex-nowrap max-md:items-stretch max-md:gap-3">
+          <div className="flex flex-wrap items-center gap-[6px] max-md:block max-md:min-w-0">
+            <span className="mr-1 text-[12px] text-muted max-md:mb-1 max-md:block">{c.client.roles}:</span>
+            <div className={chipRow}>{ROLES.map((r) => <button key={r} type="button" onClick={() => toggleRole(r)} className={chipCls(f.roles.includes(r))} style={f.roles.includes(r) ? { background: "#14243f" } : undefined}>{c.roles[r]}</button>)}</div>
+          </div>
+          <span className="mx-1 h-4 w-px bg-line max-md:hidden" />
+          <div className="flex flex-wrap items-center gap-[6px] max-md:block max-md:min-w-0">
+            <span className="mr-1 text-[12px] text-muted max-md:mb-1 max-md:block">{c.client.priority}:</span>
+            <div className={chipRow}>{PRIOS.map((p) => <button key={p} type="button" onClick={() => set({ priority: f.priority === p ? null : p })} className={chipCls(f.priority === p)} style={f.priority === p ? { background: PRIO_COLOR[p] } : undefined}>{c.prio[p]}</button>)}</div>
+          </div>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 max-md:grid-cols-1">
           <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang), color: st.color ?? undefined }))} /></div>
