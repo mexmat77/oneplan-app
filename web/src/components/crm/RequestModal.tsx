@@ -17,7 +17,8 @@ import { mergeBriefs, ObjectPicker } from "./ObjectPicker";
 import { GROUP_ORDER, OPTS, REQUEST_FIELDS, REQUEST_KINDS, type ReqField } from "@/lib/crm/requestFields";
 import type { ObjRef, CrmRequest, Priority, RequestInput, RequestKind, RequestStatus } from "@/lib/crm/types";
 import { ROOMS_ALL } from "@/lib/types";
-import { crmError, btnP, btnS, inp, lbl, useCrm, wantGeoLabel } from "./crmUi";
+import { crmError, btnP, btnS, inp, lbl, PRIO_COLOR, useCrm, wantGeoLabel } from "./crmUi";
+import { REQ_ST_COLOR } from "./ChipMenu";
 
 type Dict = ReturnType<typeof useI18n>["t"];
 type Vals = Record<string, unknown>;
@@ -120,11 +121,11 @@ function RequestForm({ clientId, request, kind: kind0, briefs: briefs0, onClose,
       <div className="max-h-[70vh] overflow-y-auto pr-1 max-md:max-h-none">
         <div className="grid grid-cols-4 gap-2 max-md:grid-cols-2">
           <div><label className={lbl}>{rq.kind}</label><Select value={f.kind} onChange={(v) => set({ kind: v as RequestKind, fields: { cur: f.fields.cur ?? "TRY" }, closed: {} })} options={REQUEST_KINDS.map((k) => ({ value: k, label: rq.kinds[k] }))} disabled={!!request} /></div>
-          <div><label className={lbl}>{rq.status}</label><Select value={f.status} onChange={(v) => set({ status: v as RequestStatus })} options={(Object.keys(rq.st) as RequestStatus[]).map((k) => ({ value: k, label: rq.st[k] }))} /></div>
-          <div><label className={lbl}>{c.client.priority}</label><Select value={f.priority ?? ""} onChange={(v) => set({ priority: (v || null) as Priority | null })} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, label: c.prio[k] }))]} /></div>
+          <div><label className={lbl}>{rq.status}</label><Select value={f.status} onChange={(v) => set({ status: v as RequestStatus })} options={(Object.keys(rq.st) as RequestStatus[]).map((k) => ({ value: k, label: rq.st[k], color: REQ_ST_COLOR[k] }))} /></div>
+          <div><label className={lbl}>{c.client.priority}</label><Select value={f.priority ?? ""} onChange={(v) => set({ priority: (v || null) as Priority | null })} options={[{ value: "", label: c.prio.none }, ...(["hot", "warm", "cold"] as Priority[]).map((k) => ({ value: k, color: PRIO_COLOR[k], label: c.prio[k] }))]} /></div>
           <div><label className={lbl}>{rq.deadline}</label><Select value={f.deadline ?? ""} onChange={(v) => set({ deadline: (v || null) as RequestInput["deadline"] })} options={[{ value: "", label: rq.dl.none }, ...(["asap", "1m", "3m", "later"] as const).map((k) => ({ value: k, label: rq.dl[k] }))]} /></div>
         </div>
-        {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2"><div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>{crm.me.branches.length > 0 && <div><label className={lbl}>{c.client.branch}</label><Select value={f.branchId ?? ""} onChange={(v) => set({ branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} /></div>}</div>}
+        {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2"><div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></div>{crm.me.branches.length > 0 && <div><label className={lbl}>{c.client.branch}</label><Select value={f.branchId ?? ""} onChange={(v) => set({ branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} /></div>}</div>}
         <ReqFieldGroups kind={f.kind} vals={f.fields} closed={f.closed} onField={(k, v) => set({ fields: { ...f.fields, [k]: v } })} onClosed={(k, v) => set({ closed: { ...f.closed, [k]: v } })} t={t} clients={clients} />
         {wantsVariants && <div className="mt-4"><div className="mb-2 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.obj.variants}</div><ObjectPicker mode="multi" value={f.variants ?? []} onChange={(v) => set({ variants: v })} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} /></div>}
       </div>

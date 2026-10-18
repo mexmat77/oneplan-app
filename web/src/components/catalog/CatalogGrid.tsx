@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -215,7 +216,7 @@ export function CatalogGrid({
       <Modal open={ssOpen} onClose={() => setSsOpen(false)} width={440} z={410}>
         <div className="mb-[6px] flex items-center gap-[10px]"><span className="flex-1 text-[16px] font-extrabold text-ink">{t.cat.ssT}</span><ModalClose onClick={() => setSsOpen(false)} /></div>
         <p className="mb-[14px] text-[12.5px] leading-[1.5] text-text-2 [text-wrap:pretty]">{t.cat.ssH}</p>
-        <input value={ssName} onChange={(e) => setSsName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ssSave()} className="mb-[14px] w-full rounded-[11px] border border-line px-[13px] py-[11px] text-[14px] font-semibold outline-none focus:border-blue" autoFocus />
+        <input value={ssName} onChange={(e) => setSsName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ssSave()} className="mb-[14px] w-full rounded-[11px] border border-line px-[13px] py-[11px] text-[14px] font-semibold outline-none focus:border-blue" autoFocus={kbAutoFocus()} />
         <button type="button" onClick={ssSave} className="inline-flex w-full cursor-pointer items-center justify-center gap-[6px] rounded-[12px] bg-blue-2 p-[13px] text-[14px] font-bold text-white hover:bg-blue-3"><IconBookmarkPlus size={16} /> {t.cat.saveSearch}</button>
       </Modal>
 

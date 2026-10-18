@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Выпадающий список в стиле сайта вместо системного <select> (решение пользователя 07.10.2026: единый вид во всех формах).
 // Кнопка-триггер выглядит как поле ввода, список рендерится порталом в body (не обрезается модалками), позиция от триггера,
 // при нехватке места снизу — открывается вверх. Клавиатура: Enter/Space/↓ — открыть, ↑/↓ — выбор, Enter — применить, Esc — закрыть.
@@ -9,7 +10,7 @@ import { IconCheck, IconChevronDown, IconSearch } from "@tabler/icons-react";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-export type SelectOption = { value: string; label: ReactNode; disabled?: boolean };
+export type SelectOption = { value: string; label: ReactNode; disabled?: boolean; /** цветная точка слева (статусы, этапы, приоритеты, ответственные) */ color?: string };
 type Props = {
   value: string;
   onChange: (value: string) => void;
@@ -82,7 +83,7 @@ export function Select({ value, onChange, options, className = "w-full", style, 
     for (let k = 0; k < shown.length; k++) { i = (i + d + shown.length) % shown.length; if (!shown[i].disabled) break; }
     setActive(i);
   };
-  useEffect(() => { if (open && withSearch) setTimeout(() => search.current?.focus(), 0); }, [open, withSearch]);
+  useEffect(() => { if (open && withSearch && kbAutoFocus()) setTimeout(() => search.current?.focus(), 0); }, [open, withSearch]); // на телефоне клавиатура — только по тапу в поле
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
     if (!open) { if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(e.key)) { e.preventDefault(); toggle(); } return; }
@@ -97,6 +98,7 @@ export function Select({ value, onChange, options, className = "w-full", style, 
       <button ref={btn} type="button" title={title} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} aria-controls={id} disabled={disabled} data-open={open}
         onClick={(e) => { if (stopPropagation) e.stopPropagation(); toggle(); }} onKeyDown={onKeyDown} className={`${TRIGGER} ${className}`} style={style}>
         {icon}
+        {cur?.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: cur.color }} />}
         <span className={`min-w-0 flex-1 truncate ${cur ? "" : "text-muted-2"}`}>{cur ? cur.label : placeholder ?? "—"}</span>
         <IconChevronDown size={size === "sm" ? 13 : 15} className={`flex-none text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -116,6 +118,7 @@ export function Select({ value, onChange, options, className = "w-full", style, 
             return (
               <div key={o.value} data-opt role="option" aria-selected={on} aria-disabled={o.disabled} onMouseEnter={() => setActive(i)} onClick={() => pick(o)}
                 className={`flex cursor-pointer items-center gap-2 rounded-[9px] px-3 ${size === "sm" ? "py-[6px] text-[13px]" : "py-[9px] text-[13.5px]"} ${o.disabled ? "cursor-default text-muted-2" : on ? "bg-blue-tint font-semibold text-blue-2" : i === active ? "bg-bg-3 text-ink" : "text-ink"}`}>
+                {o.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}
                 <span className="min-w-0 flex-1 truncate">{o.label}</span>
                 {on && <IconCheck size={15} className="flex-none text-blue-2" />}
               </div>

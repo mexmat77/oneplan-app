@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Модалки сделки и задачи.
 import { useState, useEffect } from "react";
 import { saveDeal, saveTask, listClients } from "@/app/crm/actions";
@@ -71,10 +72,10 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       </div>
       <p className="mt-1 text-[11.5px] text-muted">{dev ? c.deal.partiesDev : c.deal.partiesHint}</p>
       <label className={`${lbl} mt-3`}>{c.deal.title}</label>
-      <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.deal.titlePh} className={inp} autoFocus />
+      <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.deal.titlePh} className={inp} autoFocus={kbAutoFocus()} />
       <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2">
         <div><label className={lbl}>{t.cat.dealT}</label><Select value={f.deal} onChange={(v) => set({ deal: v })} options={(["sale", "rent", "daily"] as const).map((d) => ({ value: d, label: t.deal[d] }))} /></div>
-        <div><label className={lbl}>{c.deal.stage}</label><Select value={f.stageId ?? ""} onChange={(v) => set({ stageId: v || null })} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang) }))} /></div>
+        <div><label className={lbl}>{c.deal.stage}</label><Select value={f.stageId ?? ""} onChange={(v) => set({ stageId: v || null })} options={crm.stages.map((s) => ({ value: s.id, label: stageName(s, t, lang), color: s.color ?? undefined }))} /></div>
       </div>
       <label className={`${lbl} mt-3`}>{c.deal.amount}</label>
       <div className="grid grid-cols-[1fr_110px] gap-2">
@@ -91,7 +92,7 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
         <div><label className={lbl}>{c.deal.depositAt}</label><DateField value={f.depositAt ?? ""} onChange={(v) => set({ depositAt: v || null })} /></div>
       </div>
       {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2">
-        <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>
+        <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></div>
       </div>}
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{deal ? c.save : c.create}</button></div>
     </div>
@@ -124,13 +125,13 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
     <div data-crm-form="1">
       <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.task.add}</div><ModalClose onClick={onClose} /></div>
       <label className={lbl}>{c.task.title}</label>
-      <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.task.titlePh} className={inp} autoFocus />
+      <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.task.titlePh} className={inp} autoFocus={kbAutoFocus()} />
       <label className={`${lbl} mt-3`}>{c.task.kind}</label>
       <div className="flex flex-wrap gap-[6px]">{kinds.map((k) => <button key={k} type="button" onClick={() => set({ kind: k })} className={`h-7 cursor-pointer rounded-full border px-3 text-[12px] font-medium ${f.kind === k ? "border-ink bg-ink text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`}>{taskKindName(k, t)}</button>)}</div>
       <label className={`${lbl} mt-3`}>{c.task.due}</label>
       <DuePicker value={due} onChange={setDue} />
       {!clientId && <><label className={`${lbl} mt-3`}>{c.deal.client}</label><Select value={f.clientId ?? ""} onChange={(v) => set({ clientId: v || null })} searchable options={[{ value: "", label: "—" }, ...clients.map((x) => ({ value: x.id, label: x.name }))]} /></>}
-      {crm.me.members.length > 1 && <><label className={`${lbl} mt-3`}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></>}
+      {crm.me.members.length > 1 && <><label className={`${lbl} mt-3`}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></>}
       <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button></div>
     </div>
   );

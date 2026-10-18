@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Мастер «Объект из файлов» (вариант по умолчанию при добавлении объекта; ручной мастер прототипа — `NewObjectWizard`,
 // ссылка «Заполнить вручную»). Идея: у застройщика уже есть прайс-лист и планы этажей — объект собирается из них сам,
 // человек только проверяет результат.
@@ -356,7 +357,7 @@ export function ImportWizard() {
         <div className="mx-auto max-w-[920px] px-[clamp(16px,4vw,32px)] py-[clamp(18px,3vw,30px)]">
           {step === 0 && (
             <div className="flex flex-col gap-[18px]">
-              <div><label className={label}>{L.name_lbl}</label><input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder={L.name_ph} className={input} /></div>
+              <div><label className={label}>{L.name_lbl}</label><input autoFocus={kbAutoFocus()} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder={L.name_ph} className={input} /></div>
               {(dev.viewRole === "superadmin" || my.length > 1) && (
                 <div><label className={label}>{L.co_lbl}</label>
                   <Select value={String(co?.id ?? "")} onChange={(v) => setClient(v ? +v : null)} options={[{ value: "", label: "—" }, ...my.map((c) => ({ value: String(c.id), label: c.name }))]} />

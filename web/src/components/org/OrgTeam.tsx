@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Команда организации (12.10.2026, модель «Организации и участники», миграция 0022) — ОДИН компонент для всех мест:
 // «Управление → Организации → карточка» (админ платформы), «Моё агентство» (/team, администратор агентства),
 // CRM → Настройки → Команда, кабинет застройщика /dev/users. Участники с ролями, филиалы (агентство), приглашения.
@@ -169,7 +170,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
           <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{o.addExisting}</div><ModalClose onClick={() => setAdd(null)} /></div>
           <p className="mb-3 text-[12.5px] text-muted">{o.addS[kind]}</p>
           <div className="grid grid-cols-[1fr_200px] gap-3 max-md:grid-cols-1">
-            <div><label className={lbl}>{o.email}</label><input type="email" value={add.email} onChange={(e) => setAdd({ ...add, email: e.target.value })} className={inp} placeholder="user@mail.com" autoFocus /></div>
+            <div><label className={lbl}>{o.email}</label><input type="email" value={add.email} onChange={(e) => setAdd({ ...add, email: e.target.value })} className={inp} placeholder="user@mail.com" autoFocus={kbAutoFocus()} /></div>
             <div><label className={lbl}>{o.role}</label>{scoped ? <div className={`${inp} flex items-center text-text`}>{roles.agent}</div> : <Select value={add.role} onChange={(v) => setAdd({ ...add, role: v as OrgRole })} options={roleOpts} />}</div>
           </div>
           <div className="mt-4 flex justify-end gap-2">

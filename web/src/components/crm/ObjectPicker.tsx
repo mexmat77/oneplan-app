@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Выбор объекта для сделки / заявки (0024, 12.10.2026, решение пользователя «из базы или свободно»):
 //   риэлтор  — объявления базы: «Мои» / «Избранное» / поиск по № объявления, заголовку, району (сервер, ≤30 строк);
 //   застройщик — свои квартиры: проект → корпус → только свободные, поиск по номеру/типу;
@@ -39,7 +40,7 @@ export function ObjectPicker({ mode, value, onChange, briefs, onBriefs, disabled
       {value.map((r, i) => <ObjCard key={i} r={r} briefs={briefs} compact onRemove={disabled ? undefined : () => remove(r)} />)}
       {free && (
         <div data-crm-form="1" className="grid grid-cols-[1fr_1fr_auto_auto] items-end gap-2 rounded-[6px] border border-sel-line bg-blue-tint/40 p-2 max-md:grid-cols-1">
-          <div><label className={lbl}>{c.obj.freeText}</label><input autoFocus value={free.text} onChange={(e) => setFree({ ...free, text: e.target.value })} placeholder={c.obj.freePh} className={inp} /></div>
+          <div><label className={lbl}>{c.obj.freeText}</label><input autoFocus={kbAutoFocus()} value={free.text} onChange={(e) => setFree({ ...free, text: e.target.value })} placeholder={c.obj.freePh} className={inp} /></div>
           <div><label className={lbl}>{c.obj.freeUrl}</label><input value={free.url} onChange={(e) => setFree({ ...free, url: e.target.value })} placeholder="https://…" className={inp} /></div>
           <button type="button" disabled={!free.text.trim()} onClick={() => { pick({ kind: "free", text: free.text.trim(), url: free.url.trim() || undefined }); setFree(null); }} className={btnP}>{c.ev.add}</button>
           <button type="button" onClick={() => setFree(null)} className={btnS}>{c.cancel}</button>
@@ -80,7 +81,7 @@ function ListingsModal({ onClose, value, onPick, briefs, onBriefs, mode }: MProp
         <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickListing}</div><ModalClose onClick={onClose} /></div>
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <Segmented value={scope} onChange={setScope} size="sm" options={[{ value: "mine", label: c.obj.scopeMine }, { value: "favs", label: c.obj.scopeFavs }, { value: "all", label: c.obj.scopeAll }]} />
-          <div className="relative min-w-[240px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.obj.searchPh} className={`${inp} pl-9`} /></div>
+          <div className="relative min-w-[240px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input autoFocus={kbAutoFocus()} value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.obj.searchPh} className={`${inp} pl-9`} /></div>
         </div>
         <p className="mb-3 text-[12px] text-muted">{(c.obj.scopeHint as Record<string, string>)[scope]}</p>
         <div className="flex max-h-[60vh] flex-col gap-[6px] overflow-y-auto">

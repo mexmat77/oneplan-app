@@ -114,7 +114,7 @@ export function CrmSettings({ sub }: { sub?: string }) {
                 <div key={b.id} className="grid grid-cols-[1fr_140px_190px_auto] items-center gap-2 rounded-[6px] border border-line px-3 py-[6px] max-md:grid-cols-1">
                   <span className="truncate text-[13px] font-medium text-ink">{b.name}</span>
                   <span className="truncate text-[12.5px] text-muted">{b.city ?? "—"}</span>
-                  <Select value={b.headId ?? ""} onChange={(v) => branchHead(b, v || null)} placeholder={c.team.branchHead} options={[{ value: "", label: c.team.branchHead }, ...team.members.map((m) => ({ value: m.id, label: m.name }))]} size="sm" disabled={!isOwner || ro} />
+                  <Select value={b.headId ?? ""} onChange={(v) => branchHead(b, v || null)} placeholder={c.team.branchHead} options={[{ value: "", label: c.team.branchHead }, ...team.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))]} size="sm" disabled={!isOwner || ro} />
                   <button type="button" disabled={!isOwner || ro} onClick={() => delBranch(b)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={14} /></button>
                 </div>
               ))}

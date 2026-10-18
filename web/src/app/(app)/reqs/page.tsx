@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -112,7 +113,7 @@ export default function ReqsPage() {
                 <div className="min-w-[200px] flex-1">
                   {editing === s.id ? (
                     <div className="flex items-center gap-[7px]">
-                      <input value={editVal} onChange={(e) => setEditVal(e.target.value)} className="min-w-0 flex-1 rounded-[9px] border border-blue px-[11px] py-2 text-[13.5px] font-semibold outline-none" autoFocus />
+                      <input value={editVal} onChange={(e) => setEditVal(e.target.value)} className="min-w-0 flex-1 rounded-[9px] border border-blue px-[11px] py-2 text-[13.5px] font-semibold outline-none" autoFocus={kbAutoFocus()} />
                       <button type="button" onClick={() => { renameSearch(s.id, editVal.trim() || s.name); setEditing(null); }} className="flex-none cursor-pointer rounded-[8px] bg-green-3 px-[13px] py-2 text-[12px] font-bold text-white hover:brightness-[.92]"><IconCheck size={14} /></button>
                     </div>
                   ) : (

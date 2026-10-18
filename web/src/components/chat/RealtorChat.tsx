@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Чат риэлторов на Supabase (разметка — прототип 770–817, как в ChatDemo). Диалоги 1-на-1 с участниками базы и с поддержкой;
 // админ платформы видит все диалоги поддержки и отвечает в них от своего имени. Перевод — ИИ по кнопке (trStore, как в кабинете застройщика).
 import { useRouter, useSearchParams } from "next/navigation";
@@ -197,7 +198,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
       {picker && (
         <Modal open onClose={() => setPicker(null)} width={460} z={410} padding="22px 24px">
           <div className="mb-3 flex items-center gap-[10px]"><span className="flex-1 text-[16px] font-extrabold text-ink">{L("Новый чат", "New chat", "Yeni sohbet")}</span><ModalClose onClick={() => setPicker(null)} /></div>
-          <div className="relative mb-3"><IconSearch size={14} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-muted-2" /><input autoFocus value={picker.q} onChange={(e) => setPicker({ ...picker, q: e.target.value })} placeholder={t.chat.search} className="w-full rounded-[10px] border border-line bg-bg py-[9px] pl-8 pr-[11px] text-[13px] outline-none focus:border-blue" /></div>
+          <div className="relative mb-3"><IconSearch size={14} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-muted-2" /><input autoFocus={kbAutoFocus()} value={picker.q} onChange={(e) => setPicker({ ...picker, q: e.target.value })} placeholder={t.chat.search} className="w-full rounded-[10px] border border-line bg-bg py-[9px] pl-8 pr-[11px] text-[13px] outline-none focus:border-blue" /></div>
           <div className="max-h-[360px] overflow-y-auto rounded-[12px] border border-line">
             {picker.list === null && <div className="p-4 text-center text-[12.5px] text-muted">…</div>}
             {picker.list?.filter((p) => !picker.q.trim() || `${p.name} ${p.agency} ${p.email ?? ""}`.toLowerCase().includes(picker.q.trim().toLowerCase())).map((p) => (

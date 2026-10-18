@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Режим обводки поэтажного плана: клик ставит точки контура; Enter / двойной клик / клик по первой точке замыкает;
 // Esc отменяет; Backspace убирает последнюю точку. После замыкания — выбор квартиры (поиск по номеру) либо
 // автопривязка к `traceUid` (кнопка «Обвести» в списке неотмеченных). Клик по контуру выбирает его: вершины
@@ -270,7 +271,7 @@ export function FloorPlanEditor({ objId, planKey, plan, units, colors, cur, trac
                 <div className="mb-2 text-[14px] font-extrabold text-ink">{t.fp.pick_title}</div>
                 <div className="relative mb-2">
                   <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
-                  <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.fp.pick_search} onKeyDown={(e) => { if (e.key === "Enter" && pickList.length === 1) { assign(pickList[0].uid, pick); setPick(null); } }} className="w-full rounded-[9px] border border-line bg-surface py-[7px] pl-[28px] pr-2 text-[13px] outline-none focus:border-blue" />
+                  <input autoFocus={kbAutoFocus()} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.fp.pick_search} onKeyDown={(e) => { if (e.key === "Enter" && pickList.length === 1) { assign(pickList[0].uid, pick); setPick(null); } }} className="w-full rounded-[9px] border border-line bg-surface py-[7px] pl-[28px] pr-2 text-[13px] outline-none focus:border-blue" />
                 </div>
                 <div className="flex max-h-[220px] flex-col gap-[3px] overflow-auto">
                   {!pickList.length && <div className="p-2 text-center text-[12px] text-muted">{t.fp.pick_none}</div>}

@@ -5,7 +5,7 @@
 // строка (как в WhatsApp на телефоне), отправка — кнопкой. Общий для чата риэлторов и чата застройщика.
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from "react";
 
-const touch = () => typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+import { isTouch as touch } from "@/lib/touch";
 
 export const ChatInput = forwardRef<HTMLTextAreaElement, { value: string; onChange: (v: string) => void; onSend: () => void; placeholder?: string; className?: string; maxPx?: number }>(
   function ChatInput({ value, onChange, onSend, placeholder, className = "", maxPx = 168 }, ref) {

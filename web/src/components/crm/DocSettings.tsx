@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Настройки документов CRM (12.10.2026, «довести до идеала»): наборы реквизитов (несколько юрлиц/филиалов, основной,
 // карточка реквизитов DOCX/PDF для контрагента) и шаблоны (таблица, предпросмотр PDF с образцами, скачать DOCX, поля,
 // переименование и тип своих шаблонов, загрузка своего).
@@ -158,7 +159,7 @@ export function TemplateSettings() {
               {tpls.map((t2) => (
                 <tr key={t2.id} className={`group hover:bg-[#f7f8fa] ${t2.enabled ? "" : "opacity-60"}`}>
                   <td className="px-3 py-2">
-                    {rename?.id === t2.id ? <span className="flex gap-1"><input value={rename.name} onChange={(e) => setRename({ id: t2.id, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setRename(null); }} className={`${inp} h-7`} autoFocus /><button type="button" onClick={saveRename} className={`${btnP} h-7 px-2`}>OK</button></span>
+                    {rename?.id === t2.id ? <span className="flex gap-1"><input value={rename.name} onChange={(e) => setRename({ id: t2.id, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setRename(null); }} className={`${inp} h-7`} autoFocus={kbAutoFocus()} /><button type="button" onClick={saveRename} className={`${btnP} h-7 px-2`}>OK</button></span>
                       : <span className="flex items-center gap-2"><span className="font-medium text-ink">{tplName(t2, lang)}</span>{t2.builtin ? <span className={chip}>{d.builtin}</span> : <button type="button" disabled={ro} onClick={() => setRename({ id: t2.id, name: tplName(t2, lang) })} className="cursor-pointer text-muted opacity-0 hover:text-ink group-hover:opacity-100"><IconPencil size={13} /></button>}</span>}
                     {t2.builtin && (t2.for as string[]).length > 0 && <div className="text-[11.5px] text-muted">{d.forDeals}: {(t2.for as string[]).map((k) => (k === "any" ? d.anyDeal : t.deal[k as keyof typeof t.deal])).join(", ")}</div>}
                   </td>

@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // CRM — клиенты списком по образцу пользователя (11.10.2026): заголовок со счётчиком, поиск, «Все фильтры», плотность
 // (компакт / развёрнуто), сохранённые виды с числами, строка этапов с числами, таблица с двухстрочными ячейками
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
@@ -220,7 +221,7 @@ export function ClientsTable() {
       {sel.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] bg-ink px-3 py-[6px] text-[12.5px] text-white">
           <span className="font-semibold">{fill(c.tbl.selected, { n: sel.size })}</span>
-          {crm.me.members.length > 1 && <Select value="" onChange={(v) => bulk({ ownerId: v })} placeholder={c.tbl.assign} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} className="w-[170px]" size="sm" />}
+          {crm.me.members.length > 1 && <Select value="" onChange={(v) => bulk({ ownerId: v })} placeholder={c.tbl.assign} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} className="w-[170px]" size="sm" />}
           {crm.me.branches.length > 0 && <Select value="" onChange={(v) => bulk({ branchId: v || null })} placeholder={c.client.transferBranch} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} className="w-[170px]" size="sm" />}
           <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && tagInput.trim()) { bulk({ addTag: tagInput.trim() }); setTagInput(""); } }} placeholder={c.tbl.addTagPh} className="h-7 w-[170px] rounded-[4px] border border-white/20 bg-white/10 px-2 text-[12.5px] text-white outline-none placeholder:text-white/60" />
           <button type="button" onClick={() => bulk({ status: status === "active" ? "archived" : "active" })} className="h-7 cursor-pointer rounded-[4px] bg-white/15 px-3 font-semibold hover:bg-white/25">{status === "active" ? c.tbl.archive : c.tbl.restore}</button>
@@ -247,7 +248,7 @@ export function ClientsTable() {
                   </>; })() : <span className="text-muted">—</span>}</td>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} clientId={x.id} ownerId={x.ownerId} onChange={async (k) => { patchRow(x.id, { stage: k }); try { await patchClient(x.id, { stage: k }); } catch (er) { err(er); load(); } }} disabled={ro} />{!dense && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
-                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { patchRow(x.id, { ownerId: v || null }); try { await patchClient(x.id, { ownerId: v || null }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
+                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { patchRow(x.id, { ownerId: v || null }); try { await patchClient(x.id, { ownerId: v || null }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name, color: mm.color }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
                   <td className={`px-3 ${pad}`}>{x.nextTask ? <span className={`block truncate text-[12.5px] ${over ? "font-semibold text-red" : "text-text"}`} title={x.nextTask.title}>{fmtDT(x.nextTask.dueAt, lang)}{!dense && <span className="block truncate text-[12px] font-normal text-muted">{x.nextTask.title}</span>}</span> : <span className="text-muted">—</span>}</td>
                   <td className={`px-3 ${pad} text-muted`} title={fmtDT(x.lastActivityAt, lang)}>{hoursAgo(x.lastActivityAt)}</td>
                   <td className={`px-3 ${pad} text-muted`}>{fmtDate(x.createdAt, lang)}</td>
@@ -307,7 +308,7 @@ function useFieldDefs(allTags: string[]): FieldDef[] {
     { key: "il", label: c.want.il, kind: "select", opts: GEO.map((g) => ({ value: g.k, label: g.n })) },
     { key: "budget", label: c.client.budget, kind: "budget" },
     { key: "source", label: c.source, kind: "select", opts: crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) })) },
-    ...(crm.me.members.length > 1 ? [{ key: "owner", label: c.owner, kind: "select" as const, opts: crm.me.members.map((m) => ({ value: m.id, label: m.name })) }] : []),
+    ...(crm.me.members.length > 1 ? [{ key: "owner", label: c.owner, kind: "select" as const, opts: crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color })) }] : []),
     ...(crm.me.branches.length > 0 ? [{ key: "branch", label: c.client.branch, kind: "select" as const, opts: crm.me.branches.map((b) => ({ value: b.id, label: b.name })) }] : []),
     { key: "lang", label: c.client.lang, kind: "select", opts: ["RU", "EN", "TR"].map((l) => ({ value: l, label: l })) },
     { key: "channel", label: c.client.channel, kind: "select", opts: opt(CHANNELS_F, c.channel) },
@@ -348,7 +349,7 @@ function MultiList({ def, flt, setF, onDone }: { def: FieldDef; flt: Flt; setF: 
   return (
     <>
       <div className="flex items-center justify-between px-2 pb-1 pt-1"><span className="text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</span>{cur.length > 0 && <button type="button" onClick={() => setF({ [def.key]: [] } as Partial<Flt>)} className="cursor-pointer text-[11px] font-medium text-muted hover:text-red">{c.tbl.clear}</button>}</div>
-      {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
+      {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus={kbAutoFocus()} className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
       <div className="max-h-[280px] overflow-y-auto max-md:max-h-[60dvh]">{opts.map((o) => <OptRow key={o.value} on={cur.includes(o.value)} color={o.color} label={o.label} onClick={() => toggle(o.value)} />)}</div>
       <div className="mt-1 border-t border-line pt-1"><button type="button" onClick={onDone} className="flex h-8 w-full cursor-pointer items-center justify-center rounded-[5px] text-[13px] font-semibold text-blue-2 hover:bg-bg-3">{c.tbl.done}</button></div>
     </>
@@ -409,7 +410,7 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
         <button type="button" onClick={(e) => { setOpen(open ? null : { mode: "pick", anchor: "+", el: e.currentTarget }); setQ(""); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-dashed border-line px-3 text-[12.5px] font-medium text-text hover:border-blue hover:text-ink"><IconPlus size={13} /> {c.tbl.addFilter}</button>
         {open?.mode === "pick" && (
           <PopBox className={pop} close={() => setOpen(null)} anchor={open.el}>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus={kbAutoFocus()} className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />
             <div className="max-h-[280px] overflow-y-auto">{fields.map((d) => <button key={d.key} type="button" onClick={() => pickField(d)} className={item(false)}>{d.label}</button>)}</div>
           </PopBox>
         )}
@@ -425,7 +426,7 @@ function ValuePop({ def, flt, range, setRange, apply, setF, close, pop, anchor }
   if (def.kind === "budget") return (
     <PopBox className={`${pop} p-3`} close={close} anchor={anchor}>
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
-      <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={range.min} onChange={(e) => setRange({ ...range, min: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetFrom} autoFocus className={inp} /><input inputMode="numeric" value={range.max} onChange={(e) => setRange({ ...range, max: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetTo} className={inp} onKeyDown={(e) => { if (e.key === "Enter") apply({ budgetMin: range.min, budgetMax: range.max }); }} /></div>
+      <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={range.min} onChange={(e) => setRange({ ...range, min: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetFrom} autoFocus={kbAutoFocus()} className={inp} /><input inputMode="numeric" value={range.max} onChange={(e) => setRange({ ...range, max: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetTo} className={inp} onKeyDown={(e) => { if (e.key === "Enter") apply({ budgetMin: range.min, budgetMax: range.max }); }} /></div>
       <button type="button" onClick={() => apply({ budgetMin: range.min, budgetMax: range.max })} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.apply}</button>
     </PopBox>
   );

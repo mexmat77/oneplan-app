@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Форма клиента (0017, ТЗ docs/crm-spec.md §2, §7): минимум при создании — имя, контакт, тип первой заявки, источник,
 // ответственный, район/бюджет, следующее действие, KVKK-уведомление; остальное — секции ниже. Один клиент — несколько заявок
 // (RequestModal), здесь только первая. Дубли по телефону/e-mail проверяются перед сохранением.
@@ -97,7 +98,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         {/* ---- основное ---- */}
         <div className="grid grid-cols-[auto_1fr_120px] gap-3 max-md:grid-cols-1">
           <div><label className={lbl}>&nbsp;</label><div className="inline-flex h-9 rounded-[6px] border border-line bg-surface p-[2px]">{(["person", "company"] as const).map((k) => <button key={k} type="button" onClick={() => set({ kind: k })} className={`cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${f.kind === k ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{k === "person" ? c.client.kindPerson : c.client.kindCompany}</button>)}</div></div>
-          <div><label className={lbl}>{c.client.name}</label><input value={f.name} onChange={(e) => set({ name: e.target.value })} className={inp} autoFocus /></div>
+          <div><label className={lbl}>{c.client.name}</label><input value={f.name} onChange={(e) => set({ name: e.target.value })} className={inp} autoFocus={kbAutoFocus()} /></div>
           <div><label className={lbl}>{c.client.lang}</label><Select value={f.lang} onChange={(v) => set({ lang: v as Lang })} options={["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))} /></div>
         </div>
         {f.kind === "company" && <div className="mt-3"><label className={lbl}>{c.client.company}</label><input value={f.company} onChange={(e) => set({ company: e.target.value })} className={inp} /></div>}
@@ -126,10 +127,10 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
           {PRIOS.map((p) => <button key={p} type="button" onClick={() => set({ priority: f.priority === p ? null : p })} className={chipCls(f.priority === p)} style={f.priority === p ? { background: PRIO_COLOR[p] } : undefined}>{c.prio[p]}</button>)}
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang) }))} /></div>
+          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang), color: st.color ?? undefined }))} /></div>
           <div><label className={lbl}>{c.source}</label><Select value={f.sourceId ?? ""} onChange={(v) => set({ sourceId: v || null })} options={[{ value: "", label: c.noSource }, ...crm.sources.filter((s) => s.active).map((s) => ({ value: s.id, label: sourceName(s, t) }))]} /></div>
           <div><label className={lbl}>{c.client.campaign}</label><input value={f.campaign} onChange={(e) => set({ campaign: e.target.value })} placeholder={c.client.campaignPh} className={inp} /></div>
-          {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name }))} /></div>}
+          {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></div>}
           {crm.me.branches.length > 0 && <div><label className={lbl}>{c.client.branch}</label><Select value={f.branchId ?? ""} onChange={(v) => set({ branchId: v || null })} options={[{ value: "", label: c.client.noBranch }, ...crm.me.branches.map((b) => ({ value: b.id, label: b.name }))]} /></div>}
         </div>
         <div className="mt-3">

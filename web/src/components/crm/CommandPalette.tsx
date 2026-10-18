@@ -1,5 +1,6 @@
 "use client";
 
+import { kbAutoFocus } from "@/lib/touch";
 // Cmd+K / Ctrl+K (12.10.2026, стандарт Linear/Attio/Notion): поиск клиентов, переходы по разделам, создание, настройки.
 // Стрелки/Enter/Esc, подсказки сочетаний; мышь тоже работает. Монтируется из CrmShell.
 import { useBackClose } from "@/hooks/useScrollLock";
@@ -53,7 +54,7 @@ export function CommandPalette({ open, onClose, onCreate }: { open: boolean; onC
     <>
       <div className="fixed inset-0 z-[600] bg-ink/30" onClick={onClose} />
       <div className="fixed left-1/2 top-[12vh] z-[610] w-[600px] max-w-[calc(100vw-24px)] -translate-x-1/2 overflow-hidden rounded-[10px] border border-line bg-surface shadow-[0_24px_80px_rgba(20,36,63,.3)]" style={{ animation: "opl-card .12s ease" }}>
-        <div className="flex items-center gap-2 border-b border-line px-4"><IconSearch size={16} className="text-muted" /><input ref={inp} autoFocus value={q} onChange={(e) => { setQ(e.target.value); setIdx(0); }} onKeyDown={onKey} placeholder={c.cmd.placeholder} className="h-12 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted-2" /><kbd className="rounded-[4px] border border-line px-[6px] py-[1px] text-[10.5px] text-muted">Esc</kbd></div>
+        <div className="flex items-center gap-2 border-b border-line px-4"><IconSearch size={16} className="text-muted" /><input ref={inp} autoFocus={kbAutoFocus()} value={q} onChange={(e) => { setQ(e.target.value); setIdx(0); }} onKeyDown={onKey} placeholder={c.cmd.placeholder} className="h-12 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted-2" /><kbd className="rounded-[4px] border border-line px-[6px] py-[1px] text-[10.5px] text-muted">Esc</kbd></div>
         <div className="max-h-[52vh] overflow-y-auto py-1">
           {items.length === 0 && <div className="px-4 py-6 text-center text-[13px] text-muted">{c.cmd.noResults}</div>}
           {groups.map((g) => { const list = items.filter((x) => x.group === g); if (!list.length) return null; return (
