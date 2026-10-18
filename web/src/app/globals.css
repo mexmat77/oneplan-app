@@ -325,4 +325,19 @@ html[data-crmmode] [data-dev] > header { position: sticky; top: 0; z-index: 100;
 html[data-crmmode] button[aria-haspopup="listbox"] { height: 32px; padding-top: 0; padding-bottom: 0; border-radius: 6px; font-size: 13px; }
 html[data-crmmode] [data-crm-form] input:not([type="checkbox"]):not([type="radio"]), html[data-crmmode] [data-crm-form] button[aria-haspopup="listbox"], [data-crm-form] input:not([type="checkbox"]):not([type="radio"]), [data-crm-form] button[aria-haspopup="listbox"] { height: 36px; padding-top: 0; padding-bottom: 0; border-radius: 6px; font-size: 13px; }
 [data-crm-form] textarea { border-radius: 6px; font-size: 13px; }
+/* CRM НА ТЕЛЕФОНЕ — РАЗМЕРЫ КАК У РАСШИРЕННОГО ПОИСКА КАТАЛОГА (18.10.2026, «в CRM слишком мелко, пальцем трудно»):
+   поля и триггеры списков 44px / 14px / радиус 10, кнопки форм 44px, тулбар и чипы 40/36px; на десктопе плотность Pipedrive остаётся. */
+@media (max-width: 760px) {
+  html[data-crmmode] [data-crm-form] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), [data-crm-form] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  html[data-crmmode] [data-crm-form] button[aria-haspopup="listbox"], [data-crm-form] button[aria-haspopup="listbox"] { height: 44px !important; min-height: 44px; font-size: 14px !important; border-radius: 10px !important; }
+  [data-crm-form] textarea { min-height: 96px; font-size: 14px !important; border-radius: 10px !important; }
+  [data-crm-form] button.h-8:not(.w-8):not(.w-7):not(.w-6), [data-crm-form] button.h-9:not(.w-9):not(.w-8):not(.w-7), [data-crm-form] button.h-7:not(.w-7):not(.w-6) { height: 44px !important; font-size: 14px !important; border-radius: 10px !important; }
+  [data-crm-form] label, [data-crm-form] .text-\[11px\], [data-crm-form] .text-\[11\.5px\] { font-size: 12.5px !important; }
+  html[data-crmmode] main button.h-8:not(.w-8):not(.w-7):not(.w-6), html[data-crmmode] main input.h-8 { height: 40px !important; font-size: 13.5px !important; }
+  html[data-crmmode] main button.h-7:not(.w-7):not(.w-6) { height: 36px !important; font-size: 13px !important; }
+  html[data-crmmode] button[aria-haspopup="listbox"] { height: 40px !important; font-size: 13.5px !important; }
+  html[data-crmmode] .sticky.h-12 { height: 56px !important; }
+  html[data-crmmode] main [role="tablist"].h-8 { height: 40px !important; } html[data-crmmode] main [role="tablist"] button { font-size: 13.5px !important; }
+  html[data-crmmode] [data-sheet] button, html[data-crmmode] [data-sheet] input { min-height: 44px; font-size: 14px; }
+}
 .crm-drag-over { background: var(--blue-tint) !important; }
