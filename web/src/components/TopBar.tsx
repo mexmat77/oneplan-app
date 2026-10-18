@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentType } from "react";
 import {
-  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFlag, IconFolders, IconGlobe, IconHeart, IconHome2, IconInbox, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
+  IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFlag, IconFolders, IconGlobe, IconHeart, IconHome2, IconInbox, IconLayoutDashboard, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
 import { Logo } from "./Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -82,7 +82,16 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
     { href: "/admin/companies", label: L("Организации", "Organizations", "Kuruluşlar"), Icon: IconBuilding, active: is("/admin/companies") },
     { href: "/admin/reports", label: L("Жалобы", "Reports", "Şikayetler"), Icon: IconFlag, badge: adminRepN, active: is("/admin/reports") },
   ];
-  const navItems = workspace === "realtors" ? items : workspace === "dev" ? devItems : workspace === "admin" ? adminItems : [];
+  const navItems = workspace === "realtors" ? items : workspace === "dev" ? devItems : [];
+  // Меню кабинетов (18.10.2026, «из Управления не попасть в Мои объекты и CRM»): как у HubSpot/Shopify переключатель контекста
+  // раскрывает разделы своего кабинета — один клик из любого места; на телефоне у админа в «Управлении» все три кабинета группами.
+  const devMenu: Item[] = [
+    { href: "/dev", label: L("Дашборд", "Dashboard", "Panel"), Icon: IconLayoutDashboard, active: is("/dev") && !is("/dev/") },
+    { href: "/dev/objects", label: L("Объекты", "Objects", "Projeler"), Icon: IconBuildingCommunity, active: is("/dev/objects") },
+    { href: "/dev/users", label: L("Пользователи", "Users", "Kullanıcılar"), Icon: IconUsers, active: is("/dev/users") },
+    { href: "/dev/crm", label: "CRM", Icon: IconAddressBook, active: is("/dev/crm") },
+  ];
+  const spaceMenu: Record<Workspace, Item[]> = { realtors: items, dev: devMenu, admin: adminItems };
   // Kebab rows — prototype order (line 3753): catalog, mine, favs, sels, reqs, api, billing, then rls for admins.
   const kebabRows: Item[] = [
     ...navItems,
@@ -107,9 +116,22 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         {isAdmin && (
           <div className="flex shrink-0 gap-[2px] rounded-[9px] bg-bg-2 p-[3px] max-md:hidden">
             {spaces.map(({ key, href, label, Icon, badge }) => (
-              <Link key={key} href={href} title={label} className={`flex h-[26px] items-center gap-[4px] rounded-[7px] px-[8px] text-[11px] font-extrabold uppercase tracking-[.04em] ${workspace === key ? "bg-surface text-blue shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>
-                <Icon size={13} /><span className="max-[1560px]:hidden">{label}</span><Badge n={badge} />
-              </Link>
+              <div key={key} className="group relative">
+                <Link href={href} title={label} className={`flex h-[26px] items-center gap-[4px] rounded-[7px] px-[8px] text-[11px] font-extrabold uppercase tracking-[.04em] ${workspace === key ? "bg-surface text-blue shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>
+                  <Icon size={13} /><span className="max-[1560px]:hidden">{label}</span><Badge n={badge} />
+                </Link>
+                {/* разделы кабинета по наведению / фокусу — переход в один клик из любого кабинета */}
+                <div className="absolute left-0 top-full z-[120] hidden pt-[6px] group-hover:block group-focus-within:block">
+                  <div className="min-w-[210px] rounded-[12px] border border-line bg-surface p-[6px] shadow-[0_14px_40px_rgba(20,36,63,.16)]">
+                    <div className="px-[10px] pb-[4px] pt-[6px] text-[10.5px] font-extrabold uppercase tracking-[.08em] text-muted">{label}</div>
+                    {spaceMenu[key].map((m) => (
+                      <Link key={m.href} href={m.href} onClick={() => { if (m.href === "/catalog") setView("list"); }} className={`flex items-center gap-[9px] rounded-[8px] px-[10px] py-[8px] text-[13px] font-semibold ${m.active && workspace === key ? "bg-blue-tint text-blue-2" : "text-ink hover:bg-bg-2"}`}>
+                        <m.Icon size={15} /><span className="flex-1">{m.label}</span><Badge n={m.badge} />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -173,15 +195,23 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
               <span className="flex-1 text-[15px] font-extrabold text-ink">{t.common.menu}</span>
               <button type="button" onClick={() => setMenu(false)} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[11px] bg-bg-2 text-[20px] text-text hover:brightness-95" aria-label={t.common.menu}><IconX size={20} /></button>
             </div>
-            {isAdmin && (
+            {isAdmin && workspace !== "admin" && (
               <div className="mb-[6px] border-b border-line-2 pb-[6px]">
                 {spaces.map(({ key, href, label, Icon, badge }) => (
                   <Link key={key} href={href} onClick={() => setMenu(false)} className={`flex items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold ${workspace === key ? "bg-blue-tint text-blue-2" : "text-ink"}`}><Icon size={17} /><span className="flex-1">{label}</span><Badge n={badge} /></Link>
                 ))}
               </div>
             )}
+            {isAdmin && workspace === "admin" && spaces.map(({ key, label }) => (
+              <div key={key} className="mb-[6px] border-b border-line-2 pb-[6px]">
+                <div className="px-[10px] pb-[2px] pt-[8px] text-[10.5px] font-extrabold uppercase tracking-[.08em] text-muted">{label}</div>
+                {spaceMenu[key].map(({ href, label: l2, Icon, badge, active }) => (
+                  <Link key={href} href={href} onClick={() => { setMenu(false); if (href === "/catalog") setView("list"); }} className={`flex items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold ${active && workspace === key ? "bg-blue-tint text-blue-2" : "text-ink"}`}><Icon size={17} /><span className="flex-1">{l2}</span><Badge n={badge} /></Link>
+                ))}
+              </div>
+            ))}
             <div data-kebab-rows="1">
-              {kebabRows.map(({ href, label, Icon, badge, active }) => (
+              {(workspace === "admin" ? kebabRows.filter((r) => !adminItems.some((a) => a.href === r.href)) : kebabRows).map(({ href, label, Icon, badge, active }) => (
                 <Link key={href} href={href} onClick={() => { setMenu(false); if (href === "/catalog") setView("list"); }} className={`flex cursor-pointer items-center gap-[11px] rounded-[10px] px-[10px] py-3 text-[13.5px] font-semibold hover:brightness-95 ${active ? "bg-blue-tint text-blue-2" : "text-ink"}`}>
                   <Icon size={17} />
                   <span className="flex-1">{label}</span>
