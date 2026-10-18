@@ -140,7 +140,7 @@ function DealDataModal({ dealId, dealKind, onClose, onDone }: { dealId: string; 
   return (
     <Modal open onClose={onClose} width={1080} sheet="tall">
       <div data-crm-form="1">
-        <div className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.data}</div><ModalClose onClick={onClose} /></div>
+        <div data-modal-head="1" className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.data}</div><ModalClose onClick={onClose} /></div>
         <p className="mb-3 text-[12.5px] text-muted">{c.dataS}</p>
         <div className="grid grid-cols-[260px_1fr] gap-4 max-md:grid-cols-1">
           <div className="flex flex-col gap-3">
@@ -168,7 +168,7 @@ function DealDataModal({ dealId, dealKind, onClose, onDone }: { dealId: string; 
             ))}
           </div>
         </div>
-        <div className="mt-3 flex justify-end gap-2 border-t border-line pt-3"><button type="button" onClick={onClose} className={btnS}>{t.crm.cancel}</button><button type="button" onClick={save} disabled={busy || !ready} className={btnP}><IconCheck size={15} /> {c.dataSave}</button></div>
+        <div data-modal-foot="1" className="mt-3 flex justify-end gap-2 border-t border-line pt-3"><button type="button" onClick={onClose} className={btnS}>{t.crm.cancel}</button><button type="button" onClick={save} disabled={busy || !ready} className={btnP}><IconCheck size={15} /> {c.dataSave}</button></div>
       </div>
     </Modal>
   );
@@ -196,7 +196,7 @@ function GenerateModal({ dealId, dealKind, onClose, onDone, onData }: { dealId: 
   return (
     <Modal open onClose={onClose} width={820} sheet="tall">
       <div data-crm-form="1">
-        <div className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.generateMany}</div><ModalClose onClick={onClose} /></div>
+        <div data-modal-head="1" className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.generateMany}</div><ModalClose onClick={onClose} /></div>
         <p className="mb-3 text-[12.5px] text-muted">{c.pickTpls}{!pdf ? ` · ${c.noPdfShort}` : ""}</p>
         {!ready && <div className="text-[12.5px] text-muted">…</div>}
         {ready && (tpls ?? []).length === 0 && <div className="rounded-[6px] bg-[#fff8e6] px-3 py-2 text-[12.5px] text-[#a16207]">{c.noTpls}</div>}
@@ -248,13 +248,13 @@ function DocUploadModal({ dealId, onClose, onDone }: { dealId: string; onClose: 
   return (
     <Modal open onClose={onClose} width={480}>
       <div data-crm-form="1">
-        <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.uploadT}</div><ModalClose onClick={onClose} /></div>
+        <div data-modal-head="1" className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.uploadT}</div><ModalClose onClick={onClose} /></div>
         <label className={`${btnS} mb-3 w-full cursor-pointer justify-center`}><IconUpload size={14} /> {file ? file.name : c.uploadPick}<input type="file" onChange={(e) => { const f = e.target.files?.[0] ?? null; setFile(f); if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, "")); }} className="hidden" /></label>
         <label className={lbl}>{c.docTitle}</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className={inp} />
         <label className={`${lbl} mt-3`}>{c.uploadKind}</label>
         <Select value={kind} onChange={setKind} options={["passport", "deed", "receipt", "sale", "rent", "other"].map((k) => ({ value: k, label: kinds[k] ?? k }))} />
-        <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{t.crm.cancel}</button><button type="button" onClick={go} disabled={busy || !file} className={btnP}><IconUpload size={15} /> {c.upload}</button></div>
+        <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{t.crm.cancel}</button><button type="button" onClick={go} disabled={busy || !file} className={btnP}><IconUpload size={15} /> {c.upload}</button></div>
       </div>
     </Modal>
   );

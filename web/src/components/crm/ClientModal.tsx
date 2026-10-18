@@ -90,7 +90,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
   const fr = f.firstRequest;
   return (
     <div data-crm-form="1">
-      <div className="mb-4 flex items-center justify-between">
+      <div data-modal-head="1" className="mb-4 flex items-center justify-between">
         <div className="text-[18px] font-semibold text-ink">{client ? c.client.edit : c.addClient}</div>
         <ModalClose onClick={onClose} />
       </div>
@@ -214,7 +214,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
           </div>
         )}
       </div>
-      <div className="mt-4 flex justify-end gap-2">
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={onClose} className={btnS}>{c.cancel}</button>
         <button type="button" onClick={() => submit(false)} disabled={busy} className={btnP}>{client ? c.save : c.create}</button>
       </div>

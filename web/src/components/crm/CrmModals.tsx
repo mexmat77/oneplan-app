@@ -62,7 +62,7 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
   }
   return (
     <div data-crm-form="1">
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{deal ? deal.title || c.deal.add : c.deal.add}</div><ModalClose onClick={onClose} /></div>
+      <div data-modal-head="1" className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{deal ? deal.title || c.deal.add : c.deal.add}</div><ModalClose onClick={onClose} /></div>
       <label className={lbl}>{c.deal.company}</label>
       <Select value={f.companyProfileId ?? (companies?.find((x) => x.isDefault) ?? companies?.[0])?.id ?? ""} onChange={(v) => set({ companyProfileId: v || null })} placeholder={companies === null ? "…" : c.deal.noCompany} options={(companies ?? []).map((x) => ({ value: x.id, label: x.label || x.fields.name || "—" }))} disabled={companies === null} />
       {companies && companies.length === 0 && <div className="mt-1 text-[11.5px] text-[#a16207]">{c.deal.noCompanyHint}</div>}
@@ -94,7 +94,7 @@ function DealForm({ deal, clients, clientId, requests, briefs: briefs0, onClose,
       {crm.me.members.length > 1 && <div className="mt-3 grid grid-cols-2 gap-2">
         <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></div>
       </div>}
-      <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{deal ? c.save : c.create}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{deal ? c.save : c.create}</button></div>
     </div>
   );
 }
@@ -123,7 +123,7 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
   const kinds: TaskKind[] = ["call", "show", "meeting", "message", "other"];
   return (
     <div data-crm-form="1">
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.task.add}</div><ModalClose onClick={onClose} /></div>
+      <div data-modal-head="1" className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.task.add}</div><ModalClose onClick={onClose} /></div>
       <label className={lbl}>{c.task.title}</label>
       <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={c.task.titlePh} className={inp} autoFocus={kbAutoFocus()} />
       <label className={`${lbl} mt-3`}>{c.task.kind}</label>
@@ -132,7 +132,7 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
       <DuePicker value={due} onChange={setDue} />
       {!clientId && <><label className={`${lbl} mt-3`}>{c.deal.client}</label><Select value={f.clientId ?? ""} onChange={(v) => set({ clientId: v || null })} searchable options={[{ value: "", label: "—" }, ...clients.map((x) => ({ value: x.id, label: x.name }))]} /></>}
       {crm.me.members.length > 1 && <><label className={`${lbl} mt-3`}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></>}
-      <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button></div>
     </div>
   );
 }

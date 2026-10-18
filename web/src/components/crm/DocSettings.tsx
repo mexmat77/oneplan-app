@@ -91,7 +91,7 @@ function CompanyForm({ pr, first, onClose, onSaved }: { pr: CompanyProfile | nul
   }
   return (
     <div data-crm-form="1">
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{pr ? d.editCompany : d.addCompany}</div><ModalClose onClick={onClose} /></div>
+      <div data-modal-head="1" className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{pr ? d.editCompany : d.addCompany}</div><ModalClose onClick={onClose} /></div>
       <div className="max-h-[70vh] overflow-y-auto pr-1 max-md:max-h-none">
         <div className="grid grid-cols-[1fr_auto] items-end gap-3">
           <div><label className={lbl}>{d.companyLabel}</label><input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={d.companyLabelPh} className={inp} /></div>
@@ -106,7 +106,7 @@ function CompanyForm({ pr, first, onClose, onSaved }: { pr: CompanyProfile | nul
           </div>
         ))}
       </div>
-      <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{pr ? c.save : c.create}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{pr ? c.save : c.create}</button></div>
     </div>
   );
 }

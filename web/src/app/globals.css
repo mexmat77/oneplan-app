@@ -316,7 +316,7 @@ html[data-crmmode] [data-dev] > header { position: sticky; top: 0; z-index: 100;
 /* подписи меню: плавно гаснут при сворачивании (свёрнутое меню — только иконки с подсказками) */
 [data-crm-side] [data-crm-label] { transition: opacity .15s ease; }
 [data-crm-side][data-wide="0"] [data-crm-label] { opacity: 0; pointer-events: none; }
-@media (max-width: 760px) { [data-crm-side] { display: none; } html[data-crmmode] main { padding-top: 62px !important; padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; } html[data-crmmode] [data-demo] { bottom: calc(72px + env(safe-area-inset-bottom)); } html:has(aside[data-crm-form]) [data-demo] { display: none; } } /* на телефоне шапка fixed (не в потоке), `padding: 0` CRM-режима прятал первые 62px содержимого под липкими панелями (18.10.2026) */ /* нижняя панель вкладок CRM на телефоне (data-crm-bottom) */
+@media (max-width: 760px) { [data-crm-side] { display: none; } html[data-crmmode] main { padding-top: 62px !important; padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; } html[data-crmmode] [data-demo] { bottom: calc(72px + env(safe-area-inset-bottom)); } html:has(aside[data-crm-form]) [data-demo], html:has([data-overlay]) [data-demo] { display: none; } /* и при любом открытом окне/шторке — кнопка перекрывала «Отмена» (18.10.2026) */ } /* на телефоне шапка fixed (не в потоке), `padding: 0` CRM-режима прятал первые 62px содержимого под липкими панелями (18.10.2026) */ /* нижняя панель вкладок CRM на телефоне (data-crm-bottom) */
 [data-crm-table] th { position: sticky; top: 0; z-index: 2; background: #fafbfc; border-bottom: 1px solid var(--line); }
 [data-crm-table] td { border-bottom: 1px solid var(--line); }
 [data-crm-kanban] { scrollbar-width: thin; }
@@ -339,6 +339,11 @@ html[data-crmmode] [data-crm-form] input:not([type="checkbox"]):not([type="radio
   html[data-crmmode] .sticky.h-12 { height: 56px !important; }
   html[data-crmmode] main [role="tablist"].h-8 { height: 40px !important; } html[data-crmmode] main [role="tablist"] button { font-size: 13.5px !important; }
   html[data-crmmode] [data-sheet] button, html[data-crmmode] [data-sheet] input { min-height: 44px; font-size: 14px; }
+  /* ФОРМЫ-ШТОРКИ КАК ПАНЕЛЬ ФИЛЬТРОВ (18.10.2026, «крестик всегда наверху, кнопки всегда внизу»): шапка и ряд кнопок формы
+     (`data-modal-head` / `data-modal-foot`) липкие внутри прокрутки шторки, во всю ширину, кнопки делят ширину поровну. */
+  [data-sheet] [data-modal-head] { position: sticky; top: -22px; z-index: 5; margin: -22px -24px 14px; padding: 14px 16px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  [data-sheet] [data-modal-foot] { position: sticky; bottom: -22px; z-index: 5; display: flex; gap: 10px; margin: 14px -24px -22px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
+  [data-sheet] [data-modal-foot] > button { flex: 1; justify-content: center; }
   html[data-crmmode] [data-contact] a { flex: none; height: 40px !important; width: 40px !important; border-radius: 10px !important; } html[data-crmmode] [data-contact] a svg { width: 20px; height: 20px; }
   html[data-crmmode] [data-contact] button { flex: none; height: 36px !important; width: 36px !important; border-radius: 10px !important; } html[data-crmmode] [data-contact] button svg { width: 17px; height: 17px; }
   [data-sheet] [role="listbox"] > *, [role="listbox"][data-sheet] > * { min-height: 44px; }

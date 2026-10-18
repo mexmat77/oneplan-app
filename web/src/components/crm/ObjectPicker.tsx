@@ -78,7 +78,7 @@ function ListingsModal({ onClose, value, onPick, briefs, onBriefs, mode }: MProp
   return (
     <Modal open onClose={onClose} width={760}>
       <div data-crm-form="1">
-        <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickListing}</div><ModalClose onClick={onClose} /></div>
+        <div data-modal-head="1" className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickListing}</div><ModalClose onClick={onClose} /></div>
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <Segmented value={scope} onChange={setScope} size="sm" options={[{ value: "mine", label: c.obj.scopeMine }, { value: "favs", label: c.obj.scopeFavs }, { value: "all", label: c.obj.scopeAll }]} />
           <div className="relative min-w-[240px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input autoFocus={kbAutoFocus()} value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.obj.searchPh} className={`${inp} pl-9`} /></div>
@@ -116,7 +116,7 @@ function UnitsModal({ onClose, value, onPick, briefs, onBriefs, mode }: MProps) 
   return (
     <Modal open onClose={onClose} width={820}>
       <div data-crm-form="1">
-        <div className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickUnit}</div><ModalClose onClick={onClose} /></div>
+        <div data-modal-head="1" className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.obj.pickUnit}</div><ModalClose onClick={onClose} /></div>
         <div className="mb-3 grid grid-cols-[1fr_150px_auto_1fr] items-center gap-2 max-md:grid-cols-1">
           <Select value={pid != null ? String(pid) : ""} onChange={(v) => { setPid(v ? Number(v) : null); setWing(""); }} options={[{ value: "", label: c.obj.allProjects }, ...projects.map((p) => ({ value: String(p.id), label: p.name }))]} searchable />
           <Select value={wing} onChange={setWing} options={[{ value: "", label: c.obj.allWings }, ...wings.map((w) => ({ value: w, label: `${c.obj.wing} ${w}` }))]} disabled={!wings.length} />

@@ -117,7 +117,7 @@ function RequestForm({ clientId, request, kind: kind0, briefs: briefs0, onClose,
   }
   return (
     <div data-crm-form="1">
-      <div className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{request ? `${rq.edit} · ${rq.kinds[request.kind]}` : rq.add}</div><ModalClose onClick={onClose} /></div>
+      <div data-modal-head="1" className="mb-4 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{request ? `${rq.edit} · ${rq.kinds[request.kind]}` : rq.add}</div><ModalClose onClick={onClose} /></div>
       <div className="max-h-[70vh] overflow-y-auto pr-1 max-md:max-h-none">
         <div className="grid grid-cols-4 gap-2 max-md:grid-cols-2">
           <div><label className={lbl}>{rq.kind}</label><Select value={f.kind} onChange={(v) => set({ kind: v as RequestKind, fields: { cur: f.fields.cur ?? "TRY" }, closed: {} })} options={REQUEST_KINDS.map((k) => ({ value: k, label: rq.kinds[k] }))} disabled={!!request} /></div>
@@ -129,7 +129,7 @@ function RequestForm({ clientId, request, kind: kind0, briefs: briefs0, onClose,
         <ReqFieldGroups kind={f.kind} vals={f.fields} closed={f.closed} onField={(k, v) => set({ fields: { ...f.fields, [k]: v } })} onClosed={(k, v) => set({ closed: { ...f.closed, [k]: v } })} t={t} clients={clients} />
         {wantsVariants && <div className="mt-4"><div className="mb-2 text-[12px] font-semibold uppercase tracking-[.05em] text-muted">{c.obj.variants}</div><ObjectPicker mode="multi" value={f.variants ?? []} onChange={(v) => set({ variants: v })} briefs={briefs} onBriefs={(add) => setBriefs((b) => mergeBriefs(b, add))} /></div>}
       </div>
-      <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{request ? c.save : c.create}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{request ? c.save : c.create}</button></div>
     </div>
   );
 }

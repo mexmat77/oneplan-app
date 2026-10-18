@@ -9,6 +9,7 @@ import { useBackClose } from "@/hooks/useScrollLock";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { IconCalendarCheck, IconChevronDown, IconLayoutDashboard, IconLayoutKanban, IconLock, IconMenu2, IconPlus, IconSearch, IconSettings, IconUsers, IconX } from "@tabler/icons-react";
 import { crmBootstrap, crmClientsPage, crmCounts } from "@/app/crm/actions";
 import { useI18n } from "@/i18n/provider";
@@ -40,6 +41,7 @@ export function CrmShell({ base }: { base: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [create, setCreate] = useState<"" | "client" | "deal" | "task">("");
   const [menu, setMenu] = useState(false);
+  const [menuRect, setMenuRect] = useState<{ bottom: number; right: number } | null>(null); // якорь меню создания (снимок при открытии)
   useBackClose(menu, () => setMenu(false)); // на телефоне меню создания — шторка снизу, «назад» закрывает (стандарт 18.10.2026)
   const [palette, setPalette] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string; roles?: string[] }[]>([]);
@@ -157,13 +159,14 @@ export function CrmShell({ base }: { base: string }) {
                 (клиенты → клиент, сделки → сделка, задачи → задача), стрелка — остальные два; в разделах своих кнопок нет */}
             <div className="relative flex flex-none items-stretch">
               <button type="button" disabled={ro} onClick={() => setCreate(primary)} className="inline-flex h-8 cursor-pointer items-center gap-1 whitespace-nowrap rounded-l-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:opacity-50"><IconPlus size={14} /> {CREATE_LABEL[primary]}</button>
-              <button type="button" disabled={ro} onClick={() => setMenu((v) => !v)} title={c.nav.create} className="inline-flex h-8 w-7 cursor-pointer items-center justify-center rounded-r-[6px] border-l border-white/25 max-md:h-10 max-md:w-9 bg-blue-2 text-white hover:bg-blue-3 disabled:opacity-50"><IconChevronDown size={13} /></button>
-              {menu && (<>
+              <button type="button" disabled={ro} onClick={(e) => { const r = e.currentTarget.parentElement?.getBoundingClientRect(); setMenuRect(r ? { bottom: r.bottom, right: r.right } : null); setMenu((v) => !v); }} title={c.nav.create} className="inline-flex h-8 w-7 cursor-pointer items-center justify-center rounded-r-[6px] border-l border-white/25 max-md:h-10 max-md:w-9 bg-blue-2 text-white hover:bg-blue-3 disabled:opacity-50"><IconChevronDown size={13} /></button>
+              {/* порталом в body: внутри липкой шапки (z-20) шторка на телефоне оказывалась ПОД нижней панелью вкладок (18.10.2026) */}
+              {menu && createPortal(<div data-overlay="1">
                 <div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setMenu(false)} />
-                <div data-sheet="fit" className="absolute right-0 top-[calc(100%+4px)] z-30 w-[170px] overflow-hidden rounded-[6px] border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(20,36,63,.14)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]" onMouseLeave={() => setMenu(false)}>
+                <div data-sheet="fit" style={menuRect ? { position: "fixed", top: menuRect.bottom + 4, left: Math.max(8, menuRect.right - 170), zIndex: 600 } : { position: "fixed", zIndex: 600 }} className="w-[170px] overflow-hidden rounded-[6px] border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(20,36,63,.14)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]" onMouseLeave={() => setMenu(false)}>
                   {(["client", "deal", "task"] as const).filter((k) => k !== primary).map((k) => <button key={k} type="button" onClick={() => { setMenu(false); setCreate(k); }} className="block w-full cursor-pointer px-3 py-[7px] text-left text-[13px] text-ink hover:bg-bg-3">{CREATE_LABEL[k]}</button>)}
                 </div>
-              </>)}
+              </div>, document.body)}
             </div>
           </div>
           {/* вкладки: список раздела + открытые карточки (замечание пользователя 11.10.2026 — «как заявки во вкладках») */}

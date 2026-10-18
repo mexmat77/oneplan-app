@@ -31,7 +31,7 @@ function DossierForm({ clientId, clientName, value, onClose, onSaved }: { client
   }
   return (
     <div data-crm-form="1">
-      <div className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.client.dossier} · {clientName}</div><ModalClose onClick={onClose} /></div>
+      <div data-modal-head="1" className="mb-1 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{c.client.dossier} · {clientName}</div><ModalClose onClick={onClose} /></div>
       <p className="mb-3 text-[12.5px] text-muted">{c.client.dossierS} · {filled}/{PARTY_FIELDS.length}</p>
       <div className="grid grid-cols-3 gap-x-3 gap-y-3 max-md:grid-cols-1">
         {PARTY_FIELDS.map((x) => { const wide = x.type === "textarea"; return (
@@ -42,7 +42,7 @@ function DossierForm({ clientId, clientName, value, onClose, onSaved }: { client
               : <input value={f[x.key] ?? ""} onChange={(e) => set(x.key, e.target.value)} inputMode={/phone/i.test(x.key) ? "tel" : /email/i.test(x.key) ? "email" : undefined} className={inp} />}
           </div>); })}
       </div>
-      <div className="mt-4 flex justify-end gap-2 border-t border-line pt-3"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={save} disabled={busy} className={btnP}><IconCheck size={15} /> {c.save}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2 border-t border-line pt-3"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={save} disabled={busy} className={btnP}><IconCheck size={15} /> {c.save}</button></div>
     </div>
   );
 }
