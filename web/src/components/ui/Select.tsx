@@ -105,26 +105,29 @@ export function Select({ value, onChange, options, className = "w-full", style, 
       {open && pos && typeof document !== "undefined" && createPortal(
         <><div className="fixed inset-0 bg-[rgba(10,16,28,.35)] md:hidden" style={{ zIndex: 649 }} onMouseDown={(e) => { e.stopPropagation(); setOpen(false); }} />{/* на телефоне список — шторка снизу (data-sheet), как во всех меню (18.10.2026) */}
         <div ref={list} id={id} role="listbox" data-sheet="fit" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}
-          className="fixed z-[600] max-h-[340px] overflow-y-auto rounded-[12px] border border-line bg-surface p-1 shadow-[0_18px_44px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]"
+          className="fixed z-[600] flex max-h-[340px] flex-col overflow-hidden rounded-[12px] border border-line bg-surface p-1 shadow-[0_18px_44px_rgba(20,36,63,.16)] max-md:p-0"
           style={{ top: pos.up ? undefined : pos.top, bottom: pos.up ? window.innerHeight - pos.top : undefined, left: pos.left, minWidth: pos.width, width: menuWidth === "trigger" ? pos.width : undefined, animation: "opl-bg .12s ease", zIndex: 650 }}>
           {withSearch && (
-            <div className="sticky top-0 z-[1] mb-1 bg-surface p-1">
-              <div className="relative"><IconSearch size={14} className="pointer-events-none absolute left-[9px] top-1/2 -translate-y-1/2 text-muted-2" />
-                <input ref={search} value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} onKeyDown={onKeyDown} placeholder={searchPlaceholder} className="w-full rounded-[9px] border border-line bg-bg-5 py-[8px] pl-[28px] pr-2 text-[13px] text-ink outline-none focus:border-blue" /></div>
+            <div className="mb-1 flex-none bg-surface p-1 max-md:mb-0 max-md:border-b max-md:border-[#f2f4f8] max-md:px-[18px] max-md:py-[10px]">{/* поиск вне прокрутки: раньше строки списка просвечивали над sticky-полем */}
+              <div className="relative"><IconSearch size={14} className="pointer-events-none absolute left-[9px] top-1/2 -translate-y-1/2 text-muted-2 max-md:left-[11px]" />
+                <input ref={search} value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} onKeyDown={onKeyDown} placeholder={searchPlaceholder} className="w-full rounded-[9px] border border-line bg-bg-5 py-[8px] pl-[28px] pr-2 text-[13px] text-ink outline-none focus:border-blue max-md:rounded-[10px] max-md:bg-surface max-md:pl-8" /></div>
             </div>
           )}
+          {/* на телефоне строки как в окне «Расположение» (единый стиль списков, 18.10.2026): разделители, 14px, отступы 18px */}
+          <div className="min-h-0 flex-1 overflow-y-auto max-md:pb-[env(safe-area-inset-bottom)]">
           {shown.map((o, i) => {
             const on = o.value === value;
             return (
               <div key={o.value} data-opt role="option" aria-selected={on} aria-disabled={o.disabled} onMouseEnter={() => setActive(i)} onClick={() => pick(o)}
-                className={`flex cursor-pointer items-center gap-2 rounded-[9px] px-3 ${size === "sm" ? "py-[6px] text-[13px]" : "py-[9px] text-[13.5px]"} ${o.disabled ? "cursor-default text-muted-2" : on ? "bg-blue-tint font-semibold text-blue-2" : i === active ? "bg-bg-3 text-ink" : "text-ink"}`}>
+                className={`flex cursor-pointer items-center gap-2 rounded-[9px] px-3 max-md:gap-[11px] max-md:rounded-none max-md:border-b max-md:border-[#f5f7fb] max-md:px-[18px] max-md:py-[14px] max-md:text-[14px] ${size === "sm" ? "py-[6px] text-[13px]" : "py-[9px] text-[13.5px]"} ${o.disabled ? "cursor-default text-muted-2" : on ? "bg-blue-tint font-semibold text-blue-2" : i === active ? "bg-bg-3 text-ink" : "text-ink"}`}>
                 {o.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}
                 <span className="min-w-0 flex-1 truncate">{o.label}</span>
                 {on && <IconCheck size={15} className="flex-none text-blue-2" />}
               </div>
             );
           })}
-          {shown.length === 0 && <div className="px-3 py-[9px] text-[13px] text-muted">{options.length ? emptyText : "—"}</div>}
+          {shown.length === 0 && <div className="px-3 py-[9px] text-[13px] text-muted max-md:px-[18px] max-md:py-[14px] max-md:text-[14px]">{options.length ? emptyText : "—"}</div>}
+          </div>
         </div></>,
         document.body,
       )}

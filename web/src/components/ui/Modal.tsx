@@ -3,7 +3,8 @@
 // Prototype modal shell: dim overlay (`opl-bg`), centred window (`opl-card`), body scroll-lock, Esc.
 // `sheet="fit"` reproduces `data-sheet="fit"` — on ≤760px the window becomes a bottom sheet
 // (rules live in globals.css). Markup inside is left to the caller so each modal matches its prototype.
-import type { CSSProperties, ReactNode } from "react";
+import { useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 
 type Props = {
@@ -26,9 +27,12 @@ export function Modal({ open, onClose, children, width = 460, z = 410, overlay =
   useScrollLock(open && lock);
   useBackClose(open, onClose); // «назад» закрывает окно, а не уходит со страницы (18.10.2026)
   useEscape(open, onClose);
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: z, background: `rgba(10,16,28,${overlay})`, animation: "opl-bg .15s ease" }} onClick={onClose}>
+  // Портал в body (18.10.2026): вложенное окно внутри мобильной шторки (`translate: 0 0` у `[data-sheet]` создаёт
+  // containing block для fixed-потомков) прокручивалось вместе с формой — окно «Расположение» в заявке висело посреди формы.
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  if (!open || !mounted) return null;
+  return createPortal(
+    <div data-overlay="1" className="fixed inset-0 flex items-center justify-center" style={{ zIndex: z, background: `rgba(10,16,28,${overlay})`, animation: "opl-bg .15s ease" }} onClick={onClose}>
       <div
         data-sheet={sheet || undefined}
         className={`relative max-h-[92vh] w-full overflow-y-auto rounded-[18px] bg-surface shadow-[0_30px_80px_rgba(0,0,0,.4)] ${className}`}
@@ -37,7 +41,8 @@ export function Modal({ open, onClose, children, width = 460, z = 410, overlay =
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

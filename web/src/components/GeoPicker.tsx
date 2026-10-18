@@ -3,7 +3,8 @@
 // Geo picker — prototype markup lines 2123–2175, logic 3367–3396 and 3885–3907.
 // `filter`: multi-select il › ilçe[] › semt[] with counters and the «Показать N» footer (catalogue / new builds).
 // `add` / `req`: single pick il › ilçe › semt (listing form / new-request sheet); the caller closes its own modal.
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { IconArrowLeft, IconCheck, IconChevronRight, IconMap, IconMapPin, IconSearch, IconWorld, IconX } from "@tabler/icons-react";
 import { useBackClose, useEscape, useScrollLock } from "@/hooks/useScrollLock";
 import { useT } from "@/i18n/provider";
@@ -92,8 +93,11 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
   // В поиске показываем только районы/махалле с объектами; при добавлении — все (правило пользователя 09.10.2026).
   const ilceRows = gIl?.ilces.filter((ic) => match(ic.n) && (isAdd || showAll || (cnt.byIlce[ic.k] || 0) > 0)) ?? [];
 
-  return (
-    <>
+  // Портал в body: внутри мобильной шторки формы (translate у [data-sheet]) fixed-окно прокручивалось вместе с формой (18.10.2026)
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  if (!mounted) return null;
+  return createPortal(
+    <div data-overlay="1">
       <div className="animate-bg fixed inset-0 z-330 bg-[rgba(10,16,28,.45)]" style={z ? { zIndex: z } : undefined} onClick={onClose} />
       <div data-geo-panel="1" style={z ? { zIndex: z + 10 } : undefined} className="animate-fade fixed left-1/2 top-1/2 z-340 flex h-[min(620px,86vh)] w-[520px] max-w-[calc(100vw-24px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[18px] bg-surface shadow-[0_30px_80px_rgba(0,0,0,.35)]">
         <div className="flex items-center gap-[10px] border-b border-[#f2f4f8] px-[18px] py-[15px]">
@@ -120,7 +124,7 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
                   <IconWorld size={17} /> {t.geo.all} <span className={`ml-auto ${count}`}>{scopeAll.length}</span>
                 </button>
               )}
-              {GEO.filter((g) => match(g.n) && (isAdd || (cnt.byIl[g.k] || 0) > 0)).map((g) => (
+              {GEO.filter((g) => match(g.n) && (isAdd || showAll || (cnt.byIl[g.k] || 0) > 0)).map((g) => ( // showAll: все 81 провинция (в CRM показывалась одна Antalya, 18.10.2026)
                 <button
                   key={g.k}
                   type="button"
@@ -207,7 +211,8 @@ export function GeoPicker({ mode, value, scope, projects, countLabel, onApply, o
           </div>
         )}
       </div>
-    </>
+    </div>,
+    document.body,
   );
 }
 

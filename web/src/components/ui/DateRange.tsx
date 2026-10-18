@@ -5,6 +5,7 @@
 // квартал, год). `DateField` — одиночная дата тем же календарём (один месяц + «сегодня/завтра/через неделю»).
 // Значения — строки YYYY-MM-DD; показ — дд.мм.гггг. Без системного <input type="date"> (разная высота, нет пресетов).
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { IconCalendar, IconChevronLeft, IconChevronRight, IconX } from "@tabler/icons-react";
 import { useBackClose, useEscape } from "@/hooks/useScrollLock";
 import { useI18n } from "@/i18n/provider";
@@ -82,11 +83,13 @@ function Pop({ rect, anchor, width, onClose, children }: { rect: Rect | null; an
   let left = r ? r.left : 0;
   if (r && left + width > window.innerWidth - 8) left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
   const top = r ? (r.bottom + 340 > window.innerHeight ? Math.max(8, r.top - 8 - 330) : r.bottom + 6) : 0;
-  return (
-    <>
+  // Портал в body: внутри мобильной шторки формы fixed-календарь прокручивался вместе с формой (18.10.2026)
+  return createPortal(
+    <div data-overlay="1">
       <div className="fixed inset-0 z-[599] bg-[rgba(10,16,28,.35)] md:hidden" onClick={onClose} />
       <div ref={ref} data-sheet="fit" style={{ position: "fixed", left, top, zIndex: 600 }} className="rounded-[8px] border border-line bg-surface p-3 shadow-[0_12px_40px_rgba(20,36,63,.18)] max-md:max-h-[85dvh] max-md:overflow-y-auto max-md:p-4 max-md:pb-[max(16px,env(safe-area-inset-bottom))]">{children}</div>
-    </>
+    </div>,
+    document.body,
   );
 }
 

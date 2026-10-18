@@ -389,7 +389,7 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
   const [q, setQ] = useState("");
   const [range, setRange] = useState({ min: flt.budgetMin, max: flt.budgetMax });
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { const el = e.target as Element; if (ref.current && !ref.current.contains(el) && !el.closest?.("[data-fpop]")) setOpen(null); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { const el = e.target as Element; if (ref.current && !ref.current.contains(el) && !el.closest?.("[data-fpop], [data-overlay]")) setOpen(null); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
   useEscape(!!open, () => setOpen(null));
   const def = open?.key ? defs.find((d) => d.key === open.key) : undefined;
   const pickField = (d: FieldDef) => { setQ(""); setRange({ min: flt.budgetMin, max: flt.budgetMax }); setOpen({ mode: "value", key: d.key, anchor: open?.anchor, el: open?.el }); };
