@@ -207,7 +207,7 @@ export function ClientsTable() {
         {stage.length > 0 && <button type="button" onClick={() => setF({ cstage: [] })} className="inline-flex h-7 cursor-pointer items-center gap-1 px-2 text-[12px] font-medium text-muted hover:text-red"><IconX size={12} /> {c.tbl.clear}</button>}
       </div>
       <FilterBar flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} />
-      {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <FilterDrawer flt={flt} setF={setF} reset={() => setFlt(EMPTY_FLT)} allTags={allTags} count={rows.length} onClose={() => setFiltersOpen(false)} />}
       {sel.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[6px] bg-ink px-3 py-[6px] text-[12.5px] text-white">
           <span className="font-semibold">{fill(c.tbl.selected, { n: sel.size })}</span>
@@ -426,29 +426,58 @@ function ValuePop({ def, flt, range, setRange, apply, setF, close, pop }: { def:
 }
 
 /** «Все фильтры» — панель справа блоками (клиент · команда и источник · заявка · даты); таблица остаётся на месте. */
-function FilterDrawer({ flt, setF, reset, allTags, onClose }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[]; onClose: () => void }) {
+/** Панель «Все фильтры» — по канону расширенного поиска каталога (18.10.2026, «поиск в CRM по всем канонам, эталон — база
+ *  риэлторов»): значения полей — чипы (тап переключает, выбранный — голубой с синей обводкой и цветной точкой), группы с
+ *  заголовками, внизу «Сбросить» и «Показать N»; применяется сразу. На телефоне — во весь экран, «назад» закрывает. */
+function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt; setF: (p: Partial<Flt>) => void; reset: () => void; allTags: string[]; count: number; onClose: () => void }) {
   const { t } = useI18n(); const c = t.crm; const f = c.tbl.flt;
   useEscape(true, onClose);
-  const block = (title: string, children: React.ReactNode) => <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div><div className="flex flex-col gap-2">{children}</div></div>;
+  useBackClose(true, onClose);
   const defs = useFieldDefs(allTags);
-  const F = (k: string) => { const d = defs.find((x) => x.key === k); return d ? <MultiField key={k} def={d} flt={flt} setF={setF} /> : null; };
   const active = fltActive(flt);
+  const chip = (on: boolean) => `inline-flex max-w-full cursor-pointer items-center gap-[6px] rounded-[18px] border px-[13px] py-[8px] text-[12.5px] transition-[background,border-color] duration-[120ms] ${on ? "border-sel-line bg-blue-tint font-bold text-sel-ink" : "border-line text-ink hover:bg-line-2"}`;
+  const title = (label: string, n = 0, clear?: () => void) => (
+    <div className="mb-[8px] flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">
+      <span>{label}</span>{n > 0 && <span className="rounded-full bg-blue-tint px-[6px] text-[10.5px] font-bold normal-case tracking-normal text-sel-ink">{n}</span>}
+      {n > 0 && clear && <button type="button" onClick={clear} className="ml-auto cursor-pointer text-[11px] font-semibold normal-case tracking-normal text-muted hover:text-red">{t.cat.resetBtn}</button>}
+    </div>
+  );
+  const Field = (k: SelKey) => {
+    const d = defs.find((x) => x.key === k); if (!d || !d.opts?.length) return null;
+    const cur = flt[k];
+    const toggle = (v: string) => setF({ [k]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] } as Partial<Flt>);
+    return (
+      <div key={k}>
+        {title(d.label, cur.length, () => setF({ [k]: [] } as Partial<Flt>))}
+        <div className="flex flex-wrap gap-[6px]">
+          {d.opts.map((o) => <button key={o.value} type="button" onClick={() => toggle(o.value)} className={chip(cur.includes(o.value))}>{o.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}<span className="truncate">{o.label}</span></button>)}
+        </div>
+      </div>
+    );
+  };
+  const group = (label: string, children: React.ReactNode) => <section className="flex flex-col gap-4"><div className="text-[12.5px] font-extrabold uppercase tracking-[.06em] text-ink">{label}</div>{children}</section>;
   return (
     <>
       <div className="fixed inset-0 z-[300] bg-ink/20" onClick={onClose} />
-      <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-screen w-[420px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
-        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={17} /></button></div>
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
-          {block(f.client, <>{F("role")}{F("cstage")}{F("dealStage")}{F("priority")}<div className="grid grid-cols-2 gap-2">{F("lang")}{F("channel")}</div></>)}
-          {block(f.team, <>{F("owner")}{F("branch")}{F("source")}{F("tag")}</>)}
-          {block(f.request, <>
-            {F("kind")}{F("il")}
-            <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetFrom} className={inp} /><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetTo} className={inp} /></div>
+      <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-dvh w-[460px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[8px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={18} /></button></div>
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-4">
+          {group(f.client, <>{Field("role")}{Field("cstage")}{Field("dealStage")}{Field("priority")}{Field("lang")}{Field("channel")}</>)}
+          {group(f.team, <>{Field("owner")}{Field("branch")}{Field("source")}{Field("tag")}</>)}
+          {group(f.request, <>
+            {Field("kind")}{Field("il")}
+            <div>
+              {title(c.client.budget, flt.budgetMin || flt.budgetMax ? 1 : 0, () => setF({ budgetMin: "", budgetMax: "" }))}
+              <div className="flex items-center gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetFrom} className={inp} /><span className="text-muted">—</span><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetTo} className={inp} /></div>
+            </div>
           </>)}
-          {block(f.dates, <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />)}
+          {group(f.dates, <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />)}
           <div className="text-[12px] text-muted">{f.hint}</div>
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-line px-5 py-3"><button type="button" onClick={reset} disabled={!active} className="cursor-pointer text-[13px] font-semibold text-red hover:underline disabled:cursor-default disabled:opacity-40">{c.tbl.clear}</button><button type="button" onClick={onClose} className={btnP}>{c.tbl.done}</button></div>
+        <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+          <button type="button" onClick={reset} disabled={!active} className={`flex-none cursor-pointer rounded-[10px] px-[14px] py-[10px] text-[13px] font-bold ${active ? "bg-red-tint text-red" : "text-muted"} disabled:cursor-default`}>{t.cat.resetBtn}</button>
+          <button type="button" onClick={onClose} className="flex-none cursor-pointer rounded-[10px] bg-blue-2 px-5 py-[10px] text-[13px] font-bold text-white hover:bg-blue-3">{t.geo.show} {count}</button>
+        </div>
       </aside>
     </>
   );
