@@ -146,18 +146,18 @@ export function CrmShell({ base }: { base: string }) {
 
         <div className="min-w-0 flex-1">
           <div className="sticky top-[var(--crm-top,62px)] z-20 flex h-12 items-center gap-2 border-b border-line bg-surface px-4">
-            <div className="text-[15px] font-semibold text-ink">{nav.find((n) => n.active)?.label ?? c.title}</div>
-            <div className="relative ml-2 w-[320px] max-w-[40vw]">
+            <div className="text-[15px] font-semibold text-ink max-md:hidden">{nav.find((n) => n.active)?.label ?? c.title}</div>{/* на телефоне раздел виден в нижней панели — заголовок уступает место поиску (18.10.2026, «+ Клиент уходил за край») */}
+            <div className="relative ml-2 w-[320px] max-w-[40vw] max-md:ml-0 max-md:w-auto max-md:max-w-none max-md:flex-1">
               <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
-              <kbd className="pointer-events-none absolute right-[8px] top-1/2 -translate-y-1/2 rounded-[4px] border border-line px-[5px] text-[10px] text-muted">⌘K</kbd>
+              <kbd className="pointer-events-none absolute right-[8px] top-1/2 -translate-y-1/2 rounded-[4px] border border-line px-[5px] text-[10px] text-muted max-md:hidden">⌘K</kbd>
               <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-12 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
             </div>
-            <div className="flex-1" />
+            <div className="flex-1 max-md:hidden" />
             {/* ОДНА кнопка создания на экран (замечание пользователя 12.10.2026 «дублируются кнопки»): главное действие — по разделу
                 (клиенты → клиент, сделки → сделка, задачи → задача), стрелка — остальные два; в разделах своих кнопок нет */}
-            <div className="relative flex">
-              <button type="button" disabled={ro} onClick={() => setCreate(primary)} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-l-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:opacity-50"><IconPlus size={14} /> {CREATE_LABEL[primary]}</button>
-              <button type="button" disabled={ro} onClick={() => setMenu((v) => !v)} title={c.nav.create} className="inline-flex h-8 w-7 cursor-pointer items-center justify-center rounded-r-[6px] border-l border-white/25 bg-blue-2 text-white hover:bg-blue-3 disabled:opacity-50"><IconChevronDown size={13} /></button>
+            <div className="relative flex flex-none items-stretch">
+              <button type="button" disabled={ro} onClick={() => setCreate(primary)} className="inline-flex h-8 cursor-pointer items-center gap-1 whitespace-nowrap rounded-l-[6px] bg-blue-2 px-3 text-[13px] font-semibold text-white hover:bg-blue-3 disabled:opacity-50"><IconPlus size={14} /> {CREATE_LABEL[primary]}</button>
+              <button type="button" disabled={ro} onClick={() => setMenu((v) => !v)} title={c.nav.create} className="inline-flex h-8 w-7 cursor-pointer items-center justify-center rounded-r-[6px] border-l border-white/25 max-md:h-10 max-md:w-9 bg-blue-2 text-white hover:bg-blue-3 disabled:opacity-50"><IconChevronDown size={13} /></button>
               {menu && (<>
                 <div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setMenu(false)} />
                 <div data-sheet="fit" className="absolute right-0 top-[calc(100%+4px)] z-30 w-[170px] overflow-hidden rounded-[6px] border border-line bg-surface py-1 shadow-[0_8px_24px_rgba(20,36,63,.14)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]" onMouseLeave={() => setMenu(false)}>

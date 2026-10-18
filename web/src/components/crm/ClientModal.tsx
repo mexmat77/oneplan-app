@@ -97,7 +97,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
       <div className="max-h-[72vh] overflow-y-auto pr-1 max-md:max-h-none">
         {/* ---- основное ---- */}
         <div className="grid grid-cols-[auto_1fr_120px] gap-3 max-md:grid-cols-1">
-          <div><label className={lbl}>&nbsp;</label><div className="inline-flex h-9 rounded-[6px] border border-line bg-surface p-[2px]">{(["person", "company"] as const).map((k) => <button key={k} type="button" onClick={() => set({ kind: k })} className={`cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${f.kind === k ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{k === "person" ? c.client.kindPerson : c.client.kindCompany}</button>)}</div></div>
+          <div><label className={lbl}>&nbsp;</label><div className="inline-flex h-9 rounded-[6px] border border-line bg-surface p-[2px] max-md:h-12 max-md:rounded-[10px]">{(["person", "company"] as const).map((k) => <button key={k} type="button" onClick={() => set({ kind: k })} className={`cursor-pointer rounded-[4px] px-3 text-[12.5px] font-medium ${f.kind === k ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{k === "person" ? c.client.kindPerson : c.client.kindCompany}</button>)}</div></div>
           <div><label className={lbl}>{c.client.name}</label><input value={f.name} onChange={(e) => set({ name: e.target.value })} className={inp} autoFocus={kbAutoFocus()} /></div>
           <div><label className={lbl}>{c.client.lang}</label><Select value={f.lang} onChange={(v) => set({ lang: v as Lang })} options={["RU", "EN", "TR"].map((l) => ({ value: l, label: l }))} /></div>
         </div>
