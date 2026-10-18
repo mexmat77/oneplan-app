@@ -45,7 +45,7 @@ function FieldInput({ k, value, onChange, lang }: { k: string; value: string; on
   if (f?.type === "select") return <Select value={value} onChange={onChange} options={[{ value: "", label: "—" }, ...(f.options ?? []).map((o) => ({ value: o, label: o }))]} />;
   if (f?.type === "textarea") return <textarea value={value} onChange={(e) => onChange(e.target.value)} className={`${inp} min-h-[64px] resize-y py-2`} />;
   if (f?.type === "date") return <DateField value={value} onChange={onChange} />;
-  return <input inputMode={f?.type === "money" || f?.type === "number" ? "decimal" : undefined} value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={f?.hint?.[lang]} />;
+  return <input inputMode={f?.type === "money" || f?.type === "number" ? "decimal" : /phone/i.test(f?.key ?? "") ? "tel" : /email/i.test(f?.key ?? "") ? "email" : undefined} value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={f?.hint?.[lang]} />;
 }
 
 export function DocsPanel({ dealId, dealKind, onChange }: { dealId: string; dealKind: string; onChange?: () => void }) {

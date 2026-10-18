@@ -169,7 +169,7 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
           <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
             <div><label className={label}>{L("ФИО", "Full name", "Ad Soyad")}<Req /></label><input value={edit.name ?? ""} onChange={(e) => patch({ name: e.target.value })} placeholder="Ad Soyad" className={`${input} ${miss.includes("name") ? inputBad : ""}`} /></div>
             <div><label className={label}>{t.prof.mail}<Req /></label><input type="email" value={edit.email ?? ""} onChange={(e) => patch({ email: e.target.value })} placeholder="user@mail.com" className={`${input} ${miss.includes("email") ? inputBad : ""}`} /></div>
-            <div><label className={label}>{t.prof.phone} <span className="text-muted-2">({L("необязательно", "optional", "isteğe bağlı")})</span></label><input value={edit.phone ?? ""} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} placeholder="+90 5xx xxx xx xx" className={input} /></div>
+            <div><label className={label}>{t.prof.phone} <span className="text-muted-2">({L("необязательно", "optional", "isteğe bağlı")})</span></label><input value={edit.phone ?? ""} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} placeholder="+90 5xx xxx xx xx" className={input} inputMode="tel" /></div>
             {edit.id && <div><label className={label}>{t.obj.statusT}</label><Select value={edit.status ?? "active"} onChange={(v) => setEdit({ ...edit, status: v as Status })} options={(["active", "pending", "paused"] as Status[]).map((s) => ({ value: s, label: stL[s] }))} /></div>}
           </div>
 

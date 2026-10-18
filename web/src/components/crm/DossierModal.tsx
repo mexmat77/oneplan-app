@@ -39,7 +39,7 @@ function DossierForm({ clientId, clientName, value, onClose, onSaved }: { client
             <label className={lbl}>{x.label[lang]}{x.required ? <span className="text-red"> *</span> : ""}</label>
             {wide ? <textarea value={f[x.key] ?? ""} onChange={(e) => set(x.key, e.target.value)} className={`${inp} min-h-[56px] resize-y py-2`} />
               : x.type === "date" ? <DateField value={f[x.key] ?? ""} onChange={(v) => set(x.key, v)} />
-              : <input value={f[x.key] ?? ""} onChange={(e) => set(x.key, e.target.value)} className={inp} />}
+              : <input value={f[x.key] ?? ""} onChange={(e) => set(x.key, e.target.value)} inputMode={/phone/i.test(x.key) ? "tel" : /email/i.test(x.key) ? "email" : undefined} className={inp} />}
           </div>); })}
       </div>
       <div className="mt-4 flex justify-end gap-2 border-t border-line pt-3"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={save} disabled={busy} className={btnP}><IconCheck size={15} /> {c.save}</button></div>

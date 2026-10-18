@@ -788,7 +788,10 @@
   CRM НА ТЕЛЕФОНЕ — НИЖНЯЯ ПАНЕЛЬ ВКЛАДОК (18.10.2026, «иконка обрезана; как в мире делают?»): боковое меню на ≤760 скрыто,
   вместо полоски иконок в шапке раздела — `nav[data-crm-bottom]` внизу экрана (Обзор · Клиенты · Сделки · Задачи ·
   Настройки, иконка + подпись + счётчик, активный синий, safe-area), как у Pipedrive/HubSpot в мобильном вебе;
-  `html[data-crmmode] main` на телефоне получает padding-bottom 64px, кнопка демо-режима `[data-demo]` поднята над панелью. События смены этапа пишут и ключ/имя обоих этапов
+  `html[data-crmmode] main` на телефоне получает padding-bottom 64px, кнопка демо-режима `[data-demo]` поднята над панелью.
+  КЛАВИАТУРА ПОД ПОЛЕ (18.10.2026, «в форме телефона сразу циферблат»): у полей телефона `inputMode="tel"` (+ autoComplete
+  tel), e-mail — `inputMode="email"`, деньги/числа — `decimal` (ClientModal, QuickContact, DossierModal, DocsPanel, админка,
+  профиль, join/login). Новое поле с номером или почтой — всегда с inputMode. События смены этапа пишут и ключ/имя обоих этапов
   (`fromKey/fromName/key/toName`), лента показывает их, когда старый id этапа не найден (после 0027/0028 было «Без этапа → Без этапа»).
   ДВА ВНЕШНИХ КЛЮЧА НА crm_clients (13.10.2026, «пропала сделка в сделках»): после 0027 у crm_deals две связи с crm_clients
   (client_id и seller_client_id), и вложенный select `crm_clients(name)` PostgREST отвергает («more than one relationship») —
