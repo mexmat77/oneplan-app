@@ -316,7 +316,7 @@ html[data-crmmode] [data-dev] > header { position: sticky; top: 0; z-index: 100;
 /* подписи меню: плавно гаснут при сворачивании (свёрнутое меню — только иконки с подсказками) */
 [data-crm-side] [data-crm-label] { transition: opacity .15s ease; }
 [data-crm-side][data-wide="0"] [data-crm-label] { opacity: 0; pointer-events: none; }
-@media (max-width: 760px) { [data-crm-side] { display: none; } [data-crm-mobnav] { display: flex !important; } }
+@media (max-width: 760px) { [data-crm-side] { display: none; } html[data-crmmode] main { padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; } html[data-crmmode] [data-demo] { bottom: calc(72px + env(safe-area-inset-bottom)); } } /* нижняя панель вкладок CRM на телефоне (data-crm-bottom) */
 [data-crm-table] th { position: sticky; top: 0; z-index: 2; background: #fafbfc; border-bottom: 1px solid var(--line); }
 [data-crm-table] td { border-bottom: 1px solid var(--line); }
 [data-crm-kanban] { scrollbar-width: thin; }

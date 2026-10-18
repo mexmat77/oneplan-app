@@ -143,7 +143,6 @@ export function CrmShell({ base }: { base: string }) {
 
         <div className="min-w-0 flex-1">
           <div className="sticky top-[var(--crm-top,62px)] z-20 flex h-12 items-center gap-2 border-b border-line bg-surface px-4">
-            <div data-crm-mobnav="1" className="hidden gap-1 overflow-x-auto">{nav.map((n) => <Link key={n.key} href={n.href} className={`flex h-8 w-8 flex-none items-center justify-center rounded-[6px] ${n.active ? "bg-ink text-white" : "text-muted"}`}><n.Icon size={17} /></Link>)}</div>
             <div className="text-[15px] font-semibold text-ink">{nav.find((n) => n.active)?.label ?? c.title}</div>
             <div className="relative ml-2 w-[320px] max-w-[40vw]">
               <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
@@ -183,6 +182,16 @@ export function CrmShell({ base }: { base: string }) {
       <ClientModal open={create === "client"} client={null} onClose={() => setCreate("")} onSaved={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} onOpenDup={(id) => { setCreate(""); router.push(`${base}/c/${id}`); }} />
       <CreateDealHost open={create === "deal"} onClose={() => setCreate("")} clients={clients} setClients={setClients} base={base} preset={clientId ? { id: clientId, name: tabs.find((x) => x.id === clientId)?.name ?? "…" } : null} />
       <CreateTaskHost open={create === "task"} onClose={() => setCreate("")} clients={clients} setClients={setClients} preset={clientId ? { id: clientId, name: tabs.find((x) => x.id === clientId)?.name ?? "…" } : null} />
+      {/* Телефон: разделы — нижняя панель вкладок (18.10.2026, «иконка обрезана, как в мире делают»): как у Pipedrive/HubSpot в
+          мобильном вебе — иконка + подпись + счётчик, активный синий, боковое меню на ≤760 скрыто (globals.css) */}
+      <nav data-crm-bottom="1" className="fixed inset-x-0 bottom-0 z-[90] hidden border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] max-md:flex">
+        {nav.map((n) => { const cnt = n.key === "clients" ? counts?.clients : n.key === "deals" ? counts?.deals : n.key === "tasks" ? counts?.tasks : undefined; return (
+          <Link key={n.key} href={n.href} className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-[3px] text-[10.5px] font-semibold ${n.active ? "text-blue-2" : "text-muted"}`}>
+            <n.Icon size={21} stroke={n.active ? 2 : 1.7} />
+            <span className="max-w-full truncate px-1">{n.label}</span>
+            {!!cnt && <span className="absolute left-1/2 top-[6px] ml-[6px] rounded-[7px] bg-bg-2 px-[5px] text-[9.5px] font-bold text-text">{cnt}</span>}
+          </Link>); })}
+      </nav>
     </CrmCtx.Provider>
   );
 }
