@@ -48,14 +48,46 @@ export function useEscape(active: boolean, onEsc: () => void) {
 }
 
 /** «Назад» браузера (кнопка / свайп на телефоне) закрывает открытый оверлей, а не уходит со страницы (16.10.2026,
- *  правило пользователя: галерея фото закрывается как крестиком). Пока `open`, в историю добавляется запись с меткой;
- *  popstate → `onClose`; закрытие крестиком/Esc снимает нашу запись через `history.back()`, чтобы история не засорялась.
- *  Запись копирует состояние Next (`__NA`), иначе роутер при возврате перезагружал бы страницу. */
+ *  правило пользователя: галерея фото закрывается как крестиком). Пока `open`, в историю добавлена запись с меткой;
+ *  popstate → `onClose`. Запись копирует состояние Next (`__NA`), иначе роутер при возврате перезагружал бы страницу.
+ *  18.10.2026 («в мобильном меню ни один раздел не кликабелен»): закрытие крестиком/выбором пункта раньше делало
+ *  `history.back()` сразу — и отменяло переход, который начинался тем же тапом. Теперь при закрытии из интерфейса запись
+ *  только помечается «мёртвой» (`dead`), а глобальный обработчик popstate пропускает такие записи: уход с мёртвой записи
+ *  или приземление на неё даёт ещё один `history.back()` — одно нажатие «назад» ведёт туда, куда и должно. */
+const dead = new Set<string>();
+let topTag: string | null = null;
+let skipping = false;
+let installed = false;
+function installBackSkipper() {
+  if (installed || typeof window === "undefined") return; installed = true;
+  const tagOf = (st: unknown) => ((st as { oplOverlay?: string } | null)?.oplOverlay ?? null);
+  for (const name of ["pushState", "replaceState"] as const) {
+    const orig = window.history[name];
+    window.history[name] = function (this: History, data: unknown, unused: string, url?: string | URL | null) {
+      // Роутер Next на popstate делает replaceState на НОВОЙ записи раньше нашего обработчика; в этот момент `topTag` ещё
+      // описывает запись, с которой ушли, — replaceState без метки сбрасывает её только если текущая запись реально несла метку.
+      const prevTag = tagOf(window.history.state);
+      const r = orig.call(this, data, unused, url);
+      const t = tagOf(data);
+      if (name === "pushState") topTag = t;
+      else if (t) topTag = t;
+      else if (prevTag && prevTag === topTag) { topTag = null; dead.delete(prevTag); }
+      return r;
+    } as History["pushState"];
+  }
+  // capture: наш обработчик идёт раньше роутера Next, который на popstate делает replaceState и стирал бы метку «откуда ушли»
+  window.addEventListener("popstate", (e) => {
+    const leaving = topTag, landing = tagOf(e.state); topTag = landing;
+    if (skipping) { if (landing && dead.has(landing)) { window.history.back(); return; } skipping = false; return; }
+    if ((leaving && dead.has(leaving)) || (landing && dead.has(landing))) { skipping = true; window.history.back(); }
+  }, { capture: true });
+}
 export function useBackClose(open: boolean, onClose: () => void) {
   const ref = useRef(onClose);
   useEffect(() => { ref.current = onClose; });
   useEffect(() => {
     if (!open) return;
+    installBackSkipper();
     const tag = `ovl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     let popped = false;
     try { window.history.pushState({ ...(window.history.state ?? {}), oplOverlay: tag }, "", window.location.href); } catch { return; }
@@ -63,7 +95,7 @@ export function useBackClose(open: boolean, onClose: () => void) {
     window.addEventListener("popstate", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
-      if (!popped && (window.history.state as { oplOverlay?: string } | null)?.oplOverlay === tag) window.history.back();
+      if (!popped) dead.add(tag); // закрыто из интерфейса — запись мёртвая, «назад» её пропустит
     };
   }, [open]);
 }
