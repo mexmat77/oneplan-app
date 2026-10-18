@@ -97,6 +97,17 @@ export function CrmShell({ base }: { base: string }) {
   const lastList = usePref(lastListKey) || "clients";
   useEffect(() => { if (!clientId && !dealId && ["", "clients", "deals", "tasks"].includes(section)) setPref(lastListKey, section); }, [clientId, dealId, section, lastListKey]);
   const tabs: CrmTab[] = (() => { if (!boot) return []; try { const v = JSON.parse(tabsPref || "[]"); return Array.isArray(v) ? v.filter((x) => x && x.id && x.name) : []; } catch { return []; } })();
+  // Активная вкладка всегда в кадре (18.10.2026, «если их 20 — не листать же до неё»): при смене активной вкладки или появлении
+  // новой строка прокручивается к ней (горизонтально, без прыжка страницы).
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = tabsRef.current, el = row?.querySelector<HTMLElement>("[data-tab-active]");
+    if (!row || !el) return;
+    // руками по горизонтали (scrollIntoView в фоновой вкладке/с smooth не срабатывал и мог дёрнуть страницу по вертикали)
+    const left = el.offsetLeft - row.offsetLeft, right = left + el.offsetWidth;
+    if (left < row.scrollLeft + 12) row.scrollLeft = Math.max(0, left - 12);
+    else if (right > row.scrollLeft + row.clientWidth - 12) row.scrollLeft = right - row.clientWidth + 12;
+  }, [activeTab, tabsPref, boot]); // boot: до загрузки вкладок в DOM нет — после неё прокрутить ещё раз
   const readTabs = useCallback((): CrmTab[] => { try { const v = JSON.parse(getPref(tabsKey) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } }, [tabsKey]);
   const openTab = useCallback((id: string, name: string) => { const cur = readTabs(); const i = cur.findIndex((x) => x.id === id); if (i >= 0) { if (cur[i].name !== name) setPref(tabsKey, JSON.stringify(cur.map((x) => (x.id === id ? { id, name } : x)))); } else setPref(tabsKey, JSON.stringify([...cur, { id, name }].slice(-12))); }, [tabsKey, readTabs]);
   const closeTab = useCallback((id: string) => { setPref(tabsKey, JSON.stringify(readTabs().filter((x) => x.id !== id))); }, [tabsKey, readTabs]);
@@ -170,10 +181,10 @@ export function CrmShell({ base }: { base: string }) {
             </div>
           </div>
           {/* вкладки: список раздела + открытые карточки (замечание пользователя 11.10.2026 — «как заявки во вкладках») */}
-          <div className="sticky top-[calc(var(--crm-top,62px)_+_48px)] z-10 flex h-10 items-stretch gap-[2px] overflow-x-auto border-b border-line bg-[#eef0f3] px-3 pt-[6px]">
+          <div ref={tabsRef} className="sticky top-[calc(var(--crm-top,62px)_+_48px)] z-10 flex h-10 items-stretch gap-[2px] overflow-x-auto border-b border-line bg-[#eef0f3] px-3 pt-[6px] max-md:[scrollbar-width:none]">
             <Link href={listTab.href} className={`flex flex-none items-center gap-2 rounded-t-[6px] border border-b-0 px-3 text-[12.5px] font-medium ${!activeTab ? "border-line bg-surface text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}><IconMenu2 size={14} /> {listTab.key === "clients" ? c.tbl.listOf : listTab.label}</Link>
             {tabs.map((tb) => (
-              <div key={tb.id} role="link" tabIndex={0} onClick={() => router.push(hrefOf(tb.id))} onKeyDown={(e) => { if (e.key === "Enter") router.push(hrefOf(tb.id)); }} onAuxClick={(e) => { if (e.button === 1) closeAndGo(tb.id); }} title={tb.name} className={`flex min-w-[120px] max-w-[220px] flex-none cursor-pointer select-none items-center gap-2 rounded-t-[6px] border border-b-0 pl-3 pr-1 text-[12.5px] ${activeTab === tb.id ? "border-line bg-surface font-medium text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}>
+              <div key={tb.id} data-tab-active={activeTab === tb.id ? "1" : undefined} role="link" tabIndex={0} onClick={() => router.push(hrefOf(tb.id))} onKeyDown={(e) => { if (e.key === "Enter") router.push(hrefOf(tb.id)); }} onAuxClick={(e) => { if (e.button === 1) closeAndGo(tb.id); }} title={tb.name} className={`flex min-w-[120px] max-w-[220px] flex-none cursor-pointer select-none items-center gap-2 rounded-t-[6px] border border-b-0 pl-3 pr-1 text-[12.5px] ${activeTab === tb.id ? "border-line bg-surface font-medium text-ink" : "border-transparent text-muted hover:bg-[#e4e7ec] hover:text-ink"}`}>
                 <span className={`h-[6px] w-[6px] flex-none rounded-full ${activeTab === tb.id ? "bg-blue-2" : tb.id.startsWith("d:") ? "bg-[#f5a623]" : "bg-line-4"}`} />
                 <span className="min-w-0 flex-1 truncate">{tb.name}</span>
                 <button type="button" onClick={(e) => { e.stopPropagation(); closeAndGo(tb.id); }} title={c.close} className="flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={13} /></button>
