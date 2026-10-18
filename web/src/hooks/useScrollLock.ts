@@ -69,6 +69,7 @@ function installBackSkipper() {
       // описывает запись, с которой ушли, — replaceState без метки сбрасывает её только если текущая запись реально несла метку.
       const prevTag = tagOf(window.history.state);
       const r = orig.call(this, data, unused, url);
+      curUrl = window.location.href;
       const t = tagOf(data);
       if (name === "pushState") topTag = t;
       else if (t) topTag = t;
@@ -77,10 +78,19 @@ function installBackSkipper() {
     } as History["pushState"];
   }
   // capture: наш обработчик идёт раньше роутера Next, который на popstate делает replaceState и стирал бы метку «откуда ушли»
+  // Мёртвая запись: закрыта из интерфейса (`dead`) или осталась от прошлой загрузки страницы (метка есть, а оверлея в стеке
+  // нет) — после перезагрузки такие записи иначе «съедали» по одному лишнему нажатию «назад».
+  const isDead = (t: string | null) => !!t && (dead.has(t) || !stack.includes(t));
+  let curUrl = window.location.href;
   window.addEventListener("popstate", (e) => {
     const leaving = topTag, landing = tagOf(e.state); topTag = landing;
-    if (skipping) { if (landing && dead.has(landing)) { window.history.back(); return; } skipping = false; return; }
-    if ((leaving && dead.has(leaving)) || (landing && dead.has(landing))) { skipping = true; window.history.back(); }
+    // Прыгаем только между записями ОДНОГО адреса: записи оверлеев всегда лежат поверх записи своей страницы, а старые метки
+    // других страниц — обычная навигация (иначе цепочка прыжков уводила на несколько страниц назад).
+    const fromUrl = curUrl; curUrl = window.location.href; const sameUrl = fromUrl === curUrl;
+    // Служебный прыжок через мёртвую запись — НЕ нажатие пользователя: хуки оверлеев его игнорируют (18.10.2026, «вызвал
+    // шторку, закрыл, открыл окно, нажал назад — закрылся весь поиск»: второй popstate от прыжка закрывал родительскую панель).
+    if (skipping) { (e as PopStateEvent & { oplAuto?: boolean }).oplAuto = true; if (sameUrl && isDead(landing)) { window.history.back(); return; } skipping = false; return; }
+    if (sameUrl && (isDead(leaving) || isDead(landing))) { skipping = true; window.history.back(); }
   }, { capture: true });
 }
 export function useBackClose(open: boolean, onClose: () => void) {
@@ -93,12 +103,12 @@ export function useBackClose(open: boolean, onClose: () => void) {
     let popped = false;
     try { window.history.pushState({ ...(window.history.state ?? {}), oplOverlay: tag }, "", window.location.href); } catch { return; }
     stack.push(tag);
-    const onPop = () => { if (stack[stack.length - 1] !== tag) return; popped = true; ref.current(); };
+    const onPop = (e: PopStateEvent & { oplAuto?: boolean }) => { if (e.oplAuto) return; if (stack[stack.length - 1] !== tag) return; popped = true; ref.current(); };
     window.addEventListener("popstate", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
       const i = stack.lastIndexOf(tag); if (i >= 0) stack.splice(i, 1);
-      if (!popped) dead.add(tag); // закрыто из интерфейса — запись мёртвая, «назад» её пропустит
+        if (!popped) dead.add(tag); // закрыто из интерфейса — запись мёртвая, «назад» её пропустит
     };
   }, [open]);
 }

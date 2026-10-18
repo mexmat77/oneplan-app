@@ -2,6 +2,7 @@
 
 // Меню пользователя в шапке (как в современных CRM): аватар/инициалы → выпадающая карточка с именем, ролью и почтой,
 // пунктами (профиль, уведомления…) и «Выйти». Общее для базы риэлторов (`TopBar`) и кабинета застройщика (`DevShell`).
+import { useBackClose } from "@/hooks/useScrollLock";
 import Link from "next/link";
 import { IconChevronDown, IconLogout } from "@tabler/icons-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -20,6 +21,7 @@ export function UserMenu({ name, sub, email, avatar, color, items, logoutLabel, 
   name: string; sub?: string; email?: string; avatar?: string | null; color?: string; items: UserMenuItem[]; logoutLabel: string; onLogout: () => void; showName?: boolean; className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false)); // на телефоне «назад» закрывает меню, а не уходит со страницы
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
