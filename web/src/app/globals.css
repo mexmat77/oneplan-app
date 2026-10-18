@@ -339,5 +339,8 @@ html[data-crmmode] [data-crm-form] input:not([type="checkbox"]):not([type="radio
   html[data-crmmode] .sticky.h-12 { height: 56px !important; }
   html[data-crmmode] main [role="tablist"].h-8 { height: 40px !important; } html[data-crmmode] main [role="tablist"] button { font-size: 13.5px !important; }
   html[data-crmmode] [data-sheet] button, html[data-crmmode] [data-sheet] input { min-height: 44px; font-size: 14px; }
+  html[data-crmmode] [data-contact] a { flex: none; height: 40px !important; width: 40px !important; border-radius: 10px !important; } html[data-crmmode] [data-contact] a svg { width: 20px; height: 20px; }
+  html[data-crmmode] [data-contact] button { flex: none; height: 36px !important; width: 36px !important; border-radius: 10px !important; } html[data-crmmode] [data-contact] button svg { width: 17px; height: 17px; }
+  [data-sheet] [role="listbox"] > *, [role="listbox"][data-sheet] > * { min-height: 44px; }
 }
 .crm-drag-over { background: var(--blue-tint) !important; }

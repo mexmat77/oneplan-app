@@ -1,6 +1,7 @@
 "use client";
 
 // Карточка клиента: контакты, что ищет, сделки, задачи, история с заметками (перевод по кнопке того, кто смотрит).
+import { useBackClose } from "@/hooks/useScrollLock";
 import Link from "next/link";
 import { DealStageChip, ReqStatusChip } from "./ChipMenu";
 import { useRouter } from "next/navigation";
@@ -153,12 +154,12 @@ function Inner({ id }: { id: string }) {
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {cl.contacts.map((x) => (
-                <div key={x.id} className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px]">
-                  <span className="text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink">{x.value}</span>
+                <div key={x.id} data-contact="1" className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px] max-md:w-full max-md:min-w-0 max-md:gap-2 max-md:rounded-[10px] max-md:py-2 max-md:pl-3 max-md:text-[14.5px]">
+                  <div className="flex min-w-0 items-center gap-1 max-md:flex-1 max-md:flex-col max-md:items-start max-md:gap-0"><span className="whitespace-nowrap text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink max-md:ml-0 max-md:max-w-full max-md:truncate">{x.value}</span></div>
                   {(x.kind === "phone" || x.kind === "whatsapp") && <><a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={13} /></a><a href={waOf(x.value)} target="_blank" rel="noreferrer" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-[#25d366] hover:bg-bg-2"><IconBrandWhatsapp size={14} /></a></>}
                   {x.kind === "telegram" && <a href={`https://t.me/${x.value.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`} target="_blank" rel="noreferrer" title="Telegram" className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-[#229ed9] hover:bg-bg-2"><IconBrandTelegram size={14} /></a>}
                   {x.kind === "email" && <a href={`mailto:${x.value}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconMail size={13} /></a>}
-                  <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
+                  <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer max-md:hidden items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
                   {!ro && cl.contacts.length > 1 && <button type="button" title={c.client.removeContact} onClick={async () => { if (!(await confirmDialog({ text: `${x.value} — ${c.client.removeContact}?`, danger: true }))) return; setData((d) => (d ? { ...d, client: { ...d.client, contacts: d.client.contacts.filter((y) => y.id !== x.id) } } : d)); try { await removeContact(x.id); } catch (e) { err(e); load(); } }} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-red-tint hover:text-red"><IconX size={12} /></button>}
                 </div>
               ))}
@@ -261,6 +262,7 @@ function PriorityChip({ value, onChange, disabled }: { value: Priority | null; o
   const c = t.crm;
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLSpanElement>(null);
+  useBackClose(open, () => setOpen(false));
   // клик/тап мимо и Esc закрывают меню (18.10.2026, «по пустому месту тыкаешь — не убирается»); раньше — только уход мыши
   useEffect(() => { if (!open) return; const h = (e: MouseEvent | TouchEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); }; const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); }; document.addEventListener("mousedown", h, true); document.addEventListener("touchstart", h, true); document.addEventListener("keydown", k, true); return () => { document.removeEventListener("mousedown", h, true); document.removeEventListener("touchstart", h, true); document.removeEventListener("keydown", k, true); }; }, [open]);
   const col = value ? PRIO_COLOR[value] : "#8a93a2";
@@ -269,9 +271,9 @@ function PriorityChip({ value, onChange, disabled }: { value: Priority | null; o
     <span ref={box} className="relative inline-block">
       <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95 disabled:cursor-default" style={{ background: col + "1f", color: col }}><span className="h-[7px] w-[7px] rounded-full" style={{ background: col }} />{value ? c.prio[value] : c.prio.none}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-[180px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]" onMouseLeave={() => setOpen(false)}>
+        <><div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setOpen(false)} /><div data-sheet="fit" className="absolute left-0 top-[calc(100%+4px)] z-30 w-[180px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]" onMouseLeave={() => setOpen(false)}>
           {opts.map((k) => <button key={k ?? "none"} type="button" onClick={() => { setOpen(false); onChange(k); }} className={`flex w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 py-[6px] text-left text-[12.5px] hover:bg-bg-3 ${k === value ? "font-semibold text-ink" : "text-text"}`}><span className="h-[7px] w-[7px] rounded-full" style={{ background: k ? PRIO_COLOR[k] : "#c9d0dc" }} />{k ? c.prio[k] : c.prio.none}</button>)}
-        </div>
+        </div></>
       )}
     </span>
   );

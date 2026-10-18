@@ -3,6 +3,7 @@
 // Цветной чип со списком значений (13.10.2026, замечание пользователя «этапы сделки — разными цветами, как у заявки»):
 // один компонент для этапа сделки (шапка карточки сделки, блок сделок в карточке клиента, список сделок) и статуса
 // заявки — тот же вид, что чип статуса клиента (`StageMenu`). Меню — fixed, чтобы его не резал overflow.
+import { useBackClose } from "@/hooks/useScrollLock";
 import { useEffect, useRef, useState } from "react";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
@@ -22,6 +23,7 @@ export function menuPos(rect: { left: number; top: number; bottom: number } | nu
 
 export function ChipMenu({ value, options, onChange, disabled, title, size = "sm" }: { value: string; options: ChipOption[]; onChange: (v: string) => void; disabled?: boolean; title?: string; size?: "sm" | "md" }) {
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); }; document.addEventListener("mousedown", h, true); document.addEventListener("keydown", k, true); return () => { document.removeEventListener("mousedown", h, true); document.removeEventListener("keydown", k, true); }; }, [open]);
@@ -31,10 +33,12 @@ export function ChipMenu({ value, options, onChange, disabled, title, size = "sm
     <span ref={ref} className="relative inline-block">
       <button type="button" disabled={disabled} onClick={(e) => { e.stopPropagation(); const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom }); setOpen((v) => !v); }} className={`inline-flex ${size === "md" ? "h-8 text-[13px]" : "h-7 text-[12px]"} cursor-pointer items-center gap-1 whitespace-nowrap rounded-[5px] px-2 font-medium hover:brightness-95 disabled:cursor-default`} style={{ background: col + "1f", color: col }}>{cur?.label ?? "—"}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
       {open && (
-        <div style={menuPos(rect, 232, 40 + options.length * 32)} className="w-[220px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]" onClick={(e) => e.stopPropagation()}>
+        <>{/* на телефоне — шторка снизу (data-sheet), единый стандарт меню CRM (18.10.2026) */}
+        <div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setOpen(false)} />
+        <div data-sheet="fit" style={menuPos(rect, 232, 40 + options.length * 32)} className="w-[220px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
           {title && <div className="px-2 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[.05em] text-muted">{title}</div>}
           {options.map((o) => <button key={o.value} type="button" onClick={() => { setOpen(false); if (o.value !== value) onChange(o.value); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${o.value === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />{o.label}</button>)}
-        </div>
+        </div></>
       )}
     </span>
   );

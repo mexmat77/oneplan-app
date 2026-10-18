@@ -4,6 +4,7 @@
 // Кнопка-триггер выглядит как поле ввода, список рендерится порталом в body (не обрезается модалками), позиция от триггера,
 // при нехватке места снизу — открывается вверх. Клавиатура: Enter/Space/↓ — открыть, ↑/↓ — выбор, Enter — применить, Esc — закрыть.
 //   <Select value={v} onChange={setV} options={[{ value: "", label: "Все" }, ...]} className="w-full" />
+import { useBackClose } from "@/hooks/useScrollLock";
 import { IconCheck, IconChevronDown, IconSearch } from "@tabler/icons-react";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -39,6 +40,7 @@ const TRIGGER = "inline-flex cursor-pointer items-center gap-2 rounded-[10px] bo
 
 export function Select({ value, onChange, options, className = "w-full", style, placeholder, disabled, stopPropagation, menuWidth = "trigger", icon, size = "md", title, "aria-label": ariaLabel, searchable, searchPlaceholder = "Поиск…", emptyText = "Ничего не найдено" }: Props) {
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const [active, setActive] = useState(-1);
   const [pos, setPos] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);
   const btn = useRef<HTMLButtonElement>(null);
@@ -99,9 +101,10 @@ export function Select({ value, onChange, options, className = "w-full", style, 
         <IconChevronDown size={size === "sm" ? 13 : 15} className={`flex-none text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && pos && typeof document !== "undefined" && createPortal(
-        <div ref={list} id={id} role="listbox" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}
-          className="fixed z-[600] max-h-[340px] overflow-y-auto rounded-[12px] border border-line bg-surface p-1 shadow-[0_18px_44px_rgba(20,36,63,.16)]"
-          style={{ top: pos.up ? undefined : pos.top, bottom: pos.up ? window.innerHeight - pos.top : undefined, left: pos.left, minWidth: pos.width, width: menuWidth === "trigger" ? pos.width : undefined, animation: "opl-bg .12s ease" }}>
+        <><div className="fixed inset-0 bg-[rgba(10,16,28,.35)] md:hidden" style={{ zIndex: 649 }} onMouseDown={(e) => { e.stopPropagation(); setOpen(false); }} />{/* на телефоне список — шторка снизу (data-sheet), как во всех меню (18.10.2026) */}
+        <div ref={list} id={id} role="listbox" data-sheet="fit" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}
+          className="fixed z-[600] max-h-[340px] overflow-y-auto rounded-[12px] border border-line bg-surface p-1 shadow-[0_18px_44px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]"
+          style={{ top: pos.up ? undefined : pos.top, bottom: pos.up ? window.innerHeight - pos.top : undefined, left: pos.left, minWidth: pos.width, width: menuWidth === "trigger" ? pos.width : undefined, animation: "opl-bg .12s ease", zIndex: 650 }}>
           {withSearch && (
             <div className="sticky top-0 z-[1] mb-1 bg-surface p-1">
               <div className="relative"><IconSearch size={14} className="pointer-events-none absolute left-[9px] top-1/2 -translate-y-1/2 text-muted-2" />
@@ -119,7 +122,7 @@ export function Select({ value, onChange, options, className = "w-full", style, 
             );
           })}
           {shown.length === 0 && <div className="px-3 py-[9px] text-[13px] text-muted">{options.length ? emptyText : "—"}</div>}
-        </div>,
+        </div></>,
         document.body,
       )}
     </>

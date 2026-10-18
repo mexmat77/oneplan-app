@@ -4,6 +4,7 @@
 // (компакт / развёрнуто), сохранённые виды с числами, строка этапов с числами, таблица с двухстрочными ячейками
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { menuPos } from "./ChipMenu";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -383,55 +384,70 @@ function FilterBar({ flt, setF, reset, allTags }: { flt: Flt; setF: (p: Partial<
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const defs = useFieldDefs(allTags);
   const pills = pillsOf(flt, defs, t, crm, lang);
-  const [open, setOpen] = useState<{ mode: "pick" | "value"; key?: string; anchor?: string } | null>(null);
+  const [open, setOpen] = useState<{ mode: "pick" | "value"; key?: string; anchor?: string; el?: HTMLElement | null } | null>(null);
   const [q, setQ] = useState("");
   const [range, setRange] = useState({ min: flt.budgetMin, max: flt.budgetMax });
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { const el = e.target as Element; if (ref.current && !ref.current.contains(el) && !el.closest?.("[data-fpop]")) setOpen(null); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
   useEscape(!!open, () => setOpen(null));
   const def = open?.key ? defs.find((d) => d.key === open.key) : undefined;
-  const pickField = (d: FieldDef) => { setQ(""); setRange({ min: flt.budgetMin, max: flt.budgetMax }); setOpen({ mode: "value", key: d.key, anchor: open?.anchor }); };
+  const pickField = (d: FieldDef) => { setQ(""); setRange({ min: flt.budgetMin, max: flt.budgetMax }); setOpen({ mode: "value", key: d.key, anchor: open?.anchor, el: open?.el }); };
   const fields = defs.filter((d) => !q.trim() || d.label.toLowerCase().includes(q.trim().toLowerCase()));
-  const pop = "absolute left-0 top-[calc(100%+4px)] z-30 w-[260px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)]";
+  const pop = "w-[260px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]";
+  useBackClose(!!open, () => setOpen(null)); // на телефоне поповеры — шторки снизу (единый стандарт 18.10.2026), «назад» закрывает
   const item = (on: boolean) => `flex h-8 w-full cursor-pointer items-center rounded-[5px] px-2 text-left text-[13px] ${on ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`;
   return (
     <div ref={ref} className="mb-3 flex flex-wrap items-center gap-[6px] max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
       {pills.map((p) => (
         <span key={p.key} className="relative inline-flex h-7 items-center rounded-full border border-sel-line bg-blue-tint pl-3 pr-1 text-[12.5px] text-sel-ink">
-          <button type="button" onClick={() => { setOpen(open?.key === p.key ? null : { mode: "value", key: p.key, anchor: p.key }); setRange({ min: flt.budgetMin, max: flt.budgetMax }); }} className="cursor-pointer"><span className="text-sel-ink/70">{p.label}:</span> <span className="font-semibold">{p.value}</span></button>
+          <button type="button" onClick={(e) => { setOpen(open?.key === p.key ? null : { mode: "value", key: p.key, anchor: p.key, el: e.currentTarget.parentElement }); setRange({ min: flt.budgetMin, max: flt.budgetMax }); }} className="cursor-pointer"><span className="text-sel-ink/70">{p.label}:</span> <span className="font-semibold">{p.value}</span></button>
           <button type="button" onClick={() => setF(clearField(p.key))} className="ml-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full hover:bg-white/60"><IconX size={12} /></button>
-          {open?.mode === "value" && open.anchor === p.key && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} />}
+          {open?.mode === "value" && open.anchor === p.key && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} anchor={open.el} />}
         </span>
       ))}
       <span className="relative">
-        <button type="button" onClick={() => { setOpen(open ? null : { mode: "pick", anchor: "+" }); setQ(""); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-dashed border-line px-3 text-[12.5px] font-medium text-text hover:border-blue hover:text-ink"><IconPlus size={13} /> {c.tbl.addFilter}</button>
+        <button type="button" onClick={(e) => { setOpen(open ? null : { mode: "pick", anchor: "+", el: e.currentTarget }); setQ(""); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-dashed border-line px-3 text-[12.5px] font-medium text-text hover:border-blue hover:text-ink"><IconPlus size={13} /> {c.tbl.addFilter}</button>
         {open?.mode === "pick" && (
-          <div className={pop}>
+          <PopBox className={pop} close={() => setOpen(null)} anchor={open.el}>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />
             <div className="max-h-[280px] overflow-y-auto">{fields.map((d) => <button key={d.key} type="button" onClick={() => pickField(d)} className={item(false)}>{d.label}</button>)}</div>
-          </div>
+          </PopBox>
         )}
-        {open?.mode === "value" && open.anchor === "+" && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} />}
+        {open?.mode === "value" && open.anchor === "+" && def && <ValuePop def={def} flt={flt} range={range} setRange={setRange} apply={(p2) => { setF(p2); setOpen(null); }} setF={setF} close={() => setOpen(null)} pop={pop} anchor={open.el} />}
       </span>
       {pills.length > 0 && <button type="button" onClick={reset} className="ml-1 cursor-pointer text-[12.5px] font-semibold text-muted hover:text-red">{c.tbl.clear}</button>}
     </div>
   );
 }
-function ValuePop({ def, flt, range, setRange, apply, setF, close, pop }: { def: FieldDef; flt: Flt; range: { min: string; max: string }; setRange: (r: { min: string; max: string }) => void; apply: (p: Partial<Flt>) => void; setF: (p: Partial<Flt>) => void; close: () => void; pop: string }) {
+function ValuePop({ def, flt, range, setRange, apply, setF, close, pop, anchor }: { def: FieldDef; flt: Flt; range: { min: string; max: string }; setRange: (r: { min: string; max: string }) => void; apply: (p: Partial<Flt>) => void; setF: (p: Partial<Flt>) => void; close: () => void; anchor?: HTMLElement | null; pop: string }) {
   const { t } = useI18n(); const c = t.crm;
-  if (def.kind === "select") return <div className={pop}><MultiList def={def} flt={flt} setF={setF} onDone={close} /></div>;
+  if (def.kind === "select") return <PopBox className={pop} close={close} anchor={anchor}><MultiList def={def} flt={flt} setF={setF} onDone={close} /></PopBox>;
   if (def.kind === "budget") return (
-    <div className={`${pop} p-3`}>
+    <PopBox className={`${pop} p-3`} close={close} anchor={anchor}>
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
       <div className="grid grid-cols-2 gap-2"><input inputMode="numeric" value={range.min} onChange={(e) => setRange({ ...range, min: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetFrom} autoFocus className={inp} /><input inputMode="numeric" value={range.max} onChange={(e) => setRange({ ...range, max: e.target.value.replace(/\D/g, "") })} placeholder={c.tbl.flt.budgetTo} className={inp} onKeyDown={(e) => { if (e.key === "Enter") apply({ budgetMin: range.min, budgetMax: range.max }); }} /></div>
       <button type="button" onClick={() => apply({ budgetMin: range.min, budgetMax: range.max })} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.apply}</button>
-    </div>
+    </PopBox>
   );
   return (
-    <div className={`${pop} w-[300px] p-3`}>
+    <PopBox className={`${pop} w-[300px] p-3`} close={close} anchor={anchor} w={300}>
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
       <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => apply({ createdFrom: a, createdTo: b })} />
-    </div>
+    </PopBox>
+  );
+}
+/** Поповер фильтра: на компьютере — под пилюлей, на телефоне — шторка снизу с затемнением (`data-sheet="fit"`), как все
+ *  выпадающие списки CRM (единый стандарт 18.10.2026, «чтобы не было только в одном месте так»). */
+function PopBox({ className, close, children, anchor, w = 260 }: { className: string; close: () => void; children: React.ReactNode; anchor?: HTMLElement | null; w?: number }) {
+  // Портал в body: строка пилюль на телефоне прокручивается с mask-image, а маска режет и fixed-потомков — шторка внутри строки
+  // была невидима. Позиция на компьютере — под якорем (menuPos), на телефоне `[data-sheet]` ставит низ экрана.
+  const rect = anchor?.getBoundingClientRect() ?? null;
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={close} />
+      <div data-fpop="1" data-sheet="fit" style={menuPos(rect, w, 340)} className={className}>{children}</div>
+    </>,
+    document.body,
   );
 }
 
@@ -493,6 +509,7 @@ function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt;
 export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const [visitFor, setVisitFor] = useState<string | null>(null); // этап с датой («Приедет»): выбор даты приезда → задача
   const [due, setDue] = useState("");
   const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null); // меню — fixed, иначе его режет overflow таблицы
@@ -503,8 +520,9 @@ export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { va
   return (
     <span ref={ref} className="relative inline-block">
       <button type="button" disabled={disabled} onClick={(e) => { const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom }); setVisitFor(null); setOpen((v) => !v); }} className="inline-flex h-7 cursor-pointer items-center gap-1 whitespace-nowrap rounded-[5px] px-2 text-[12px] font-medium hover:brightness-95" style={{ background: col + "1f", color: col }}>{stageName(st, t, lang)}{!disabled && <IconChevronDown size={12} className="opacity-70" />}</button>
-      {open && (
-        <div style={menuPos(rect, visitFor ? 372 : 232, visitFor ? 250 : 40 + crm.cstages.length * 32)} className={`rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] ${visitFor ? "w-[360px]" : "w-[220px]"}`}>
+      {open && (<>
+        <div className="fixed inset-0 z-[310] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setOpen(false)} />
+        <div data-sheet="fit" style={menuPos(rect, visitFor ? 372 : 232, visitFor ? 250 : 40 + crm.cstages.length * 32)} className={`rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))] ${visitFor ? "w-[360px]" : "w-[220px]"}`}>
           <div className="flex items-center gap-1 px-2 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[.05em] text-muted">{visitFor && <button type="button" onClick={() => setVisitFor(null)} className="cursor-pointer rounded-[4px] px-1 text-[12px] normal-case tracking-normal text-blue-2 hover:underline">←</button>}{visitFor ? c.tbl.visitDate : c.tbl.changeStatus}</div>
           {!visitFor && crm.cstages.map((x) => <button key={x.id} type="button" onClick={() => { if (x.key === "visit") { setVisitFor(x.key); const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(12, 0, 0, 0); setDue(d.toISOString()); return; } setOpen(false); if (x.key !== value) onChange(x.key); }} className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 text-left text-[13px] ${x.key === value ? "bg-blue-tint font-semibold text-sel-ink" : "text-ink hover:bg-bg-3"}`}><span className="h-2 w-2 flex-none rounded-full" style={{ background: x.color ?? "#8a93a2" }} />{stageName(x, t, lang)}{x.key === "visit" && <IconCalendar size={13} className="ml-auto text-muted" />}</button>)}
           {visitFor && (
@@ -513,7 +531,7 @@ export function StageMenu({ value, onChange, disabled, clientId, ownerId }: { va
               <button type="button" onClick={async () => { setOpen(false); setVisitFor(null); onChange(visitFor); try { await saveTask({ clientId, dealId: null, ownerId: ownerId ?? crm.me.meId, kind: "meeting", title: c.tbl.visitTask, dueAt: due || new Date().toISOString() }); } catch { /* задача не создалась — статус уже стоит */ } }} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.visitSave}</button>
             </div>
           )}
-        </div>
+        </div></>
       )}
     </span>
   );
