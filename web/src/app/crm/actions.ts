@@ -33,7 +33,7 @@ async function loadSources(c: Ctx): Promise<Source[]> {
 }
 
 // ---------- клиенты ----------
-function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: number, nextTask: Client["nextTask"], requests: RequestBrief[] = []): Client {
+function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: number, nextTask: Client["nextTask"], requests: RequestBrief[] = [], visitAt: string | null = null): Client {
   const id = r.id as string;
   return {
     id, no: Number(r.no ?? 0), ownerId: s(r.owner_id), name: r.name as string, lang: (r.lang as Lang) || "RU", sourceId: s(r.source_id),
@@ -45,7 +45,7 @@ function rowClient(c: Ctx, r: Row, contacts: Contact[], dealsN: number, openN: n
     notes: dec(c, "crm_clients", "notes", id, r.notes_enc as string | null), tags: (r.tags as string[]) ?? [], consent: !!r.consent, consentAt: s(r.consent_at),
     dossier: parseDossier(c, id, r.dossier_enc as string | null),
     status: r.status as Client["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string, lastActivityAt: (r.last_activity_at as string | null) ?? (r.updated_at as string),
-    contacts, dealsN, openDealsN: openN, nextTask,
+    contacts, dealsN, openDealsN: openN, nextTask, visitAt,
   };
 }
 function rowContact(c: Ctx, r: Row): Contact {
@@ -102,7 +102,8 @@ async function listClientsFor(c: Ctx, opts: { q?: string; status?: "active" | "a
     const ds = dm.get(id) ?? [];
     const t0 = (tm.get(id) ?? [])[0];
     return rowClient(c, r, (cm.get(id) ?? []).map((x) => rowContact(c, x)), ds.length, ds.filter((d) => !d.closed_at).length,
-      t0 ? { id: t0.id as string, title: t0.title as string, dueAt: t0.due_at as string, kind: t0.kind as Task["kind"] } : null, (rm.get(id) ?? []).map(rowBrief).sort((a, b) => Number(a.status === "closed") - Number(b.status === "closed")));
+      t0 ? { id: t0.id as string, title: t0.title as string, dueAt: t0.due_at as string, kind: t0.kind as Task["kind"] } : null, (rm.get(id) ?? []).map(rowBrief).sort((a, b) => Number(a.status === "closed") - Number(b.status === "closed")),
+      ((tm.get(id) ?? []).find((x) => x.kind === "meeting")?.due_at as string | undefined) ?? null);
   });
 }
 

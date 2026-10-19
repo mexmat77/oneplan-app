@@ -6,7 +6,9 @@ import { kbAutoFocus } from "@/lib/touch";
 // (клиент + телефон, объект + сделка, источник + язык, команда), действия при наведении, панель карточки по клику на строку.
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { menuPos } from "./ChipMenu";
+import { menuPos, REQ_ST_COLOR } from "./ChipMenu";
+import { OPTS } from "@/lib/crm/requestFields";
+import { ROOMS_ALL } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconCheck, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconMapPin, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
@@ -31,23 +33,24 @@ import { ilceOfSemt } from "@/store/listings";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
 /** Поля-списки фильтра — МУЛЬТИВЫБОР «любое из» (13.10.2026, «покупает и арендует», «в работе и приедет»); бюджет и даты — диапазоны. */
-type SelKey = "owner" | "branch" | "source" | "role" | "cstage" | "dealStage" | "priority" | "lang" | "kind" | "il" | "ilces" | "semts" | "tag" | "channel";
-const SEL_KEYS: SelKey[] = ["owner", "branch", "source", "role", "cstage", "dealStage", "priority", "lang", "kind", "il", "ilces", "semts", "tag", "channel"]; // ilces/semts — районы и махалле из окна «Расположение» (18.10.2026)
-type Flt = Record<SelKey, string[]> & { budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string };
+type SelKey = "owner" | "branch" | "source" | "role" | "cstage" | "dealStage" | "priority" | "lang" | "kind" | "il" | "ilces" | "semts" | "tag" | "channel" | "reqStatus" | "propType" | "purpose" | "rooms" | "payment";
+const SEL_KEYS: SelKey[] = ["owner", "branch", "source", "role", "cstage", "dealStage", "priority", "lang", "kind", "il", "ilces", "semts", "tag", "channel", "reqStatus", "propType", "purpose", "rooms", "payment"]; // + параметры заявки (19.10.2026, «поиск по всему, что есть в заявке») // ilces/semts — районы и махалле из окна «Расположение» (18.10.2026)
+type Flt = Record<SelKey, string[]> & { budgetMin: string; budgetMax: string; createdFrom: string; createdTo: string; visitFrom: string; visitTo: string };
+const STR_KEYS = ["budgetMin", "budgetMax", "createdFrom", "createdTo", "visitFrom", "visitTo"] as const;
 type SavedView = { id: string; name: string; flt: Flt; stage: string[]; view: View; sort: { key: SortKey; dir: 1 | -1 } };
 const MODE_LS = "opl-crm-clients-mode";
-const EMPTY_FLT: Flt = { owner: [], branch: [], source: [], role: [], cstage: [], dealStage: [], priority: [], lang: [], kind: [], il: [], ilces: [], semts: [], tag: [], channel: [], budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "" };
+const EMPTY_FLT: Flt = { owner: [], branch: [], source: [], role: [], cstage: [], dealStage: [], priority: [], lang: [], kind: [], il: [], ilces: [], semts: [], tag: [], channel: [], reqStatus: [], propType: [], purpose: [], rooms: [], payment: [], budgetMin: "", budgetMax: "", createdFrom: "", createdTo: "", visitFrom: "", visitTo: "" };
 /** Сохранённое состояние (последний вид, сохранённые виды) могло быть записано, когда значения были одиночными строками. */
 function normFlt(p: unknown): Flt {
   const o = (p && typeof p === "object" ? p : {}) as Record<string, unknown>; const out: Flt = { ...EMPTY_FLT };
   for (const k of SEL_KEYS) { const v = o[k]; out[k] = Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : typeof v === "string" && v ? [v] : []; }
-  for (const k of ["budgetMin", "budgetMax", "createdFrom", "createdTo"] as const) out[k] = typeof o[k] === "string" ? (o[k] as string) : "";
+  for (const k of STR_KEYS) out[k] = typeof o[k] === "string" ? (o[k] as string) : "";
   return out;
 }
 /** Строка статусов над таблицей = фильтр «Статус клиента» (`flt.cstage`), без отдельного состояния и без дубля-пилюли (13.10.2026);
  *  в сохранённых видах и последнем состоянии раньше лежал `stage` (одна строка) — сливается в cstage. */
 const normStage = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : typeof v === "string" && v ? [v] : []);
-const fltActive = (f: Flt) => SEL_KEYS.filter((k) => k !== "ilces" && k !== "semts" && f[k].length).length + (f.budgetMin || f.budgetMax ? 1 : 0) + (f.createdFrom || f.createdTo ? 1 : 0); // расположение — одно условие
+const fltActive = (f: Flt) => SEL_KEYS.filter((k) => k !== "ilces" && k !== "semts" && f[k].length).length + (f.budgetMin || f.budgetMax ? 1 : 0) + (f.createdFrom || f.createdTo ? 1 : 0) + (f.visitFrom || f.visitTo ? 1 : 0); // расположение — одно условие
 type SortKey = "name" | "activity" | "created" | "updated" | "stage" | "owner" | "source" | "next" | "region";
 const DENS_LS = "opl-crm-density";
 
@@ -145,6 +148,12 @@ export function ClientsTable() {
     if (flt.lang.length) r = r.filter((x) => flt.lang.includes(x.lang));
     if (flt.channel.length) r = r.filter((x) => flt.channel.includes(x.channel ?? ""));
     if (flt.kind.length) r = r.filter((x) => x.requests.some((q) => flt.kind.includes(q.kind)));
+    // параметры заявки: «любое из» внутри поля, совпадение по любой заявке клиента
+    if (flt.reqStatus.length) r = r.filter((x) => x.requests.some((q) => flt.reqStatus.includes(q.status)));
+    for (const k of ["propType", "purpose", "payment"] as const) if (flt[k].length) r = r.filter((x) => x.requests.some((q) => flt[k].includes(String(q.fields[k] ?? ""))));
+    if (flt.rooms.length) r = r.filter((x) => x.requests.some((q) => (Array.isArray(q.fields.rooms) ? (q.fields.rooms as string[]) : []).some((v) => flt.rooms.includes(v))));
+    if (flt.visitFrom) r = r.filter((x) => !!x.visitAt && x.visitAt >= flt.visitFrom);
+    if (flt.visitTo) r = r.filter((x) => !!x.visitAt && x.visitAt <= flt.visitTo + "T23:59:59");
     if (flt.il.length) r = r.filter((x) => { // расположение как в каталоге: провинция → районы → махалле (18.10.2026)
       const geos = [...x.requests.map((q) => q.fields.geo as { il?: string; ilces?: string[]; semts?: string[] } | undefined), x.want].filter((g): g is { il?: string; ilces?: string[]; semts?: string[] } => !!g);
       return geos.some((g) => flt.il.includes(g.il ?? "")
@@ -283,6 +292,10 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
     case "kind": return (c.rq.kinds as Record<string, string>)[v] ?? v;
     case "il": return GEO.find((g) => g.k === v)?.n ?? v;
     case "channel": return (c.channel as Record<string, string>)[v] ?? v;
+    case "reqStatus": return (c.rq.st as Record<string, string>)[v] ?? v;
+    case "propType": case "purpose": case "payment": return (c.rq.o as Record<string, Record<string, string>>)[k]?.[v] ?? v;
+    case "visitFrom": return `${c.tbl.flt.visit}: ${fmtD(v)} –`;
+    case "visitTo": return `– ${fmtD(v)}`;
     case "budgetMin": return `≥ ${v}`;
     case "budgetMax": return `≤ ${v}`;
     case "createdFrom": return `${c.tbl.flt.created}: ${fmtD(v)} –`;
@@ -292,7 +305,7 @@ function fltLabel(k: keyof Flt, v: string, t: ReturnType<typeof useI18n>["t"], c
 }
 
 /** Поле фильтра для «+ Фильтр»: подпись и способ ввода значения. */
-type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string; color?: string }[] };
+type FieldDef = { key: string; label: string; kind: "select" | "budget" | "dates"; opts?: { value: string; label: string; color?: string }[]; /** для kind dates — ключи «с» и «по» в Flt */ range?: { from: "createdFrom" | "visitFrom"; to: "createdTo" | "visitTo" } };
 /** Цвет роли — как у типа заявки (покупатель = buy, продавец = sell, арендодатель = rent_out, арендатор = rent_in). */
 const ROLE_COLOR: Record<string, string> = { buyer: REQ_COLOR.buy, seller: REQ_COLOR.sell, landlord: REQ_COLOR.rent_out, tenant: REQ_COLOR.rent_in };
 const GREY = "#8a93a2";
@@ -305,6 +318,11 @@ function useFieldDefs(allTags: string[]): FieldDef[] {
     { key: "dealStage", label: c.tbl.dealStage, kind: "select", opts: [...crm.stages.filter((x) => x.kind === "open").map((x) => ({ value: x.id, label: stageName(x, t, lang), color: x.color ?? GREY })), { value: "won", label: c.tbl.won, color: "#22c15e" }, { value: "lost", label: c.tbl.lost, color: "#e5484d" }, { value: "none", label: c.tbl.noStage, color: GREY }] },
     { key: "priority", label: c.client.priority, kind: "select", opts: opt(PRIOS_F, c.prio, PRIO_COLOR as Record<string, string>) },
     { key: "kind", label: c.rq.kind, kind: "select", opts: opt(KINDS_F, c.rq.kinds, REQ_COLOR as Record<string, string>) },
+    { key: "reqStatus", label: c.tbl.flt.reqStatus, kind: "select", opts: (Object.keys(c.rq.st) as string[]).map((v) => ({ value: v, label: (c.rq.st as Record<string, string>)[v], color: (REQ_ST_COLOR as Record<string, string>)[v] ?? GREY })) },
+    { key: "propType", label: c.rq.f.propType, kind: "select", opts: OPTS.propType.map((v) => ({ value: v, label: (c.rq.o as Record<string, Record<string, string>>).propType?.[v] ?? v })) },
+    { key: "purpose", label: c.rq.f.purpose, kind: "select", opts: OPTS.purpose.map((v) => ({ value: v, label: (c.rq.o as Record<string, Record<string, string>>).purpose?.[v] ?? v })) },
+    { key: "rooms", label: c.rq.f.rooms, kind: "select", opts: ROOMS_ALL.map((v) => ({ value: v, label: v })) },
+    { key: "payment", label: c.rq.f.payment, kind: "select", opts: OPTS.payment.map((v) => ({ value: v, label: (c.rq.o as Record<string, Record<string, string>>).payment?.[v] ?? v })) },
     { key: "il", label: c.want.il, kind: "select", opts: GEO.map((g) => ({ value: g.k, label: g.n })) },
     { key: "budget", label: c.client.budget, kind: "budget" },
     { key: "source", label: c.source, kind: "select", opts: crm.sources.map((x) => ({ value: x.id, label: sourceName(x, t) })) },
@@ -313,7 +331,8 @@ function useFieldDefs(allTags: string[]): FieldDef[] {
     { key: "lang", label: c.client.lang, kind: "select", opts: ["RU", "EN", "TR"].map((l) => ({ value: l, label: l })) },
     { key: "channel", label: c.client.channel, kind: "select", opts: opt(CHANNELS_F, c.channel) },
     ...(allTags.length ? [{ key: "tag", label: c.tbl.tag, kind: "select" as const, opts: allTags.map((g) => ({ value: g, label: g })) }] : []),
-    { key: "created", label: c.tbl.flt.created, kind: "dates" },
+    { key: "created", label: c.tbl.flt.created, kind: "dates", range: { from: "createdFrom", to: "createdTo" } },
+    { key: "visit", label: c.tbl.flt.visit, kind: "dates", range: { from: "visitFrom", to: "visitTo" } },
   ];
   return defs;
 }
@@ -323,12 +342,12 @@ function pillsOf(flt: Flt, defs: FieldDef[], t: ReturnType<typeof useI18n>["t"],
   for (const d of defs) {
     if (d.key === "cstage") continue; // статус клиента показан строкой чипов над таблицей — пилюлю не дублировать
     if (d.kind === "budget") { if (flt.budgetMin || flt.budgetMax) out.push({ key: d.key, label: d.label, value: `${flt.budgetMin ? `≥ ${Number(flt.budgetMin).toLocaleString("ru-RU")}` : ""}${flt.budgetMin && flt.budgetMax ? " " : ""}${flt.budgetMax ? `≤ ${Number(flt.budgetMax).toLocaleString("ru-RU")}` : ""}` }); }
-    else if (d.kind === "dates") { if (flt.createdFrom || flt.createdTo) out.push({ key: d.key, label: d.label, value: `${fmtD(flt.createdFrom) || "…"} – ${fmtD(flt.createdTo) || "…"}` }); }
+    else if (d.kind === "dates" && d.range) { const a = flt[d.range.from], b = flt[d.range.to]; if (a || b) out.push({ key: d.key, label: d.label, value: `${fmtD(a) || "…"} – ${fmtD(b) || "…"}` }); }
     else { const v = flt[d.key as SelKey]; if (v.length) { const names = v.map((x) => fltLabel(d.key as keyof Flt, x, t, crm, lang)); out.push({ key: d.key, label: d.label, value: names.slice(0, 2).join(", ") + (names.length > 2 ? ` +${names.length - 2}` : "") }); } }
   }
   return out;
 }
-const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMin: "", budgetMax: "" } : key === "created" ? { createdFrom: "", createdTo: "" } : key === "il" ? { il: [], ilces: [], semts: [] } : ({ [key]: [] } as Partial<Flt>));
+const clearField = (key: string): Partial<Flt> => (key === "budget" ? { budgetMin: "", budgetMax: "" } : key === "created" ? { createdFrom: "", createdTo: "" } : key === "visit" ? { visitFrom: "", visitTo: "" } : key === "il" ? { il: [], ilces: [], semts: [] } : ({ [key]: [] } as Partial<Flt>));
 /** Строка значения мультивыбора: чекбокс, цветная точка, подпись — одна и та же в «+ Фильтр», в пилюле и в панели. */
 function OptRow({ on, color, label, onClick }: { on: boolean; color?: string; label: string; onClick: () => void }) {
   return (
@@ -433,7 +452,7 @@ function ValuePop({ def, flt, range, setRange, apply, setF, close, pop, anchor }
   return (
     <PopBox className={`${pop} w-[300px] p-3`} close={close} anchor={anchor} w={300}>
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</div>
-      <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => apply({ createdFrom: a, createdTo: b })} />
+      <DateRange from={def.range ? flt[def.range.from] : ""} to={def.range ? flt[def.range.to] : ""} onChange={(a, b) => apply(def.range ? ({ [def.range.from]: a, [def.range.to]: b } as Partial<Flt>) : {})} />
     </PopBox>
   );
 }
@@ -484,7 +503,9 @@ function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt;
           {group(f.client, <>{Field("role")}{Field("cstage")}{Field("dealStage")}{Field("priority")}<div className="grid grid-cols-2 gap-2">{Field("lang")}{Field("channel")}</div></>)}
           {group(f.team, <>{Field("owner")}{Field("branch")}{Field("source")}{Field("tag")}</>)}
           {group(f.request, <>
-            {Field("kind")}
+            <div className="grid grid-cols-2 gap-2">{Field("kind")}{Field("reqStatus")}</div>
+            <div className="grid grid-cols-2 gap-2">{Field("propType")}{Field("purpose")}</div>
+            <div className="grid grid-cols-2 gap-2">{Field("rooms")}{Field("payment")}</div>
             <button type="button" onClick={() => setGeo(true)} className={`relative h-9 w-full cursor-pointer truncate rounded-[6px] border pl-8 pr-7 text-left text-[13px] ${geoOn ? "border-sel-line bg-blue-tint font-semibold text-sel-ink" : "border-line bg-surface text-muted hover:border-blue"}`}>
               <IconMapPin size={14} className={`absolute left-[9px] top-1/2 -translate-y-1/2 ${geoOn ? "text-sel-ink" : "text-muted"}`} />{geoOn ? wantGeoLabel(geoVal, geoLabel) : geoLabel}<IconChevronDown size={13} className="absolute right-[9px] top-1/2 -translate-y-1/2 text-muted" />
             </button>
@@ -494,7 +515,7 @@ function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt;
               <div className="flex items-center gap-2"><input inputMode="numeric" value={flt.budgetMin} onChange={(e) => setF({ budgetMin: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetFrom} className={inp} /><span className="text-muted">—</span><input inputMode="numeric" value={flt.budgetMax} onChange={(e) => setF({ budgetMax: e.target.value.replace(/\D/g, "") })} placeholder={f.budgetTo} className={inp} /></div>
             </div>
           </>)}
-          {group(f.dates, <DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} />)}
+          {group(f.dates, <><DateRange from={flt.visitFrom} to={flt.visitTo} onChange={(a, b) => setF({ visitFrom: a, visitTo: b })} placeholder={f.visit} /><DateRange from={flt.createdFrom} to={flt.createdTo} onChange={(a, b) => setF({ createdFrom: a, createdTo: b })} placeholder={f.created} /></>)}
           <div className="text-[12px] text-muted">{f.hint}</div>
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">

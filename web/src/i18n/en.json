@@ -1650,7 +1650,9 @@
         "budgetTo": "Budget to",
         "active": "Filters: {n}",
         "hint": "Name, phone and e-mail — in the search above. Filters apply instantly.",
-        "created": "Created"
+        "created": "Created",
+        "visit": "Arrival date",
+        "reqStatus": "Request status"
       },
       "addFilter": "Filter",
       "findField": "Find a field…",

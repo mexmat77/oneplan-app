@@ -1650,7 +1650,9 @@
         "budgetTo": "Bütçe (max)",
         "active": "Filtre: {n}",
         "hint": "Ad, telefon ve e-posta — yukarıdaki aramada. Filtreler anında uygulanır.",
-        "created": "Oluşturma tarihi"
+        "created": "Oluşturma tarihi",
+        "visit": "Varış tarihi",
+        "reqStatus": "Talep durumu"
       },
       "addFilter": "Filtre",
       "findField": "Alan ara…",

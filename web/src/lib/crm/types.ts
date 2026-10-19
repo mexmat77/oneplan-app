@@ -50,6 +50,8 @@ export type Client = {
   requests: RequestBrief[];
   /** сводка для списка */
   dealsN: number; openDealsN: number; nextTask: { id: string; title: string; dueAt: string; kind: TaskKind } | null;
+  /** дата приезда — ближайшая открытая задача-встреча (фильтр «Дата приезда» в списке, 19.10.2026) */
+  visitAt: string | null;
 };
 
 /** Ссылка на объект в CRM (0024): объявление риэлтора, квартира застройщика или свободный текст (не из базы). */
