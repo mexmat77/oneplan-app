@@ -1672,6 +1672,8 @@
       "activity": "Activity",
       "next": "Next action"
     },
+    "dflt": {"type": "Deal type", "object": "Property", "objListing": "Listing from the base", "objUnit": "Developer unit", "objFree": "Other property", "objNone": "No property", "from": "from", "to": "to", "closed": "Closing date", "group": "Deal", "money": "Money", "views": {"all": "All", "mine": "Mine", "open": "Open", "won": "Won", "lost": "Lost", "noTask": "No task"}},
+    "tflt": {"views": {"open": "Open", "today": "Today", "overdue": "Overdue", "done": "Done", "all": "All"}, "link": "Linked to", "linkClient": "Client", "linkDeal": "Deal", "linkNone": "Not linked", "due": "Due", "group": "Task", "month": "Month", "today": "Today", "more": "{n} more", "day": "Tasks for {d}", "moved": "Due date moved"},
     "kb": {
       "days": "{n} d.",
       "sum": "Total",

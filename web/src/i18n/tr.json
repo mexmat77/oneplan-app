@@ -1672,6 +1672,8 @@
       "activity": "Etkinlik",
       "next": "Sonraki adım"
     },
+    "dflt": {"type": "İşlem türü", "object": "Mülk", "objListing": "Veritabanından ilan", "objUnit": "Müteahhit dairesi", "objFree": "Başka mülk", "objNone": "Mülk yok", "from": "en az", "to": "en çok", "closed": "Kapanış tarihi", "group": "İşlem", "money": "Para", "views": {"all": "Tümü", "mine": "Benim", "open": "Açık", "won": "Kazanılan", "lost": "Kaybedilen", "noTask": "Görevsiz"}},
+    "tflt": {"views": {"open": "Açık", "today": "Bugün", "overdue": "Gecikmiş", "done": "Tamamlanan", "all": "Tümü"}, "link": "Bağlantı", "linkClient": "Müşteriye", "linkDeal": "İşleme", "linkNone": "Bağlantısız", "due": "Son tarih", "group": "Görev", "month": "Ay", "today": "Bugün", "more": "{n} daha", "day": "{d} görevleri", "moved": "Son tarih taşındı"},
     "kb": {
       "days": "{n} gün",
       "sum": "Toplam",

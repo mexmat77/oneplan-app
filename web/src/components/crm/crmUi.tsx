@@ -48,6 +48,8 @@ export function sourceName(src: Source | undefined | null, t: Dict): string {
   const dict = t.crm.sources as Record<string, string>;
   return dict[src.name] ?? src.name;
 }
+/** Цвета типов задач — календарь и фильтры (19.10.2026); те же тона, что у ленты карточки. */
+export const TASK_COLOR: Record<TaskKind, string> = { call: "#22c15e", show: "#f5a623", meeting: "#7b4fd0", message: "#4d7cfe", other: "#8a93a2" };
 export const taskKindName = (k: TaskKind, t: Dict) => (t.crm.task.kinds as Record<string, string>)[k] ?? k;
 
 const LOC: Record<Lang, string> = { RU: "ru-RU", EN: "en-GB", TR: "tr-TR" };

@@ -130,7 +130,8 @@ export function CrmShell({ base }: { base: string }) {
   const hrefOf = (id: string) => (id.startsWith("d:") ? `${base}/d/${id.slice(2)}` : `${base}/c/${id}`);
   const closeAndGo = (id: string) => { closeTab(id); if (activeTab === id) router.push(listTab.href); };
   const ro = boot.me.access !== "full";
-  const submitSearch = () => { if (section !== "clients") router.push(`${base}/clients`); };
+  const SEARCHABLE = ["clients", "deals", "tasks"]; // поиск в шапке фильтрует список раздела (сделки/задачи — 19.10.2026), из остальных уводит в клиентов
+  const submitSearch = () => { if (!SEARCHABLE.includes(section)) router.push(`${base}/clients`); };
 
   let page: ReactNode;
   if (clientId) page = <ClientPage key={clientId} base={base} id={clientId} embedded />;
@@ -163,7 +164,7 @@ export function CrmShell({ base }: { base: string }) {
             <div className="relative ml-2 w-[320px] max-w-[40vw] max-md:ml-0 max-md:w-auto max-md:max-w-none max-md:flex-1">
               <IconSearch size={14} className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted" />
               <kbd className="pointer-events-none absolute right-[8px] top-1/2 -translate-y-1/2 rounded-[4px] border border-line px-[5px] text-[10px] text-muted max-md:hidden">⌘K</kbd>
-              <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (section !== "clients" && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-12 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
+              <input ref={searchRef} value={q} onChange={(e) => { setQ(e.target.value); if (!SEARCHABLE.includes(section) && e.target.value.trim()) router.push(`${base}/clients`); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setQ(""); }} placeholder={c.nav.search} className="h-8 w-full rounded-[6px] border border-line bg-surface pl-7 pr-12 text-[13px] text-ink outline-none focus:border-blue focus:ring-2 focus:ring-blue/15" />
             </div>
             <div className="flex-1 max-md:hidden" />
             {/* ОДНА кнопка создания на экран (замечание пользователя 12.10.2026 «дублируются кнопки»): главное действие — по разделу

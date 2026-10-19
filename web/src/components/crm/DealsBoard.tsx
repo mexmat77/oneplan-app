@@ -10,16 +10,17 @@ import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/c
 import { confirmDialog } from "@/components/ui/confirm";
 import { offerCloseObject } from "./closeObject";
 import { Segmented } from "@/components/ui/Segmented";
-import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/provider";
 import type { Deal, Task } from "@/lib/crm/types";
 import { fmt } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 import { DealStageChip } from "./ChipMenu";
 import { DealModal } from "./CrmModals";
-import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, card, fill, fmtDT, fmtDate, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { dropIndex, posBetween, sortBoard, crmError, cacheGet, cacheSet, card, DEAL_COLOR, fill, fmtDT, fmtDate, getPref, initials, setPref, stageName, useCrm, useNow, usePref } from "./crmUi";
+import { activeCount, emptyOf, FilterPanel, FiltersButton, loadFlt, PanelField, PanelGroup, PillBar, sel, storeFlt, str, ViewTabs, type FDef, type GFlt } from "./FilterKit";
 
 const LS = "opl-crm-deals-view";
+type DView = "all" | "mine" | "open" | "won" | "lost" | "noTask";
 
 export function DealsBoard() {
   const { t, lang } = useI18n();
@@ -34,7 +35,13 @@ export function DealsBoard() {
   const view: "board" | "list" = viewPref === "list" ? "list" : "board";
   const setView = (v: "board" | "list") => setPref(LS, v);
   const now = useNow();
-  const [owner, setOwner] = useState("");
+  // фильтры по параметрам сделки (19.10.2026, «в сделках нет фильтров — как в мировых CRM»): виды, пилюли «+ Фильтр», панель «Все фильтры»
+  const fltKey = `opl-crm-deals-flt:${crm.base}`;
+  const [fltRaw, setFltRaw] = useState<GFlt>(() => loadFlt(fltKey, []));
+  const vwPref = usePref(`opl-crm-deals-vw:${crm.base}`);
+  const vw: DView = (["all", "mine", "open", "won", "lost", "noTask"] as DView[]).includes(vwPref as DView) ? (vwPref as DView) : "all";
+  const setVw = (v: DView) => setPref(`opl-crm-deals-vw:${crm.base}`, v);
+  const [panel, setPanel] = useState(false);
   const [modal, setModal] = useState<{ open: boolean; deal: Deal | null }>({ open: false, deal: null });
   const [dragId, setDragId] = useState<string | null>(null);
   const [drop, setDrop] = useState<{ col: string; idx: number } | null>(null); // пунктирное место вставки (12.10.2026)
@@ -54,7 +61,46 @@ export function DealsBoard() {
     try { await moveDeal(d.id, stageId, reason, pos); if (st?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
   }
   async function del(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
-  const shown = useMemo(() => (deals ?? []).filter((d) => !owner || d.ownerId === owner), [deals, owner]);
+  const stKind = useCallback((d: Deal) => crm.stages.find((x) => x.id === d.stageId)?.kind ?? "open", [crm.stages]);
+  const objKind = (d: Deal) => (d.listingId ? "listing" : d.projectId ? "unit" : d.objectText ? "free" : "none");
+  const defs = useMemo<FDef[]>(() => {
+    const lost = Array.from(new Set((deals ?? []).map((d) => d.lostReason?.trim()).filter((x): x is string => !!x)));
+    return [
+      { key: "stage", label: c.deal.stage, kind: "select", opts: crm.stages.map((x) => ({ value: x.id, label: stageName(x, t, lang), color: x.color ?? "#8a93a2" })) },
+      { key: "type", label: c.dflt.type, kind: "select", opts: (["sale", "rent", "daily", "transfer"] as const).map((v) => ({ value: v, label: t.dealF[v], color: DEAL_COLOR[v] })) },
+      ...(crm.me.members.length > 1 ? [{ key: "owner", label: c.owner, kind: "select" as const, opts: crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color })) }] : []),
+      ...(crm.me.branches.length > 0 ? [{ key: "branch", label: c.client.branch, kind: "select" as const, opts: crm.me.branches.map((b) => ({ value: b.id, label: b.name })) }] : []),
+      { key: "object", label: c.dflt.object, kind: "select", opts: [{ value: "listing", label: c.dflt.objListing }, { value: "unit", label: c.dflt.objUnit }, { value: "free", label: c.dflt.objFree }, { value: "none", label: c.dflt.objNone }] },
+      ...(lost.length ? [{ key: "lost", label: c.deal.lost, kind: "select" as const, opts: lost.map((v) => ({ value: v, label: v })) }] : []),
+      { key: "amount", label: c.deal.amount, kind: "range", range: { from: "amountMin", to: "amountMax" }, ph: [c.dflt.from, c.dflt.to] },
+      { key: "commission", label: c.deal.commission, kind: "range", range: { from: "comMin", to: "comMax" }, ph: [c.dflt.from, c.dflt.to] },
+      { key: "created", label: c.tbl.flt.created, kind: "dates", range: { from: "createdFrom", to: "createdTo" } },
+      { key: "closed", label: c.dflt.closed, kind: "dates", range: { from: "closedFrom", to: "closedTo" } },
+      { key: "deposit", label: c.deal.depositAt, kind: "dates", range: { from: "depFrom", to: "depTo" } },
+    ];
+  }, [deals, crm.stages, crm.me.members, crm.me.branches, c, t, lang]);
+  const flt = useMemo(() => ({ ...emptyOf(defs), ...fltRaw }), [defs, fltRaw]);
+  const setF = (p: GFlt) => setFltRaw((prev) => { const n = { ...prev, ...p }; storeFlt(fltKey, n); return n; });
+  const resetF = () => { setFltRaw({}); storeFlt(fltKey, {}); };
+  const active = activeCount(flt, defs);
+  const q = crm.q.trim().toLowerCase();
+  const inRange = (v: number | null | undefined, a: string, b: string) => (!a && !b ? true : v != null && (!a || v >= +a) && (!b || v <= +b));
+  const inDates = (v: string | null | undefined, a: string, b: string) => (!a && !b ? true : !!v && (!a || v >= a) && (!b || v <= b + "T23:59:59"));
+  const filtered = useMemo(() => (deals ?? []).filter((d) =>
+    (!q || [d.title, `d-${d.no}`, String(d.no), d.clientName, d.sellerName ?? ""].some((x) => x.toLowerCase().includes(q)))
+    && (!sel(flt, "stage").length || sel(flt, "stage").includes(d.stageId ?? ""))
+    && (!sel(flt, "type").length || sel(flt, "type").includes(d.deal))
+    && (!sel(flt, "owner").length || sel(flt, "owner").includes(d.ownerId ?? ""))
+    && (!sel(flt, "branch").length || sel(flt, "branch").includes(d.branchId ?? ""))
+    && (!sel(flt, "object").length || sel(flt, "object").includes(objKind(d)))
+    && (!sel(flt, "lost").length || sel(flt, "lost").includes(d.lostReason?.trim() ?? ""))
+    && inRange(d.amount, str(flt, "amountMin"), str(flt, "amountMax")) && inRange(d.commission, str(flt, "comMin"), str(flt, "comMax"))
+    && inDates(d.createdAt, str(flt, "createdFrom"), str(flt, "createdTo")) && inDates(d.closedAt, str(flt, "closedFrom"), str(flt, "closedTo")) && inDates(d.depositAt, str(flt, "depFrom"), str(flt, "depTo")),
+  ), [deals, q, flt]);
+  const hasTask = useCallback((d: Deal) => tasks.some((x) => x.dealId === d.id || x.clientId === d.clientId), [tasks]);
+  const viewOk = useCallback((d: Deal, v: DView) => (v === "all" ? true : v === "mine" ? d.ownerId === crm.me.meId : v === "noTask" ? !hasTask(d) : stKind(d) === v), [crm.me.meId, hasTask, stKind]);
+  const counts = useMemo(() => Object.fromEntries((["all", "mine", "open", "won", "lost", "noTask"] as DView[]).map((v) => [v, filtered.filter((d) => viewOk(d, v)).length])) as Record<DView, number>, [filtered, viewOk]);
+  const shown = useMemo(() => filtered.filter((d) => viewOk(d, vw)), [filtered, vw, viewOk]);
   const byStage = useMemo(() => { const m = new Map<string, Deal[]>(); shown.forEach((d) => { const k = d.stageId ?? ""; m.set(k, [...(m.get(k) ?? []), d]); }); for (const [k, v] of m) m.set(k, sortBoard(v)); return m; }, [shown]);
   const sum = (list: Deal[]) => { const by: Record<string, number> = {}; list.forEach((d) => { if (d.amount) by[d.cur] = (by[d.cur] ?? 0) + d.amount; }); return Object.entries(by).map(([cur, v]) => fmt(v, cur as Currency)).join(" · "); };
   const taskOf = (d: Deal) => tasks.find((x) => x.dealId === d.id) ?? tasks.find((x) => x.clientId === d.clientId);
@@ -90,11 +136,17 @@ export function DealsBoard() {
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-[13px] text-text"><b className="font-semibold text-ink">{totalSum || "—"}</b> · {shown.length} {c.nav.deals.toLowerCase()}</span>
-        {crm.me.members.length > 1 && <Select value={owner} onChange={setOwner} options={[{ value: "", label: c.kb.all }, { value: crm.me.meId, label: c.kb.mine }, ...crm.me.members.filter((m) => m.id !== crm.me.meId).map((m) => ({ value: m.id, label: m.name }))]} className="w-[170px]" size="sm" />}
         <div className="flex-1" />
         <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
-
+        <FiltersButton n={active} onClick={() => setPanel(true)} />
       </div>
+      <ViewTabs value={vw} onChange={setVw} items={(["all", "mine", "open", "won", "lost", "noTask"] as DView[]).map((v) => ({ key: v, label: c.dflt.views[v], n: counts[v] }))} />
+      <PillBar flt={flt} setF={setF} reset={resetF} defs={defs} />
+      <FilterPanel open={panel} onClose={() => setPanel(false)} active={active} count={shown.length} reset={resetF}>
+        <PanelGroup label={c.dflt.group}>{defs.filter((d) => ["stage", "type", "owner", "branch", "object", "lost"].includes(d.key)).map((d) => <PanelField key={d.key} def={d} flt={flt} setF={setF} />)}</PanelGroup>
+        <PanelGroup label={c.dflt.money}>{defs.filter((d) => d.kind === "range").map((d) => <PanelField key={d.key} def={d} flt={flt} setF={setF} />)}</PanelGroup>
+        <PanelGroup label={c.tbl.flt.dates}>{defs.filter((d) => d.kind === "dates").map((d) => <PanelField key={d.key} def={d} flt={flt} setF={setF} />)}</PanelGroup>
+      </FilterPanel>
       {deals === null ? <div className="py-12 text-center text-[13px] text-muted">…</div> : view === "board" ? (
         <div data-crm-kanban="1" className="flex overflow-x-auto rounded-[6px] border border-line bg-surface" style={{ minHeight: "calc(100vh - 200px)" }}>
           {crm.stages.map((st, i) => { const list = byStage.get(st.id) ?? []; return (
