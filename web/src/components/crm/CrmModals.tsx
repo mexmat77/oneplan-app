@@ -1,9 +1,11 @@
 "use client";
 
+import { IconCheck } from "@tabler/icons-react";
+
 import { kbAutoFocus } from "@/lib/touch";
 // Модалки сделки и задачи.
 import { useState, useEffect } from "react";
-import { saveDeal, saveTask, listClients } from "@/app/crm/actions";
+import { doneTask, saveDeal, saveTask, listClients } from "@/app/crm/actions";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { getCompanies, type CompanyProfile } from "@/app/crm/doc-actions";
 import { dealRef, type Briefs } from "./ObjCard";
@@ -132,7 +134,11 @@ function TaskForm({ task, clients, clientId, dealId, onClose, onSaved }: TaskPro
       <DuePicker value={due} onChange={setDue} />
       {!clientId && <><label className={`${lbl} mt-3`}>{c.deal.client}</label><Select value={f.clientId ?? ""} onChange={(v) => set({ clientId: v || null })} searchable options={[{ value: "", label: "—" }, ...clients.map((x) => ({ value: x.id, label: x.name }))]} /></>}
       {crm.me.members.length > 1 && <><label className={`${lbl} mt-3`}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></>}
-      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button></div>
+      <div data-modal-foot="1" className="mt-4 flex justify-end gap-2">
+        {/* явное действие «Выполнить» в карточке задачи — кружок в списке не все читают как кнопку (19.10.2026) */}
+        {task && <button type="button" onClick={async () => { try { await doneTask(task.id, !task.doneAt); onSaved(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } }} className={`${btnS} mr-auto ${task.doneAt ? "" : "border-green/40 text-green hover:bg-green/10"}`}><IconCheck size={14} /> {task.doneAt ? c.task.reopen : c.task.markDone}</button>}
+        <button type="button" onClick={onClose} className={btnS}>{c.cancel}</button><button type="button" onClick={submit} disabled={busy} className={btnP}>{task ? c.save : c.create}</button>
+      </div>
     </div>
   );
 }

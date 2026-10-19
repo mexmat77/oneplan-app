@@ -1270,6 +1270,9 @@
       "done": "Tamamlandı",
       "none": "Görev yok — sakin bir gün",
       "showDone": "Tamamlananları göster",
+      "markDone": "Tamamla",
+      "reopen": "Yeniden aç",
+      "doneAt": "Tamamlandı",
       "delete": "Görevi sil",
       "kinds": {
         "call": "Arama",

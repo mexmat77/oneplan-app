@@ -1270,6 +1270,9 @@
       "done": "Done",
       "none": "No tasks — a quiet day",
       "showDone": "Show completed",
+      "markDone": "Mark done",
+      "reopen": "Reopen",
+      "doneAt": "Done",
       "delete": "Delete task",
       "kinds": {
         "call": "Call",

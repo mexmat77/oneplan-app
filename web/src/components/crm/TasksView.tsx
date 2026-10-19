@@ -117,10 +117,12 @@ export function TasksView() {
   const shiftMonth = (n: number) => setMonth(({ y, m }) => { const d = new Date(y, m + n, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
 
   const row = (x: Task, overdue?: boolean) => (
-    <div className="flex items-center gap-3 rounded-[6px] border border-line bg-surface px-3 py-[6px]">
-      <button type="button" onClick={() => toggle(x)} disabled={ro} className={`flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-full border-2 ${x.doneAt ? "border-green bg-green text-white" : "border-line hover:border-blue"}`}>{x.doneAt && <IconCheck size={14} />}</button>
+    <div className="group/row flex items-center gap-3 rounded-[6px] border border-line bg-surface px-3 py-[6px]">
+      {/* чекбокс как у Todoist/Things: заметная рамка, при наведении «галочка-призрак» и подсказка; на телефоне крупнее (19.10.2026) */}
+      <button type="button" onClick={() => toggle(x)} disabled={ro} title={x.doneAt ? c.task.reopen : c.task.markDone} aria-label={x.doneAt ? c.task.reopen : c.task.markDone} className={`group/chk flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center rounded-full border-2 transition max-md:h-7 max-md:w-7 ${x.doneAt ? "border-green bg-green text-white" : "border-[#aeb7c6] bg-surface text-[#c3cad6] hover:border-green hover:bg-green/10 hover:text-green"}`}><IconCheck size={14} stroke={3} className={x.doneAt ? "" : "opacity-0 transition group-hover/chk:opacity-100"} /></button>
       <span className="h-2 w-2 flex-none rounded-full" style={{ background: TASK_COLOR[x.kind] }} />
       <button type="button" onClick={() => setModal({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className={`truncate text-[13.5px] font-semibold ${x.doneAt ? "text-muted line-through" : "text-ink"}`}>{x.title}</div><div className="text-[12px] text-muted">{taskKindName(x.kind, t)} · <span className={overdue ? "font-semibold text-red" : ""}>{fmtDT(x.dueAt, lang)}</span>{x.clientName && <> · <Link href={`${crm.base}/c/${x.clientId}`} onClick={(e) => e.stopPropagation()} className="text-blue-2 hover:underline">{x.clientName}</Link></>}</div></button>
+      {!x.doneAt && !ro && <button type="button" onClick={() => toggle(x)} className="hidden flex-none cursor-pointer items-center gap-1 rounded-[6px] border border-line px-2 py-[3px] text-[12px] font-semibold text-ink opacity-0 transition hover:border-green hover:text-green group-hover/row:opacity-100 md:inline-flex"><IconCheck size={13} /> {c.task.markDone}</button>}
       <button type="button" onClick={() => del(x)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button>
     </div>
   );
