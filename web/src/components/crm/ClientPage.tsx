@@ -28,7 +28,7 @@ import { ClientModal } from "./ClientModal";
 import { DossierModal } from "./DossierModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { cacheGet, cacheSet, crmError, CrmCtx, DEAL_COLOR, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, wantGeoLabel, contactLabelOptions } from "./crmUi";
+import { cacheGet, cacheSet, crmError, CrmCtx, DEAL_COLOR, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, visitOf, wantGeoLabel, contactLabelOptions } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -115,6 +115,7 @@ function Inner({ id }: { id: string }) {
   const mainPhone = cl.contacts.find((x) => x.kind === "phone" || x.kind === "whatsapp");
   const openDeal = deals.find((d) => !d.closedAt);
   const openTasks = tasks.filter((x) => !x.doneAt);
+  const visitAt = cl.stage === "visit" ? visitOf(tasks, c.tbl.visitTask) : null; // дата приезда — в чипе статуса (19.10.2026)
   const field = (l: string, v?: string | null) => v ? <div key={l} className="min-w-0"><div className="text-[11px] font-medium text-muted">{l}</div><div className="truncate text-[13px] text-ink">{v}</div></div> : null;
   return (
     <>
@@ -135,7 +136,7 @@ function Inner({ id }: { id: string }) {
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
+          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} suffix={visitAt ? fmtDT(visitAt, lang) : undefined} onSaved={() => load()} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
           <PriorityChip value={cl.priority} disabled={ro} onChange={async (pr) => { patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} />
           <span className={chip}>{cl.lang}</span>
           {cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}

@@ -52,6 +52,11 @@ export const taskKindName = (k: TaskKind, t: Dict) => (t.crm.task.kinds as Recor
 
 const LOC: Record<Lang, string> = { RU: "ru-RU", EN: "en-GB", TR: "tr-TR" };
 export const fmtDate = (iso: string | null | undefined, lang: Lang) => (iso ? new Date(iso).toLocaleDateString(LOC[lang], { day: "2-digit", month: "2-digit", year: "numeric" }) : "");
+/** Дата приезда клиента (статус «Приедет»): ближайшая невыполненная задача-встреча «Приезд клиента» (19.10.2026, «где видно, когда приедет?»). */
+export function visitOf(tasks: { kind: string; title: string; dueAt: string; doneAt?: string | null }[], visitTitle: string): string | null {
+  const open = tasks.filter((x) => !x.doneAt && x.kind === "meeting").sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+  return (open.find((x) => x.title === visitTitle) ?? open[0])?.dueAt ?? null;
+}
 export const fmtDT = (iso: string | null | undefined, lang: Lang) => (iso ? new Date(iso).toLocaleString(LOC[lang], { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
 /** Для <input type="datetime-local"> — локальное время без зоны. */
 export function toLocalInput(iso: string | null | undefined): string {
