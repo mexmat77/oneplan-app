@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { addNote, deleteDeal, doneTask, getDeal, moveDeal, patchDealOwner } from "@/app/crm/actions";
-import { confirmDialog } from "@/components/ui/confirm";
+import { promptDialog, confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showUndo } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
@@ -61,12 +61,13 @@ export function DealPage({ id }: { id: string }) {
 
   async function move(stageId: string) {
     const s2 = crm.stages.find((s) => s.id === stageId);
-    const reason = s2?.kind === "lost" ? window.prompt(crm.me.lostReasons.length ? `${c.deal.lostPh}\n${crm.me.lostReasons.map((x, i) => `${i + 1}. ${x}`).join("\n")}` : c.deal.lostPh) ?? undefined : undefined;
-    const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
+    const picked = s2?.kind === "lost" ? await promptDialog({ title: c.deal.lostPick, placeholder: c.deal.lostPh, options: crm.me.lostReasons, required: false }) : ""; // отмена окна = отмена перевода
+    if (picked === null) return;
+    const reason = picked || undefined;
     const prev = d.stageId;
     setData((x) => (x ? { ...x, deal: { ...x.deal, stageId, closedAt: s2?.kind === "open" ? null : x.deal.closedAt ?? new Date().toISOString() } } : x));
     try {
-      await moveDeal(d.id, stageId, picked); load();
+      await moveDeal(d.id, stageId, reason); load();
       if (prev && s2?.kind === "open") showUndo(fill(c.undo.moved, { stage: stageName(s2, t, lang) }), async () => { await moveDeal(d.id, prev); load(); }, c.undo.undo);
       if (s2?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t);
     } catch (e) { err(e); load(); }

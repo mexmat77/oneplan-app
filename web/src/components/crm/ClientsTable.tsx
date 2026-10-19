@@ -1,5 +1,6 @@
 "use client";
 
+import { promptDialog } from "@/components/ui/confirm";
 import { kbAutoFocus } from "@/lib/touch";
 // CRM — клиенты списком по образцу пользователя (11.10.2026): заголовок со счётчиком, поиск, «Все фильтры», плотность
 // (компакт / развёрнуто), сохранённые виды с числами, строка этапов с числами, таблица с двухстрочными ячейками
@@ -88,7 +89,7 @@ export function ClientsTable() {
   const savedRaw = usePref(viewsKey);
   const saved: SavedView[] = (() => { try { const v = JSON.parse(savedRaw || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
   const [curSaved, setCurSaved] = useState<string>(last.flt ? "" : "");
-  const saveView = async () => { const name = window.prompt(c.tbl.viewName); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage: [], view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
+  const saveView = async () => { const name = await promptDialog({ title: c.tbl.viewName, placeholder: c.tbl.viewName }); if (!name?.trim()) return; const v: SavedView = { id: crypto.randomUUID(), name: name.trim(), flt, stage: [], view, sort }; setPref(viewsKey, JSON.stringify([...saved, v])); setCurSaved(v.id); };
   const applySaved = (v: SavedView) => { const f0 = normFlt(v.flt); setFlt({ ...f0, cstage: [...new Set([...f0.cstage, ...normStage(v.stage)])] }); setView(v.view); setSort(v.sort); setCurSaved(v.id); };
   const deleteSaved = (id: string) => { setPref(viewsKey, JSON.stringify(saved.filter((x) => x.id !== id))); if (curSaved === id) setCurSaved(""); };
   const [drawer, setDrawer] = useState<string | null>(null);

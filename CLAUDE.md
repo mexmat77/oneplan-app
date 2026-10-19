@@ -126,7 +126,10 @@
   в клиентах текст — должен быть один стандарт»), `@/components/ui/DateRange` (`DateRange`, `DateField`), `@/components/ui/toast` (`showToast(msg)`, хост в root layout), `@/components/ui/Select`
   (стилизованный выпадающий список вместо системного `<select>` — везде, правило пользователя 07.10.2026; `options`, `size="sm"`,
   `menuWidth="auto"`, `stopPropagation` для строк таблиц), `@/components/ui/confirm` (`await confirmDialog({text, title?, ok?, cancel?, danger?})`
-  вместо системного `window.confirm` — везде, хост в root layout; правило пользователя 08.10.2026), `@/components/ui/UserMenu` (аватар + меню пользователя в шапках обоих
+  вместо системного `window.confirm` — везде, хост в root layout; правило пользователя 08.10.2026), `promptDialog({title, placeholder?, text?, options?, required?})`
+  → строка | null вместо системного `window.prompt` (19.10.2026, «почему системное окно?»): тот же хост, `options` — быстрые
+  варианты чипами (причины отказа из настроек); используется в «Сохранить вид» (клиенты) и причине отказа сделки (канбан,
+  карточки сделки и клиента — отмена окна отменяет перевод этапа). `window.prompt` в коде больше нет, `@/components/ui/UserMenu` (аватар + меню пользователя в шапках обоих
   кабинетов: профиль, уведомления, выход; `Avatar` — инициалы или фото из `user_metadata.avatar_url`, загрузка в `media/dev/avatars/<uid>`), `@/components/ui/Modal`
   (`Modal` + `ModalClose`, `sheet="fit"` → bottom-sheet ≤760), `@/hooks/useScrollLock` (`useScrollLock`, `useEscape`),
   `@/lib/phone` (`trPhone`, `fmtPhone`, `normPh`, `validMail`), `@/store/role` (`useRole()` — роль + демо-переключатель

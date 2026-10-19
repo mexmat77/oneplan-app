@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
 import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
-import { confirmDialog } from "@/components/ui/confirm";
+import { promptDialog, confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
@@ -101,12 +101,13 @@ function Inner({ id }: { id: string }) {
   }
   async function move(d: Deal, stageId: string) {
     const st = crm.stages.find((s) => s.id === stageId);
-    const reason = st?.kind === "lost" ? window.prompt(crm.me.lostReasons.length ? `${c.deal.lostPh}\n${crm.me.lostReasons.map((x, i) => `${i + 1}. ${x}`).join("\n")}` : c.deal.lostPh) ?? undefined : undefined;
-    const picked = reason && /^\d+$/.test(reason.trim()) ? crm.me.lostReasons[+reason.trim() - 1] ?? reason : reason;
+    const picked = st?.kind === "lost" ? await promptDialog({ title: c.deal.lostPick, placeholder: c.deal.lostPh, options: crm.me.lostReasons, required: false }) : ""; // отмена окна = отмена перевода
+    if (picked === null) return;
+    const reason = picked || undefined;
     const prev = d.stageId;
     setData((x) => (x ? { ...x, deals: x.deals.map((q) => (q.id === d.id ? { ...q, stageId, closedAt: st?.kind === "open" ? null : q.closedAt ?? new Date().toISOString() } : q)) } : x));
     try {
-      await moveDeal(d.id, stageId, picked); load();
+      await moveDeal(d.id, stageId, reason); load();
       if (prev && st?.kind === "open") showUndo(fill(c.undo.moved, { stage: stageName(st, t, lang) }), async () => { await moveDeal(d.id, prev); load(); }, c.undo.undo);
       if (st?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t);
     } catch (e) { err(e); load(); }

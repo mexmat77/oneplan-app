@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { IconCalendarEvent, IconChevronRight, IconLayoutKanban, IconList } from "@tabler/icons-react";
 import { deleteDeal, listClients, listDeals, listTasks, moveDeal } from "@/app/crm/actions";
-import { confirmDialog } from "@/components/ui/confirm";
+import { promptDialog, confirmDialog } from "@/components/ui/confirm";
 import { offerCloseObject } from "./closeObject";
 import { Segmented } from "@/components/ui/Segmented";
 import { useI18n } from "@/i18n/provider";
@@ -56,7 +56,10 @@ export function DealsBoard() {
   async function move(d: Deal, stageId: string, pos?: number) {
     if (d.stageId === stageId && pos === undefined) return;
     const st = crm.stages.find((s) => s.id === stageId);
-    const reason = st?.kind === "lost" ? window.prompt(c.deal.lostPh) ?? undefined : undefined;
+    // отмена окна причины = отмена перевода (раньше сделка переводилась без причины)
+    const picked = st?.kind === "lost" ? await promptDialog({ title: c.deal.lostPick, placeholder: c.deal.lostPh, options: crm.me.lostReasons, required: false }) : "";
+    if (picked === null) return;
+    const reason = picked || undefined;
     setDeals((v) => (v ?? []).map((x) => (x.id === d.id ? { ...x, stageId, boardPos: pos ?? x.boardPos } : x))); // оптимистично
     try { await moveDeal(d.id, stageId, reason, pos); if (st?.kind === "won") await offerCloseObject(d, crm.me.ws.kind, t); } catch (e) { err(e); load(); } // без load() после успеха: карточка уже на месте
   }
