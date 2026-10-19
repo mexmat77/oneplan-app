@@ -136,9 +136,10 @@ export function DealsBoard() {
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-[13px] text-text"><b className="font-semibold text-ink">{totalSum || "—"}</b> · {shown.length} {c.nav.deals.toLowerCase()}</span>
-        <div className="flex-1" />
-        <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
-        <FiltersButton n={active} onClick={() => setPanel(true)} />
+        <div className="ml-auto flex items-center gap-2 max-md:w-full">{/* на телефоне — своей строкой: вид слева, фильтры справа (19.10.2026) */}
+          <Segmented value={view} onChange={setView} options={[{ value: "board", label: c.deal.board, icon: <IconLayoutKanban size={15} /> }, { value: "list", label: c.deal.list, icon: <IconList size={15} /> }]} />
+          <FiltersButton n={active} onClick={() => setPanel(true)} className="ml-auto" />
+        </div>
       </div>
       <ViewTabs value={vw} onChange={setVw} items={(["all", "mine", "open", "won", "lost", "noTask"] as DView[]).map((v) => ({ key: v, label: c.dflt.views[v], n: counts[v] }))} />
       <PillBar flt={flt} setF={setF} reset={resetF} defs={defs} />

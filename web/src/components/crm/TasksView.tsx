@@ -153,9 +153,10 @@ export function TasksView() {
             <span className="ml-2 text-[14px] font-semibold capitalize text-ink">{mode === "month" ? monthTitle : `${fmtDate(week[0].toISOString(), lang)} – ${fmtDate(week[6].toISOString(), lang)}`}</span>
           </div>
         )}
-        <div className="flex-1" />
-        <Segmented value={mode} onChange={setMode} options={[{ value: "list", label: c.tk.list, icon: <IconList size={15} /> }, { value: "week", label: c.tk.week, icon: <IconCalendarWeek size={15} /> }, { value: "month", label: c.tflt.month, icon: <IconCalendarMonth size={15} /> }]} />
-        <FiltersButton n={active} onClick={() => setPanel(true)} />
+        <div className="ml-auto flex items-center gap-2 max-md:w-full">{/* на телефоне — своей строкой: режим слева, фильтры справа (19.10.2026) */}
+          <Segmented value={mode} onChange={setMode} options={[{ value: "list", label: c.tk.list, icon: <IconList size={15} /> }, { value: "week", label: c.tk.week, icon: <IconCalendarWeek size={15} /> }, { value: "month", label: c.tflt.month, icon: <IconCalendarMonth size={15} /> }]} />
+          <FiltersButton n={active} onClick={() => setPanel(true)} className="ml-auto" />
+        </div>
       </div>
       <ViewTabs value={vw} onChange={setVw} items={(["open", "today", "overdue", "done", "all"] as TView[]).map((v) => ({ key: v, label: c.tflt.views[v], n: counts[v], red: v === "overdue" }))} />
       <PillBar flt={flt} setF={setF} reset={resetF} defs={defs} />

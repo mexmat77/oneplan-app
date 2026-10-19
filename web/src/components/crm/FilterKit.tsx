@@ -189,9 +189,16 @@ export function PillBar({ flt, setF, reset, defs, hide = [], extra }: { flt: GFl
 }
 
 /** Кнопка «Все фильтры · N» для тулбара раздела (справа, рядом с видом). */
-export function FiltersButton({ n, onClick }: { n: number; onClick: () => void }) {
+export function FiltersButton({ n, onClick, className = "" }: { n: number; onClick: () => void; className?: string }) {
   const { t } = useI18n(); const c = t.crm;
-  return <button type="button" onClick={onClick} className={`inline-flex h-8 cursor-pointer items-center gap-[6px] rounded-[6px] border px-3 text-[13px] font-semibold ${n ? "border-sel-line bg-blue-tint text-sel-ink" : "border-line bg-surface text-ink hover:bg-bg-3"}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.filters}{n ? ` · ${n}` : ""}</button>;
+  // Одно место во всех разделах (19.10.2026, «фильтр то справа, то слева»): на компьютере «Все фильтры · N», на телефоне —
+  // иконка 40×40 со значком числа в углу, ширина кнопки не зависит от числа, кнопка всегда правая в своей строке (ml-auto).
+  return (
+    <button type="button" onClick={onClick} title={c.tbl.allFilters} className={`relative inline-flex h-8 cursor-pointer items-center gap-[6px] rounded-[6px] border px-3 text-[13px] font-semibold max-md:w-10 max-md:flex-none max-md:justify-center max-md:px-0 ${n ? "border-sel-line bg-blue-tint text-sel-ink" : "border-line bg-surface text-ink hover:bg-bg-3"} ${className}`}>
+      <IconAdjustmentsHorizontal size={15} className="max-md:h-[18px] max-md:w-[18px]" /><span className="max-md:hidden">{c.tbl.allFilters}{n ? ` · ${n}` : ""}</span>
+      {n > 0 && <span className="absolute -right-[6px] -top-[6px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-blue-2 px-1 text-[10.5px] font-bold text-white md:hidden">{n}</span>}
+    </button>
+  );
 }
 
 /** Панель «Все фильтры» справа: шапка с крестиком, группы, внизу «Сбросить» и «Показать N». Таблица/доска остаётся на месте. */

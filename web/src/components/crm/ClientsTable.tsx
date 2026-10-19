@@ -29,6 +29,7 @@ import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
 import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref, fmtDT, wantGeoLabel } from "./crmUi";
 import { GeoPicker } from "@/components/GeoPicker";
+import { FiltersButton } from "./FilterKit";
 import { ilceOfSemt } from "@/store/listings";
 
 type View = "all" | "mine" | "withTask" | "overdue" | "noDeal";
@@ -204,11 +205,13 @@ export function ClientsTable() {
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h1 className="text-[20px] font-semibold text-ink">{c.nav.clients} <span className="text-[13px] font-normal text-muted">{list ? base.length.toLocaleString("ru-RU") : ""}</span></h1>
-        <div className="flex-1" />
-        {/* стандарт тулбара (12.10.2026): справа → вид · плотность · фильтры · главное действие */}
-        <Segmented value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
-        {mode === "list" && <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />}
-        <button type="button" onClick={() => setFiltersOpen((v) => !v)} className={`${btnS} ${activeFilters ? "border-sel-line bg-blue-tint text-sel-ink" : ""}`}><IconAdjustmentsHorizontal size={15} /> {c.tbl.allFilters}{activeFilters ? ` · ${activeFilters}` : ""}</button>
+        {/* стандарт тулбара (12.10.2026): справа → вид · плотность · фильтры; на телефоне (19.10.2026): вид — справа в строке
+            заголовка, плотность слева и фильтры справа — второй строкой; фильтры всегда правые (ml-auto), число — значком */}
+        <Segmented className="ml-auto" value={mode} onChange={(m) => setPref(MODE_LS, m)} options={[{ value: "list", label: c.tbl.listMode, icon: <IconList size={15} /> }, { value: "board", label: c.tbl.boardMode, icon: <IconLayoutKanban size={15} /> }]} />
+        <div className="flex items-center gap-2 max-md:w-full">
+          {mode === "list" && <Segmented value={dense ? "compact" : "expanded"} onChange={(d) => setPref(DENS_LS, d)} options={[{ value: "compact", label: c.tbl.compact, icon: <IconLayoutRows size={15} /> }, { value: "expanded", label: c.tbl.expanded, icon: <IconLayoutList size={15} /> }]} />}
+          <FiltersButton n={activeFilters} onClick={() => setFiltersOpen((v) => !v)} className="ml-auto" />
+        </div>
 
       </div>
       {/* виды — на телефоне одной строкой с прокруткой и затуханием справа (18.10.2026, решение пользователя: «в одну строку со скроллом») */}
