@@ -1661,6 +1661,8 @@
       "findField": "Alan ara…",
       "apply": "Uygula",
       "done": "Tamam",
+      "wonBuy": "Satın aldı",
+      "wonRent": "Kiraladı",
       "saveView": "Filtreyi kaydet",
       "viewName": "Filtre adı",
       "saveViewHint": "Filtre veya durum seçin, sonra seti kaydedin — tek tıkla açılır",

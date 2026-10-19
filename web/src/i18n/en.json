@@ -1661,6 +1661,8 @@
       "findField": "Find a field…",
       "apply": "Apply",
       "done": "Done",
+      "wonBuy": "Bought",
+      "wonRent": "Rented",
       "saveView": "Save filter",
       "viewName": "Filter name",
       "saveViewHint": "Pick filters or statuses, then save the set to open it in one click",
