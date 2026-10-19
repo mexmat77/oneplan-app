@@ -49,17 +49,17 @@ function Month({ year, month, lang, from, to, hover, onPick, onHover }: { year: 
   const tt = today().getTime();
   const a = from?.getTime() ?? null, b = (to ?? (from && hover && hover.getTime() >= from.getTime() ? hover : null))?.getTime() ?? null;
   return (
-    <div className="w-[238px]">
-      <div className="mb-2 text-center text-[13px] font-semibold capitalize text-ink">{first.toLocaleDateString(loc, { month: "long", year: "numeric" })}</div>
-      <div className="grid grid-cols-7 text-center text-[10.5px] font-semibold uppercase text-muted">{dows.map((d, i) => <div key={i} className="h-6 leading-6">{d}</div>)}</div>
+    <div className="w-[238px] max-md:w-full">{/* на телефоне — во всю ширину шторки, клетки 44px, концы диапазона кружками (19.10.2026) */}
+      <div className="mb-2 text-center text-[13px] font-semibold capitalize text-ink max-md:text-[15px]">{first.toLocaleDateString(loc, { month: "long", year: "numeric" })}</div>
+      <div className="grid grid-cols-7 text-center text-[10.5px] font-semibold uppercase text-muted max-md:text-[11.5px]">{dows.map((d, i) => <div key={i} className="h-6 leading-6 max-md:h-8 max-md:leading-8">{d}</div>)}</div>
       <div className="grid grid-cols-7">
         {cells.map((d, i) => {
-          if (!d) return <div key={i} className="h-8" />;
+          if (!d) return <div key={i} className="h-8 max-md:h-11" />;
           const x = d.getTime();
           const isFrom = a === x, isTo = b === x, inR = a !== null && b !== null && x > a && x < b;
           return (
             <button key={i} type="button" onMouseEnter={() => onHover(d)} onMouseLeave={() => onHover(null)} onClick={() => onPick(d)}
-              className={`h-8 cursor-pointer text-[12.5px] ${isFrom || isTo ? "rounded-[6px] bg-blue-2 font-semibold text-white" : inR ? "bg-blue-tint text-sel-ink" : "rounded-[6px] text-ink hover:bg-bg-3"} ${inR && (i % 7 === 0) ? "rounded-l-[6px]" : ""} ${inR && (i % 7 === 6) ? "rounded-r-[6px]" : ""} ${x === tt && !isFrom && !isTo ? "font-bold text-blue-2" : ""}`}>
+              className={`h-8 cursor-pointer text-[12.5px] max-md:h-11 max-md:text-[15px] ${isFrom || isTo ? "rounded-[6px] bg-blue-2 font-semibold text-white max-md:rounded-full" : inR ? "bg-blue-tint text-sel-ink" : "rounded-[6px] text-ink hover:bg-bg-3 max-md:rounded-full"} ${inR && (i % 7 === 0) ? "rounded-l-[6px]" : ""} ${inR && (i % 7 === 6) ? "rounded-r-[6px]" : ""} ${x === tt && !isFrom && !isTo ? "font-bold text-blue-2" : ""}`}>
               {d.getDate()}
             </button>
           );
@@ -127,17 +127,17 @@ export function DateRange({ from, to, onChange, placeholder, className = "" }: {
       {open && (
         <Pop rect={rect} anchor={btn} width={700} onClose={() => setOpen(false)}>
           <div className="flex gap-3 max-md:flex-col">
-            <div className="flex w-[150px] flex-col gap-[2px] border-r border-line pr-3 max-md:w-auto max-md:flex-row max-md:flex-wrap max-md:gap-[6px] max-md:border-b max-md:border-r-0 max-md:pb-3 max-md:pr-0">
+            <div className="flex w-[150px] flex-col gap-[2px] border-r border-line pr-3 max-md:-mx-4 max-md:w-auto max-md:flex-row max-md:flex-nowrap max-md:gap-[6px] max-md:overflow-x-auto max-md:border-b max-md:border-r-0 max-md:px-4 max-md:pb-3 max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
               {pl.map((p) => <button key={p.key} type="button" onClick={() => apply(p.r)} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] max-md:h-8 max-md:rounded-full max-md:border max-md:px-3 ${cur === p.key ? "bg-blue-tint font-semibold text-sel-ink max-md:border-sel-line" : "text-text hover:bg-bg-3 max-md:border-line"}`}>{(d.p as Record<string, string>)[p.key]}</button>)}
             </div>
-            <div>
-              <div className="relative flex gap-5">
-                <button type="button" onClick={() => shift(-1)} className="absolute -left-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronLeft size={16} /></button>
-                <button type="button" onClick={() => shift(1)} className="absolute -right-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronRight size={16} /></button>
+            <div className="max-md:w-full">
+              <div className="relative flex gap-5 max-md:w-full">
+                <button type="button" onClick={() => shift(-1)} className="absolute -left-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink max-md:-top-[8px] max-md:left-0 max-md:h-9 max-md:w-9 max-md:rounded-full max-md:border max-md:border-line max-md:text-ink"><IconChevronLeft size={16} /></button>
+                <button type="button" onClick={() => shift(1)} className="absolute -right-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink max-md:-top-[8px] max-md:right-0 max-md:h-9 max-md:w-9 max-md:rounded-full max-md:border max-md:border-line max-md:text-ink"><IconChevronRight size={16} /></button>
                 <Month year={view.y} month={view.m} lang={lang} from={draft.from} to={draft.to} hover={hover} onPick={pick} onHover={setHover} />
                 <div className="max-md:hidden"><Month year={new Date(view.y, view.m + 1, 1).getFullYear()} month={new Date(view.y, view.m + 1, 1).getMonth()} lang={lang} from={draft.from} to={draft.to} hover={hover} onPick={pick} onHover={setHover} /></div>
               </div>
-              <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[12px] text-muted">
+              <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[12px] text-muted max-md:mt-3 max-md:pt-3 max-md:text-[13px]">
                 <span>{draft.from ? `${fmtD(iso(draft.from))} – ${draft.to ? fmtD(iso(draft.to)) : d.pickTo}` : d.pickFrom}</span>
                 <button type="button" onClick={() => { onChange("", ""); setOpen(false); }} className="cursor-pointer font-semibold text-red hover:underline">{d.clear}</button>
               </div>
@@ -171,13 +171,13 @@ export function DateField({ value, onChange, placeholder, className = "", cleara
       </button>
       {open && (
         <Pop rect={rect} anchor={btn} width={420} onClose={() => setOpen(false)}>
-          <div className="flex gap-3">
-            <div className="flex w-[130px] flex-col gap-[2px] border-r border-line pr-3">
-              {singlePresets().map((p) => <button key={p.key} type="button" onClick={() => { onChange(p.v); setOpen(false); }} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] ${value === p.v ? "bg-blue-tint font-semibold text-sel-ink" : "text-text hover:bg-bg-3"}`}>{(d.s as Record<string, string>)[p.key]}</button>)}
+          <div className="flex gap-3 max-md:flex-col">
+            <div className="flex w-[130px] flex-col gap-[2px] border-r border-line pr-3 max-md:-mx-4 max-md:w-auto max-md:flex-row max-md:flex-nowrap max-md:gap-[6px] max-md:overflow-x-auto max-md:border-b max-md:border-r-0 max-md:px-4 max-md:pb-3 max-md:[scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-36px),transparent)] max-md:[&>*]:flex-none">
+              {singlePresets().map((p) => <button key={p.key} type="button" onClick={() => { onChange(p.v); setOpen(false); }} className={`h-7 cursor-pointer rounded-[5px] px-2 text-left text-[12.5px] max-md:h-8 max-md:rounded-full max-md:border max-md:px-3 ${value === p.v ? "bg-blue-tint font-semibold text-sel-ink max-md:border-sel-line" : "text-text hover:bg-bg-3 max-md:border-line"}`}>{(d.s as Record<string, string>)[p.key]}</button>)}
             </div>
-            <div className="relative">
-              <button type="button" onClick={() => shift(-1)} className="absolute -left-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronLeft size={16} /></button>
-              <button type="button" onClick={() => shift(1)} className="absolute -right-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink"><IconChevronRight size={16} /></button>
+            <div className="relative max-md:w-full">
+              <button type="button" onClick={() => shift(-1)} className="absolute -left-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink max-md:-top-[8px] max-md:left-0 max-md:h-9 max-md:w-9 max-md:rounded-full max-md:border max-md:border-line max-md:text-ink"><IconChevronLeft size={16} /></button>
+              <button type="button" onClick={() => shift(1)} className="absolute -right-1 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] text-muted hover:bg-bg-3 hover:text-ink max-md:-top-[8px] max-md:right-0 max-md:h-9 max-md:w-9 max-md:rounded-full max-md:border max-md:border-line max-md:text-ink"><IconChevronRight size={16} /></button>
               <Month year={view.y} month={view.m} lang={lang} from={sel} to={sel} hover={null} onPick={(x) => { onChange(iso(x)); setOpen(false); }} onHover={() => {}} />
             </div>
           </div>
