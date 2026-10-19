@@ -136,7 +136,7 @@ function Inner({ id }: { id: string }) {
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} suffix={visitAt ? fmtDT(visitAt, lang) : undefined} onSaved={() => load()} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
+          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} suffix={visitAt ? fmtDT(visitAt, lang) : undefined} onVisit={() => patchLocal({ stage: "visit" as ClientStage })} onSaved={() => load()} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
           <PriorityChip value={cl.priority} disabled={ro} onChange={async (pr) => { patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} />
           <span className={chip}>{cl.lang}</span>
           {cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}

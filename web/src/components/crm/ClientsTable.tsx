@@ -10,7 +10,7 @@ import { menuPos } from "./ChipMenu";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconCheck, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconMapPin, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
-import { bulkClients, crmClientsPage, patchClient, saveTask, type DealSummary } from "@/app/crm/actions";
+import { bulkClients, crmClientsPage, patchClient, setClientVisit, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { Segmented } from "@/components/ui/Segmented";
@@ -246,7 +246,7 @@ export function ClientsTable() {
                     <span className="flex items-center gap-2"><span className="truncate text-text">{d.title || (d.amount != null ? fmt(d.amount, d.cur as Currency) : "—")}</span>{dense && <span className="flex-none rounded-[5px] px-[6px] text-[11px] font-medium" style={{ background: col + "1f", color: col }}>{label}</span>}</span>
                     {!dense && <span className="mt-[3px] flex items-center gap-2 text-[12px] text-muted"><span className="flex-none rounded-[5px] px-[6px] py-[1px] text-[11px] font-medium" style={{ background: col + "1f", color: col }}>{label}</span><span className="truncate">{t.dealF[d.deal as keyof typeof t.dealF]}{d.amount != null ? ` · ${fmt(d.amount, d.cur as Currency)}` : ""}</span></span>}
                   </>; })() : <span className="text-muted">—</span>}</td>
-                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} clientId={x.id} ownerId={x.ownerId} suffix={x.stage === "visit" && x.nextTask?.kind === "meeting" ? fmtDT(x.nextTask.dueAt, lang) : undefined} onSaved={() => load()} onChange={async (k) => { patchRow(x.id, { stage: k }); try { await patchClient(x.id, { stage: k }); } catch (er) { err(er); load(); } }} disabled={ro} />{!dense && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>
+                  <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}><StageMenu value={x.stage} clientId={x.id} ownerId={x.ownerId} suffix={x.stage === "visit" && x.nextTask?.kind === "meeting" ? fmtDT(x.nextTask.dueAt, lang) : undefined} onVisit={(d) => patchRow(x.id, { stage: "visit", nextTask: { id: "tmp", title: c.tbl.visitTask, dueAt: d, kind: "meeting" } })} onSaved={() => load()} onChange={async (k) => { patchRow(x.id, { stage: k }); try { await patchClient(x.id, { stage: k }); } catch (er) { err(er); load(); } }} disabled={ro} />{!dense && x.nextTask && <span className="mt-[3px] block truncate text-[12px] text-muted">{x.nextTask.title}</span>}</td>
                   <td className={`px-3 ${pad}`}><span className="block truncate text-text">{sourceName(crm.sources.find((s) => s.id === x.sourceId), t)}</span>{!dense && <span className="block text-[12px] text-muted">{x.lang}{x.tags.length ? ` · ${x.tags.slice(0, 2).join(", ")}` : ""}</span>}</td>
                   <td className={`px-3 ${pad}`} onClick={(e) => e.stopPropagation()}>{crm.me.members.length > 1 && !ro ? <Select value={x.ownerId ?? ""} onChange={async (v) => { patchRow(x.id, { ownerId: v || null }); try { await patchClient(x.id, { ownerId: v || null }); } catch (e) { err(e); load(); } }} options={[{ value: "", label: c.tbl.unassigned }, ...crm.me.members.map((mm) => ({ value: mm.id, label: mm.name, color: mm.color }))]} size="sm" menuWidth="auto" stopPropagation className="w-[170px]" icon={m ? <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span> : undefined} /> : m ? <span className="inline-flex items-center gap-2"><span className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: m.color }}>{initials(m.name)}</span><span className="truncate text-text">{m.name}</span></span> : <span className="text-muted">{c.tbl.unassigned}</span>}</td>
                   <td className={`px-3 ${pad}`}>{x.nextTask ? <span className={`block truncate text-[12.5px] ${over ? "font-semibold text-red" : "text-text"}`} title={x.nextTask.title}>{fmtDT(x.nextTask.dueAt, lang)}{!dense && <span className="block truncate text-[12px] font-normal text-muted">{x.nextTask.title}</span>}</span> : <span className="text-muted">—</span>}</td>
@@ -507,12 +507,13 @@ function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt;
 }
 
 /** Чип этапа клиента с меню «Сменить статус» (как в современных CRM — прямо из списка). */
-export function StageMenu({ value, onChange, disabled, clientId, ownerId, suffix, onSaved }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null; /** подпись после статуса — дата приезда у «Приедет» */ suffix?: string; /** задача-напоминание создана — обновить карточку/строку */ onSaved?: () => void }) {
+export function StageMenu({ value, onChange, disabled, clientId, ownerId, suffix, onSaved, onVisit: onVisitProp }: { value: string; onChange: (key: string) => void; disabled?: boolean; clientId: string; ownerId: string | null; /** подпись после статуса — дата приезда у «Приедет» */ suffix?: string; /** задача-напоминание создана — обновить карточку/строку */ onSaved?: () => void; /** «Приедет» с датой: статус и задачу пишет setClientVisit, родителю — только локально показать статус */ onVisit?: (dueAt: string) => void }) {
   const { t, lang } = useI18n(); const crm = useCrm(); const c = t.crm;
   const [open, setOpen] = useState(false);
   useBackClose(open, () => setOpen(false));
   const [visitFor, setVisitFor] = useState<string | null>(null); // этап с датой («Приедет»): выбор даты приезда → задача
   const [due, setDue] = useState("");
+  const onVisit = (d: string) => (onVisitProp ? onVisitProp(d) : onChange("visit"));
   const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null); // меню — fixed, иначе его режет overflow таблицы
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
@@ -529,7 +530,7 @@ export function StageMenu({ value, onChange, disabled, clientId, ownerId, suffix
           {visitFor && (
             <div className="p-2">
               <DuePicker value={due} onChange={setDue} />
-              <button type="button" onClick={async () => { setOpen(false); setVisitFor(null); onChange(visitFor); try { await saveTask({ clientId, dealId: null, ownerId: ownerId ?? crm.me.meId, kind: "meeting", title: c.tbl.visitTask, dueAt: due || new Date().toISOString() }); onSaved?.(); } catch { /* задача не создалась — статус уже стоит */ } }} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.visitSave}</button>
+              <button type="button" onClick={async () => { setOpen(false); setVisitFor(null); onVisit(due || new Date().toISOString()); try { await setClientVisit(clientId, due || new Date().toISOString(), ownerId ?? crm.me.meId, c.tbl.visitTask); onSaved?.(); } catch (e) { crmError(e, c.errSave, c.errReadonly); onSaved?.(); } }} className={`${btnP} mt-2 w-full justify-center`}>{c.tbl.visitSave}</button>
             </div>
           )}
         </div></>

@@ -334,6 +334,18 @@ export async function saveTask(input: TaskInput, id?: string | null): Promise<st
   if (error) throw new Error(error.message);
   return tid;
 }
+/** Статус «Приедет» + напоминание одним вызовом (19.10.2026, у клиента статус стоял, а задачи с датой не было: два отдельных
+ *  вызова, второй падал молча). Открытая задача «Приезд клиента» у клиента обновляется, а не дублируется. Возвращает id задачи. */
+export async function setClientVisit(clientId: string, dueAt: string, ownerId: string | null, title: string): Promise<string> {
+  const c = await crmCtx(); assertWrite(c);
+  const { error: e1 } = await c.sb.from("crm_clients").update({ stage: "visit" }).eq("id", clientId);
+  if (e1) throw new Error(e1.message);
+  const { data: ex } = await c.sb.from("crm_tasks").select("id").eq("client_id", clientId).eq("kind", "meeting").eq("title", title.trim()).is("done_at", null).order("due_at").limit(1).maybeSingle();
+  const tid = ex?.id ?? crypto.randomUUID();
+  const { error } = await c.sb.from("crm_tasks").upsert({ id: tid, ws_kind: c.ws.kind, ws_id: c.ws.id, client_id: clientId, deal_id: null, owner_id: ownerId || c.me.id, kind: "meeting", title: title.trim(), due_at: dueAt, created_by: c.me.id });
+  if (error) throw new Error(error.message);
+  return tid;
+}
 export async function doneTask(id: string, done: boolean): Promise<void> {
   const c = await crmCtx(); assertWrite(c);
   const { data: t } = await c.sb.from("crm_tasks").select("client_id, deal_id, title, kind").eq("id", id).maybeSingle();
