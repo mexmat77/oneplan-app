@@ -1,5 +1,7 @@
 "use client";
 
+import { TaskRow } from "./TaskRow";
+
 // Карточка сделки (13.10.2026, «почему сделки не выглядят как клиенты»): та же схема, что у клиента — шапка (название · D-номер,
 // клиент, этап, сумма, ответственный, Редактировать/Удалить), слева данные сделки, объект, документы, задачи, справа лента
 // активности с комментарием. Открывается во вкладке из канбана/списка сделок и из карточки клиента; редактирование — модалкой.
@@ -23,7 +25,7 @@ import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
 import { getCompanies, type CompanyProfile } from "@/app/crm/doc-actions";
 import { dealRef, ObjCard, type Briefs } from "./ObjCard";
-import { crmError, btnP, btnS, cacheGet, cacheSet, card, chip, fill, fmtDT, fmtDate, inp, stageName, taskKindName, useCrm } from "./crmUi";
+import { crmError, btnP, btnS, cacheGet, cacheSet, card, chip, fill, fmtDate, inp, stageName, useCrm } from "./crmUi";
 
 type DealData = { deal: Deal; client: { id: string; no: number; name: string; phone: string | null; lang: string }; events: CrmEvent[]; tasks: Task[]; objs: Record<string, ListingBrief>; units: Record<string, UnitBrief>; requests: { id: string; label: string }[] };
 
@@ -112,7 +114,7 @@ export function DealPage({ id }: { id: string }) {
           </div>
           <div className={card}>
             <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.tasks} · {openTasks.length}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
-            {openTasks.length === 0 ? <div className="text-[12.5px] text-muted">{c.task.none}</div> : <div className="flex flex-col gap-1">{openTasks.map((x) => <div key={x.id} className="flex items-center gap-2 rounded-[6px] border border-line px-2 py-[6px]"><button type="button" onClick={async () => { try { await doneTask(x.id, true); load(); } catch (e) { err(e); } }} disabled={ro} className="h-5 w-5 flex-none cursor-pointer rounded-full border-2 border-line hover:border-blue" /><button type="button" onClick={() => setTaskM({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className="truncate text-[12.5px] font-medium text-ink">{x.title}</div><div className={`text-[11px] ${new Date(x.dueAt) < new Date() ? "font-semibold text-red" : "text-muted"}`}>{taskKindName(x.kind, t)} · {fmtDT(x.dueAt, lang)}</div></button></div>)}</div>}
+            {openTasks.length === 0 ? <div className="text-[12.5px] text-muted">{c.task.none}</div> : <div className="flex flex-col gap-1">{openTasks.map((x) => <TaskRow key={x.id} task={x} compact showClient={false} disabled={ro} onToggle={async () => { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }} onOpen={() => setTaskM({ open: true, task: x })} />)}</div>}
           </div>
         </div>
         <div className={`${card} self-start min-[1101px]:sticky min-[1101px]:top-[calc(var(--crm-top,62px)_+_98px)]`}>

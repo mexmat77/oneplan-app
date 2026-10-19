@@ -4,9 +4,8 @@
 // ответственному, привязке и сроку (FilterKit, 19.10.2026), поиск из шапки; режимы «Список · Неделя · Месяц».
 // Месяц — календарная сетка как у Pipedrive Activities / Google Calendar: до трёх задач в клетке цветными полосками по типу,
 // «ещё N» и клик по дню открывают список дня, перетаскивание задачи на другой день переносит срок (время сохраняется).
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconCalendarMonth, IconCalendarWeek, IconCheck, IconChevronLeft, IconChevronRight, IconList, IconPlus } from "@tabler/icons-react";
+import { IconCalendarMonth, IconCalendarWeek, IconChevronLeft, IconChevronRight, IconList, IconPlus } from "@tabler/icons-react";
 import { Segmented } from "@/components/ui/Segmented";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
@@ -15,6 +14,7 @@ import { confirmDialog } from "@/components/ui/confirm";
 import { useI18n } from "@/i18n/provider";
 import type { Task } from "@/lib/crm/types";
 import { TaskModal } from "./CrmModals";
+import { TaskRow } from "./TaskRow";
 import { crmError, cacheGet, cacheSet, btnP, card, fill, fmtDT, fmtDate, inp, setPref, TASK_COLOR, taskKindName, useCrm, useNow, usePref } from "./crmUi";
 import { activeCount, emptyOf, FilterPanel, FiltersButton, loadFlt, PanelField, PanelGroup, PillBar, sel, storeFlt, str, ViewTabs, type FDef, type GFlt } from "./FilterKit";
 
@@ -116,17 +116,8 @@ export function TasksView() {
   const monthTitle = new Date(month.y, month.m, 1).toLocaleDateString(LOC[lang] ?? "ru-RU", { month: "long", year: "numeric" });
   const shiftMonth = (n: number) => setMonth(({ y, m }) => { const d = new Date(y, m + n, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
 
-  const row = (x: Task, overdue?: boolean) => (
-    <div className="group/row flex items-center gap-3 rounded-[6px] border border-line bg-surface px-3 py-[6px]">
-      {/* чекбокс как у Todoist/Things: заметная рамка, при наведении «галочка-призрак» и подсказка; на телефоне крупнее (19.10.2026) */}
-      <button type="button" onClick={() => toggle(x)} disabled={ro} title={x.doneAt ? c.task.reopen : c.task.markDone} aria-label={x.doneAt ? c.task.reopen : c.task.markDone} className={`group/chk flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center rounded-full border-2 transition max-md:h-7 max-md:w-7 ${x.doneAt ? "border-green bg-green text-white" : "border-[#aeb7c6] bg-surface text-[#c3cad6] hover:border-green hover:bg-green/10 hover:text-green"}`}><IconCheck size={14} stroke={3} className={x.doneAt ? "" : "opacity-0 transition group-hover/chk:opacity-100"} /></button>
-      <span className="h-2 w-2 flex-none rounded-full" style={{ background: TASK_COLOR[x.kind] }} />
-      <button type="button" onClick={() => setModal({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className={`truncate text-[13.5px] font-semibold ${x.doneAt ? "text-muted line-through" : "text-ink"}`}>{x.title}</div><div className="text-[12px] text-muted">{taskKindName(x.kind, t)} · <span className={overdue ? "font-semibold text-red" : ""}>{fmtDT(x.dueAt, lang)}</span>{x.clientName && <> · <Link href={`${crm.base}/c/${x.clientId}`} onClick={(e) => e.stopPropagation()} className="text-blue-2 hover:underline">{x.clientName}</Link></>}</div></button>
-      {!x.doneAt && !ro && <button type="button" onClick={() => toggle(x)} className="hidden flex-none cursor-pointer items-center gap-1 rounded-[6px] border border-line px-2 py-[3px] text-[12px] font-semibold text-ink opacity-0 transition hover:border-green hover:text-green group-hover/row:opacity-100 md:inline-flex"><IconCheck size={13} /> {c.task.markDone}</button>}
-      <button type="button" onClick={() => del(x)} disabled={ro} className="cursor-pointer text-[12px] text-muted hover:text-red">✕</button>
-    </div>
-  );
-  const sec = (title: string, list: Task[], overdue?: boolean) => list.length ? <div className="mb-4"><div className={`mb-2 text-[11px] font-semibold uppercase tracking-[.05em] ${overdue ? "text-red" : "text-muted"}`}>{title} · {list.length}</div><div className="flex flex-col gap-2">{list.map((x) => <div key={x.id}>{row(x, overdue)}</div>)}</div></div> : null;
+  const row = (x: Task) => <TaskRow task={x} onToggle={() => toggle(x)} onOpen={() => setModal({ open: true, task: x })} onDelete={() => del(x)} disabled={ro} />;
+  const sec = (title: string, list: Task[], overdue?: boolean) => list.length ? <div className="mb-4"><div className={`mb-2 text-[11px] font-semibold uppercase tracking-[.05em] ${overdue ? "text-red" : "text-muted"}`}>{title} · {list.length}</div><div className="flex flex-col gap-2">{list.map((x) => <div key={x.id}>{row(x)}</div>)}</div></div> : null;
   const dayNames = [c.tk.mon, c.tk.tue, c.tk.wed, c.tk.thu, c.tk.fri, c.tk.sat, c.tk.sun];
   const nowMs = useNow(); // «сейчас» через хук (правило React-компилятора)
   /** полоска задачи в календаре: цвет типа, просроченная — красная, выполненная — серая зачёркнутая; тянется мышью */
@@ -193,7 +184,7 @@ export function TasksView() {
       {/* список задач дня (клик по дню или «ещё N» в месяце) */}
       <Modal open={!!day} onClose={() => setDay(null)} width={560}>
         <div data-modal-head="1" className="mb-3 flex items-center justify-between"><div className="text-[18px] font-semibold text-ink">{day ? fill(c.tflt.day, { d: fmtDate(new Date(day + "T12:00:00").toISOString(), lang) }) : ""}</div><ModalClose onClick={() => setDay(null)} /></div>
-        <div className="flex flex-col gap-2">{dayList.map((x) => <div key={x.id}>{row(x, !x.doneAt && new Date(x.dueAt).getTime() < nowMs)}</div>)}{dayList.length === 0 && <div className="py-4 text-center text-[13px] text-muted">{c.tk.noTasks}</div>}</div>
+        <div className="flex flex-col gap-2">{dayList.map((x) => <div key={x.id}>{row(x)}</div>)}{dayList.length === 0 && <div className="py-4 text-center text-[13px] text-muted">{c.tk.noTasks}</div>}</div>
       </Modal>
       <TaskModal open={modal.open} task={modal.task} clients={clients} onClose={() => setModal({ open: false, task: null })} onSaved={() => { setModal({ open: false, task: null }); load(); }} />
     </>

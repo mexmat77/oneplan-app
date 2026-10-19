@@ -1,5 +1,7 @@
 "use client";
 
+import { TaskRow } from "./TaskRow";
+
 import { kbAutoFocus } from "@/lib/touch";
 // Карточка клиента: контакты, что ищет, сделки, задачи, история с заметками (перевод по кнопке того, кто смотрит).
 import { useBackClose } from "@/hooks/useScrollLock";
@@ -28,7 +30,7 @@ import { ClientModal } from "./ClientModal";
 import { DossierModal } from "./DossierModal";
 import { DealModal, TaskModal } from "./CrmModals";
 import { DocsPanel } from "./DocsPanel";
-import { cacheGet, cacheSet, crmError, CrmCtx, DEAL_COLOR, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, taskKindName, useCrm, visitOf, wantGeoLabel, contactLabelOptions } from "./crmUi";
+import { cacheGet, cacheSet, crmError, CrmCtx, DEAL_COLOR, PRIO_COLOR, REQ_COLOR, btnD, btnP, btnS, card, chip, countryName, fill, fmtDT, fmtDate, initials, inp, reqSummary, sourceName, stageName, useCrm, visitOf, wantGeoLabel, contactLabelOptions } from "./crmUi";
 
 /** `embedded` — внутри CrmShell (контекст уже есть); иначе страница сама грузит bootstrap. */
 export function ClientPage({ base, id, embedded }: { base: string; id: string; embedded?: boolean }) {
@@ -234,7 +236,7 @@ function Inner({ id }: { id: string }) {
 
           <div className={card}>
             <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-ink">{c.client.tasks} · {openTasks.length}</div><button type="button" onClick={() => setTaskM({ open: true, task: null })} disabled={ro} className={btnS}><IconPlus size={14} /> {c.task.add}</button></div>
-            {openTasks.length === 0 ? <div className="text-[12.5px] text-muted">{c.task.none}</div> : <div className="flex flex-col gap-1">{openTasks.map((x) => <div key={x.id} className="flex items-center gap-2 rounded-[6px] border border-line px-2 py-[6px]"><button type="button" onClick={async () => { try { await doneTask(x.id, true); load(); } catch (e) { err(e); } }} disabled={ro} className="h-5 w-5 flex-none cursor-pointer rounded-full border-2 border-line hover:border-blue" /><button type="button" onClick={() => setTaskM({ open: true, task: x })} className="min-w-0 flex-1 cursor-pointer text-left"><div className="truncate text-[12.5px] font-medium text-ink">{x.title}</div><div className={`text-[11px] ${new Date(x.dueAt) < new Date() ? "font-semibold text-red" : "text-muted"}`}>{taskKindName(x.kind, t)} · {fmtDT(x.dueAt, lang)}</div></button></div>)}</div>}
+            {openTasks.length === 0 ? <div className="text-[12.5px] text-muted">{c.task.none}</div> : <div className="flex flex-col gap-1">{openTasks.map((x) => <TaskRow key={x.id} task={x} compact showClient={false} disabled={ro} onToggle={async () => { try { await doneTask(x.id, !x.doneAt); load(); } catch (e) { err(e); } }} onOpen={() => setTaskM({ open: true, task: x })} />)}</div>}
           </div>
         </div>
 
