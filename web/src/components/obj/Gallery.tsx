@@ -99,7 +99,7 @@ export function Gallery({ photos, title, overlay }: { photos: string[]; title: s
         {hasSides && (
           <>
             <div data-gal-side="1" onClick={(e) => { e.stopPropagation(); setGalIdx(1); }} className="cursor-pointer overflow-hidden rounded-[16px] bg-cover bg-center hover:brightness-[.96]" style={{ backgroundImage: `url('${photos[1]}')` }} />
-            <div data-gal-side="1" onClick={(e) => { e.stopPropagation(); if (n > 3) setMg(true); else setGalIdx(2); }} className="relative cursor-pointer overflow-hidden rounded-[16px] bg-cover bg-center hover:brightness-[.96]" style={{ backgroundImage: `url('${photos[2]}')` }}>
+            <div data-gal-side="1" onClick={(e) => { e.stopPropagation(); setGalIdx(2); if (n > 3) openLb(); }} /* «+N»: на компьютере лайтбокс со стрелками, на телефоне лента (раньше лента открывалась и на компьютере — без листания, 19.10.2026) */ className="relative cursor-pointer overflow-hidden rounded-[16px] bg-cover bg-center hover:brightness-[.96]" style={{ backgroundImage: `url('${photos[2]}')` }}>
               {n > 3 && <div className="absolute inset-0 flex items-center justify-center bg-[rgba(10,16,28,.45)] text-[17px] font-extrabold text-white">+{n - 3}</div>}
             </div>
           </>
