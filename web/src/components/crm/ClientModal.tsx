@@ -6,7 +6,7 @@ import { kbAutoFocus } from "@/lib/touch";
 // (RequestModal), здесь только первая. Дубли по телефону/e-mail проверяются перед сохранением.
 import { useEffect, useState } from "react";
 import { IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
-import { findDups, listClients, listReferrers, saveClient } from "@/app/crm/actions";
+import { findDups, listClients, listReferrers, saveClient, setClientVisit } from "@/app/crm/actions";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
@@ -33,7 +33,7 @@ function fromClient(c: Client | null, lang: Lang, meId: string, branchId: string
     refKind: c.refKind, refProfileId: c.refProfileId, refAgencyId: c.refAgencyId, refClientId: c.refClientId, refText: c.refText ?? "", branchId: c.branchId, kvkk: c.kvkk ?? {}, notes: c.notes, tags: c.tags, contacts: c.contacts.map((x) => ({ id: x.id, kind: x.kind, value: x.value, label: x.label ?? "", isMain: x.isMain })) };
 }
 
-type Props = { open: boolean; client: Client | null; onClose: () => void; onSaved: (id: string) => void; onOpenDup?: (id: string) => void };
+type Props = { open: boolean; client: Client | null; onClose: () => void; onSaved: (id: string) => void; onOpenDup?: (id: string) => void; /** дата приезда из задачи «Приезд клиента» (карточка) — чтобы форма показала и дала поправить */ visitAt?: string | null };
 /** Окно монтируется только открытым: форма (`ClientForm`) берёт начальное состояние из props при монтировании. */
 export function ClientModal(props: Props) {
   return <Modal open={props.open} onClose={props.onClose} width={720} sheet="tall">{props.open && <ClientForm key={props.client?.id ?? "new"} {...props} />}</Modal>;
@@ -42,7 +42,8 @@ export function ClientModal(props: Props) {
 const sec = "mt-5 border-t border-line pt-3 text-[12px] font-semibold uppercase tracking-[.05em] text-muted";
 const chipCls = (on: boolean) => `h-7 cursor-pointer rounded-full border px-3 text-[12px] font-medium ${on ? "border-transparent text-white" : "border-line bg-surface text-text hover:bg-bg-3"}`;
 
-function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
+function ClientForm({ client, onClose, onSaved, onOpenDup, visitAt: visitAt0 }: Props) {
+  const [visitAt, setVisitAt] = useState<string>(visitAt0 ?? ""); // статус «Приедет» в форме: дата обязательна, иначе статус без даты (19.10.2026, «где дата?»)
   const { t, lang } = useI18n();
   const crm = useCrm();
   useMahalleLoaded();
@@ -82,6 +83,8 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
         if (hits.length) { setDups(hits); setBusy(false); return; }
       }
       const id = await saveClient({ ...f, tags: tags.split(",").map((s) => s.trim()).filter(Boolean), firstRequest: isNew ? f.firstRequest : null, firstTask: isNew && f.firstTask?.dueAt ? { ...f.firstTask, title: f.firstTask.title.trim() || taskKindName(f.firstTask.kind, t) } : null }, client?.id ?? null);
+      // статус «Приедет» из формы — напоминание с датой тем же путём, что из меню статуса (иначе статус стоял без даты)
+      if (f.stage === "visit" && visitAt) await setClientVisit(id, visitAt, f.ownerId ?? null, c.tbl.visitTask);
       onSaved(id);
     } catch (e) { crmError(e, c.errSave, c.errReadonly); }
     finally { setBusy(false); }
@@ -133,7 +136,8 @@ function ClientForm({ client, onClose, onSaved, onOpenDup }: Props) {
           </div>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => set({ stage: v as ClientStage })} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang), color: st.color ?? undefined }))} /></div>
+          <div><label className={lbl}>{c.client.stage}</label><Select value={f.stage} onChange={(v) => { set({ stage: v as ClientStage }); if (v === "visit" && !visitAt) { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(12, 0, 0, 0); setVisitAt(d.toISOString()); } }} options={crm.cstages.map((st) => ({ value: st.key, label: stageName(st, t, lang), color: st.color ?? undefined }))} /></div>
+          {f.stage === "visit" && <div className="col-span-3 max-md:col-span-1"><label className={lbl}>{c.tbl.visitDate}</label><DuePicker value={visitAt} onChange={setVisitAt} /></div>}
           <div><label className={lbl}>{c.source}</label><Select value={f.sourceId ?? ""} onChange={(v) => set({ sourceId: v || null })} options={[{ value: "", label: c.noSource }, ...crm.sources.filter((s) => s.active).map((s) => ({ value: s.id, label: sourceName(s, t) }))]} /></div>
           <div><label className={lbl}>{c.client.campaign}</label><input value={f.campaign} onChange={(e) => set({ campaign: e.target.value })} placeholder={c.client.campaignPh} className={inp} /></div>
           {crm.me.members.length > 1 && <div><label className={lbl}>{c.owner}</label><Select value={f.ownerId ?? ""} onChange={(v) => set({ ownerId: v || null })} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} /></div>}

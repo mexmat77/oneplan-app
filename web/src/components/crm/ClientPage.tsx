@@ -136,7 +136,7 @@ function Inner({ id }: { id: string }) {
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} suffix={visitAt ? fmtDT(visitAt, lang) : undefined} onVisit={() => patchLocal({ stage: "visit" as ClientStage })} onSaved={() => load()} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
+          <StageMenu value={cl.stage} clientId={cl.id} ownerId={cl.ownerId} suffix={cl.stage === "visit" ? (visitAt ? fmtDT(visitAt, lang) : c.tbl.visitNoDate) : undefined} onVisit={() => patchLocal({ stage: "visit" as ClientStage })} onSaved={() => load()} onChange={async (v) => { patchLocal({ stage: v as ClientStage }); try { await patchClient(cl.id, { stage: v as ClientStage }); load(); } catch (e) { err(e); load(); } }} disabled={ro} />
           <PriorityChip value={cl.priority} disabled={ro} onChange={async (pr) => { patchLocal({ priority: pr }); try { await patchClient(cl.id, { priority: pr }); } catch (e) { err(e); load(); } }} />
           <span className={chip}>{cl.lang}</span>
           {cl.kind === "company" && cl.company && <span className={chip}>{cl.company}</span>}
@@ -251,7 +251,7 @@ function Inner({ id }: { id: string }) {
       <TransferModal open={transfer} title={c.client.transferOne} hint={c.client.transferH} busy={trBusy} prefer={crm.me.members.filter((m) => m.id !== cl.ownerId && m.id !== crm.me.meId).map((m) => ({ id: m.id, name: m.name }))} onClose={() => setTransfer(false)} onPick={async (toId, target) => { setTrBusy(true); try { const r = await transferClient(cl.id, toId); setTransfer(false); showToast(fill(c.client.transferDone, { name: target?.name ?? crm.me.members.find((m) => m.id === toId)?.name ?? "" })); if (r.moved) { crm.closeTab?.(cl.id); router.push(`${crm.base}/clients`); } else load(); } catch (e) { crmError(e, c.errSave, c.errReadonly); } finally { setTrBusy(false); } }} />
       <RequestModal open={reqM.open} clientId={cl.id} request={reqM.req} kind={reqM.kind} briefs={briefs} onClose={() => setReqM({ open: false, req: null })} onSaved={() => { setReqM({ open: false, req: null }); load(); }} />
       <DossierModal open={dossier} clientId={cl.id} clientName={cl.name} value={cl.dossier} onClose={() => setDossier(false)} onSaved={(v) => { patchLocal({ dossier: v }); setDossier(false); load(); }} />
-      <ClientModal open={edit} client={cl} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
+      <ClientModal open={edit} client={cl} visitAt={visitAt} onClose={() => setEdit(false)} onSaved={() => { setEdit(false); load(); }} onOpenDup={(x) => router.push(`${crm.base}/c/${x}`)} />
       <DealModal open={dealM.open} deal={dealM.deal} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} briefs={briefs} requests={requests.map((r) => ({ id: r.id, label: `${c.rq.kinds[r.kind]}${reqSummary(r.kind, r.fields) ? ` · ${reqSummary(r.kind, r.fields)}` : ""}` }))} onClose={() => setDealM({ open: false, deal: null })} onSaved={() => { setDealM({ open: false, deal: null }); load(); }} />
       <TaskModal open={taskM.open} task={taskM.task} clients={[{ id: cl.id, name: cl.name }]} clientId={cl.id} onClose={() => setTaskM({ open: false, task: null })} onSaved={() => { setTaskM({ open: false, task: null }); load(); }} />
     </>

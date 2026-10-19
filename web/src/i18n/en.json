@@ -1665,6 +1665,7 @@
       "dealStage": "Deal stage",
       "visitDate": "Arrival date and time",
       "visitTask": "Client visit",
+      "visitNoDate": "no date",
       "visitSave": "Set status and reminder",
       "activity": "Activity",
       "next": "Next action"

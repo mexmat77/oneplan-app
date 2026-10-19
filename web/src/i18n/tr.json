@@ -1665,6 +1665,7 @@
       "dealStage": "İşlem aşaması",
       "visitDate": "Geliş tarihi ve saati",
       "visitTask": "Müşteri ziyareti",
+      "visitNoDate": "tarih yok",
       "visitSave": "Durumu ve hatırlatmayı ayarla",
       "activity": "Etkinlik",
       "next": "Sonraki adım"
