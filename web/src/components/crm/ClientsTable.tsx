@@ -12,7 +12,7 @@ import { OPTS } from "@/lib/crm/requestFields";
 import { ROOMS_ALL } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconAdjustmentsHorizontal, IconArchive, IconArrowsSort, IconCalendar, IconCheck, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconMapPin, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
+import { IconArchive, IconArrowsSort, IconCalendar, IconCheck, IconChevronDown, IconLayoutKanban, IconLayoutList, IconLayoutRows, IconList, IconChevronRight, IconExternalLink, IconEye, IconMapPin, IconPhone, IconPlus, IconX } from "@tabler/icons-react";
 import { bulkClients, crmClientsPage, patchClient, setClientVisit, type DealSummary } from "@/app/crm/actions";
 import { DuePicker } from "./DuePicker";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
@@ -28,7 +28,8 @@ import { ilceName, GEO } from "@/lib/seed";
 import type { Currency } from "@/lib/types";
 import { ClientDrawer } from "./ClientDrawer";
 import { ClientModal } from "./ClientModal";
-import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, btnS, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref, fmtDT, wantGeoLabel } from "./crmUi";
+import { ModalClose } from "@/components/ui/Modal";
+import { cacheRun, dropIndex, posBetween, sortBoard, crmError, PRIO_COLOR, REQ_COLOR, btnP, cacheGet, cacheSet, fill, fmtDate, getPref, initials, inp, reqSummary, setPref, sourceName, stageName, useCrm, useNow, usePref, fmtDT, wantGeoLabel } from "./crmUi";
 import { GeoPicker } from "@/components/GeoPicker";
 import { FiltersButton } from "./FilterKit";
 import { ilceOfSemt } from "@/store/listings";
@@ -502,7 +503,7 @@ function FilterDrawer({ flt, setF, reset, allTags, count, onClose }: { flt: Flt;
     <>
       <div className="fixed inset-0 z-[300] bg-ink/20" onClick={onClose} />
       <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-dvh w-[460px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
-        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[8px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={18} /></button></div>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[18px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><ModalClose onClick={onClose} /></div>
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-4">
           {group(f.client, <>{Field("role")}{Field("cstage")}{Field("dealStage")}{Field("priority")}<div className="grid grid-cols-2 gap-2">{Field("lang")}{Field("channel")}</div></>)}
           {group(f.team, <>{Field("owner")}{Field("branch")}{Field("source")}{Field("tag")}</>)}

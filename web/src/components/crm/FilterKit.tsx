@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { IconAdjustmentsHorizontal, IconCheck, IconChevronDown, IconPlus, IconX } from "@tabler/icons-react";
 import { DateRange, fmtD } from "@/components/ui/DateRange";
 import { useBackClose, useEscape } from "@/hooks/useScrollLock";
+import { ModalClose } from "@/components/ui/Modal";
 import { useI18n } from "@/i18n/provider";
 import { menuPos } from "./ChipMenu";
 import { btnP, getPref, inp, setPref } from "./crmUi";
@@ -211,7 +212,7 @@ export function FilterPanel({ open, onClose, active, count, reset, children }: {
     <>
       <div className="fixed inset-0 z-[300] bg-ink/20" onClick={onClose} />
       <aside data-crm-form="1" className="fixed right-0 top-0 z-[310] flex h-dvh w-[460px] max-w-full flex-col border-l border-line bg-surface shadow-[-10px_0_40px_rgba(20,36,63,.15)]">
-        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-bg-3 hover:text-ink"><IconX size={16} /></button></div>
+        <div className="flex items-center justify-between border-b border-line px-5 py-3"><div className="text-[18px] font-semibold text-ink">{c.tbl.filters}{active ? <span className="ml-2 rounded-full bg-blue-tint px-2 py-[1px] text-[11px] text-sel-ink">{active}</span> : null}</div><ModalClose onClick={onClose} /></div>
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-4">{children}</div>
         <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <button type="button" onClick={reset} disabled={!active} className={`flex-none cursor-pointer rounded-[10px] px-[14px] py-[10px] text-[13px] font-bold ${active ? "bg-red-tint text-red" : "text-muted"} disabled:cursor-default`}>{t.cat.resetBtn}</button>
