@@ -67,7 +67,7 @@ export function MultiList({ def, flt, setF, onDone }: { def: FDef; flt: GFlt; se
   return (
     <>
       <div className="flex items-center justify-between px-2 pb-1 pt-1"><span className="text-[11px] font-semibold uppercase tracking-[.05em] text-muted">{def.label}</span>{cur.length > 0 && <button type="button" onClick={() => setF({ [def.key]: [] })} className="cursor-pointer text-[11px] font-medium text-muted hover:text-red">{c.tbl.clear}</button>}</div>
-      {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.tbl.findField} autoFocus={kbAutoFocus()} className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
+      {(def.opts?.length ?? 0) > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.common.search} autoFocus={kbAutoFocus()} className="mb-1 h-8 w-full rounded-[5px] border border-line px-2 text-[13px] outline-none focus:border-blue" />}
       <div className="max-h-[280px] overflow-y-auto max-md:max-h-[60dvh]">{opts.map((o) => <OptRow key={o.value} on={cur.includes(o.value)} color={o.color} label={o.label} onClick={() => toggle(o.value)} />)}{opts.length === 0 && <div className="px-2 py-2 text-[12.5px] text-muted">—</div>}</div>
       <div className="mt-1 border-t border-line pt-1"><button type="button" onClick={onDone} className="flex h-8 w-full cursor-pointer items-center justify-center rounded-[5px] text-[13px] font-semibold text-blue-2 hover:bg-bg-3">{c.tbl.done}</button></div>
     </>
@@ -76,16 +76,17 @@ export function MultiList({ def, flt, setF, onDone }: { def: FDef; flt: GFlt; se
 /** Поле-мультивыбор в панели «Все фильтры»: триггер как у Select (подпись поля, выбранные значения с точками), список — fixed-меню / шторка. */
 export function MultiField({ def, flt, setF }: { def: FDef; flt: GFlt; setF: (p: GFlt) => void }) {
   const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<{ left: number; top: number; bottom: number } | null>(null);
+  const [rect, setRect] = useState<{ left: number; top: number; bottom: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", h, true); return () => document.removeEventListener("mousedown", h, true); }, [open]);
   useEscape(open, () => setOpen(false));
+  const menuW = Math.max(240, rect?.width ?? 0); // список по ширине поля (стандарт Apple/Material/Linear, 20.10.2026), не уже 240
   useBackClose(open, () => setOpen(false));
   const cur = sel(flt, def.key);
   const selected = cur.map((v) => def.opts?.find((o) => o.value === v)).filter((o): o is FOpt => !!o);
   return (
     <div ref={ref} className="relative">
-      <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={(e) => { const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom }); setOpen((v) => !v); }} className={`flex h-9 w-full cursor-pointer items-center gap-2 rounded-[6px] border bg-surface px-3 text-left text-[13px] ${open ? "border-blue" : "border-line hover:border-blue/60"}`}>
+      <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={(e) => { const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setRect({ left: b.left, top: b.top, bottom: b.bottom, width: b.width }); setOpen((v) => !v); }} className={`flex h-9 w-full cursor-pointer items-center gap-2 rounded-[6px] border bg-surface px-3 text-left text-[13px] ${open ? "border-blue" : "border-line hover:border-blue/60"}`}>
         {selected.length === 0 ? <span className="flex-1 truncate text-muted">{def.label}</span> : (
           <span className="flex min-w-0 flex-1 items-center gap-2"><span className="max-w-[55%] flex-none truncate text-[11px] uppercase tracking-[.04em] text-muted">{def.label}</span><span className="block min-w-0 flex-1 truncate whitespace-nowrap">{selected.slice(0, 3).map((o) => <span key={o.value} className="mr-[6px] inline-flex items-center gap-1 whitespace-nowrap align-middle">{o.color && <span className="h-2 w-2 flex-none rounded-full" style={{ background: o.color }} />}{o.label}</span>)}{selected.length > 3 && <span className="text-muted">+{selected.length - 3}</span>}</span></span>
         )}
@@ -93,7 +94,7 @@ export function MultiField({ def, flt, setF }: { def: FDef; flt: GFlt; setF: (p:
         <IconChevronDown size={14} className="flex-none text-muted" />
       </button>
       {open && <div className="fixed inset-0 z-[311] bg-[rgba(10,16,28,.35)] md:hidden" onClick={() => setOpen(false)} />}
-      {open && <div data-sheet="fit" style={menuPos(rect, 300, 48 + Math.min(def.opts?.length ?? 0, 8) * 32 + 40)} className="w-[300px] rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]"><MultiList def={def} flt={flt} setF={setF} onDone={() => setOpen(false)} /></div>}
+      {open && <div data-sheet="fit" style={{ ...menuPos(rect, menuW, 48 + Math.min(def.opts?.length ?? 0, 8) * 32 + 40), width: menuW }} className="rounded-[8px] border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(20,36,63,.16)] max-md:p-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]"><MultiList def={def} flt={flt} setF={setF} onDone={() => setOpen(false)} /></div>}
     </div>
   );
 }
