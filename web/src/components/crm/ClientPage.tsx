@@ -11,14 +11,14 @@ import Link from "next/link";
 import { DealStageChip, ReqStatusChip } from "./ChipMenu";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IconArchive, IconBrandTelegram, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
+import { IconArchive, IconBrandTelegram, IconBrandWechat, IconBrandWhatsapp, IconChevronDown, IconChevronUp, IconCopy, IconId, IconLanguage, IconMail, IconPencil, IconPhone, IconPlus, IconTrash, IconUserShare, IconX } from "@tabler/icons-react";
 import { addContact, addNote, crmBootstrap, deleteClient, removeContact, deleteDeal, deleteRequest, doneTask, getClient, mergeClients, transferClient, moveDeal, patchClient, setClientStatus, setRequestStatus, translateNote, type ListingBrief } from "@/app/crm/actions";
 import { promptDialog, confirmDialog } from "@/components/ui/confirm";
 import { Select } from "@/components/ui/Select";
 import { showToast, showUndo } from "@/components/ui/toast";
 import type { Lang } from "@/i18n";
 import { useI18n } from "@/i18n/provider";
-import type { UnitBrief, Client, ClientStage, Contact, ContactKind, CrmEvent, CrmMe, CrmRequest, Deal, DupHit, Priority, RequestKind, Source, Stage, Task } from "@/lib/crm/types";
+import { CONTACT_KINDS, PHONE_KINDS, type UnitBrief, type Client, type ClientStage, type Contact, type ContactKind, type CrmEvent, type CrmMe, type CrmRequest, type Deal, type DupHit, type Priority, type RequestKind, type Source, type Stage, type Task } from "@/lib/crm/types";
 import { clientNo, dealNo } from "@/lib/crm/types";
 import { GROUP_ORDER, REQUEST_FIELDS, REQUEST_KINDS } from "@/lib/crm/requestFields";
 import { RequestModal } from "./RequestModal";
@@ -117,7 +117,7 @@ function Inner({ id }: { id: string }) {
   async function delDeal(d: Deal) { if (!(await confirmDialog({ text: c.deal.delQ, danger: true }))) return; try { await deleteDeal(d.id); load(); } catch (e) { err(e); } }
 
   const refLabel = cl.refKind === "none" ? null : cl.refKind === "text" ? cl.refText : cl.refKind === "realtor" ? c.client.refRealtor : c.client.refAgency;
-  const mainPhone = cl.contacts.find((x) => x.kind === "phone" || x.kind === "whatsapp");
+  const mainPhone = cl.contacts.find((x) => PHONE_KINDS.includes(x.kind)); // телефон, WhatsApp, Viber, MAX
   const openDeal = deals.find((d) => !d.closedAt);
   const openTasks = tasks.filter((x) => !x.doneAt);
   const visitAt = cl.stage === "visit" ? visitOf(tasks, c.tbl.visitTask) : null; // дата приезда — в чипе статуса (19.10.2026)
@@ -162,9 +162,13 @@ function Inner({ id }: { id: string }) {
             <div className="mt-3 flex flex-wrap gap-2">
               {cl.contacts.map((x) => (
                 <div key={x.id} data-contact="1" className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px] max-md:w-full max-md:min-w-0 max-md:gap-2 max-md:rounded-[10px] max-md:py-2 max-md:pl-3 max-md:text-[14.5px]">
-                  <div className="flex min-w-0 items-center gap-1 max-md:flex-1 max-md:flex-col max-md:items-start max-md:gap-0"><span className="whitespace-nowrap text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink max-md:ml-0 max-md:max-w-full max-md:truncate">{(x.kind === "phone" || x.kind === "whatsapp") && <PhoneFlag value={x.value} className="mr-1" />}{x.value}</span></div>
+                  <div className="flex min-w-0 items-center gap-1 max-md:flex-1 max-md:flex-col max-md:items-start max-md:gap-0"><span className="whitespace-nowrap text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink max-md:ml-0 max-md:max-w-full max-md:truncate">{PHONE_KINDS.includes(x.kind) && <PhoneFlag value={x.value} className="mr-1" />}{x.value}</span></div>
                   {(x.kind === "phone" || x.kind === "whatsapp") && <><a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={13} /></a><a href={waOf(x.value)} target="_blank" rel="noreferrer" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-[#25d366] hover:bg-bg-2"><IconBrandWhatsapp size={14} /></a></>}
                   {x.kind === "telegram" && <a href={`https://t.me/${x.value.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`} target="_blank" rel="noreferrer" title="Telegram" className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-[#229ed9] hover:bg-bg-2"><IconBrandTelegram size={14} /></a>}
+                  {/* мессенджеры (20.10.2026): Viber — viber://chat (приложение), MAX — max.ru/<номер или id>, WeChat — weixin://dl/chat (приложение) */}
+                  {x.kind === "viber" && <><a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={13} /></a><a href={`viber://chat?number=%2B${x.value.replace(/\D/g, "")}`} title="Viber" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-[12px] font-extrabold text-[#7360f2] hover:bg-bg-2">V</a></>}
+                  {x.kind === "max" && <a href={`https://max.ru/${/\d{7,}/.test(x.value.replace(/\D/g, "")) ? x.value.replace(/\D/g, "") : x.value.replace(/^@/, "")}`} target="_blank" rel="noreferrer" title="MAX" className="ml-1 flex h-6 min-w-6 items-center justify-center rounded-[4px] px-1 text-[9px] font-extrabold text-[#7b4fd0] hover:bg-bg-2">MAX</a>}
+                  {x.kind === "wechat" && <a href={`weixin://dl/chat?${encodeURIComponent(x.value.replace(/^@/, ""))}`} title="WeChat" className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-[#07c160] hover:bg-bg-2"><IconBrandWechat size={14} /></a>}
                   {x.kind === "email" && <a href={`mailto:${x.value}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconMail size={13} /></a>}
                   <button type="button" onClick={() => copy(x.value)} className="flex h-6 w-6 cursor-pointer max-md:hidden items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconCopy size={12} /></button>
                   {!ro && cl.contacts.length > 1 && <button type="button" title={c.client.removeContact} onClick={async () => { if (!(await confirmDialog({ text: `${x.value} — ${c.client.removeContact}?`, danger: true }))) return; setData((d) => (d ? { ...d, client: { ...d.client, contacts: d.client.contacts.filter((y) => y.id !== x.id) } } : d)); try { await removeContact(x.id); } catch (e) { err(e); load(); } }} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-red-tint hover:text-red"><IconX size={12} /></button>}
@@ -416,8 +420,8 @@ function QuickContact({ clientId, disabled, onAdded }: { clientId: string; disab
   if (!open) return <button type="button" onClick={() => setOpen(true)} disabled={disabled} className="inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-[6px] border border-dashed border-line px-2 text-[12.5px] font-medium text-blue-2 hover:bg-blue-tint disabled:opacity-50"><IconPlus size={13} /> {c.client.addContact}</button>;
   return (
     <div data-crm-form="1" className="flex flex-wrap items-center gap-2 rounded-[6px] border border-sel-line bg-blue-tint/40 p-2">
-      <Select value={kind} onChange={(v) => setKind(v as ContactKind)} options={(["phone", "whatsapp", "email", "telegram", "other"] as ContactKind[]).map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" className="w-[130px]" />
-      {kind === "phone" || kind === "whatsapp" ? <PhoneInput autoFocus={kbAutoFocus()} value={value} onChange={setValue} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} className={`${inp} w-[220px]`} /> : <input autoFocus={kbAutoFocus()} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} inputMode={kind === "email" ? "email" : undefined} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : ""} className={`${inp} w-[200px]`} />}
+      <Select value={kind} onChange={(v) => setKind(v as ContactKind)} options={CONTACT_KINDS.map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" className="w-[130px]" />
+      {PHONE_KINDS.includes(kind) ? <PhoneInput autoFocus={kbAutoFocus()} value={value} onChange={setValue} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} className={`${inp} w-[220px]`} /> : <input autoFocus={kbAutoFocus()} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} inputMode={kind === "email" ? "email" : undefined} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : ""} className={`${inp} w-[200px]`} />}
       <Select value={label} onChange={setLabel} options={contactLabelOptions(label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="w-[150px]" />
       <button type="button" onClick={save} disabled={busy || !value.trim()} className={btnP}>{c.ev.add}</button>
       <button type="button" onClick={() => setOpen(false)} className={btnS}>{c.cancel}</button>

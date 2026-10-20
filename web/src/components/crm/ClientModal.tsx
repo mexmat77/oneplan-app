@@ -15,14 +15,14 @@ import { useI18n } from "@/i18n/provider";
 import type { Lang } from "@/i18n";
 import { COUNTRIES } from "@/lib/crm/countries";
 import { REQUEST_KINDS, ROLE_OF_KIND } from "@/lib/crm/requestFields";
-import type { Channel, Client, ClientInput, ClientRole, ClientStage, ContactKind, DupHit, Priority, RefKind, TaskKind } from "@/lib/crm/types";
+import { CONTACT_KINDS, PHONE_KINDS, type Channel, type Client, type ClientInput, type ClientRole, type ClientStage, type ContactKind, type DupHit, type Priority, type RefKind, type TaskKind } from "@/lib/crm/types";
 import { useMahalleLoaded } from "@/lib/geo";
 import { DuePicker } from "./DuePicker";
 import { ReqFieldGroups } from "./RequestModal";
 import { crmError, PRIO_COLOR, btnP, btnS, countryName, inp, lbl, sourceName, stageName, taskKindName, useCrm, contactLabelOptions } from "./crmUi";
 
 type CForm = { id?: string; kind: ContactKind; value: string; label: string; isMain: boolean };
-const KINDS: ContactKind[] = ["phone", "whatsapp", "email", "telegram", "other"];
+const KINDS: ContactKind[] = CONTACT_KINDS;
 const ROLES: ClientRole[] = ["buyer", "seller", "landlord", "tenant"];
 const PRIOS: Priority[] = ["hot", "warm", "cold"];
 const CHANNELS: Channel[] = ["call", "whatsapp", "telegram", "email"];
@@ -113,7 +113,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup, visitAt: visitAt0 }: 
           {f.contacts.map((x, i) => (
             <div key={i} className="grid grid-cols-[130px_1fr_150px_auto_auto] items-center gap-2 max-md:grid-cols-[100px_1fr_auto_auto]">
               <Select value={x.kind} onChange={(v) => setC(i, { kind: v as ContactKind })} options={KINDS.map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" />
-              {x.kind === "phone" || x.kind === "whatsapp" ? <PhoneInput value={x.value} onChange={(v) => setC(i, { value: v })} className={inp} /> : <input value={x.value} onChange={(e) => setC(i, { value: e.target.value })} inputMode={x.kind === "email" ? "email" : undefined} autoComplete={x.kind === "email" ? "email" : "off"} placeholder={x.kind === "email" ? "name@mail.com" : x.kind === "telegram" ? "@login" : ""} className={inp} />}
+              {PHONE_KINDS.includes(x.kind) ? <PhoneInput value={x.value} onChange={(v) => setC(i, { value: v })} className={inp} /> : <input value={x.value} onChange={(e) => setC(i, { value: e.target.value })} inputMode={x.kind === "email" ? "email" : undefined} autoComplete={x.kind === "email" ? "email" : "off"} placeholder={x.kind === "email" ? "name@mail.com" : x.kind === "telegram" ? "@login" : x.kind === "wechat" ? "WeChat ID" : ""} className={inp} />}
               <Select value={x.label} onChange={(v) => setC(i, { label: v })} options={contactLabelOptions(x.label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="max-md:hidden" />
               <button type="button" title={c.client.main} onClick={() => mainC(i)} className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] ${x.isMain ? "text-[#f5a623]" : "text-muted hover:bg-bg-3"}`}>{x.isMain ? <IconStarFilled size={16} /> : <IconStar size={16} />}</button>
               <button type="button" onClick={() => delC(i)} disabled={f.contacts.length === 1} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={16} /></button>

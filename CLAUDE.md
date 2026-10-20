@@ -140,7 +140,12 @@
   логика `lib/phoneIntl.ts` (`phoneInfo`, `toIntlDigits`, `countryOf`, `flagOf`, `countryName` через Intl.DisplayNames; страна
   невалидного номера — по коду, у общих кодов главная: +1 US, +7 RU, +44 GB), тесты `tests/unit/phoneIntl.test.ts`; подключено в
   форме и быстром контакте клиента, профилях риэлтора/застройщика, заявках /login и /join, админке; новое поле телефона — только
-  PhoneInput; npm: peer-конфликт @types/node↔vitest не наш — пакеты ставить с `--legacy-peer-deps`), `@/store/role` (`useRole()` — роль + демо-переключатель
+  PhoneInput; npm: peer-конфликт @types/node↔vitest не наш — пакеты ставить с `--legacy-peer-deps`),
+  ВИДЫ КОНТАКТОВ КЛИЕНТА (20.10.2026, «добавим мессенджеры»): `ContactKind` = phone · whatsapp · telegram · wechat · viber ·
+  max · email · other, порядок в формах — `CONTACT_KINDS` (lib/crm/types), номерные виды — `PHONE_KINDS` (phone, whatsapp, viber,
+  max: PhoneInput, флаг, tel:); в базе ограничения на kind нет, миграция не нужна. Иконки-ссылки в строке контакта карточки:
+  WhatsApp wa.me, Telegram t.me, Viber `viber://chat?number=%2B…` (только приложение), MAX `https://max.ru/<номер или id>`,
+  WeChat `weixin://dl/chat?<id>` (приложение; web-ссылки у WeChat нет). Главный телефон шапки карточки — первый из PHONE_KINDS. `@/store/role` (`useRole()` — роль + демо-переключатель
   «Риэлтор/Админ» в `AppChrome`, только для реальных админов).
 - ЛИСТЫ НА МОБИЛЬНОМ (16.10.2026, «фильтры на телефоне уехали на полэкрана»): Tailwind v4 делает `-translate-x-1/2`
   свойством `translate` (через `--tw-translate-x`), а не `transform`, поэтому `transform: none !important` его не гасит; к тому же

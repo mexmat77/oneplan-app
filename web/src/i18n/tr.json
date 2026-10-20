@@ -1217,6 +1217,9 @@
       "email": "E-posta",
       "whatsapp": "WhatsApp",
       "telegram": "Telegram",
+      "wechat": "WeChat",
+      "viber": "Viber",
+      "max": "MAX",
       "other": "Diğer"
     },
     "deal": {

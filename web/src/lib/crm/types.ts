@@ -17,7 +17,11 @@ export type StageKind = "open" | "won" | "lost";
 export type StageScope = "deal" | "client";
 export type Stage = { id: string; key: string; name: Record<Lang, string>; kind: StageKind; color: string | null; sort: number; scope: StageScope };
 
-export type ContactKind = "phone" | "email" | "whatsapp" | "telegram" | "other";
+export type ContactKind = "phone" | "email" | "whatsapp" | "telegram" | "wechat" | "viber" | "max" | "other";
+/** Порядок видов контакта в формах (20.10.2026): телефон и мессенджеры, затем почта и другое. */
+export const CONTACT_KINDS: ContactKind[] = ["phone", "whatsapp", "telegram", "wechat", "viber", "max", "email", "other"];
+/** Виды, где значение — номер телефона (маска PhoneInput, флаг страны, tel:). */
+export const PHONE_KINDS: ContactKind[] = ["phone", "whatsapp", "viber", "max"];
 export type Contact = { id: string; kind: ContactKind; value: string; label: string | null; isMain: boolean };
 
 export type RefKind = "none" | "realtor" | "agency" | "client" | "text";

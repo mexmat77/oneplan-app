@@ -1172,6 +1172,9 @@
       "email": "E-mail",
       "whatsapp": "WhatsApp",
       "telegram": "Telegram",
+      "wechat": "WeChat",
+      "viber": "Viber",
+      "max": "MAX",
       "other": "Другое"
     },
     "deal": {
