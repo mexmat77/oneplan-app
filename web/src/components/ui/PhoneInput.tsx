@@ -4,15 +4,16 @@
 // (список всех стран с флагом, названием на языке интерфейса и кодом, поиск по названию и коду; на телефоне — шторка снизу),
 // справа сам номер без кода, форматируется по правилам страны по мере ввода («505 123 45 67»). Набор «+…» или «00…» в поле
 // номера переключает страну автоматически; «0505…» / «905…» для Турции тоже понимаются. Значение наружу — международный вид
-// с пробелами («+90 505 123 45 67»), как хранилось. Невалидный номер после ухода с поля — красная рамка.
+// с пробелами («+90 505 123 45 67»), как хранилось. Невалидный номер после ухода с поля — красная рамка. Лишние цифры
+// сверх длины номера страны/типа не вводятся (`fitNationalDigits`), в пустом поле — пример номера страны (`exampleNational`).
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { IconCheck, IconChevronDown, IconSearch } from "@tabler/icons-react";
-import { AsYouType, getCountries, getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
+import { AsYouType, getCountries, getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/max";
 import { useBackClose, useEscape } from "@/hooks/useScrollLock";
 import { useI18n } from "@/i18n/provider";
 import { kbAutoFocus } from "@/lib/touch";
-import { countryName, DEFAULT_COUNTRY, flagOf, phoneInfo, toIntlDigits } from "@/lib/phoneIntl";
+import { countryName, DEFAULT_COUNTRY, exampleNational, fitIntlDigits, fitNationalDigits, flagOf, phoneInfo, toIntlDigits } from "@/lib/phoneIntl";
 
 const EMOJI: CSSProperties = { fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif' };
 const POPULAR: CountryCode[] = ["TR", "RU", "UA", "KZ", "BY", "AZ", "UZ", "DE", "GB", "US", "KG", "IR", "IQ", "SA", "AE", "NL", "FR", "IT", "PL"];
@@ -46,16 +47,17 @@ export function PhoneInput({ value, onChange, className = "", placeholder, disab
   const onInput = (raw: string) => {
     const t = raw.trim();
     if (!t) { onChange(""); return; }
-    if (t.startsWith("+") || t.startsWith("00")) { onChange(new AsYouType().input(toIntlDigits(t))); return; }
+    if (t.startsWith("+") || t.startsWith("00")) { onChange(new AsYouType().input(fitIntlDigits(toIntlDigits(t)))); return; }
     let d = t.replace(/\D/g, "");
     if (cc === "TR") { if (d.startsWith("90") && d.length > 10) d = d.slice(2); if (d.startsWith("0")) d = d.slice(1); }
     else if (cc === "RU" && d.startsWith("8") && d.length === 11) d = d.slice(1);
+    d = fitNationalDigits(cc, d);
     const p = parsePhoneNumberFromString(code + d);
     onChange(p ? new AsYouType().input(p.number) : code + " " + d);
   };
   const pickCountry = (c: CountryCode) => {
     setPicked(c); setOpen(false);
-    const d = value.replace(/\D/g, "").replace(new RegExp("^" + getCountryCallingCode(cc)), "");
+    const d = fitNationalDigits(c, value.replace(/\D/g, "").replace(new RegExp("^" + getCountryCallingCode(cc)), ""));
     if (d) { const p = parsePhoneNumberFromString("+" + getCountryCallingCode(c) + d); onChange(p ? new AsYouType().input(p.number) : "+" + getCountryCallingCode(c) + " " + d); }
   };
   const openList = () => { const b = btn.current?.getBoundingClientRect(); setRect(b ? { left: b.left, top: b.top, bottom: b.bottom } : null); setOpen(true); };
@@ -65,7 +67,7 @@ export function PhoneInput({ value, onChange, className = "", placeholder, disab
         <span className="text-[18px] leading-none" style={EMOJI}>{flagOf(cc)}</span><span className="[font-variant-numeric:tabular-nums]">{code}</span><IconChevronDown size={12} className="text-muted" />
       </button>
       <input id={id} value={shown} onChange={(e) => onInput(e.target.value)} onBlur={() => { setTouched(true); if (value.trim() && info.valid) onChange(info.intl); }} onKeyDown={onKeyDown}
-        inputMode="tel" autoComplete="tel" placeholder={placeholder ?? (cc === "TR" ? "5xx xxx xx xx" : "")} disabled={disabled} autoFocus={autoFocus} title={value ? info.intl : undefined}
+        inputMode="tel" autoComplete="tel" placeholder={placeholder ?? exampleNational(cc)} disabled={disabled} autoFocus={autoFocus} title={value ? info.intl : undefined}
         className={`${className} [font-variant-numeric:tabular-nums] ${bad ? "!border-red" : ""}`} style={{ ...style, paddingLeft: 24 + 8 * code.length + 44 }} />
       {open && <CountryList current={cc} rect={rect} anchor={btn} onPick={pickCountry} onClose={() => setOpen(false)} />}
     </span>
