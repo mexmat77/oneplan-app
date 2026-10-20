@@ -1,5 +1,6 @@
 "use client";
 
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { kbAutoFocus } from "@/lib/touch";
 // Форма клиента (0017, ТЗ docs/crm-spec.md §2, §7): минимум при создании — имя, контакт, тип первой заявки, источник,
 // ответственный, район/бюджет, следующее действие, KVKK-уведомление; остальное — секции ниже. Один клиент — несколько заявок
@@ -112,7 +113,7 @@ function ClientForm({ client, onClose, onSaved, onOpenDup, visitAt: visitAt0 }: 
           {f.contacts.map((x, i) => (
             <div key={i} className="grid grid-cols-[130px_1fr_150px_auto_auto] items-center gap-2 max-md:grid-cols-[100px_1fr_auto_auto]">
               <Select value={x.kind} onChange={(v) => setC(i, { kind: v as ContactKind })} options={KINDS.map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" />
-              <input value={x.value} onChange={(e) => setC(i, { value: e.target.value })} inputMode={x.kind === "email" ? "email" : x.kind === "phone" || x.kind === "whatsapp" ? "tel" : undefined} autoComplete={x.kind === "email" ? "email" : x.kind === "phone" || x.kind === "whatsapp" ? "tel" : "off"} placeholder={x.kind === "email" ? "name@mail.com" : x.kind === "telegram" ? "@login" : "+90 5xx xxx xx xx"} className={inp} />
+              {x.kind === "phone" || x.kind === "whatsapp" ? <PhoneInput value={x.value} onChange={(v) => setC(i, { value: v })} className={inp} /> : <input value={x.value} onChange={(e) => setC(i, { value: e.target.value })} inputMode={x.kind === "email" ? "email" : undefined} autoComplete={x.kind === "email" ? "email" : "off"} placeholder={x.kind === "email" ? "name@mail.com" : x.kind === "telegram" ? "@login" : ""} className={inp} />}
               <Select value={x.label} onChange={(v) => setC(i, { label: v })} options={contactLabelOptions(x.label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="max-md:hidden" />
               <button type="button" title={c.client.main} onClick={() => mainC(i)} className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] ${x.isMain ? "text-[#f5a623]" : "text-muted hover:bg-bg-3"}`}>{x.isMain ? <IconStarFilled size={16} /> : <IconStar size={16} />}</button>
               <button type="button" onClick={() => delC(i)} disabled={f.contacts.length === 1} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[6px] text-muted hover:bg-red-tint hover:text-red disabled:opacity-30"><IconTrash size={16} /></button>

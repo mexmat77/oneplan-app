@@ -1,6 +1,7 @@
 "use client";
 
 // «Профиль» — prototype lines 1403–1534 (markup), 3680–3700 / 3824–3826 / 4243–4285 (logic).
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -9,7 +10,6 @@ import {
 } from "@tabler/icons-react";
 import { useT } from "@/i18n/provider";
 import { TwoFactorCard } from "@/components/auth/TwoFactor";
-import { fmtPhone, trPhone } from "@/lib/phone";
 import { GEO } from "@/lib/seed";
 import { useMahalleLoaded } from "@/lib/geo";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
@@ -155,7 +155,7 @@ export default function ProfilePage() {
         <div className="mb-[18px] border-t border-[#f2f4f8] pt-[18px]">
           <div className="mb-3 flex items-center gap-2 text-[14.5px] font-extrabold text-ink"><IconAddressBook size={17} className="text-muted" /> {t.prof.ch}</div>
           <label className={label}>{t.prof.phone}</label>
-          <input value={phone} onChange={(e) => setPhone(trPhone(e.target.value))} placeholder="+90 5__ ___ __ __" inputMode="tel" className={`${input} w-[220px] [font-variant-numeric:tabular-nums]`} />
+          <PhoneInput value={phone} onChange={setPhone} className={`${input} w-[260px]`} />
           <div className="mt-[7px] text-[11.5px] leading-[1.5] text-muted">{t.prof.chSelfH}</div>
           <div className="mb-[2px] mt-[14px] text-[11.5px] text-muted">{t.prof.chSub}</div>
           <Row icon={<IconPhone size={17} className="text-muted" />} name={t.prof.call} right={<span className="text-[11px] text-muted-2">{t.prof.always}</span>} />
@@ -178,7 +178,7 @@ export default function ProfilePage() {
               {!mxForm && <div className="mb-2 text-[11.5px] text-text-2"><IconPlus size={13} className="inline" /> <span onClick={() => setMxForm(true)} className={link}>{t.prof.mxAdd}</span></div>}
               {mxForm && (
                 <>
-                  <input value={mxId} onChange={(e) => setMxId(fmtPhone(e.target.value))} placeholder="+7 ___ ___ __ __" inputMode="tel" className={`${input} mb-[6px] w-[220px]`} />
+                  <PhoneInput value={mxId} onChange={setMxId} placeholder="+7 ___ ___ __ __" className={`${input} mb-[6px] w-[260px]`} />
                   <div className="mb-2 text-[11.5px] leading-[1.5] text-text-2">{t.prof.mxManualH}</div>
                   <div className="mb-2 flex gap-2"><button type="button" onClick={() => setMxForm(false)} className={smallBtn}>{t.common.cancel}</button><button type="button" onClick={() => { if (!mxId.trim()) { showToast(t.prof.mxManualH); return; } saveProfile({ mxId, mxOn: true }); setMxForm(false); }} className={primSmall}>{t.prof.add}</button></div>
                 </>

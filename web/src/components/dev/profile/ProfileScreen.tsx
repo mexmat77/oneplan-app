@@ -3,6 +3,7 @@
 // §1.15 «Профайл» (prototype lines 1106–1142). Переработано 07.10.2026 по образцу профиля риэлтора: одна колонка ≤ 760px,
 // карточка с аватаром (загрузка в Storage `media`, ссылка — в user_metadata.avatar_url), данные, реквизиты компании (админ),
 // безопасность, правовые документы; «Выйти» продублирован в меню пользователя в шапке.
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { IconCamera, IconCheck, IconCopy, IconLock, IconLogout, IconRefresh, IconShieldCheck, IconTrash } from "@tabler/icons-react";
@@ -111,7 +112,7 @@ export function ProfileScreen({ me }: { me: ProfileMe }) {
         </div>
         <div className="grid grid-cols-2 gap-[14px] max-md:grid-cols-1">
           <div>{label(t.fld_fio)}<input value={name} onChange={(e) => { setName(e.target.value); touch(); }} className={input} /></div>
-          <div>{label(t.fld_phone)}<input value={phone} onChange={(e) => { setPhone(e.target.value); touch(); }} placeholder="+90 5xx xxx xx xx" inputMode="tel" className={input} /></div>
+          <div>{label(t.fld_phone)}<PhoneInput value={phone} onChange={(v) => { setPhone(v); touch(); }} className={input} /></div>
           <div className="col-span-full">{label(t.fld_email)}<input value={me.email} readOnly className={inputRo} /><div className="mt-[5px] text-[11.5px] text-muted">{t.prof_mail_note}</div></div>
         </div>
         <div className="mt-4 flex justify-end"><button type="button" onClick={save} disabled={saving || !dirty} className={primary}><IconCheck size={16} /> {t.btn_save}</button></div>

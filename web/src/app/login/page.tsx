@@ -2,6 +2,7 @@
 
 // Sign-in screen — prototype lines 124–142 (card), 144–178 (access request modal), 1896–1917 (password recovery).
 // Supabase sign-in + the red error block are an extension over the prototype (which only flips `logged:true`).
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconAlertCircle, IconCircleCheck, IconFilePencil, IconLock, IconLogin2, IconMailCheck, IconMailForward, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
@@ -11,7 +12,7 @@ import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/provider";
 import { REALTORS } from "@/lib/seed";
-import { normPh, trPhone, validMail } from "@/lib/phone";
+import { normPh, validMail } from "@/lib/phone";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { MfaCodeForm, mfaNeeded } from "@/components/auth/TwoFactor";
 import { submitAccessRequest, submitUnblockRequest } from "@/app/lead-actions";
@@ -204,7 +205,7 @@ function RegModal({ open, lang, onClose }: { open: boolean; lang: string; onClos
           <label className={labelCls}>{t.prof.name} <span className="text-red">*</span></label>
           <input value={f.name} onChange={(e) => set({ name: e.target.value })} className={`${inputCls} mb-3 ${bad("name")}`} />
           <label className={labelCls}>{t.prof.phone} <span className="text-red">*</span></label>
-          <input value={f.phone} onChange={(e) => set({ phone: trPhone(e.target.value) })} placeholder="+90 5xx xxx xx xx" inputMode="tel" className={`${inputCls} mb-1 ${bad("phone")}`} />
+          <PhoneInput value={f.phone} onChange={(v) => set({ phone: v })} className={`${inputCls} mb-1 ${bad("phone")}`} />
           <div className="mb-3 text-[11px] text-muted-2">{t.login.regPhoneH}</div>
           <label className={labelCls}>{t.prof.mail} <span className="text-red">*</span></label>
           <input value={f.mail} onChange={(e) => set({ mail: e.target.value })} placeholder="name@agency.com" className={`${inputCls} mb-3 ${bad("mail")}`} />

@@ -2,10 +2,11 @@
 
 // «Данные риэлтора» — prototype `rlEditOpen` (markup 1791–1810, logic 4200–4217).
 // Same modal serves «Добавить» (`rlEditK === '__new'`, line 3924) and editing; for `me` it also syncs the profile.
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useState } from "react";
 import { IconAlertCircle, IconCalendar, IconCheck, IconChevronDown } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
-import { normPh, trPhone, validMail } from "@/lib/phone";
+import { normPh, validMail } from "@/lib/phone";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
 import { addMember, updateMember, type Member } from "@/store/admin";
@@ -79,7 +80,7 @@ export function RealtorModal({ k, members, agencies, remote, onClose }: Props) {
       <label className={label}>{t.prof.mail}</label>
       <input value={f.mail} onChange={(e) => setF({ ...f, mail: e.target.value, miss: false })} className={`${input} mb-3 ${f.miss && (!f.mail.trim() || !validMail(f.mail)) ? "border-red bg-red-tint" : ""}`} />
       <label className={label}>{t.prof.phone}</label>
-      <input value={f.phone} onChange={(e) => setF({ ...f, phone: trPhone(e.target.value) })} placeholder="+90 5xx xxx xx xx" inputMode="tel" className={`${input} mb-3`} />
+      <PhoneInput value={f.phone} onChange={(v) => setF({ ...f, phone: v })} className={`${input} mb-3`} />
       <label className={label}>{t.rl.agL}</label>
       <input value={f.agQ} onChange={(e) => setF({ ...f, agQ: e.target.value })} placeholder={t.rl.agSearch} className={`${input} rounded-b-none border-b-0`} />
       <div className="mb-4 max-h-[180px] overflow-y-auto rounded-b-[11px] border border-line">

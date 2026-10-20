@@ -3,6 +3,7 @@
 // Invite link landing: one-plan.pro/join/<code> (prototype `invLink`, 4239) — registration form that creates
 // the account with the invite's role. Fields mirror the access-request form (phone mask, agency chip); the
 // password pair is an extension needed to actually create the account.
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { Logo } from "@/components/Logo";
 import { LangSwitch } from "@/components/LangSwitch";
 import { useI18n } from "@/i18n/provider";
 import { inviteInfo, registerByInvite } from "@/app/admin/actions";
-import { trPhone, validMail } from "@/lib/phone";
+import { validMail } from "@/lib/phone";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 const inputCls = "w-full rounded-[11px] border border-line px-[13px] py-[11px] text-[14px] outline-none focus:border-blue";
@@ -74,7 +75,7 @@ export default function JoinPage() {
             <label className={labelCls}>{t.prof.name} <span className="text-red">*</span></label>
             <input value={f.name} onChange={(e) => set({ name: e.target.value })} className={`${inputCls} mb-3 ${bad("name")}`} autoComplete="name" />
             <label className={labelCls}>{t.prof.phone} <span className="text-red">*</span></label>
-            <input value={f.phone} onChange={(e) => set({ phone: trPhone(e.target.value) })} placeholder="+90 5xx xxx xx xx" inputMode="tel" className={`${inputCls} mb-1 ${bad("phone")}`} />
+            <PhoneInput value={f.phone} onChange={(v) => set({ phone: v })} className={`${inputCls} mb-1 ${bad("phone")}`} />
             <div className="mb-3 text-left text-[11px] text-muted-2">{t.login.regPhoneH}</div>
             <label className={labelCls}>{t.prof.mail} <span className="text-red">*</span></label>
             <input type="email" value={f.email} onChange={(e) => set({ email: e.target.value })} placeholder="name@agency.com" readOnly={fixedMail} className={`${inputCls} ${fixedMail ? "mb-1 bg-bg-2 text-text-2" : "mb-3"} ${bad("email")}`} autoComplete="email" />

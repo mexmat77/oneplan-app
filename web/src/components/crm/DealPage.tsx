@@ -1,5 +1,6 @@
 "use client";
 
+import { PhoneFlag } from "@/components/ui/PhoneFlag";
 import { TaskRow } from "./TaskRow";
 
 // Карточка сделки (13.10.2026, «почему сделки не выглядят как клиенты»): та же схема, что у клиента — шапка (название · D-номер,
@@ -86,7 +87,7 @@ export function DealPage({ id }: { id: string }) {
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-[13px] font-bold text-white" style={{ background: stCol }}>{initialsOf(d.title || dealNo(d))}</span>
         <div className="min-w-[220px] flex-1">
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-[17px] font-semibold text-ink">{d.title || "—"}</h1><span className="text-[14px] text-muted" title={d.id}>· {dealNo(d)}</span><span className={chip}>{t.dealF[d.deal as keyof typeof t.dealF]}</span></div>
-          <div className="mt-[2px] truncate text-[13px] text-text"><Link href={`${crm.base}/c/${cl.id}`} className="font-medium text-blue-2 hover:underline">{cl.name}</Link> · {clientNo(cl)}{cl.phone ? ` · ${cl.phone}` : ""}{owner ? ` · ${owner.name}` : ""}</div>
+          <div className="mt-[2px] truncate text-[13px] text-text"><Link href={`${crm.base}/c/${cl.id}`} className="font-medium text-blue-2 hover:underline">{cl.name}</Link> · {clientNo(cl)}{cl.phone ? <> · <PhoneFlag value={cl.phone} className="mr-1" />{cl.phone}</> : ""}{owner ? ` · ${owner.name}` : ""}</div>
         </div>
         <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.deal.stage}</span><DealStageChip deal={d} onChange={move} disabled={ro} size="md" /></span>
         {crm.me.members.length > 1 && <span className="inline-flex items-center gap-[6px]"><span className="text-[11.5px] font-semibold uppercase tracking-[.04em] text-muted">{c.owner}</span><Select value={d.ownerId ?? ""} onChange={async (v) => { setData((x) => (x ? { ...x, deal: { ...x.deal, ownerId: v || null } } : x)); try { await patchDealOwner(d.id, v || null); } catch (e) { err(e); load(); } }} options={crm.me.members.map((m) => ({ value: m.id, label: m.name, color: m.color }))} size="sm" menuWidth="auto" className="w-[170px]" disabled={ro} /></span>}

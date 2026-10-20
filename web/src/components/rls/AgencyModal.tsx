@@ -1,10 +1,11 @@
 "use client";
 
 // «Новое агентство» / «Данные агентства» — prototype `agAddOpen` (markup 1866–1883, logic 4180–4198).
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useState } from "react";
 import { IconPaperclip } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
-import { normPh, trPhone } from "@/lib/phone";
+import { normPh } from "@/lib/phone";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
 import { saveAgency, updateMember, type Agency, type Member } from "@/store/admin";
@@ -63,7 +64,7 @@ export function AgencyModal({ edit, agencies, members, profileAgency, remote, on
       <label className={label}>{t.rl.agAddrL}</label>
       <input value={f.addr} onChange={(e) => setF({ ...f, addr: e.target.value })} className={`${input} mb-3`} />
       <label className={label}>{t.prof.phone}</label>
-      <input value={f.phone} onChange={(e) => setF({ ...f, phone: trPhone(e.target.value) })} placeholder="+90 5xx xxx xx xx" inputMode="tel" className={`${input} mb-3`} />
+      <PhoneInput value={f.phone} onChange={(v) => setF({ ...f, phone: v })} className={`${input} mb-3`} />
       <label className={label}>{t.rl.agLicL}</label>
       <input value={f.lic} onChange={(e) => setF({ ...f, lic: e.target.value })} placeholder="TR-07-XXXX" className={`${input} mb-3`} />
       {!remote && <label className={label}>{t.rl.agScanL}</label>}

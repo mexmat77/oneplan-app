@@ -132,7 +132,15 @@
   карточки сделки и клиента — отмена окна отменяет перевод этапа). `window.prompt` в коде больше нет, `@/components/ui/UserMenu` (аватар + меню пользователя в шапках обоих
   кабинетов: профиль, уведомления, выход; `Avatar` — инициалы или фото из `user_metadata.avatar_url`, загрузка в `media/dev/avatars/<uid>`), `@/components/ui/Modal`
   (`Modal` + `ModalClose`, `sheet="fit"` → bottom-sheet ≤760), `@/hooks/useScrollLock` (`useScrollLock`, `useEscape`),
-  `@/lib/phone` (`trPhone`, `fmtPhone`, `normPh`, `validMail`), `@/store/role` (`useRole()` — роль + демо-переключатель
+  `@/lib/phone` (`normPh`, `validMail`; `trPhone`/`fmtPhone` — только служебный код: с 20.10.2026 ВСЕ поля телефона —
+  `@/components/ui/PhoneInput`: международная маска на libphonenumber-js, формат по правилам страны по мере ввода, набор без «+»
+  → международный (5xx/05xx → +90 5xx, 90… → +90, 00… → +, 8 9xx → +7), слева флаг-эмодзи страны с подсказкой «Турция · TR»,
+  невалидный после ухода с поля — красная рамка, значение наружу «+90 505 123 45 67» как хранилось; рядом с показанным номером —
+  `@/components/ui/PhoneFlag` (флаг + страна при наведении: контакты и шапка карточки клиента, список клиентов, шапка сделки);
+  логика `lib/phoneIntl.ts` (`phoneInfo`, `toIntlDigits`, `countryOf`, `flagOf`, `countryName` через Intl.DisplayNames; страна
+  невалидного номера — по коду, у общих кодов главная: +1 US, +7 RU, +44 GB), тесты `tests/unit/phoneIntl.test.ts`; подключено в
+  форме и быстром контакте клиента, профилях риэлтора/застройщика, заявках /login и /join, админке; новое поле телефона — только
+  PhoneInput; npm: peer-конфликт @types/node↔vitest не наш — пакеты ставить с `--legacy-peer-deps`), `@/store/role` (`useRole()` — роль + демо-переключатель
   «Риэлтор/Админ» в `AppChrome`, только для реальных админов).
 - ЛИСТЫ НА МОБИЛЬНОМ (16.10.2026, «фильтры на телефоне уехали на полэкрана»): Tailwind v4 делает `-translate-x-1/2`
   свойством `translate` (через `--tw-translate-x`), а не `transform`, поэтому `transform: none !important` его не гасит; к тому же

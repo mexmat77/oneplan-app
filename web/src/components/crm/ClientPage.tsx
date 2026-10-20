@@ -1,5 +1,7 @@
 "use client";
 
+import { PhoneFlag } from "@/components/ui/PhoneFlag";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { TaskRow } from "./TaskRow";
 
 import { kbAutoFocus } from "@/lib/touch";
@@ -130,7 +132,7 @@ function Inner({ id }: { id: string }) {
           <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-blue-tint text-[14px] font-semibold text-sel-ink">{initials(cl.name)}</span>
           <div className="min-w-[240px] flex-[1_1_320px]">
             <div className="flex items-center gap-2 whitespace-nowrap"><h1 className="truncate text-[17px] font-semibold text-ink" title={cl.name}>{cl.name}</h1><span className="flex-none text-[14px] text-muted" title={cl.id}>· {clientNo(cl)}</span></div>
-            <div className="mt-[2px] truncate text-[13px] text-text">{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
+            <div className="mt-[2px] truncate text-[13px] text-text">{mainPhone?.value && <PhoneFlag value={mainPhone.value} className="mr-1" />}{[mainPhone?.value, sourceName(src, t), owner?.name].filter(Boolean).join(" · ")}</div>
           </div>
           <div className="ml-auto flex flex-none flex-wrap items-center gap-2">
             <button type="button" onClick={() => setEdit(true)} disabled={ro} className={btnS}><IconPencil size={14} /> {c.client.edit}</button>
@@ -160,7 +162,7 @@ function Inner({ id }: { id: string }) {
             <div className="mt-3 flex flex-wrap gap-2">
               {cl.contacts.map((x) => (
                 <div key={x.id} data-contact="1" className="flex items-center gap-1 rounded-[6px] border border-line bg-surface py-[3px] pl-2 pr-1 text-[12.5px] max-md:w-full max-md:min-w-0 max-md:gap-2 max-md:rounded-[10px] max-md:py-2 max-md:pl-3 max-md:text-[14.5px]">
-                  <div className="flex min-w-0 items-center gap-1 max-md:flex-1 max-md:flex-col max-md:items-start max-md:gap-0"><span className="whitespace-nowrap text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink max-md:ml-0 max-md:max-w-full max-md:truncate">{x.value}</span></div>
+                  <div className="flex min-w-0 items-center gap-1 max-md:flex-1 max-md:flex-col max-md:items-start max-md:gap-0"><span className="whitespace-nowrap text-[10px] font-semibold uppercase text-muted">{c.kinds[x.kind]}{x.label ? ` · ${x.label}` : ""}</span><span className="ml-1 font-medium text-ink max-md:ml-0 max-md:max-w-full max-md:truncate">{(x.kind === "phone" || x.kind === "whatsapp") && <PhoneFlag value={x.value} className="mr-1" />}{x.value}</span></div>
                   {(x.kind === "phone" || x.kind === "whatsapp") && <><a href={`tel:${x.value.replace(/[^\d+]/g, "")}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconPhone size={13} /></a><a href={waOf(x.value)} target="_blank" rel="noreferrer" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-[#25d366] hover:bg-bg-2"><IconBrandWhatsapp size={14} /></a></>}
                   {x.kind === "telegram" && <a href={`https://t.me/${x.value.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "")}`} target="_blank" rel="noreferrer" title="Telegram" className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-[#229ed9] hover:bg-bg-2"><IconBrandTelegram size={14} /></a>}
                   {x.kind === "email" && <a href={`mailto:${x.value}`} className="ml-1 flex h-6 w-6 items-center justify-center rounded-[4px] text-muted hover:bg-bg-2 hover:text-ink"><IconMail size={13} /></a>}
@@ -415,7 +417,7 @@ function QuickContact({ clientId, disabled, onAdded }: { clientId: string; disab
   return (
     <div data-crm-form="1" className="flex flex-wrap items-center gap-2 rounded-[6px] border border-sel-line bg-blue-tint/40 p-2">
       <Select value={kind} onChange={(v) => setKind(v as ContactKind)} options={(["phone", "whatsapp", "email", "telegram", "other"] as ContactKind[]).map((k) => ({ value: k, label: c.kinds[k] }))} size="sm" className="w-[130px]" />
-      <input autoFocus={kbAutoFocus()} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} inputMode={kind === "email" ? "email" : kind === "phone" || kind === "whatsapp" ? "tel" : undefined} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : "+90 5xx xxx xx xx"} className={`${inp} w-[200px]`} />
+      {kind === "phone" || kind === "whatsapp" ? <PhoneInput autoFocus={kbAutoFocus()} value={value} onChange={setValue} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} className={`${inp} w-[220px]`} /> : <input autoFocus={kbAutoFocus()} value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }} inputMode={kind === "email" ? "email" : undefined} placeholder={kind === "email" ? "name@mail.com" : kind === "telegram" ? "@login" : ""} className={`${inp} w-[200px]`} />}
       <Select value={label} onChange={setLabel} options={contactLabelOptions(label, c.client.labels, c.client.label)} size="sm" menuWidth="auto" className="w-[150px]" />
       <button type="button" onClick={save} disabled={busy || !value.trim()} className={btnP}>{c.ev.add}</button>
       <button type="button" onClick={() => setOpen(false)} className={btnS}>{c.cancel}</button>
