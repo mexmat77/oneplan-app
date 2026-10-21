@@ -991,6 +991,9 @@
     "tfaRelogin": "Sign in again and confirm with a code to do this",
     "photoChange": "Upload photo",
     "photoRemove": "Remove",
+    "photoRemoveQ": "Remove profile photo?",
+    "photoRemoveT": "Colleagues and clients will see your initials instead. You can upload a new photo at any time.",
+    "photoRemoveOk": "Remove photo",
     "photoHint": "Any photo from your phone or computer, iPhone shots included; resized to 512 px. Colleagues and clients see it.",
     "photoErr": "Could not read the image — choose a JPG, PNG or a camera photo"
   },

@@ -991,6 +991,9 @@
     "tfaRelogin": "Bunun için yeniden giriş yapıp kodla onaylayın",
     "photoChange": "Fotoğraf yükle",
     "photoRemove": "Kaldır",
+    "photoRemoveQ": "Profil fotoğrafı kaldırılsın mı?",
+    "photoRemoveT": "Meslektaşlar ve müşteriler fotoğraf yerine baş harflerinizi görecek. İstediğiniz zaman yeni fotoğraf yükleyebilirsiniz.",
+    "photoRemoveOk": "Fotoğrafı kaldır",
     "photoHint": "Telefon veya bilgisayardan herhangi bir fotoğraf, iPhone çekimleri dahil; 512 px'e küçültülür. Meslektaşlar ve müşteriler görür.",
     "photoErr": "Görsel okunamadı — JPG, PNG veya kamera fotoğrafı seçin"
   },

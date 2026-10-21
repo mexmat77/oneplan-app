@@ -795,6 +795,8 @@
   Большие снимки сначала уменьшаются до 2000 px (`loadImage`), на выходе — квадрат 512 px JPEG (canvas с тем же transform),
   дальше прежняя загрузка `uploadFile` → `avatar_url`. Тело окна монтируется заново на каждый файл (`key`) — без setState в
   эффекте. Подключено в профиле риэлтора и застройщика; словарь `crop` RU/EN/TR. `toJpegFile` для аватаров больше не нужен.
+  «Убрать» фото — с подтверждением `confirmDialog` (danger; `prof.photoRemoveQ/T/Ok`, у застройщика `prof_photo_remove_q/t/ok`;
+  21.10.2026, «вы уверены?»).
 - ПЕРЕДАЧА (12.10.2026): объект → другому риэлтору — функция базы `transfer_listing` (миграция `0020_transfer_listing.sql`;
   право: владелец, владелец/руководитель CRM того же агентства, админ платформы) через `app/(app)/transfer-actions.ts`
   (`listTransferTargets`, `transferListing` + уведомление `listing_transfer`), кнопка на странице объекта; клиент →

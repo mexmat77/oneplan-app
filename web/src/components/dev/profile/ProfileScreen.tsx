@@ -13,6 +13,7 @@ import { useDevT } from "@/i18n/dev";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { uploadFile } from "@/lib/upload";
 import { AvatarCropper } from "@/components/ui/AvatarCropper";
+import { confirmDialog } from "@/components/ui/confirm";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { setCurrentUserName, touch, useDev } from "@/store/dev";
 import { copyText, genPassword, useRoleFlags } from "@/components/dev/users/shared";
@@ -67,6 +68,7 @@ export function ProfileScreen({ me }: { me: ProfileMe }) {
     } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); }
   };
   const removePhoto = async () => {
+    if (!(await confirmDialog({ title: t.prof_photo_remove_q, text: t.prof_photo_remove_t, ok: t.prof_photo_remove_ok, danger: true }))) return; // подтверждение (21.10.2026)
     setUpBusy(true);
     try { if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: "" }); setAvatar(null); router.refresh(); }
     catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); }

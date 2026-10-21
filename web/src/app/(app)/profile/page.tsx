@@ -18,6 +18,7 @@ import { saveProfile, useProfile } from "@/store/profile";
 import { Avatar } from "@/components/ui/UserMenu";
 import { uploadFile } from "@/lib/upload";
 import { AvatarCropper } from "@/components/ui/AvatarCropper";
+import { confirmDialog } from "@/components/ui/confirm";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { IconCamera, IconTrash } from "@tabler/icons-react";
 
@@ -84,7 +85,9 @@ export default function ProfilePage() {
     try { const up = await uploadFile(jpg, `dev/avatars/${uid || "demo"}`); if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: up.url }); setAvatar(up.url); showToast(t.prof.saved); router.refresh(); }
     catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); }
   };
-  const removePhoto = async () => { setUpBusy(true); try { if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: "" }); setAvatar(null); router.refresh(); } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); } };
+  const removePhoto = async () => {
+    if (!(await confirmDialog({ title: t.prof.photoRemoveQ, text: t.prof.photoRemoveT, ok: t.prof.photoRemoveOk, cancel: t.common.cancel, danger: true }))) return; // подтверждение (21.10.2026, просьба пользователя)
+    setUpBusy(true); try { if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: "" }); setAvatar(null); router.refresh(); } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); } };
   const areaList = areasOpen ? GEO : GEO.filter((g) => p.areas.includes(g.k));
   const toggleArea = (k: string) => saveProfile({ areas: p.areas.includes(k) ? p.areas.filter((x) => x !== k) : [...p.areas, k] });
   const mxAdded = !!p.mxId;
