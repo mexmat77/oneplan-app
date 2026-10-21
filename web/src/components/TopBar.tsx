@@ -3,7 +3,8 @@
 // Top bar — prototype lines 181–221 (topbar, kebab menu, notifications dropdown).
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, type ComponentType } from "react";
+import { useRef, useState, useSyncExternalStore, type ComponentType } from "react";
+import { createPortal } from "react-dom";
 import {
   IconAddressBook, IconApi, IconBell, IconBookmark, IconBuilding, IconBuildingCommunity, IconFlag, IconFolders, IconGlobe, IconHeart, IconHome2, IconInbox, IconLayoutDashboard, IconMenu2, IconMessageCircle, IconSettings, IconUser, IconUsers, IconX, type IconProps,
 } from "@tabler/icons-react";
@@ -114,22 +115,7 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         {isAdmin && (
           <div className="flex shrink-0 gap-[2px] rounded-[9px] bg-bg-2 p-[3px] max-md:hidden">
             {spaces.map(({ key, href, label, Icon, badge }) => (
-              <div key={key} className="group relative">
-                <Link href={href} title={label} className={`flex h-[26px] items-center gap-[4px] rounded-[7px] px-[8px] text-[11px] font-extrabold uppercase tracking-[.04em] ${workspace === key ? "bg-surface text-blue shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>
-                  <Icon size={13} /><span className="max-[1560px]:hidden">{label}</span><Badge n={badge} />
-                </Link>
-                {/* разделы кабинета по наведению / фокусу — переход в один клик из любого кабинета */}
-                <div className="absolute left-0 top-full z-[120] hidden pt-[6px] group-hover:block group-focus-within:block">
-                  <div className="min-w-[210px] rounded-[12px] border border-line bg-surface p-[6px] shadow-[0_14px_40px_rgba(20,36,63,.16)]">
-                    <div className="px-[10px] pb-[4px] pt-[6px] text-[10.5px] font-extrabold uppercase tracking-[.08em] text-muted">{label}</div>
-                    {spaceMenu[key].map((m) => (
-                      <Link key={m.href} href={m.href} onClick={() => { if (m.href === "/catalog") setView("list"); }} className={`flex items-center gap-[9px] rounded-[8px] px-[10px] py-[8px] text-[13px] font-semibold ${m.active && workspace === key ? "bg-blue-tint text-blue-2" : "text-ink hover:bg-bg-2"}`}>
-                        <m.Icon size={15} /><span className="flex-1">{m.label}</span><Badge n={m.badge} />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <SpacePill key={key} href={href} label={label} Icon={Icon} badge={badge} current={workspace === key} items={spaceMenu[key]} onItem={(h) => { if (h === "/catalog") setView("list"); }} />
             ))}
           </div>
         )}
@@ -223,5 +209,38 @@ export function TopBar({ name, isAdmin = false, favsN = 0, reqsN = 0, ntfN = 0, 
         </>
       )}
     </>
+  );
+}
+
+/** Пилюля кабинета с меню разделов по наведению/фокусу. Меню — ПОРТАЛОМ в body с fixed-позицией от пилюли (21.10.2026,
+ *  «небольшой косяк»: шапка — свой stacking context z-100, и выпадающее меню уходило ПОД закреплённую панель фильтров каталога
+ *  z-150). Наведение держится таймером 120 мс, чтобы курсор успел перейти с пилюли на меню через зазор. */
+function SpacePill({ href, label, Icon, badge, current, items, onItem }: { href: string; label: string; Icon: ComponentType<IconProps>; badge?: number; current: boolean; items: Item[]; onItem: (href: string) => void }) {
+  const [rect, setRect] = useState<{ left: number; bottom: number } | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const show = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } const b = wrap.current?.getBoundingClientRect(); if (b) setRect({ left: b.left, bottom: b.bottom }); };
+  const hide = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setRect(null), 120); };
+  const onBlur = (e: React.FocusEvent) => { const to = e.relatedTarget as Node | null; if (to && (wrap.current?.contains(to) || document.querySelector("[data-space-menu]")?.contains(to))) return; hide(); };
+  useEscape(!!rect, () => setRect(null));
+  return (
+    <div ref={wrap} className="relative" onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={onBlur}>
+      <Link href={href} title={label} className={`flex h-[26px] items-center gap-[4px] rounded-[7px] px-[8px] text-[11px] font-extrabold uppercase tracking-[.04em] ${current ? "bg-surface text-blue shadow-[0_1px_3px_rgba(20,36,63,.12)]" : "text-muted hover:bg-line-2"}`}>
+        <Icon size={13} /><span className="max-[1560px]:hidden">{label}</span><Badge n={badge} />
+      </Link>
+      {rect && createPortal(
+        <div data-space-menu="1" className="fixed z-[200] pt-[6px]" style={{ left: rect.left, top: rect.bottom }} onMouseEnter={show} onMouseLeave={hide} onBlur={onBlur}>
+          <div className="min-w-[210px] rounded-[12px] border border-line bg-surface p-[6px] shadow-[0_14px_40px_rgba(20,36,63,.16)]">
+            <div className="px-[10px] pb-[4px] pt-[6px] text-[10.5px] font-extrabold uppercase tracking-[.08em] text-muted">{label}</div>
+            {items.map((m) => (
+              <Link key={m.href} href={m.href} onClick={() => { onItem(m.href); setRect(null); }} className={`flex items-center gap-[9px] rounded-[8px] px-[10px] py-[8px] text-[13px] font-semibold ${m.active && current ? "bg-blue-tint text-blue-2" : "text-ink hover:bg-bg-2"}`}>
+                <m.Icon size={15} /><span className="flex-1">{m.label}</span><Badge n={m.badge} />
+              </Link>
+            ))}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </div>
   );
 }
