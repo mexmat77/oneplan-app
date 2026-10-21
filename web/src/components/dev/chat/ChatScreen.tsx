@@ -12,6 +12,7 @@ import type { DevLang, DM } from "@/lib/dev/types";
 import { openDM, patchDM, pushDM, useDev } from "@/store/dev";
 import { ensureTr, trKey, useTrCache } from "./trStore";
 import { useMobile } from "./useMobile";
+import { useBackClose } from "@/hooks/useScrollLock";
 
 const ME = { init: "AY", color: "#4d7cfe" }; // current user in the prototype = TEAM[0]
 const LANGS: DevLang[] = ["RU", "EN", "TR"];
@@ -24,6 +25,7 @@ export function ChatScreen() {
   const mobile = useMobile();
   const cache = useTrCache();
   const [peer, setPeer] = useState<number | null>(null);
+  useBackClose(mobile && peer !== null, () => setPeer(null)); // «назад» на телефоне → список диалогов (21.10.2026)
   const [search, setSearch] = useState("");
   const [trOn, setTrOn] = useState(true);
   const [readLangSel, setReadLangSel] = useState<DevLang | null>(null);

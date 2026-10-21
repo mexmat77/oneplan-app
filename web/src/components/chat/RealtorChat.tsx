@@ -17,6 +17,8 @@ import { hideConversation, listChatPeers, openDmWith, openSupport, useConversati
 import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { normPh } from "@/lib/phone";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { useBackClose } from "@/hooks/useScrollLock";
+import { useMobile } from "@/components/dev/chat/useMobile";
 import { LinkCard, firstOplLink } from "@/components/chat/LinkPreview";
 import { linkify } from "@/lib/shareListing";
 
@@ -33,6 +35,10 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
   const { messages, names, send, markRead } = useThread(cur, me.id);
   const [q, setQ] = useState("");
   const [mobOpen, setMobOpen] = useState(false);
+  // «Назад»/свайп на телефоне из открытого диалога возвращает к списку диалогов, а не уводит из раздела (21.10.2026, просьба
+  // пользователя): пока диалог открыт во весь экран, в истории есть запись-оверлей (тот же хук, что у листов и модалок).
+  const mobile = useMobile();
+  useBackClose(mobile && mobOpen, () => setMobOpen(false));
   const [input, setInput] = useState("");
   const [tr, setTr] = useState(() => { try { return localStorage.getItem(TR_KEY) !== "0"; } catch { return true; } });
   const [orig, setOrig] = useState<Record<number, boolean>>({});

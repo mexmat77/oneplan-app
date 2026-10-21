@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { IconArrowLeft, IconBrandWhatsapp, IconChecks, IconChevronRight, IconHeadset, IconLanguage, IconSearch, IconSend, IconSparkles } from "@tabler/icons-react";
 import { useI18n } from "@/i18n/provider";
+import { useBackClose } from "@/hooks/useScrollLock";
+import { useMobile } from "@/components/dev/chat/useMobile";
 import { fmt } from "@/lib/money";
 import { REALTORS } from "@/lib/seed";
 import { useAllListings } from "@/store/listings";
@@ -42,6 +44,8 @@ function ChatInner() {
   const [q, setQ] = useState("");
   const [cur, setCur] = useState<string>(() => (params.get("with") ? dialogIdFor(params.get("with")!) : "d1"));
   const [mobOpen, setMobOpen] = useState(!!params.get("with"));
+  const mobile = useMobile();
+  useBackClose(mobile && mobOpen, () => setMobOpen(false)); // «назад» на телефоне → список диалогов (21.10.2026)
   const [input, setInput] = useState("");
   const [orig, setOrig] = useState<Record<string, boolean>>({});
   const msgsRef = useRef<HTMLDivElement>(null);

@@ -15,6 +15,7 @@ import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { confirmDialog } from "@/components/ui/confirm";
 import { ensureTr, trKey, useTrCache } from "./trStore";
 import { useMobile } from "./useMobile";
+import { useBackClose } from "@/hooks/useScrollLock";
 
 const LANGS: DevLang[] = ["RU", "EN", "TR"];
 const nowMs = () => Date.now(); // вынесено: react-compiler считает Date.now() в рендере нечистым
@@ -27,6 +28,8 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
   const { conversations, reload } = useConversations(me.id, supportId, me.isAdmin);
   const [cur, setCur] = useState<string | null>(null);
   const [curPeer, setCurPeer] = useState<ChatPeer | null>(null);
+  // «назад» на телефоне из открытого диалога → список диалогов (21.10.2026)
+  useBackClose(mobile && !!cur, () => { setCur(null); setCurPeer(null); });
   const { messages, names, send, markRead } = useThread(cur, me.id);
   const [search, setSearch] = useState("");
   const [trOn, setTrOn] = useState(true);
