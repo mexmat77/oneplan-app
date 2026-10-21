@@ -994,6 +994,15 @@
     "photoHint": "Any photo from your phone or computer, iPhone shots included; resized to 512 px. Colleagues and clients see it.",
     "photoErr": "Could not read the image — choose a JPG, PNG or a camera photo"
   },
+  "crop": {
+    "title": "Profile photo",
+    "hint": "Drag the photo and adjust the zoom — the circle is what colleagues and clients will see",
+    "zoom": "Zoom",
+    "rotate": "Rotate 90°",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "ok": "Done"
+  },
   "lp": {
     "send_err": "Could not send the request. Please try again or contact us.",
     "title": "OnePlan — platform for realtors and developers",

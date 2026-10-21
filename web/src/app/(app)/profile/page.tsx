@@ -17,7 +17,7 @@ import { showToast } from "@/components/ui/toast";
 import { saveProfile, useProfile } from "@/store/profile";
 import { Avatar } from "@/components/ui/UserMenu";
 import { uploadFile } from "@/lib/upload";
-import { toJpegFile } from "@/lib/photos";
+import { AvatarCropper } from "@/components/ui/AvatarCropper";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { IconCamera, IconTrash } from "@tabler/icons-react";
 
@@ -76,10 +76,13 @@ export default function ProfilePage() {
   const [upBusy, setUpBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (!hasSupabaseEnv()) return; createClient().auth.getUser().then(({ data }) => { setUid(data.user?.id ?? ""); setAvatar((data.user?.user_metadata?.avatar_url as string | undefined) || null); }).catch(() => {}); }, []);
-  const pickPhoto = async (file: File | undefined) => {
-    if (!file) return; setUpBusy(true);
-    try { const jpg = await toJpegFile(file, 512).catch(() => { throw new Error(t.prof.photoErr); }); const up = await uploadFile(jpg, `dev/avatars/${uid || "demo"}`); if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: up.url }); setAvatar(up.url); showToast(t.prof.saved); router.refresh(); }
-    catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+  // выбранный файл открывает окно кадрирования (круг, сдвиг, масштаб, поворот — 21.10.2026); загружается уже вырезанный квадрат 512 px
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const pickPhoto = (file: File | undefined) => { if (file) setCropFile(file); if (fileRef.current) fileRef.current.value = ""; };
+  const uploadAvatar = async (jpg: File) => {
+    setCropFile(null); setUpBusy(true);
+    try { const up = await uploadFile(jpg, `dev/avatars/${uid || "demo"}`); if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: up.url }); setAvatar(up.url); showToast(t.prof.saved); router.refresh(); }
+    catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); }
   };
   const removePhoto = async () => { setUpBusy(true); try { if (hasSupabaseEnv()) await updateMyProfile({ avatar_url: "" }); setAvatar(null); router.refresh(); } catch (e) { showToast((e as Error).message); } finally { setUpBusy(false); } };
   const areaList = areasOpen ? GEO : GEO.filter((g) => p.areas.includes(g.k));
@@ -131,7 +134,8 @@ export default function ProfilePage() {
           {avatar ? <Avatar name={name} src={avatar} size={58} /> : <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>}
           <div className="min-w-0 flex-1"><div className="text-[16px] font-extrabold text-ink">{name}</div><div className="text-[12.5px] text-muted">{p.agency}</div></div>
           <div className="flex flex-wrap items-center gap-2">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => void pickPhoto(e.target.files?.[0])} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickPhoto(e.target.files?.[0])} />
+            <AvatarCropper file={cropFile} onDone={(f) => void uploadAvatar(f)} onCancel={() => setCropFile(null)} />
             <button type="button" onClick={() => fileRef.current?.click()} disabled={upBusy} className={`${smallBtn} inline-flex items-center gap-[6px]`}><IconCamera size={15} /> {upBusy ? "…" : t.prof.photoChange}</button>
             {avatar && <button type="button" onClick={removePhoto} disabled={upBusy} className={`${smallBtn} inline-flex items-center gap-[6px] text-muted`}><IconTrash size={14} /> {t.prof.photoRemove}</button>}
           </div>

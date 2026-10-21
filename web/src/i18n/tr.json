@@ -994,6 +994,15 @@
     "photoHint": "Telefon veya bilgisayardan herhangi bir fotoğraf, iPhone çekimleri dahil; 512 px'e küçültülür. Meslektaşlar ve müşteriler görür.",
     "photoErr": "Görsel okunamadı — JPG, PNG veya kamera fotoğrafı seçin"
   },
+  "crop": {
+    "title": "Profil fotoğrafı",
+    "hint": "Fotoğrafı kaydırın ve yakınlaştırın — dairedeki kısmı meslektaşlar ve müşteriler görecek",
+    "zoom": "Yakınlaştırma",
+    "rotate": "90° döndür",
+    "reset": "Sıfırla",
+    "cancel": "İptal",
+    "ok": "Tamam"
+  },
   "lp": {
     "send_err": "Başvuru gönderilemedi. Lütfen tekrar deneyin veya bize yazın.",
     "title": "OnePlan — emlakçılar ve müteahhitler için platform",
