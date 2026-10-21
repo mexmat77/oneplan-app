@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/api/health", "/api/crm/inbound", "/api/v1/", "/api/docs", "/feed/", "/share/", "/login", "/auth", "/s/", "/join/", "/p/", "/d/", "/api/rates", "/api/geo", "/geo/", "/maplibre-gl-worker.mjs"]; // курсы валют — публичные данные ЕЦБ; география (справочник, полигоны OSM) — публичная
+const PUBLIC_PREFIXES = ["/api/health", "/api/crm/inbound", "/api/v1/", "/api/docs", "/feed/", "/share/", "/login", "/auth", "/s/", "/join/", "/p/", "/d/", "/api/rates", "/api/geo", "/geo/", "/maplibre-gl-worker.mjs", "/map-style.json"]; // курсы валют — публичные данные ЕЦБ; география (справочник, полигоны OSM) — публичная
 
 // Refreshes the Supabase session cookie and guards app routes.
 // When Supabase env is missing (local UI work), everything is allowed through.

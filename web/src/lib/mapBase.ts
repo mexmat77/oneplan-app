@@ -12,7 +12,10 @@ import { setWorkerUrl } from "maplibre-gl";
 // Next отдаёт модульный воркер из бандла как HTML → «Worker failed to load», карта пустая. Обновлять вместе с пакетом.
 if (typeof window !== "undefined") { try { setWorkerUrl("/maplibre-gl-worker.mjs"); } catch { /* старая сборка без API */ } }
 
-export const BASE_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// Стиль «OnePlan light» (22.10.2026, в духе Apple Maps): public/map-style.json, генерируется `node scripts/gen-map-style.mjs`
+// из liberty OpenFreeMap (те же тайлы/шрифты, переопределены только цвета и видимость слоёв). Откат — вернуть LIBERTY.
+export const LIBERTY_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+export const BASE_STYLE = "/map-style.json";
 const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTR_VECTOR = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const ATTR_RASTER = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
