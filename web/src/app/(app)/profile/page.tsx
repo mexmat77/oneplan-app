@@ -132,8 +132,9 @@ export default function ProfilePage() {
       <div className="rounded-[16px] border border-line bg-surface p-[22px] max-md:p-4">
         <div className="mb-5 flex flex-wrap items-center gap-[14px]">
           {avatar ? <Avatar name={name} src={avatar} size={58} /> : <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>}
-          <div className="min-w-0 flex-1"><div className="text-[16px] font-extrabold text-ink">{name}</div><div className="text-[12.5px] text-muted">{p.agency}</div></div>
-          <div className="flex flex-wrap items-center gap-2">
+          {/* на телефоне кнопки — своей строкой под аватаром и именем (21.10.2026, «ФИО оказалось под кнопкой "Загрузить фото"») */}
+          <div className="min-w-0 flex-1"><div className="truncate text-[16px] font-extrabold text-ink">{name}</div><div className="truncate text-[12.5px] text-muted">{p.agency}</div></div>
+          <div className="flex flex-wrap items-center gap-2 max-md:basis-full">
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickPhoto(e.target.files?.[0])} />
             <AvatarCropper file={cropFile} onDone={(f) => void uploadAvatar(f)} onCancel={() => setCropFile(null)} />
             <button type="button" onClick={() => fileRef.current?.click()} disabled={upBusy} className={`${smallBtn} inline-flex items-center gap-[6px]`}><IconCamera size={15} /> {upBusy ? "…" : t.prof.photoChange}</button>
