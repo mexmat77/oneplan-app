@@ -2,6 +2,8 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
+import { Avatar } from "@/components/ui/UserMenu";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconArrowLeft, IconBrandWhatsapp, IconBuildingSkyscraper, IconMessageCircle, IconPhone } from "@tabler/icons-react";
 import { useMemo } from "react";
@@ -58,7 +60,7 @@ function CatalogInner() {
                 <div className="flex flex-wrap gap-2">
                   {team.map((x) => (
                     <Link key={x.id} href={`/catalog?owner=${x.id}`} className="flex items-center gap-[9px] rounded-[12px] border border-line bg-surface py-[7px] pl-[7px] pr-[14px] hover:border-blue">
-                      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[12px] font-extrabold text-white" style={{ background: x.color }}>{x.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>
+                      <Avatar name={x.name} src={x.av} size={32} color={x.color} />
                       <span className="min-w-0"><span className="block truncate text-[13px] font-bold text-ink">{x.name}</span><span className="block text-[11.5px] text-muted">{all.filter((o) => o.owner === x.id).length} {t.cat.profObjs}</span></span>
                     </Link>
                   ))}
@@ -71,7 +73,7 @@ function CatalogInner() {
         <>
           <Link href="/catalog" className="mb-[14px] inline-flex items-center gap-[7px] text-[13.5px] font-bold text-blue hover:text-blue-2"><IconArrowLeft size={16} /> {t.cat.profBack}</Link>
           <div data-card="1" className="mb-5 flex flex-wrap items-center gap-4 rounded-[20px] border border-line-4 bg-surface px-6 py-[22px] shadow-[0_1px_3px_rgba(20,36,63,.05)]">
-            <span className="flex h-16 w-16 flex-none items-center justify-center rounded-full text-[20px] font-extrabold text-white" style={{ background: r.color }}>{r.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>
+            <AvatarZoom name={r.name} src={r.av} size={64} color={r.color} />
             <div className="min-w-[200px] flex-1">
               <div className="text-[19px] font-extrabold leading-[1.25] tracking-[-0.01em] text-ink">{r.name}</div>
               <div className="mt-[3px] text-[13px] leading-[1.4] text-muted">{agLink(r.ag)}{[r.city?.[lang], r.langs].filter(Boolean).map((x, i) => <span key={i}> · {x}</span>)}</div>

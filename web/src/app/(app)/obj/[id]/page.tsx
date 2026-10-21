@@ -27,6 +27,7 @@ import { chatShareHref, listingContactText, tgTo, waTo } from "@/lib/shareListin
 import { ListingNote } from "@/components/obj/ListingNote";
 import { ExportModal, expCount } from "@/components/obj/ExportModal";
 import { Modal, ModalClose } from "@/components/ui/Modal";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { showToast } from "@/components/ui/toast";
 import { confirmDialog } from "@/components/ui/confirm";
 import { TransferModal } from "@/components/ui/TransferModal";
@@ -318,7 +319,7 @@ export default function ObjPage() {
             <div data-card="1" className={`${CARD} px-6 py-[22px]`}>
               <div className="mb-[13px] text-[12px] font-bold uppercase tracking-[.06em] text-muted">{t.obj.realtorT}</div>
               <div className="mb-[13px] flex items-center gap-3">
-                <Link href={`/catalog?owner=${o.owner}`} className="flex h-14 w-14 flex-none items-center justify-center rounded-full text-[17px] font-bold text-white" style={{ background: owner.color }}>{ownerAv}</Link>
+                {owner.av ? <AvatarZoom name={owner.name} src={owner.av} size={56} color={owner.color} /> : <Link href={`/catalog?owner=${o.owner}`} className="flex h-14 w-14 flex-none items-center justify-center rounded-full text-[17px] font-bold text-white" style={{ background: owner.color }}>{ownerAv}</Link>}
                 <span className="min-w-0 flex-1">
                   <Link href={`/catalog?owner=${o.owner}`} className="block truncate text-[15px] font-extrabold leading-[1.3] text-ink hover:text-blue">{owner.name}</Link>
                   {/* агентство — ссылка на его страницу только когда в нём есть кто-то кроме этого риэлтора, иначе просто текст */}
@@ -357,7 +358,7 @@ export default function ObjPage() {
 
       {/* Mobile contact bar (`[data-obj-bar]`, shown ≤820 via globals.css) */}
       <div data-obj-bar="1" className="fixed inset-x-0 bottom-0 z-[210] hidden items-center gap-3 rounded-t-[16px] bg-surface px-[14px] pb-[calc(12px+env(safe-area-inset-bottom))] pt-[10px] shadow-[0_-8px_30px_rgba(20,36,63,.16)]">
-        <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-[12px] font-bold text-white" style={{ background: owner.color }}>{ownerAv}</span>
+        {owner.av ? <AvatarZoom name={owner.name} src={owner.av} size={38} color={owner.color} /> : <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-[12px] font-bold text-white" style={{ background: owner.color }}>{ownerAv}</span>}
         <div className="min-w-0 flex-1">
           <div className="whitespace-nowrap text-[16.5px] font-extrabold text-ink">{priceLabel(o, t)}</div>
           <div className="truncate text-[11px] text-muted">{eqOf(o)} · {owner.name}</div>

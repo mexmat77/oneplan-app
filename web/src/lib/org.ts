@@ -29,6 +29,7 @@ export type OrgMember = {
   id: string; name: string; email: string | null; phone: string | null; color: string; status: "active" | "paused" | "pending";
   role: OrgRole; branchId: string | null; lastSeen: string | null; paidTo: string | null; platformStaff: boolean; joinedAt: string;
   listings?: number; // объектов в базе (агентство)
+  avatar?: string | null; // фото профиля
 };
 export type OrgInvite = { code: string; email: string | null; name: string | null; role: OrgRole; createdAt: string; url: string };
 export type OrgBranch = { id: string; name: string };

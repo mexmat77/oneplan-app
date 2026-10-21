@@ -15,9 +15,10 @@ import { useMahalleLoaded } from "@/lib/geo";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { showToast } from "@/components/ui/toast";
 import { saveProfile, useProfile } from "@/store/profile";
-import { Avatar } from "@/components/ui/UserMenu";
+
 import { uploadFile } from "@/lib/upload";
 import { AvatarCropper } from "@/components/ui/AvatarCropper";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { confirmDialog } from "@/components/ui/confirm";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { IconCamera, IconTrash } from "@tabler/icons-react";
@@ -134,7 +135,7 @@ export default function ProfilePage() {
 
       <div className="rounded-[16px] border border-line bg-surface p-[22px] max-md:p-4">
         <div className="mb-5 flex flex-wrap items-center gap-[14px]">
-          {avatar ? <Avatar name={name} src={avatar} size={58} /> : <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>}
+          {avatar ? <AvatarZoom name={name} src={avatar} size={58} /> : <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-2 text-[19px] font-extrabold text-white">{initials}</span>}
           {/* на телефоне кнопки — своей строкой под аватаром и именем (21.10.2026, «ФИО оказалось под кнопкой "Загрузить фото"») */}
           <div className="min-w-0 flex-1"><div className="truncate text-[16px] font-extrabold text-ink">{name}</div><div className="truncate text-[12.5px] text-muted">{p.agency}</div></div>
           <div className="flex flex-wrap items-center gap-2 max-md:basis-full">

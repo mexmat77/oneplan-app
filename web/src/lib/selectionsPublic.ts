@@ -21,7 +21,7 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
   if (!row) return null;
   const [{ data: items }, { data: prof }] = await Promise.all([
     admin.from("selection_items").select("listing_id, comment, sort, reaction, snap").eq("selection_id", row.id).order("sort"),
-    admin.from("profiles").select("name, phone, agency_text, wa_on, tg_on, tg_login, viber_on, max_on, max_id, wechat_on, wechat_id, agencies(name)").eq("id", row.owner_id).maybeSingle(),
+    admin.from("profiles").select("name, phone, agency_text, avatar_url, wa_on, tg_on, tg_login, viber_on, max_on, max_id, wechat_on, wechat_id, agencies(name)").eq("id", row.owner_id).maybeSingle(),
   ]);
   const its = (items ?? []) as { listing_id: string; comment: string | null; sort: number; reaction: "like" | "maybe" | "no" | null; snap: SelSnap | null }[];
   const reacts: Selection["reacts"] = {}; const cm: Record<string, string> = {}; const snap: Record<string, SelSnap> = {};
@@ -37,7 +37,7 @@ export async function loadPublicSelection(slug: string): Promise<PublicSelection
   const ag = Array.isArray(agRow) ? agRow[0]?.name : agRow?.name;
   const owner: Profile = {
     name: prof?.name || "—", agency: ag || prof?.agency_text || "", email: "", phone: prof?.phone ? trPhone(prof.phone) : "", areas: [],
-    waFound: true, tgFound: true, tgAdded: false, waOn: !!prof?.wa_on, tgOn: !!prof?.tg_on, tgLogin: prof?.tg_login ?? "", vbOn: !!prof?.viber_on, mxOn: !!prof?.max_on, mxId: prof?.max_id ?? "", wcOn: !!prof?.wechat_on, wcId: prof?.wechat_id ?? "", tfaOn: false,
+    waFound: true, tgFound: true, tgAdded: false, waOn: !!prof?.wa_on, tgOn: !!prof?.tg_on, tgLogin: prof?.tg_login ?? "", vbOn: !!prof?.viber_on, mxOn: !!prof?.max_on, mxId: prof?.max_id ?? "", wcOn: !!prof?.wechat_on, wcId: prof?.wechat_id ?? "", tfaOn: false, avatar: prof?.avatar_url || null,
   };
   return { s, listings, owner };
 }

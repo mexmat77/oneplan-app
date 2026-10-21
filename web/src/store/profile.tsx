@@ -14,6 +14,7 @@ export type Profile = {
   tgAdded: boolean;
   waOn: boolean; tgOn: boolean; tgLogin: string; vbOn: boolean; mxOn: boolean; mxId: string; wcOn: boolean; wcId: string;
   tfaOn: boolean;
+  avatar?: string | null; // фото профиля (у вошедшего — с сервера)
 };
 const DEFAULT: Profile = {
   name: "Alexander Morozov", agency: "AM Estate", email: "realtor@one-plan.pro", phone: "+90 532 555 10 20", areas: ["antalya"],
@@ -22,7 +23,7 @@ const DEFAULT: Profile = {
 };
 const KEY_BASE = "oneplan-profile-v2"; // v2: prototype defaults (vbOn, tgLogin, waFound/tgFound/tgAdded)
 // Signed-in user (from Supabase `profiles`). Identity fields come from the server; the rest is stored locally per user.
-type ServerProfile = { id: string; name: string; email: string; phone: string; agency: string };
+type ServerProfile = { id: string; name: string; email: string; phone: string; agency: string; avatar?: string | null };
 let server: ServerProfile | null = null;
 export type ProfilePersist = { name?: string; phone?: string; wa_on?: boolean; tg_on?: boolean; tg_login?: string; viber_on?: boolean; max_on?: boolean; max_id?: string; wechat_on?: boolean; wechat_id?: string };
 let onPersist: ((patch: ProfilePersist) => void) | null = null;
@@ -44,7 +45,7 @@ function read(): Profile {
 }
 /** Поля личности реального аккаунта — всегда с сервера, без демо-заглушек прототипа («Alexander Morozov / AM Estate»). */
 function identity(me: ServerProfile) {
-  return { name: me.name || me.email.split("@")[0] || "", email: me.email, phone: me.phone ? trPhone(me.phone) : "", agency: me.agency };
+  return { name: me.name || me.email.split("@")[0] || "", email: me.email, phone: me.phone ? trPhone(me.phone) : "", agency: me.agency, avatar: me.avatar ?? null };
 }
 /** Снимок для SSR и гидрации: у вошедшего пользователя — его данные (иначе показывались демо-значения до гидрации).
  *  Профиль приходит через контекст `ProfileCtx` (провайдер `ProfileInit` в (app)/layout), а не через модульную переменную:
@@ -60,7 +61,7 @@ function serverSnapshotFor(me: ServerProfile | null): Profile {
 }
 /** Called by `ProfileInit` with the server-side profile (null in demo mode without Supabase). */
 export function initProfile(me: ServerProfile | null) {
-  const same = (server?.id ?? "") === (me?.id ?? "") && server?.name === me?.name && server?.phone === me?.phone && server?.agency === me?.agency && server?.email === me?.email;
+  const same = (server?.id ?? "") === (me?.id ?? "") && server?.name === me?.name && server?.phone === me?.phone && server?.agency === me?.agency && server?.email === me?.email && (server?.avatar ?? null) === (me?.avatar ?? null);
   if (same) return;
   server = me;
   snapshot = null;

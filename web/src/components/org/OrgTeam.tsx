@@ -12,7 +12,7 @@ import { confirmDialog } from "@/components/ui/confirm";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { showToast } from "@/components/ui/toast";
-import { Avatar } from "@/components/ui/UserMenu";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { useI18n } from "@/i18n/provider";
 import { validMail } from "@/lib/phone";
 import { isOrgAdminRole, ORG_ROLES, type OrgKind, type OrgRole, type OrgView } from "@/lib/org";
@@ -76,7 +76,7 @@ export function OrgTeam({ kind, id, initial, compact, onChange }: Props) {
           const lastAdmin = isOrgAdminRole(kind, m.role) && adminsN <= 1;
           return (
             <div key={m.id} className={`flex flex-wrap items-center gap-3 border-b border-[#f5f7fb] px-4 ${compact ? "py-2" : "py-3"} last:border-b-0`}>
-              <Avatar name={m.name} size={compact ? 32 : 38} color={m.color} />
+              <AvatarZoom name={m.name} src={m.avatar} size={compact ? 32 : 38} color={m.color} />
               <div className="min-w-[180px] flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-ink">{m.name}{m.id === view.meId && <span className="text-[11px] font-semibold text-muted">· {o.you}</span>}{m.platformStaff && <span className="rounded-[6px] bg-[#efe7fb] px-[6px] py-[1px] text-[10.5px] font-bold text-[#7b4fd0]">{o.staff}</span>}</div>
                 <div className="text-[12px] text-muted">{[m.email, m.phone].filter(Boolean).join(" · ")}</div>

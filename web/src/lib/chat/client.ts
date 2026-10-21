@@ -74,7 +74,7 @@ export function useConversations(me: string | null, supportId: string, isAdmin =
     const hiddenAt = new Map((hiddenRows ?? []).map((h) => [h.conv_id as string, +new Date(h.hidden_at as string)]));
     const after = (convId: string, created: string) => { const h = hiddenAt.get(convId); return h === undefined || +new Date(created) > h; };
     const pmap = new Map((profs ?? []).map((p) => [p.id as string, toPeer(p as unknown as ProfileRow, supportId)]));
-    const fallback = (id: string): ChatPeer => ({ id, name: "—", email: null, phone: null, color: "#8a93a2", agency: "", org: id === supportId ? "staff" : "free", online: false, lastSeen: null, support: id === supportId });
+    const fallback = (id: string): ChatPeer => ({ id, name: "—", email: null, phone: null, color: "#8a93a2", avatar: null, agency: "", org: id === supportId ? "staff" : "free", online: false, lastSeen: null, support: id === supportId });
     const out: Conversation[] = rows.map((c): Conversation => {
       const a = c.a_id as string, b = c.b_id as string;
       const isSupport = c.kind === "support" || a === supportId || b === supportId;

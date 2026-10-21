@@ -10,6 +10,7 @@ import { IconArrowLeft, IconBrandWhatsapp, IconChecks, IconHeadset, IconLanguage
 import { useI18n } from "@/i18n/provider";
 import type { Lang } from "@/i18n";
 import { Avatar } from "@/components/ui/UserMenu";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/toast";
 import { ensureTr, trKey, useTrCache } from "@/components/dev/chat/trStore";
@@ -120,7 +121,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
               {firstPersonal && me.isAdmin && <div className="bg-bg-5 px-[14px] py-[6px] text-[10.5px] font-extrabold uppercase tracking-[.06em] text-muted">{L("Личные диалоги", "Direct messages", "Kişisel sohbetler")}</div>}
               <div onClick={() => { setCur(c.id); setMobOpen(true); }} className={`flex cursor-pointer items-center gap-[10px] border-b border-bg-3 px-[14px] py-3 hover:brightness-95 ${c.id === cur ? "bg-blue-tint" : "bg-surface"}`}>
                 <div className="relative flex-none">
-                  {isSup ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={19} /></div> : <Avatar name={c.peer.name} size={40} color={c.peer.color} />}
+                  {isSup ? <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={19} /></div> : <Avatar name={c.peer.name} src={c.peer.avatar} size={40} color={c.peer.color} />}
                   {c.peer.online && !isSup && <span className="absolute bottom-0 right-0 h-[11px] w-[11px] rounded-full border-2 border-surface bg-green-3" />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -146,7 +147,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
             <>
               <div data-chat-hdr="1" className="box-border flex min-h-[56px] items-center gap-[11px] border-b border-line-2 px-4 py-[9px]">
                 <span onClick={() => setMobOpen(false)} className="opl-chat-back hidden h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line text-[18px] text-ink hover:bg-line-2"><IconArrowLeft size={18} /></span>
-                {dlg.kind === "support" && !dlg.supportOf ? <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={18} /></div> : <Avatar name={dlg.peer.name} size={38} color={dlg.peer.color} />}
+                {dlg.kind === "support" && !dlg.supportOf ? <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={18} /></div> : <AvatarZoom name={dlg.peer.name} src={dlg.peer.avatar} size={38} color={dlg.peer.color} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14.5px] font-bold text-ink">{peerName(dlg)}{dlg.supportOf && <span className="ml-2 text-[12px] font-semibold text-muted">· {L("диалог поддержки", "support thread", "destek görüşmesi")}</span>}</div>
                   <div className="text-[11.5px]" style={{ color: dlg.peer.online || (dlg.kind === "support" && !dlg.supportOf) ? "#0f9d6b" : "#aab1bd" }}>{dlg.kind === "support" && !dlg.supportOf ? L("Отвечаем в рабочее время", "We reply during working hours", "Çalışma saatlerinde yanıtlıyoruz") : `${dlg.peer.online ? t.chat.online : t.chat.ls}${orgOf(dlg) ? ` · ${orgOf(dlg)}` : ""}`}</div>
@@ -209,7 +210,7 @@ export function RealtorChat({ me, supportId }: { me: { id: string; name: string;
             {picker.list === null && <div className="p-4 text-center text-[12.5px] text-muted">…</div>}
             {picker.list?.filter((p) => !picker.q.trim() || `${p.name} ${p.agency} ${p.email ?? ""}`.toLowerCase().includes(picker.q.trim().toLowerCase())).map((p) => (
               <div key={p.id} onClick={() => void startWith(p)} className="flex cursor-pointer items-center gap-[10px] border-b border-bg-3 px-3 py-[10px] last:border-b-0 hover:bg-bg-5">
-                <Avatar name={p.name} size={36} color={p.color} />
+                <Avatar name={p.name} src={p.avatar} size={36} color={p.color} />
                 <div className="min-w-0 flex-1"><div className="truncate text-[13.5px] font-bold text-ink">{p.name}</div><div className="truncate text-[12px] text-muted">{orgLabel(p, O) || p.email}</div></div>
                 {p.online && <span className="h-[9px] w-[9px] flex-none rounded-full bg-green-3" />}
               </div>

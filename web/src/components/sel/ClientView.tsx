@@ -8,6 +8,7 @@ import {
 } from "@tabler/icons-react";
 import { Logo } from "@/components/Logo";
 import { showToast } from "@/components/ui/toast";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { I18nProvider, useI18n } from "@/i18n/provider";
 import type { Lang } from "@/i18n";
 import { LangSwitch } from "@/components/LangSwitch";
@@ -112,7 +113,7 @@ function ClientViewInner({ slug, preview, data }: { slug: string; preview: boole
           <Logo size={25} textSize={17} />
           <LangSwitch />
           <div className="ml-auto flex flex-wrap items-center gap-[11px]">
-            <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[12px] bg-blue-2 text-[14px] font-extrabold text-white">{myInitials}</span>
+            {p.avatar ? <AvatarZoom name={p.name} src={p.avatar} size={42} /> : <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[12px] bg-blue-2 text-[14px] font-extrabold text-white">{myInitials}</span>}
             <div><div className="text-[14px] font-bold text-ink">{p.name}</div><div className="text-[11.5px] text-muted">{t.cli.role}</div></div>
             {chans.map((c) => (
               <a key={c.key} href={c.href} target={c.href === "#" ? undefined : "_blank"} rel="noreferrer" title={c.title} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-full text-white hover:brightness-95" style={{ background: c.bg }}>{c.node(18)}</a>
@@ -141,7 +142,7 @@ function ClientViewInner({ slug, preview, data }: { slug: string; preview: boole
           <>
             {/* Mobile bottom bar (`data-obj-bar`, shown by globals.css on ≤820) */}
             <div data-obj-bar="1" className="fixed inset-x-0 bottom-0 z-660 hidden items-center gap-3 rounded-t-[16px] bg-surface px-[14px] pb-[calc(12px+env(safe-area-inset-bottom))] pt-[10px] shadow-[0_-8px_30px_rgba(20,36,63,.16)]">
-              <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-blue-2 text-[12px] font-bold text-white">{myInitials}</span>
+              {p.avatar ? <AvatarZoom name={p.name} src={p.avatar} size={38} /> : <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-blue-2 text-[12px] font-bold text-white">{myInitials}</span>}
               <div className="min-w-0 flex-1"><div className="truncate text-[15.5px] font-extrabold text-ink">{fmt(obj.price, obj.cur)}</div><div className="truncate text-[11px] text-muted">{eqOf(obj)} · {p.name}</div></div>
               <a href={`tel:${p.phone.replace(/\s/g, "")}`} className="flex h-[42px] w-[42px] flex-none cursor-pointer items-center justify-center rounded-full bg-blue-2 text-white"><IconPhone size={18} /></a>
               <a href={`https://wa.me/${digits(p.phone)}`} target="_blank" rel="noreferrer" className="flex h-[42px] w-[42px] flex-none cursor-pointer items-center justify-center rounded-full bg-green-3 text-white"><IconBrandWhatsapp size={18} /></a>
@@ -167,7 +168,7 @@ function ClientViewInner({ slug, preview, data }: { slug: string; preview: boole
                 <div data-card="1" className="mt-[14px] rounded-[16px] border border-line bg-surface p-5">
                   <div className="mb-3 text-[11px] font-bold uppercase tracking-[.06em] text-muted">{t.cli.role}</div>
                   <div className="flex items-center gap-[11px]">
-                    <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[12px] bg-blue-2 text-[14px] font-extrabold text-white">{myInitials}</span>
+                    {p.avatar ? <AvatarZoom name={p.name} src={p.avatar} size={44} /> : <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[12px] bg-blue-2 text-[14px] font-extrabold text-white">{myInitials}</span>}
                     <div><div className="text-[14.5px] font-bold text-ink">{p.name}</div><div className="text-[12px] text-muted">{p.agency}</div></div>
                   </div>
                   <div className="mb-[11px] mt-[13px] text-[16px] font-extrabold tracking-[.01em] text-ink">{p.phone}</div>

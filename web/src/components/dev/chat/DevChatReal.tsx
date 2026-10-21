@@ -10,6 +10,7 @@ import { IconArrowLeft, IconChecks, IconHeadset, IconLanguage, IconMessage2, Ico
 import { useDevT } from "@/i18n/dev";
 import type { DevLang } from "@/lib/dev/types";
 import { Avatar } from "@/components/ui/UserMenu";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { hideConversation, openDmWith, openSupport, useConversations, useThread, type ChatPeer } from "@/lib/chat/client";
 import { orgLabel, type OrgDict } from "@/lib/chat/shared";
 import { confirmDialog } from "@/components/ui/confirm";
@@ -46,7 +47,7 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
   useEffect(() => { if (!trOn) return; messages.forEach((m) => { const s = txt(m); if (s && m.lang !== readLang) ensureTr(s, readLang); }); }, [messages, trOn, readLang]);
 
   // Строки списка: поддержка, коллеги (с диалогом или без), остальные существующие диалоги
-  const supportPeer: ChatPeer = { id: supportId, name: "OnePlan Support", email: null, phone: null, color: "#14243f", agency: "", org: "staff", online: true, lastSeen: null, support: true };
+  const supportPeer: ChatPeer = { id: supportId, name: "OnePlan Support", email: null, phone: null, color: "#14243f", avatar: null, agency: "", org: "staff", online: true, lastSeen: null, support: true };
   const O: OrgDict = { agency: tt.org_agency, developer: tt.org_dev, free: tt.org_free, staff: tt.org_staff };
   const byPeer = new Map(conversations.map((c) => [c.peer.id, c]));
   const mySupport = conversations.find((c) => c.kind === "support" && !c.supportOf) ?? null;
@@ -86,7 +87,7 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
         <div className="flex-1 overflow-y-auto px-2 pb-[10px] pt-1">
           {list.map((r) => (
             <div key={r.key} onClick={() => void open(r)} className={`flex cursor-pointer items-center gap-[11px] rounded-[12px] px-3 py-[11px] hover:bg-[#f5f7fb] ${r.convId && r.convId === cur ? "bg-blue-tint" : ""}`}>
-              {r.support && !r.peer.support ? <Avatar name={r.peer.name} size={44} color={r.peer.color} /> : r.support ? <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={20} /></span> : <Avatar name={r.peer.name} size={44} color={r.peer.color} />}
+              {r.support && !r.peer.support ? <Avatar name={r.peer.name} src={r.peer.avatar} size={44} color={r.peer.color} /> : r.support ? <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={20} /></span> : <Avatar name={r.peer.name} src={r.peer.avatar} size={44} color={r.peer.color} />}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-[6px]"><span className="flex-1 truncate text-[14px] font-bold text-ink">{r.peer.name}</span><span className="flex-none text-[11px] text-[#98a1af]">{r.when}</span></div>
                 {!r.support && orgLabel(r.peer, O) && <div className="truncate text-[11px] font-semibold text-text-2">{orgLabel(r.peer, O)}</div>}
@@ -103,7 +104,7 @@ export function DevChatReal({ me, supportId, colleagues }: { me: { id: string; n
           <>
             <div className="flex flex-none items-center gap-[11px] border-b border-line-2 bg-surface px-4 py-[11px]">
               <span onClick={() => { setCur(null); setCurPeer(null); }} className={`h-[34px] w-[34px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-line text-[18px] text-text ${mobile ? "flex" : "hidden"}`}><IconArrowLeft size={18} /></span>
-              {curPeer.support ? <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={18} /></span> : <Avatar name={curPeer.name} size={38} color={curPeer.color} />}
+              {curPeer.support ? <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-ink text-white"><IconHeadset size={18} /></span> : <AvatarZoom name={curPeer.name} src={curPeer.avatar} size={38} color={curPeer.color} />}
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[15px] font-extrabold text-ink">{curPeer.name}</div>
                 <div className="flex items-center gap-[5px] text-[12px] text-text-2">{curPeer.online && <span className="h-[7px] w-[7px] rounded-full bg-green-3" />}{curPeer.support ? tt.support : [curPeer.online ? tt.online : "", orgLabel(curPeer, O)].filter(Boolean).join(" · ")}</div>

@@ -35,6 +35,7 @@ export type Realtor = {
   ag: string;
   color: string;
   phone: string;
+  av?: string; // фото профиля (profiles.avatar_url), без фото — инициалы
   ch?: RealtorChannels; // каналы связи из profiles (wa_on, tg_on…); у демо-риэлторов нет — показываются все (16.10.2026)
   city: L10n;
   langs: string;

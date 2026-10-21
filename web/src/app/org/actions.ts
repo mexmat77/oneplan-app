@@ -78,7 +78,7 @@ export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
   const manageBranch = u.role !== "admin" && !isOrgAdminRole(kind, myRole) && scoped ? myM!.branch : null;
   const [{ data: org }, { data: ms }, { data: inv }, { data: br }] = await Promise.all([
     admin.from(TABLE[kind]).select("*").eq("id", id).maybeSingle(),
-    admin.from("org_members").select("profile_id, role, branch_id, created_at, profiles(id, name, email, phone, color, status, last_seen, paid_to, platform_staff)").eq("org_kind", kind).eq("org_id", id),
+    admin.from("org_members").select("profile_id, role, branch_id, created_at, profiles(id, name, email, phone, color, avatar_url, status, last_seen, paid_to, platform_staff)").eq("org_kind", kind).eq("org_id", id),
     admin.from("invites").select("code, email, name, org_role, role, created_at").eq(INV_COL[kind], id).is("used_by", null).order("created_at", { ascending: false }),
     kind === "agency" ? admin.from("crm_branches").select("id, name").eq("ws_kind", "agency").eq("ws_id", id).order("sort").order("name") : Promise.resolve({ data: [] as Row[] }),
   ]);
@@ -96,7 +96,7 @@ export async function getOrg(kind: OrgKind, id: string): Promise<OrgView> {
     return {
       id: String(m.profile_id), name: String(p?.name ?? p?.email ?? "—"), email: s(p?.email), phone: s(p?.phone), color: String(p?.color ?? "#4d7cfe"),
       status: ((p?.status as OrgMember["status"]) ?? "active"), role: m.role as OrgRole, branchId: s(m.branch_id), lastSeen: s(p?.last_seen), paidTo: s(p?.paid_to),
-      platformStaff: !!p?.platform_staff, joinedAt: String(m.created_at), listings: lstBy[String(m.profile_id)] ?? 0,
+      platformStaff: !!p?.platform_staff, joinedAt: String(m.created_at), listings: lstBy[String(m.profile_id)] ?? 0, avatar: s(p?.avatar_url),
     };
   }).sort((a, b) => (isOrgAdminRole(kind, b.role) ? 1 : 0) - (isOrgAdminRole(kind, a.role) ? 1 : 0) || a.name.localeCompare(b.name));
   const invites: OrgInvite[] = ((inv ?? []) as Row[]).map((i) => ({ code: String(i.code), email: s(i.email), name: s(i.name), role: ((i.org_role as OrgRole) ?? DEFAULT_ORG_ROLE[kind]), createdAt: String(i.created_at), url: `${siteUrl()}/join/${i.code}` }));

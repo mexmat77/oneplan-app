@@ -8,11 +8,12 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { IconCamera, IconCheck, IconCopy, IconLock, IconLogout, IconRefresh, IconShieldCheck, IconTrash } from "@tabler/icons-react";
 import { showToast } from "@/components/ui/toast";
-import { Avatar } from "@/components/ui/UserMenu";
+
 import { useDevT } from "@/i18n/dev";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { uploadFile } from "@/lib/upload";
 import { AvatarCropper } from "@/components/ui/AvatarCropper";
+import { AvatarZoom } from "@/components/ui/AvatarZoom";
 import { confirmDialog } from "@/components/ui/confirm";
 import { updateMyProfile } from "@/app/(app)/profile/actions";
 import { setCurrentUserName, touch, useDev } from "@/store/dev";
@@ -96,7 +97,7 @@ export function ProfileScreen({ me }: { me: ProfileMe }) {
       <div className={`${card} mb-[14px]`}>
         <div className="mb-5 flex flex-wrap items-center gap-4">
           <div className="relative">
-            <Avatar name={name || me.name} src={avatar} size={72} />
+            <AvatarZoom name={name || me.name} src={avatar} size={72} />
             <button type="button" onClick={() => fileRef.current?.click()} disabled={upBusy} title={t.prof_photo_change} className="absolute -bottom-1 -right-1 flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-blue text-white shadow-[0_2px_6px_rgba(20,36,63,.25)] hover:bg-blue-3 disabled:opacity-60"><IconCamera size={14} /></button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickPhoto(e.target.files?.[0])} />
             <AvatarCropper file={cropFile} onDone={(f) => void uploadAvatar(f)} onCancel={() => setCropFile(null)} />

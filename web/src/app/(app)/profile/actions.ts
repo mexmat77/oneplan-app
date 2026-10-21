@@ -11,14 +11,16 @@ export async function updateMyProfile(patch: Patch) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, reason: "no-session" };
-  const row: Record<string, string | boolean> = {};
+  const row: Record<string, string | boolean | null> = {};
   if (patch.name !== undefined) row.name = patch.name.trim();
   if (patch.phone !== undefined) row.phone = patch.phone.trim();
   for (const k of CHANNELS) if (patch[k] !== undefined) row[k] = typeof patch[k] === "string" ? String(patch[k]).trim() : !!patch[k];
   if (patch.avatar_url !== undefined) {
-    // Аватар живёт в user_metadata (без отдельной колонки); пустая строка — убрать фото.
+    // Аватар — в user_metadata (шапка самого пользователя) И в profiles.avatar_url (видят остальные: страница риэлтора,
+    // объект, чат, команда, подборка; миграция 0037, 21.10.2026); пустая строка — убрать фото.
     const { error: e } = await supabase.auth.updateUser({ data: { avatar_url: patch.avatar_url || null } });
     if (e) throw new Error(e.message);
+    row.avatar_url = patch.avatar_url || null;
   }
   if (!Object.keys(row).length) return { ok: true as const };
   const { error } = await supabase.from("profiles").update(row).eq("id", user.id);

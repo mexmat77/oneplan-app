@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <PrefsProvider>
       <RealtorSync meId={me?.id ?? null} />
-      <ProfileInit me={me ? { id: me.id, name: me.name, email: me.email, phone: me.phone, agency: me.agency } : null}>
+      <ProfileInit me={me ? { id: me.id, name: me.name, email: me.email, phone: me.phone, agency: me.agency, avatar: me.avatar } : null}>
         <AppChrome name={name} isAdmin={isAdmin} adminN={adminN} email={me?.email} avatar={me?.avatar ?? null} agency={me?.agency} meId={me?.id ?? null} supportId={supportId} userRole={me?.role ?? (DEMO_USER.isAdmin ? "admin" : "realtor")} />
         <main className="mx-auto w-full max-w-[1220px] px-[clamp(14px,4vw,28px)] pb-[110px] pt-[26px] max-md:px-2 max-md:pt-[76px]">
           {children}
