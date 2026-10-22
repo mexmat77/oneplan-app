@@ -8,7 +8,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const scope = await scopeByKey(keyFrom(req));
   if (!scope) return NextResponse.json({ error: "invalid_key" }, { status: 401, headers: CORS });
   const { id } = await params;
-  const { rows } = await listingsFor(scope, { status: "all" }, id.replace(/^OP-/i, ""));
+  const { rows } = await listingsFor(scope, { status: "all" }, id.replace(/^OP-?/i, "")); // uuid или номер OP-100001 / 100001
   if (!rows.length) return NextResponse.json({ error: "not_found" }, { status: 404, headers: CORS });
-  return NextResponse.json(toApi(rows[0], SITE(), scope), { headers: { ...CORS, "Cache-Control": "public, max-age=300" } });
+  return NextResponse.json(toApi(rows[0], SITE(), scope), { headers: { ...CORS, "Cache-Control": "private, max-age=300" } });
 }

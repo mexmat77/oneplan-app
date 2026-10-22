@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { MfaCodeForm } from "@/components/auth/TwoFactor";
 import { useI18n } from "@/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
+import { safeNext } from "@/lib/safeNext";
 
 function Inner() {
   const { t } = useI18n();
@@ -14,7 +15,7 @@ function Inner() {
   const params = useSearchParams();
   const done = async () => {
     const next = params.get("next");
-    if (next && next.startsWith("/")) { window.location.assign(next); return; }
+    if (next && safeNext(next, "") === next) { window.location.assign(next); return; } // не «//evil.com»
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
     const { data: prof } = user ? await sb.from("profiles").select("role").eq("id", user.id).maybeSingle() : { data: null };

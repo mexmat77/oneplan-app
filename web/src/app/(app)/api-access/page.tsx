@@ -24,14 +24,15 @@ export default function ApiPage() {
   // Prototype `apiEps` (line 3945).
   const eps: [string, string][] = [["GET /api/v1/listings?key=…", t.api.ep1], ["GET /api/v1/listings/{uuid}?key=…", t.api.ep2], ["GET /api/v1/dictionaries?key=…", t.api.ep5], ["GET /feed/{key}.xml", t.api.ep3], ["POST {your-url} · webhook", t.api.ep4]];
   // ключ агентства (16.10.2026): общая выгрузка всех риэлторов агентства — создаёт администратор агентства
-  const [ag, setAg] = useState<{ name: string; key: string | null; canManage: boolean } | null | undefined>(undefined);
+  const [ag, setAg] = useState<{ name: string; hint: string | null; key?: string | null; canManage: boolean } | null | undefined>(undefined);
   useEffect(() => { let on = true; getAgencyApiKey().then((a) => { if (on) setAg(a); }).catch(() => { if (on) setAg(null); }); return () => { on = false; }; }, []);
-  const rotateAg = async () => { if (ag?.key && !(await confirmDialog({ text: t.api.keyRotateQ, ok: t.api.keyRotate, danger: true }))) return; setBusy(true); try { const k = await rotateAgencyApiKey(); setAg((a) => (a ? { ...a, key: k } : a)); showToast(t.api.keyDone); } catch { showToast(t.api.keyErr); } finally { setBusy(false); } };
+  const rotateAg = async () => { if ((ag?.key || ag?.hint) && !(await confirmDialog({ text: t.api.keyRotateQ, ok: t.api.keyRotate, danger: true }))) return; setBusy(true); try { const k = await rotateAgencyApiKey(); setAg((a) => (a ? { ...a, key: k } : a)); showToast(t.api.keyDone); } catch { showToast(t.api.keyErr); } finally { setBusy(false); } };
   // реальный ключ (16.10.2026): показывается владельцу, создаётся/перевыпускается кнопкой
-  const [key, setKey] = useState<string | null | undefined>(undefined);
+  const [hint, setHint] = useState<string | null | undefined>(undefined); // подсказка «…ab12» — ключ хранится хэшем (0038)
+  const [key, setKey] = useState<string | null>(null); // открытый ключ — только сразу после выпуска
   const [busy, setBusy] = useState(false);
-  useEffect(() => { let on = true; getApiKey().then((k) => { if (on) setKey(k); }).catch(() => { if (on) setKey(null); }); return () => { on = false; }; }, []);
-  const rotate = async () => { if (key && !(await confirmDialog({ text: t.api.keyRotateQ, ok: t.api.keyRotate, danger: true }))) return; setBusy(true); try { setKey(await rotateApiKey()); showToast(t.api.keyDone); } catch { showToast(t.api.keyErr); } finally { setBusy(false); } };
+  useEffect(() => { let on = true; getApiKey().then((k) => { if (on) setHint(k?.hint ?? null); }).catch(() => { if (on) setHint(null); }); return () => { on = false; }; }, []);
+  const rotate = async () => { if ((key || hint) && !(await confirmDialog({ text: t.api.keyRotateQ, ok: t.api.keyRotate, danger: true }))) return; setBusy(true); try { const k = await rotateApiKey(); setKey(k); setHint(k.slice(-4)); showToast(t.api.keyDone); } catch { showToast(t.api.keyErr); } finally { setBusy(false); } };
   const copy = (s: string) => { try { navigator.clipboard.writeText(s); showToast(t.rl.copied); } catch {} };
   const site = typeof window !== "undefined" ? window.location.origin : "https://one-plan.pro";
   return (
@@ -40,16 +41,22 @@ export default function ApiPage() {
       <p className="mb-[18px] mt-[5px] max-w-[680px] text-[14px] leading-[1.55] text-text-2 [text-wrap:pretty]">{t.api.sub}</p>
       <div className={card}>
         <div className="mb-[9px] text-[12px] font-bold uppercase tracking-[.06em] text-muted">{t.api.keyL}</div>
-        {key === undefined ? <div className="text-[13px] text-muted">…</div> : key ? (
+        {hint === undefined ? <div className="text-[13px] text-muted">…</div> : key ? (
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-block rounded-[10px] border border-line bg-bg-3 px-[14px] py-[11px] font-mono text-[13.5px] font-extrabold text-ink [overflow-wrap:anywhere]">{key}</span>
             <button type="button" onClick={() => copy(key)} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3"><IconCopy size={15} /> {t.rl.copy}</button>
             <button type="button" onClick={() => void rotate()} disabled={busy} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3 disabled:opacity-60"><IconRefresh size={15} /> {t.api.keyRotate}</button>
           </div>
+        ) : hint ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-block rounded-[10px] border border-line bg-bg-3 px-[14px] py-[11px] font-mono text-[13.5px] font-extrabold text-ink">opl_live_••••••••{hint}</span>
+            <button type="button" onClick={() => void rotate()} disabled={busy} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3"><IconRefresh size={14} /> {t.api.keyRotate}</button>
+            <span className="basis-full text-[12px] text-muted">{t.api.keyHidden}</span>
+          </div>
         ) : (
           <button type="button" onClick={() => void rotate()} disabled={busy} className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] bg-blue-2 px-[20px] py-[11px] text-[14px] font-bold text-white hover:bg-blue-3 disabled:opacity-60"><IconKey size={17} /> {t.api.keyGen}</button>
         )}
-        <p className="mt-[10px] text-[12.5px] leading-[1.5] text-muted">{t.api.keyHint}</p>
+        <p className="mt-[10px] text-[12.5px] leading-[1.5] text-muted">{t.api.keyHint}{key ? ` ${t.api.keyOnce}` : ""}</p>
         {key && <div className="mt-3 flex flex-col gap-1 font-mono text-[12px] text-[#2c3a52]">
           <a href={`${site}/api/v1/listings?key=${key}`} target="_blank" rel="noreferrer" className="hover:underline [overflow-wrap:anywhere]">{site}/api/v1/listings?key={key}</a>
           <a href={`${site}/feed/${key}.xml`} target="_blank" rel="noreferrer" className="hover:underline [overflow-wrap:anywhere]">{site}/feed/{key}.xml</a>
@@ -64,10 +71,16 @@ export default function ApiPage() {
               <button type="button" onClick={() => copy(ag.key!)} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3"><IconCopy size={15} /> {t.rl.copy}</button>
               <button type="button" onClick={() => void rotateAg()} disabled={busy} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3 disabled:opacity-60"><IconRefresh size={15} /> {t.api.keyRotate}</button>
             </div>
+          ) : ag.hint ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-block rounded-[10px] border border-line bg-bg-3 px-[14px] py-[11px] font-mono text-[13.5px] font-extrabold text-ink">opl_agency_••••••••{ag.hint}</span>
+              <button type="button" onClick={() => void rotateAg()} disabled={busy} className="inline-flex cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] py-[10px] text-[13px] font-semibold text-text hover:bg-bg-3"><IconRefresh size={14} /> {t.api.keyRotate}</button>
+              <span className="basis-full text-[12px] text-muted">{t.api.keyHidden}</span>
+            </div>
           ) : (
             <button type="button" onClick={() => void rotateAg()} disabled={busy} className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] bg-blue-2 px-[20px] py-[11px] text-[14px] font-bold text-white hover:bg-blue-3 disabled:opacity-60"><IconKey size={17} /> {t.api.agKeyGen}</button>
           )}
-          <p className="mt-[10px] text-[12.5px] leading-[1.5] text-muted">{t.api.agKeyHint}</p>
+          <p className="mt-[10px] text-[12.5px] leading-[1.5] text-muted">{t.api.agKeyHint}{ag.key ? ` ${t.api.keyOnce}` : ""}</p>
           {ag.key && <div className="mt-3 flex flex-col gap-1 font-mono text-[12px] text-[#2c3a52]">
             <a href={`${site}/api/v1/listings?key=${ag.key}`} target="_blank" rel="noreferrer" className="hover:underline [overflow-wrap:anywhere]">{site}/api/v1/listings?key={ag.key}</a>
             <a href={`${site}/feed/${ag.key}.xml`} target="_blank" rel="noreferrer" className="hover:underline [overflow-wrap:anywhere]">{site}/feed/{ag.key}.xml</a>

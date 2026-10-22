@@ -8,5 +8,5 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   if (!scope) return new Response("invalid key", { status: 401 });
   const { rows } = await listingsFor(scope, { limit: "500" });
   const site = SITE();
-  return new Response(toXml(rows.map((r) => toApi(r, site, scope)), scope, site), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=900", "Access-Control-Allow-Origin": "*" } });
+  return new Response(toXml(rows.map((r) => toApi(r, site, scope)), scope, site), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "private, max-age=900", "Access-Control-Allow-Origin": "*" } });
 }

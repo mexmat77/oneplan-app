@@ -30,6 +30,13 @@ export type Selection = {
 const KEY = "oneplan-selections";
 const d = (daysAgo: number, h = 14, m = 20) => { const x = new Date(); x.setDate(x.getDate() - daysAgo); x.setHours(h, m, 0, 0); return x.toISOString(); };
 export const slugOf = (id: string) => id.toUpperCase().slice(-6);
+/** Публичный адрес новой подборки — 10 символов из crypto (~50 бит): старый slug из 6 hex-символов uuid перебирался за 16,7 млн
+ *  запросов (аудит 23.10.2026). Старые подборки открываются по прежним адресам (`findBySlug`). */
+export function newSlug(): string {
+  const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; const b = new Uint8Array(10);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(b); else for (let i = 0; i < 10; i++) b[i] = Math.floor(Math.random() * 256);
+  return Array.from(b, (x) => a[x % a.length]).join("");
+}
 // Demo data from the prototype (lines 2507–2511).
 const SEED: Selection[] = [
   { id: "s1", slug: "S1", title: "Анна · у моря", name: "Анна Соколова", items: ["o3", "o2", "o6", "o1", "o9"], status: "viewed", views: 2, reacts: { o3: "like", o2: "like", o6: "like" }, cm: { o3: "Первая линия, вид на море", o2: "Подходит под гражданство" }, note: "Подобрал варианты у моря по вашему бюджету.", date: { RU: "Сегодня, 14:20", EN: "Today, 14:20", TR: "Bugün 14:20" }, createdAt: d(0), updatedAt: d(0) },
@@ -81,7 +88,7 @@ export function createSelection(input: { title: string; name: string; note: stri
   const now = new Date().toISOString();
   const id = newSelId();
   const s: Selection = {
-    id, slug: slugOf(id), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm, snap: input.snap, lang: input.lang,
+    id, slug: newSlug(), title: input.title || input.name || "—", name: input.name || "—", note: input.note, items: input.items, cm: input.cm, snap: input.snap, lang: input.lang,
     status: "sent", views: 0, reacts: {}, date: { RU: "Только что", EN: "Just now", TR: "Az önce" }, createdAt: now, updatedAt: now,
   };
   write([s, ...read()]);

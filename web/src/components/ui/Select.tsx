@@ -76,7 +76,7 @@ export function Select({ value, onChange, options, className = "w-full", style, 
   }, [open]);
   useEffect(() => { if (open && active >= 0) list.current?.querySelectorAll<HTMLElement>("[data-opt]")[active]?.scrollIntoView({ block: "nearest" }); }, [open, active]);
 
-  const toggle = () => { if (disabled) return; setQ(""); setActive(Math.max(0, options.findIndex((o) => o.value === value))); setOpen((v) => !v); };
+  const toggle = () => { if (disabled) return; setQ(""); setActive(Math.max(0, options.findIndex((o) => o.value === value))); setOpen((v) => !v); }; // при открытии q сбрасывается, поэтому shown === options и индекс совпадает
   const pick = (o: SelectOption) => { if (o.disabled) return; onChange(o.value); setOpen(false); btn.current?.focus(); };
   const move = (d: number) => {
     let i = active;

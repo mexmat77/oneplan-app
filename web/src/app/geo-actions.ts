@@ -5,18 +5,26 @@
 // из полной ссылки (`parseMapLink`) или, в крайнем случае, из HTML конечной страницы (`@lat,lng`).
 // Используется формой объекта риэлтора (`AddForm.geoFind`) и кабинетом застройщика (`useMapLink`).
 import { parseMapLink, type LatLng } from "@/lib/dev/geo";
+import { getCurrentUser } from "@/lib/auth";
+
+// Только вошедшие и только известные картографические хосты (аудит 23.10.2026: SSRF — сервер ходил по любому URL, в т. ч. внутренним).
+const HOST_OK = /(^|\.)(goo\.gl|google\.[a-z.]+|yandex\.[a-z.]+|ya\.ru|2gis\.[a-z.]+|apple\.com|maps\.app\.goo\.gl|openstreetmap\.org|osm\.org)$/i;
+const hostOk = (u: string) => { try { return HOST_OK.test(new URL(u).hostname); } catch { return false; } };
+const signedIn = async () => !process.env.NEXT_PUBLIC_SUPABASE_URL || !!(await getCurrentUser());
 
 // Важно: НЕ представляться браузером — с Chrome-UA Google отдаёт для maps.app.goo.gl HTML-заглушку (200) вместо 302 на карту;
 // с нейтральным UA сразу приходит Location с координатами (проверено с сервера 07.10.2026).
 const UA = "OnePlan-LinkResolver/1.0 (+https://one-plan.pro)";
 
 export async function expandMapLink(url: string): Promise<LatLng | null> {
-  let cur = String(url || "").trim();
+  let cur = String(url || "").trim().slice(0, 2000);
   if (!/^https?:\/\//i.test(cur)) cur = "https://" + cur;
+  if (!(await signedIn())) return null;
   try {
     for (let hop = 0; hop < 6; hop++) {
       const direct = parseMapLink(cur);
       if (direct) return direct;
+      if (!hostOk(cur)) return null;
       const r = await fetch(cur, { redirect: "manual", headers: { "user-agent": UA }, signal: AbortSignal.timeout(8000) });
       const loc = r.headers.get("location");
       if (loc) { cur = new URL(loc, cur).toString(); continue; }
@@ -39,7 +47,8 @@ export async function expandMapLink(url: string): Promise<LatLng | null> {
 // клиент тогда идёт в Nominatim.
 export async function googleReverse(lat: number, lng: number, lang: string): Promise<{ addr: string; il: string; ilce: string; semt: string } | null> {
   const key = process.env.GOOGLE_MAPS_SERVER_KEY;
-  if (!key) return null;
+  if (!key || !(await signedIn())) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
   try {
     const lc = lang.toLowerCase() === "tr" ? "tr" : lang.toLowerCase() === "en" ? "en" : "ru";
     const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=${lc}&key=${key}`, { cache: "no-store" });

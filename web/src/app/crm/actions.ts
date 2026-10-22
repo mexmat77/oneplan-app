@@ -771,7 +771,7 @@ export async function searchListings(q: string, scope: "mine" | "favs" | "all" =
   }
   const no = text.match(/^(?:op-?)?(\d+)$/i);
   if (no) qb = qb.eq("short_id", Number(no[1]));
-  else if (text) { const like = `%${text.replace(/[%_]/g, "")}%`; qb = qb.or(`title->>RU.ilike.${like},title->>EN.ilike.${like},title->>TR.ilike.${like},il.ilike.${like},ilce.ilike.${like},semt.ilike.${like}`); }
+  else if (text) { const like = `%${text.replace(/[%_,().\\]/g, "")}%`; /* без символов синтаксиса PostgREST-фильтра (аудит 23.10.2026) */ qb = qb.or(`title->>RU.ilike.${like},title->>EN.ilike.${like},title->>TR.ilike.${like},il.ilike.${like},ilce.ilike.${like},semt.ilike.${like}`); }
   // без текста «вся база» = последние объявления всей базы (12.10.2026: раньше подставлялись свои — путало)
   const { data } = await qb;
   return ((data ?? []) as Row[]).map(rowListingBrief);
@@ -839,7 +839,7 @@ export async function closeDealObject(dealId: string): Promise<{ listing?: { id:
     if (l) {
       const members = await membersOf(c.sb, c.ws, c.me);
       if (l.owner_id === c.me.id) { const { error } = await c.sb.from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", l.id as string); if (error) throw new Error(error.message); out.listing = { id: l.id as string, status }; }
-      else if (members.some((m) => m.id === l.owner_id)) { const { error } = await createAdminClient().from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", l.id as string); if (error) throw new Error(error.message); out.listing = { id: l.id as string, status }; }
+      else if (c.role !== "agent" && members.some((m) => m.id === l.owner_id)) { const { error } = await createAdminClient().from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", l.id as string); if (error) throw new Error(error.message); out.listing = { id: l.id as string, status }; }
     }
   }
   if (d.project_id && d.unit_uid != null && c.ws.kind === "developer") {

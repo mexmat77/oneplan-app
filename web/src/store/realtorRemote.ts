@@ -47,7 +47,8 @@ const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-
 
 async function upsertListing(o: Listing): Promise<boolean> {
   if (!sb) return false;
-  let full = { ...o, owner: me };
+  let full = { ...o, owner: isUuid(o.owner) ? o.owner : me }; // админ, правящий чужое объявление, его не забирает (аудит 23.10.2026)
+  pendingWrites++;
   try {
     const photos = await uploadPhotos(me, o.id, o.photos ?? []); // data:-URL → Storage, остальное как есть
     full = { ...full, photos, img: photos[0] ?? o.img }; // запасная копия хранит уже загруженные URL — без повторной загрузки фото
@@ -57,12 +58,15 @@ async function upsertListing(o: Listing): Promise<boolean> {
     setRemoteListings(cur.some((x) => x.id === o.id) ? cur.map((x) => (x.id === o.id ? full : x)) : [full, ...cur]);
     return true;
   } catch (e) { console.warn("[realtor sync] upsert:", (e as Error).message); keepLocalCopy(full); showToast("Не удалось сохранить в базу, объявление сохранено в браузере: " + (e as Error).message); return false; }
+  finally { pendingWrites--; }
 }
 
+let pendingWrites = 0; // пока идёт загрузка фото/upsert, перезагрузка списка по возврату во вкладку пропускается
 async function loadListings() {
   if (!sb) return;
+  if (pendingWrites > 0) return;
   const { data, error } = await sb.from("listings").select("id, owner_id, status, price, photos, cover_url, exports, data, updated_at, short_id").order("created_at", { ascending: false });
-  if (error) { console.warn("[realtor sync] listings:", error.message); markRemoteLoaded(); return; }
+  if (error) { console.warn("[realtor sync] listings:", error.message); if (!getRemoteListings().active) setRemoteListings([], true); return; } // с аккаунтом демо-каталог не показываем даже при сбое (аудит 23.10.2026)
   const rows = (data ?? []) as ListingRow[];
   const list = rows.map(rowToListing);
   // История цен — из таблицы price_history (пишет триггер базы); в `ph` только когда цена менялась (13.10.2026,

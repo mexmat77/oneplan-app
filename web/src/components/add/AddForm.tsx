@@ -26,7 +26,7 @@ import { useMahalleLoaded } from "@/lib/geo";
 import { eur, fmt, useRates } from "@/lib/money";
 import { CITY_LL, DESCS, GEO, ILCES, IL_OF, NO_PHOTO, REALTORS, ilName, ilceName, semtName } from "@/lib/seed";
 import { FEATS, ROOMS_ALL, ROOMS_BASIC, type Badge, type CommType, type Deal, type Heat, type Imar, type Listing, type PropType, type Usage } from "@/lib/types";
-import { delDraft, geoOf, matchGeo, putDraft, setPrevScreen, upsertLocalListing, useAllListings } from "@/store/listings";
+import { delDraft, geoOf, matchGeo, putDraft, setPrevScreen, upsertLocalListing, useAllListings, useRemoteListings } from "@/store/listings";
 import { usePrefs } from "@/store/prefs";
 import { getMeId } from "@/store/profile";
 
@@ -90,8 +90,10 @@ function readAutosave(): Saved | null {
 function initialForm(editId: string | null, all: Listing[], lang: Lang, restoreDraft: boolean): Form {
   const saved = readAutosave();
   if (editId) {
-    if (saved && saved.editId === editId) return { ...EMPTY, ...saved, editId: undefined } as Form;
     const o = all.find((x) => x.id === editId);
+    // автосохранение правки хранится без фото: подхватываем его только поверх объявления из базы и с ЕГО фото — иначе
+    // «Опубликовать» затирало фотографии (аудит 23.10.2026); без объявления в памяти — пустая форма не показывается (см. ниже)
+    if (saved && saved.editId === editId && o) return { ...fromListing(o, lang), ...saved, photos: o.photos.slice(0, MAX_PHOTOS), editId: undefined } as Form;
     return o ? fromListing(o, lang) : EMPTY;
   }
   if (restoreDraft && saved && !saved.editId) { const { editId: _e, ...rest } = saved; void _e; return { ...EMPTY, ...rest }; }
@@ -163,6 +165,15 @@ export function AddForm() {
   const { toggleSel } = usePrefs();
   const restoreDraft = params.get("draft") === "1"; // карточка черновика «Продолжить»
   const [f, setF] = useState<Form>(() => initialForm(editId, all, lang, restoreDraft));
+  // правка объявления, которое ещё не пришло из базы (жёсткая перезагрузка /add?edit=…): ждём, не показывая пустую форму,
+  // иначе «Опубликовать» перезаписывало объявление значениями по умолчанию (аудит 23.10.2026)
+  const remoteLoaded = useRemoteListings().loaded;
+  const editMissing = !!editId && !all.some((x) => x.id === editId);
+  useEffect(() => {
+    if (!(editId && !editMissing && f.title === "" && f.photos.length === 0 && remoteLoaded)) return;
+    const h = setTimeout(() => setF(initialForm(editId, all, lang, restoreDraft)), 0); // через таймер — правило react-hooks/set-state-in-effect
+    return () => clearTimeout(h);
+  }, [editId, editMissing, remoteLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
   // Непринятый черновик из автосохранения: баннер «Продолжить / Удалить»; пока он висит, автосохранение не затирает старый черновик.
   const [pendingDraft, setPendingDraft] = useState<Saved | null>(() => { if (editId || restoreDraft) return null; const s = readAutosave(); return s && !s.editId ? s : null; });
   const [miss, setMiss] = useState(false);
@@ -208,6 +219,7 @@ export function AddForm() {
     return () => clearTimeout(id);
   }, [f, editId, pendingDraft]);
 
+  const waitEdit = editMissing && !remoteLoaded; // показываем «…» вместо пустой формы
   const isLand = f.type === "land", isFlat = f.type === "flat", isHouse = f.type === "house", isComm = f.type === "comm", isRent = f.deal === "rent";
   const { gIl, gIlce, gSemt } = geoOf(f.il, f.ilce, f.semt);
   // `addGeoLabel` (line 3909): empty until an İl is chosen.
@@ -230,7 +242,7 @@ export function AddForm() {
   // `_setAddPin` (line 2671): pin → reverse geocode → İl/İlçe/Semt keys (new ones are registered in GEO).
   async function pickPin(ll: [number, number]) {
     set({ ll });
-    const g = await reverseGeocode(ll);
+    const g = await reverseGeocode(ll).catch(() => null);
     if (!g) return;
     const keys = matchGeo(g);
     const patch: Partial<Form> = { addr: g.addr };
@@ -253,7 +265,7 @@ export function AddForm() {
     if (p) { pickPin([p.lat, p.lng]); return; }
     if (!isMapLink(v)) { showToast(t.add.linkBad); return; }
     showToast(t.add.linkWait);
-    const r = await expandMapLink(v);
+    const r = await expandMapLink(v).catch(() => null);
     if (!r) { showToast(t.add.linkBad); return; }
     pickPin([r.lat, r.lng]);
   }
@@ -378,7 +390,7 @@ export function AddForm() {
     showToast(t.add.draftSaved);
     router.push("/mine");
   }
-  const goMine = () => router.push("/mine");
+  const goMine = () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch {} router.push("/mine"); }; // отмена правки — черновик правки не нужен
 
   const heatToggle = (k: Heat) => {
     const cur = f.heat;
@@ -401,6 +413,7 @@ export function AddForm() {
     t: { vnjChip: t.cat.vnjChip, citChip: t.cat.citChip },
   };
 
+  if (waitEdit) return <div className="mx-auto max-w-[820px] py-16 text-center text-[13px] text-muted">…</div>;
   return (
     <div className="mx-auto max-w-[820px]">
       <button type="button" onClick={goMine} className="mb-[14px] inline-flex cursor-pointer items-center gap-[6px] text-[13px] font-semibold text-text-2 hover:text-blue"><IconArrowLeft size={16} /> {t.nav.mine}</button>

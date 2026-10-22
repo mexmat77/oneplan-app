@@ -2,6 +2,7 @@
 
 // New-build catalogue — prototype markup lines 961–1077, logic 3953–3979, 3868–3881 and 4087–4140.
 // Filter state lives in `useNbUi()` (memory only, like the prototype) so it survives the dev-page / project routes.
+import { escapeHtml, safeCssUrl } from "@/lib/escapeHtml";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, type MouseEvent, type ReactNode } from "react";
@@ -48,7 +49,7 @@ export function NbCatalog({ projects, dev }: { projects: Project[]; dev: string 
     const [il, ilce, semt] = p.geo.split("·").map((x) => x.trim());
     const g = geoKeysOf(il, ilce, semt);
     const price = minPlanPrice(p);
-    const tip = `<div style="display:flex;gap:10px;width:252px;align-items:stretch"><div style="width:96px;min-height:88px;flex:none;margin:-7px 0 -7px -7px;border-radius:15px 0 0 15px;background-image:url('${p.ph[0]?.img ?? ""}');background-size:cover;background-position:center"></div><div style="min-width:0;padding:2px 0"><div style="font-weight:700;font-size:12.5px;color:#14243f;line-height:1.3;max-height:33px;overflow:hidden">${p.n}</div><div style="font-size:11px;color:#8a93a2;margin-top:2px">${p.geo}</div><div style="font-size:11px;color:#5a6472;margin-top:3px">${p.dev} · ${p.dlv}</div><div style="font-weight:800;font-size:14px;color:#14243f;margin-top:5px">${t.newb.fromM} ${fmtShort(price)} ${curSym(p.cur)}</div></div></div>`;
+    const tip = `<div style="display:flex;gap:10px;width:252px;align-items:stretch"><div style="width:96px;min-height:88px;flex:none;margin:-7px 0 -7px -7px;border-radius:15px 0 0 15px;background-image:url('${safeCssUrl(p.ph[0]?.img ?? "")}');background-size:cover;background-position:center"></div><div style="min-width:0;padding:2px 0"><div style="font-weight:700;font-size:12.5px;color:#14243f;line-height:1.3;max-height:33px;overflow:hidden">${escapeHtml(p.n)}</div><div style="font-size:11px;color:#8a93a2;margin-top:2px">${escapeHtml(p.geo)}</div><div style="font-size:11px;color:#5a6472;margin-top:3px">${escapeHtml(p.dev)} · ${escapeHtml(p.dlv)}</div><div style="font-weight:800;font-size:14px;color:#14243f;margin-top:5px">${t.newb.fromM} ${fmtShort(price)} ${curSym(p.cur)}</div></div></div>`;
     return { id: p.k, ll: p.ll, price, il: g.il, ilce: g.ilce, semt: g.semt, pin: `${t.newb.fromM} ${pinShort(price)} ${curSym(p.cur)}`, tip, href: hrefOf(p) };
   });
   void mahalleReady; void lang;

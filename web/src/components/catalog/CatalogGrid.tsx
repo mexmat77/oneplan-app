@@ -1,5 +1,6 @@
 "use client";
 
+import { escapeHtml, safeCssUrl } from "@/lib/escapeHtml";
 import { kbAutoFocus } from "@/lib/touch";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
@@ -158,7 +159,7 @@ export function CatalogGrid({
   // Пины и всплывашки карты (тот же HTML, что в прототипе `_syncMap`); объект открывается в новой вкладке.
   const mapItems = useMemo<MapItem[]>(() => (!isMap ? [] : filtered.filter((o) => o.ll).map((o) => {
     const mt = (o.rooms ? o.rooms + " · " : "") + o.area + " м²" + (o.fl && o.fl !== "—" ? " · " + o.fl : "") + (o.deal === "rent" ? " · " + t.dealF.rent : o.deal === "daily" ? " · " + t.dealF.daily : "");
-    const tip = `<div style="display:flex;gap:10px;width:252px;align-items:stretch"><div style="width:96px;min-height:88px;flex:none;margin:-7px 0 -7px -7px;border-radius:15px 0 0 15px;background-image:url('${o.img}');background-size:cover;background-position:center"></div><div style="min-width:0;padding:2px 0"><div style="font-weight:700;font-size:12.5px;color:#14243f;line-height:1.3;max-height:33px;overflow:hidden">${o.t[lang] || ""}</div><div style="font-size:11px;color:#8a93a2;margin-top:2px">${o.loc[lang] || ""}</div><div style="font-size:11px;color:#5a6472;margin-top:3px">${mt}</div><div style="font-weight:800;font-size:14px;color:#14243f;margin-top:5px">${fmtShort(o.price)}</div></div></div>`;
+    const tip = `<div style="display:flex;gap:10px;width:252px;align-items:stretch"><div style="width:96px;min-height:88px;flex:none;margin:-7px 0 -7px -7px;border-radius:15px 0 0 15px;background-image:url('${safeCssUrl(o.img)}');background-size:cover;background-position:center"></div><div style="min-width:0;padding:2px 0"><div style="font-weight:700;font-size:12.5px;color:#14243f;line-height:1.3;max-height:33px;overflow:hidden">${escapeHtml(o.t[lang] || "")}</div><div style="font-size:11px;color:#8a93a2;margin-top:2px">${escapeHtml(o.loc[lang] || "")}</div><div style="font-size:11px;color:#5a6472;margin-top:3px">${escapeHtml(mt)}</div><div style="font-weight:800;font-size:14px;color:#14243f;margin-top:5px">${fmtShort(o.price)}</div></div></div>`;
     return { id: o.id, ll: o.ll as [number, number], price: o.price, il: o.il, ilce: o.ilce, semt: o.semt, st: o.st, pin: fmtShort(o.price), tip, href: `/obj/${o.id}` };
   })), [isMap, filtered, lang, t]);
   const fbarShow = mode !== "favs"; // prototype `fbarShow = catalog || mine`

@@ -1,5 +1,7 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
+
 // Организации и участники (12.10.2026, миграция 0022): одни действия для администратора платформы («Управление»),
 // администратора агентства («Моё агентство», CRM → Команда) и администратора компании-застройщика (/dev/users).
 // Право: администратор платформы — любая организация; администратор организации — своя (чтение — любой её участник).
@@ -165,9 +167,13 @@ export async function addOrgMember(kind: OrgKind, id: string, email: string, rol
   assertRole(kind, role);
   const { admin, u, full, branch } = await manager(kind, id, true);
   if (!full && role !== "agent") throw new Error("forbidden"); // руководитель филиала добавляет только риэлторов — в свой филиал
-  const { data: p } = await admin.from("profiles").select("id, role, name").ilike("email", email.trim()).maybeSingle();
+  const { data: p } = await admin.from("profiles").select("id, role, name, agency_id, developer_id").eq("email", email.trim().toLowerCase()).maybeSingle();
   if (!p) throw new Error("no-user");
   if (p.role !== PLATFORM_ROLE_OF[kind]) throw new Error("wrong-type");
+  // чужого сотрудника (уже в другой организации) переводит только админ платформы — иначе любой администратор агентства
+  // мог «забрать» риэлтора вместе с его объектами (аудит 23.10.2026)
+  const cur = kind === "agency" ? (p.agency_id as string | null) : (p.developer_id as string | null);
+  if (cur && cur !== id && u.role !== "admin") throw new Error("in-other-org");
   const r = await addMemberFor(admin, kind, id, p.id as string, role, u, full ? null : branch);
   touch(kind, id);
   return r;
@@ -180,12 +186,12 @@ export async function inviteToOrg(kind: OrgKind, id: string, input: { email?: st
   if (!full && input.role !== "agent") throw new Error("forbidden");
   const email = input.email?.trim().toLowerCase() || null;
   if (email) {
-    const { data: p } = await admin.from("profiles").select("id").ilike("email", email).maybeSingle();
+    const { data: p } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
     if (p) throw new Error("exists");
     const { data: old } = await admin.from("invites").select("code").eq(INV_COL[kind], id).ilike("email", email).is("used_by", null).maybeSingle();
     if (old) await admin.from("invites").delete().eq("code", old.code as string);
   }
-  const code = "OPL-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  const code = "OPL-" + randomBytes(8).toString("hex").toUpperCase();
   const row: Row = { code, created_by: u.id, email, name: input.name?.trim() || null, role: PLATFORM_ROLE_OF[kind], org_role: input.role, [INV_COL[kind]]: id, ...(full ? {} : { branch_id: branch }) }; // филиал приглашения (0030) — колонка только у руководителя филиала, до миграции админов не ломает
   const { error } = await admin.from("invites").insert(row);
   if (error) throw new Error(error.message);

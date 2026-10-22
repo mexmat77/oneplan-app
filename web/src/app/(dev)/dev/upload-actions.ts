@@ -26,12 +26,29 @@ export async function createUploadUrl(path: string): Promise<UploadTicket> {
     throw new Error("Недопустимый путь файла");
   }
   const bypass = process.env.NODE_ENV === "development" && process.env.DEV_AUTH_BYPASS === "1";
+  const admin = createAdminClient();
   if (!bypass) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Требуется вход в аккаунт");
+    // папка — только своя (аудит 23.10.2026): аватар в dev/avatars/<свой uid>/…, файлы объекта — участнику его компании
+    const [, folder, sub] = path.split("/");
+    if (folder === "avatars") {
+      if (sub !== user.id) throw new Error("Недопустимый путь файла");
+    } else if (folder !== "new") {
+      const { data: obj } = await admin.from("dev_objects").select("developer_id").eq("id", Number(folder)).maybeSingle();
+      const devId = (obj?.developer_id as string | undefined) ?? null;
+      const [{ data: prof }, { data: mem }] = await Promise.all([
+        admin.from("profiles").select("role, developer_id").eq("id", user.id).maybeSingle(),
+        devId ? admin.from("org_members").select("profile_id").eq("org_kind", "developer").eq("org_id", devId).eq("profile_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+      ]);
+      const ok = prof?.role === "admin" || (!!devId && (mem || prof?.developer_id === devId)) || (!obj && prof?.role === "developer");
+      if (!ok) throw new Error("Нет доступа к этому объекту");
+    } else {
+      const { data: prof } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (prof?.role !== "developer" && prof?.role !== "admin") throw new Error("Нет доступа");
+    }
   }
-  const admin = createAdminClient();
   let res: Awaited<ReturnType<ReturnType<typeof admin.storage.from>["createSignedUploadUrl"]>>;
   try {
     res = await admin.storage.from(BUCKET).createSignedUploadUrl(path);

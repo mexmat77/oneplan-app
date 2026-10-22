@@ -20,6 +20,7 @@ export async function POST(req: Request) {
   if (!token.startsWith("ops_")) return bad(401, "token");
   let body: Body;
   try { body = (await req.json()) as Body; } catch { return bad(400, "json"); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return bad(400, "json");
   const name = (body.name ?? "").toString().trim().slice(0, 200);
   const phone = (body.phone ?? "").toString().trim().slice(0, 40);
   const email = (body.email ?? "").toString().trim().slice(0, 120);
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
     const { data: hit } = await sb.from("crm_contacts").select("client_id, crm_clients!inner(id, merged_into)").eq("ws_kind", ws.kind).eq("ws_id", ws.id).in("value_hash", hashes).limit(1).maybeSingle();
     if (hit) { clientId = hit.client_id as string; isDup = true; }
   }
-  const lang = ["RU", "EN", "TR"].includes((body.lang ?? "").toUpperCase()) ? (body.lang as string).toUpperCase() : "RU";
+  const langIn = String(body.lang ?? "").toUpperCase();
+  const lang = ["RU", "EN", "TR"].includes(langIn) ? langIn : "RU";
   if (!clientId) {
     clientId = crypto.randomUUID();
     const { error } = await sb.from("crm_clients").insert({ id: clientId, ws_kind: ws.kind, ws_id: ws.id, owner_id: null, name: name || phone || email, lang, source_id: src.id, notes_enc: null });
@@ -58,6 +60,10 @@ export async function POST(req: Request) {
   if (ev && message) await sb.from("crm_events").update({ text_enc: enc("crm_events", "text", String(ev.id), message) }).eq("id", ev.id);
   // уведомление: риэлтору — ему, компании — всем участникам (колокольчик + realtime)
   const to: string[] = ws.kind === "realtor" ? [ws.id] : [];
+  if (ws.kind === "agency") { // команда агентства (аудит 23.10.2026: раньше для agency никто не уведомлялся)
+    const { data: m } = await sb.from("org_members").select("profile_id").eq("org_kind", "agency").eq("org_id", ws.id);
+    (m ?? []).forEach((p) => to.push(p.profile_id as string));
+  }
   if (ws.kind === "developer") {
     const [{ data: a }, { data: b }] = await Promise.all([sb.from("profiles").select("id").eq("developer_id", ws.id).eq("status", "active"), sb.from("org_members").select("profile_id").eq("org_kind", "developer").eq("org_id", ws.id)]);
     (a ?? []).forEach((p) => to.push(p.id as string)); (b ?? []).forEach((p) => to.push(p.profile_id as string));
@@ -65,6 +71,6 @@ export async function POST(req: Request) {
   const { data: srcRow } = await sb.from("crm_sources").select("name").eq("id", src.id).maybeSingle();
   const srcName = (srcRow?.name as string) ?? "";
   // имена источников по умолчанию — ключи i18n (site, phone…); в уведомлении их не показываем, только свои названия
-  await notify(to, "crm_lead", { name: name || phone || email, source: DEFAULT_SOURCES.some((d) => d.key === srcName) ? "" : srcName, clientId, href: ws.kind === "realtor" ? `/crm/${clientId}` : `/dev/crm/${clientId}` });
+  await notify(to, "crm_lead", { name: name || phone || email, source: DEFAULT_SOURCES.some((d) => d.key === srcName) ? "" : srcName, clientId, href: ws.kind === "developer" ? `/dev/crm/${clientId}` : `/crm/c/${clientId}` });
   return NextResponse.json({ ok: true, clientId, duplicate: isDup });
 }

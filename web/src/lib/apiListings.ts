@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import "server-only";
 
 // Выгрузка объявлений на внешние сайты (16.10.2026): ключ РИЭЛТОРА (`profiles.api_key`, `opl_live_…`) — его объявления;
@@ -13,6 +14,8 @@ type Row = Record<string, unknown>;
 export type ApiScope = { kind: "realtor" | "agency"; ownerIds: string[]; name: string; agency: string; realtors: Record<string, { name: string; phone: string | null; email: string | null }> };
 export type ApiFilters = { deal?: string | null; type?: string | null; il?: string | null; ilce?: string | null; rooms?: string | null; price_min?: string | null; price_max?: string | null; status?: string | null; updated_since?: string | null; realtor?: string | null; limit?: string | null; offset?: string | null };
 
+/** sha256 ключа — то, что лежит в profiles/agencies.api_key с миграции 0038. */
+export const apiKeyHash = (key: string) => createHash("sha256").update(key, "utf8").digest("hex");
 export function keyFrom(req: Request): string | null {
   const m = /^Bearer\s+(\S+)$/i.exec(req.headers.get("authorization") ?? "");
   return m ? m[1] : new URL(req.url).searchParams.get("key");
@@ -21,14 +24,15 @@ export function keyFrom(req: Request): string | null {
 export async function scopeByKey(key: string | null): Promise<ApiScope | null> {
   if (!key || !hasServiceRole() || !/^opl_(live|agency)_[0-9a-f]{24,}$/.test(key)) return null;
   const admin = createAdminClient();
+  const hash = apiKeyHash(key); // в базе только sha256 ключа (0038, 23.10.2026) — открытый ключ видели все участники
   if (key.startsWith("opl_agency_")) {
-    const { data: ag } = await admin.from("agencies").select("id, name, active").eq("api_key", key).maybeSingle();
+    const { data: ag } = await admin.from("agencies").select("id, name, active").eq("api_key", hash).maybeSingle();
     if (!ag || ag.active === false) return null;
     const { data: ps } = await admin.from("profiles").select("id, name, phone, email").eq("agency_id", ag.id as string).eq("status", "active").eq("role", "realtor");
     const realtors = Object.fromEntries((ps ?? []).map((p) => [p.id as string, { name: String(p.name ?? ""), phone: (p.phone as string | null) ?? null, email: (p.email as string | null) ?? null }]));
     return { kind: "agency", ownerIds: Object.keys(realtors), name: String(ag.name ?? ""), agency: String(ag.name ?? ""), realtors };
   }
-  const { data } = await admin.from("profiles").select("id, name, phone, email, status, agency_text, agencies(name)").eq("api_key", key).maybeSingle();
+  const { data } = await admin.from("profiles").select("id, name, phone, email, status, agency_text, agencies(name)").eq("api_key", hash).maybeSingle();
   if (!data || data.status !== "active") return null;
   const ag = (Array.isArray(data.agencies) ? data.agencies[0] : data.agencies) as { name?: string } | null;
   const id = data.id as string;
@@ -40,7 +44,7 @@ export async function listingsFor(scope: ApiScope, f: ApiFilters, id?: string): 
   const admin = createAdminClient();
   let q = admin.from("listings").select(COLS, { count: "exact" }).in("owner_id", f.realtor && scope.ownerIds.includes(f.realtor) ? [f.realtor] : scope.ownerIds);
   q = f.status === "all" ? q.in("status", ["active", "reserved", "sold", "off"]) : f.status && ["active", "reserved", "sold", "off"].includes(f.status) ? q.eq("status", f.status) : q.eq("status", "active");
-  if (id) q = q.eq("id", id);
+  if (id) q = /^\d+$/.test(id) ? q.eq("short_id", Number(id)) : /^[0-9a-f-]{36}$/i.test(id) ? q.eq("id", id) : q.eq("id", "00000000-0000-0000-0000-000000000000");
   if (f.deal) q = q.in("deal", f.deal.split(","));
   if (f.type) q = q.in("type", f.type.split(","));
   if (f.il) q = q.eq("il", f.il);

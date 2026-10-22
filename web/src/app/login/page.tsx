@@ -6,6 +6,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { safeNext } from "@/lib/safeNext";
 import { IconAlertCircle, IconCircleCheck, IconFilePencil, IconLock, IconLogin2, IconMailCheck, IconMailForward, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
 import { Logo } from "@/components/Logo";
 import { LangSwitch } from "@/components/LangSwitch";
@@ -52,7 +53,7 @@ function LoginInner() {
     const missing = [!email.trim() && "email", !pass && "pass"].filter(Boolean) as string[];
     if (missing.length) { setMiss(missing); setErr(`${t.rl.reqErr}: ${missing.map((k) => (k === "email" ? t.login.email : t.login.pass)).join(", ")}`); return; }
     setMiss([]);
-    const next = params.get("next") || "/catalog";
+    const next = safeNext(params.get("next")); // только относительный путь (аудит 23.10.2026: open redirect)
     if (!hasSupabaseEnv()) { router.push(next); return; } // local UI mode — prototype `doLogin` just sets `logged:true`
     setBusy(true);
     const sb = createClient();

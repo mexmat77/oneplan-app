@@ -11,7 +11,7 @@ export type FillIn = { base: Lang; title: string; desc: string; titles: Partial<
 export type FillOut = { t: Record<Lang, string>; desc: Record<Lang, string>; mt: Lang[] };
 
 export async function fillTranslations(inp: FillIn): Promise<FillOut> {
-  const title = inp.title.trim(), desc = inp.desc.trim();
+  const title = inp.title.trim().slice(0, 300), desc = inp.desc.trim().slice(0, 20_000);
   const t = { RU: title, EN: title, TR: title } as Record<Lang, string>;
   const d = { RU: desc, EN: desc, TR: desc } as Record<Lang, string>;
   const mt = new Set<Lang>();

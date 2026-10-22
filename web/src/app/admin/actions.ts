@@ -1,5 +1,8 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
+import { validMail } from "@/lib/phone";
+
 import { revalidatePath } from "next/cache";
 import { sendTemplateMail } from "@/lib/mail";
 import { notify, notifyAdmins } from "@/lib/notify";
@@ -230,7 +233,7 @@ export async function declineRequest(requestId: string) {
 // Ссылка-приглашение /join/<code>; если указана почта — отправляем письмо со ссылкой (Resend) на языке админа.
 export async function createInvite(input: { role: Role; email?: string; name?: string; agency_id?: string | null; developer_id?: string | null; org_role?: string | null; lang?: "RU" | "EN" | "TR" }) {
   const me = await requireAdmin();
-  const code = "OPL-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  const code = "OPL-" + randomBytes(8).toString("hex").toUpperCase(); // 64 бита случайности (аудит 23.10.2026)
   const { error } = await createAdminClient().from("invites").insert({ code, created_by: me.id, email: input.email ?? null, name: input.name?.trim() || null, role: input.role, agency_id: input.agency_id ?? null, developer_id: input.developer_id ?? null, org_role: input.org_role ?? null });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/users");
@@ -298,14 +301,18 @@ export async function registerByInvite(input: { code: string; name: string; phon
   const admin = createAdminClient();
   const { data: inv } = await admin.from("invites").select("*").eq("code", input.code).maybeSingle();
   if (!inv || inv.used_by) throw new Error("Приглашение недействительно");
-  const email = (inv.email as string | null) || input.email; // письмо ушло на конкретный адрес — регистрируем именно его
+  if (String(input.password || "").length < 8) throw new Error("Пароль не короче 8 символов");
+  const email = ((inv.email as string | null) || input.email || "").trim().toLowerCase(); // письмо ушло на конкретный адрес — регистрируем именно его
+  if (!validMail(email)) throw new Error("Проверьте адрес почты");
   const { data, error } = await admin.auth.admin.createUser({ email, password: input.password, email_confirm: true, user_metadata: { name: input.name, phone: input.phone, lang: input.lang ?? "RU" } });
   if (error) throw new Error(error.message);
+  // приглашение гасится атомарно — два параллельных входа по одному коду не создадут двух пользователей
+  const { data: used } = await admin.from("invites").update({ used_by: data.user.id }).eq("code", input.code).is("used_by", null).select("code");
+  if (!used?.length) { await admin.auth.admin.deleteUser(data.user.id); throw new Error("Приглашение уже использовано"); }
   await admin.from("profiles").upsert({ id: data.user.id, email, name: input.name, phone: input.phone, role: inv.role ?? "realtor", status: "active", agency_text: !inv.agency_id && !inv.developer_id ? (input.agency ?? "").trim() || null : null });
   // участие в организации с ролью из приглашения (0022)
   if (inv.agency_id) await attachMember("agency", inv.agency_id as string, data.user.id, inv.org_role as string | null, (inv.branch_id as string | null) ?? null); // филиал из приглашения (0030)
   if (inv.developer_id) await attachMember("developer", inv.developer_id as string, data.user.id, inv.org_role as string | null);
-  await admin.from("invites").update({ used_by: data.user.id }).eq("code", input.code);
   void notifyAdmins("join_registered", { name: input.name, email });
   if (inv.created_by) void notify([inv.created_by as string], "invite_accepted", { name: input.name });
   return { ok: true };

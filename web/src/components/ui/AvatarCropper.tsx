@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { IconMinus, IconPlus, IconRotateClockwise2 } from "@tabler/icons-react";
 import { Modal, ModalClose } from "@/components/ui/Modal";
 import { useI18n } from "@/i18n/provider";
+import { showToast } from "@/components/ui/toast";
 
 const MAX_ZOOM = 5;
 const PAD = 18; // поле вокруг круга на сцене
@@ -19,7 +20,7 @@ type View = { z: number; x: number; y: number; rot: number }; // z — множ�
 /** Загрузка файла в <img> (HEIC декодирует Safari; остальное — все браузеры). Большие снимки сначала уменьшаются до 2000 px. */
 async function loadImage(file: File): Promise<Img> {
   const raw = URL.createObjectURL(file);
-  const el = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("decode")); i.src = raw; });
+  const el = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => { URL.revokeObjectURL(raw); rej(new Error("decode")); }; i.src = raw; });
   const k = Math.min(1, 2000 / Math.max(el.naturalWidth, el.naturalHeight));
   if (k === 1) return { el, url: raw };
   const c = document.createElement("canvas"); c.width = Math.round(el.naturalWidth * k); c.height = Math.round(el.naturalHeight * k);
@@ -130,7 +131,7 @@ function CropBody({ file, onDone, onCancel, out }: { file: File; onDone: (f: Fil
       ctx.drawImage(img.el, -img.el.naturalWidth / 2, -img.el.naturalHeight / 2);
       const blob = await new Promise<Blob>((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error("toBlob"))), "image/jpeg", 0.88));
       onDone(new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }));
-    } finally { setBusy(false); }
+    } catch { showToast(t.prof.photoErr); } finally { setBusy(false); }
   };
 
   return (

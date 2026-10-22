@@ -24,7 +24,7 @@ function getClient(): Anthropic | null {
 const PLACES = "Turkish place names (cities, districts, neighbourhoods, complexes) must keep their Latin Turkish spelling in every language — Lara, Ermenek, Muratpaşa — never transliterate them into Cyrillic.";
 
 export async function translate(text: string, to: DevLang | "AR", kind: "chat" | "description" | "title" | "label" = "chat"): Promise<TranslateResult> {
-  const src = (text || "").trim();
+  const src = (text || "").trim().slice(0, 20_000); // лимит на платный ввод (аудит 23.10.2026)
   if (!src) return { text: "", fallback: true };
   // Server Functions are reachable by direct POST — only signed-in users may spend tokens (UI mode without Supabase: allowed).
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

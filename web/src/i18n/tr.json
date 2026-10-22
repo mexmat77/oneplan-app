@@ -95,6 +95,8 @@
     "inv": "Fatura"
   },
   "api": {
+    "keyOnce": "Anahtarı şimdi kopyalayın — yalnızca bir kez gösterilir; sonra sadece yenileyebilirsiniz.",
+    "keyHidden": "Anahtar şifrelenmiş saklanır ve yalnızca oluşturulduğunda gösterilir. Kaybettiyseniz yenileyin (eski anahtar çalışmaz).",
     "title": "API ve siteye aktarım",
     "sub": "Hazır REST API ve XML akışı: ilanları müşteri veya ajans sitesine aktarın. Portallar: Hepsiemlak ve Emlakjet ilanları yalnızca portalla yapılan sözleşmeye bağlı iş ortağı entegrasyonuyla kabul eder; Sahibinden dış sistemlerden ilan kabul etmez.",
     "keyL": "API anahtarınız",

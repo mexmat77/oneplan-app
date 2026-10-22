@@ -95,6 +95,8 @@
     "inv": "Invoice"
   },
   "api": {
+    "keyOnce": "Copy the key now — it is shown only once; later you can only reissue it.",
+    "keyHidden": "The key is stored hashed and shown only when issued. Lost it — reissue (the old one stops working).",
     "title": "API & website export",
     "sub": "Ready-made REST API and XML feed: push listings to a client or agency website. Portals: Hepsiemlak and Emlakjet accept listings only via a partner integration under an agreement with the portal; Sahibinden does not accept listings from external systems.",
     "keyL": "Your API key",

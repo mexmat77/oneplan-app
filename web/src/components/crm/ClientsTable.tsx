@@ -109,7 +109,7 @@ export function ClientsTable() {
     const cached = q ? undefined : cacheGet<{ list: Client[]; deals: Record<string, DealSummary> }>(key);
     if (cached) { setList(cached.list); setDeals(cached.deals); }
     const run = !q ? cacheRun(key, () => crmClientsPage({ q, status })) : crmClientsPage({ q, status });
-    run.then(({ list: l, deals: d, counts }) => { setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); setCounts?.(counts); }).catch(() => setList([]));
+    run.then(({ list: l, deals: d, counts }) => { setList(l); setDeals(d); if (!q) cacheSet(key, { list: l, deals: d }); setCounts?.(counts); }).catch((e) => { crmError(e, c.errSave, c.errReadonly); if (!cached) setList([]); }); // ошибка — тост, кэш не затираем (аудит 23.10.2026)
   }, [q, status, crm.base, setCounts]);
   useEffect(() => { const h = setTimeout(load, q ? 250 : 0); return () => clearTimeout(h); }, [load, q]);
 

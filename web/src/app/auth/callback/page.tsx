@@ -8,6 +8,7 @@
 //   3. ведём в раздел по роли: застройщик → /dev, остальные → /catalog (или `next`).
 import { IconKey, IconLoader2 } from "@tabler/icons-react";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { safeNext } from "@/lib/safeNext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useT } from "@/i18n/provider";
@@ -37,7 +38,7 @@ function Inner() {
     const sb = createClient();
     const { data: { user } } = await sb.auth.getUser();
     const next = params.get("next");
-    let dest = next && next.startsWith("/") ? next : "/catalog";
+    let dest = safeNext(next); // не «//evil.com» (аудит 23.10.2026)
     if (user && !next) {
       const { data: prof } = await sb.from("profiles").select("role").eq("id", user.id).maybeSingle();
       if (prof?.role === "developer") dest = "/dev";

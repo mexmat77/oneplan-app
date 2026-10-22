@@ -12,5 +12,5 @@ export async function GET(req: Request) {
   const { rows, total } = await listingsFor(scope, f);
   const site = SITE();
   const limit = Math.min(Math.max(+(f.limit ?? 100) || 100, 1), 500), offset = Math.max(+(f.offset ?? 0) || 0, 0);
-  return NextResponse.json({ total, count: rows.length, limit, offset, scope: scope.kind, name: scope.name, agency: scope.agency, generated_at: new Date().toISOString(), items: rows.map((r) => toApi(r, site, scope)) }, { headers: { ...CORS, "Cache-Control": "public, max-age=300" } });
+  return NextResponse.json({ total, count: rows.length, limit, offset, scope: scope.kind, name: scope.name, agency: scope.agency, generated_at: new Date().toISOString(), items: rows.map((r) => toApi(r, site, scope)) }, { headers: { ...CORS, "Cache-Control": "private, max-age=300" } });
 }
