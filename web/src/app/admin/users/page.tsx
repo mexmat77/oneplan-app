@@ -1,5 +1,5 @@
 import { UsersTable, type AdminUser, type Company } from "@/components/admin/UsersTable";
-import { hasServiceRole } from "@/lib/supabase/admin";
+import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,19 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     supabase.from("org_members").select("profile_id, org_kind, org_id, role"),
     supabase.from("listings").select("owner_id").eq("status", "active"), // активные объекты по владельцам (16.10.2026)
   ]);
+  // последний вход из auth.users (сервисный ключ) — пока пульс last_seen только начал писаться (22.10.2026), это честная
+  // дата активности для всех, кто хоть раз входил
+  const signIn: Record<string, string | null> = {};
+  if (hasServiceRole()) {
+    try {
+      const a = createAdminClient();
+      for (let page = 1; page <= 20; page++) {
+        const { data } = await a.auth.admin.listUsers({ page, perPage: 1000 });
+        for (const u of data?.users ?? []) signIn[u.id] = u.last_sign_in_at ?? null;
+        if ((data?.users?.length ?? 0) < 1000) break;
+      }
+    } catch { /* без ключа — только last_seen */ }
+  }
   const listingsBy: Record<string, number> = {};
   for (const l of lst ?? []) listingsBy[l.owner_id as string] = (listingsBy[l.owner_id as string] ?? 0) + 1;
   const byUser: Record<string, string[]> = {};
@@ -22,7 +35,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   for (const m of members ?? []) { if (m.org_kind === "developer") (byUser[m.profile_id] ??= []).push(m.org_id); else agRole[m.profile_id] = m.role; }
   return (
     <UsersTable
-      users={((profiles ?? []) as AdminUser[]).map((u) => ({ ...u, developer_ids: byUser[u.id] ?? (u.developer_id ? [u.developer_id] : []), agency_role: (agRole[u.id] as AdminUser["agency_role"]) ?? null }))}
+      users={((profiles ?? []) as AdminUser[]).map((u) => ({ ...u, last_sign_in: signIn[u.id] ?? null, developer_ids: byUser[u.id] ?? (u.developer_id ? [u.developer_id] : []), agency_role: (agRole[u.id] as AdminUser["agency_role"]) ?? null }))}
       agencies={(agencies ?? []) as Company[]}
       developers={(developers ?? []) as Company[]}
       invites={(invites ?? []) as { code: string; email: string | null; role: string; created_at: string }[]}

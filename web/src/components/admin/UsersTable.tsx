@@ -11,12 +11,15 @@ import {
 import Link from "next/link";
 import { useI18n } from "@/i18n/provider";
 import { validMail } from "@/lib/phone";
+import { seenExact, seenInfo } from "@/lib/seen";
+import { useNow } from "@/components/crm/crmUi";
 import { createInvite, createUser, deleteUser, resendInvite, setUserPassword, updateUser, type Role, type Status, type UserInput } from "@/app/admin/actions";
 
 export type AdminUser = {
   id: string; name: string; email: string | null; phone: string | null; role: Role; status: Status;
   agency_id: string | null; agency_text: string | null; developer_id: string | null; dev_role: string | null; paid_to: string | null;
   platform_staff: boolean; color: string; last_seen: string | null; created_at: string; developer_ids?: string[];
+  last_sign_in?: string | null; // auth.users.last_sign_in_at (сервисный ключ), 22.10.2026
   agency_role?: "owner" | "manager" | "agent" | null; // роль в агентстве (org_members, 0022)
 };
 export type Company = { id: string; name: string };
@@ -43,6 +46,9 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
   const L = (ru: string, en: string, tr: string) => (lang === "RU" ? ru : lang === "TR" ? tr : en);
   const [q, setQ] = useState(initialQ ?? "");
   const [roleF, setRoleF] = useState<"" | Role>("");
+  const [actF, setActF] = useState<"" | "online" | "d1" | "d7" | "idle" | "never">(""); // фильтр по активности (22.10.2026)
+  const [sortBy, setSortBy] = useState<"new" | "act" | "name">("new");
+  const now = useNow(); // «сейчас» без Date.now() в рендере (правило React-компилятора)
   const [edit, setEdit] = useState<Draft | null>(null);
   const [help, setHelp] = useState(false);
   const [coQ, setCoQ] = useState("");
@@ -68,7 +74,19 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
     ? (u.developer_ids ?? []).map((id) => developers.find((d) => d.id === id)?.name).filter(Boolean).join(", ") || "—"
     : agencies.find((a) => a.id === u.agency_id)?.name ?? u.agency_text ?? "—";
   // поиск: ФИО, почта, телефон и название агентства/компании застройщика
-  const rows = users.filter((u) => (!roleF || u.role === roleF) && (!nq || `${u.name} ${u.email ?? ""} ${u.phone ?? ""} ${company(u)}`.toLowerCase().includes(nq)));
+  // активность = пульс last_seen, а пока он не накопился — последний вход из auth (22.10.2026)
+  const seenAt = (u: AdminUser) => { const a = u.last_seen ? new Date(u.last_seen).getTime() : 0, b = u.last_sign_in ? new Date(u.last_sign_in).getTime() : 0; const m = Math.max(a, b); return m ? new Date(m).toISOString() : null; };
+  const actOk = (u: AdminUser) => {
+    if (!actF) return true;
+    const iso = seenAt(u); const age = iso ? now - new Date(iso).getTime() : Infinity;
+    if (actF === "never") return !iso;
+    if (actF === "online") return age < 5 * 60e3;
+    if (actF === "d1") return age < 86400e3;
+    if (actF === "d7") return age < 7 * 86400e3;
+    return !iso || age > 30 * 86400e3; // idle
+  };
+  const rows = users.filter((u) => (!roleF || u.role === roleF) && actOk(u) && (!nq || `${u.name} ${u.email ?? ""} ${u.phone ?? ""} ${company(u)}`.toLowerCase().includes(nq)))
+    .sort((a, b) => sortBy === "name" ? (a.name || "").localeCompare(b.name || "", "ru") : sortBy === "act" ? (new Date(seenAt(b) ?? 0).getTime() - new Date(seenAt(a) ?? 0).getTime()) : 0);
 
   function run(fn: () => Promise<unknown>, ok: string) {
     setErr("");
@@ -110,6 +128,8 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
       <div className="mb-[14px] flex flex-wrap gap-2">
         <div className="relative min-w-[200px] flex-1"><IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-2" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.rl.rlSearch} className={`${input} rounded-[11px] py-[10px] pl-[34px] text-[13.5px]`} /></div>
         <Select value={roleF} onChange={(v) => setRoleF(v as "" | Role)} menuWidth="auto" className="w-auto rounded-[11px] py-[10px] text-[13.5px]" options={[{ value: "", label: L("Все роли", "All roles", "Tüm roller") }, ...(["admin", "realtor", "developer"] as Role[]).map((r) => ({ value: r, label: roleL[r] }))]} />
+        <Select value={actF} onChange={(v) => setActF(v as typeof actF)} menuWidth="auto" className="w-auto rounded-[11px] py-[10px] text-[13.5px]" options={[{ value: "", label: t.rl.actAll }, { value: "online", label: t.rl.actOnline, color: "#22c15e" }, { value: "d1", label: t.rl.actD1 }, { value: "d7", label: t.rl.actD7 }, { value: "idle", label: t.rl.actIdle, color: "#e24b4b" }, { value: "never", label: t.rl.actNever, color: "#8a93a2" }]} />
+        <Select value={sortBy} onChange={(v) => setSortBy(v as typeof sortBy)} menuWidth="auto" className="w-auto rounded-[11px] py-[10px] text-[13.5px]" options={[{ value: "new", label: t.rl.sortNew }, { value: "act", label: t.rl.sortAct }, { value: "name", label: t.rl.sortName }]} />
         <button type="button" onClick={() => setInv({ role: "realtor", agency_id: "", developer_id: "", org_role: "agent", email: "", name: "" })} className="inline-flex cursor-pointer items-center gap-1 rounded-[11px] border border-[#d8e3ff] bg-blue-tint px-4 py-[10px] text-[13px] font-bold text-blue hover:bg-[#e2ebff]"><IconLink size={15} /> {t.rl.inv}</button>
         <button type="button" onClick={openNew} className="inline-flex cursor-pointer items-center gap-1 rounded-[11px] bg-blue-2 px-4 py-[10px] text-[13px] font-bold text-white hover:bg-blue-3"><IconPlus size={15} /> {L("Добавить пользователя", "Add user", "Kullanıcı ekle")}</button>
       </div>
@@ -127,6 +147,10 @@ export function UsersTable({ users, agencies, developers, invites, serviceRole, 
               </div>
               <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold text-white" style={{ background: ROLE_C[u.role] }}>{roleL[u.role]}{u.role === "developer" && u.dev_role ? ` · ${t.org.roles.developer[u.dev_role as "admin" | "editor" | "manager"] ?? u.dev_role}` : u.role === "realtor" && u.agency_id ? ` · ${t.org.roles.agency[u.agency_role ?? "agent"]}` : ""}</span>
               <span className="flex-none rounded-[8px] px-[10px] py-1 text-[11px] font-bold" style={{ background: st[0], color: st[1] }}>{stL[u.status]}</span>
+              {(() => { const iso = seenAt(u); const si = seenInfo(iso, lang, now, { online: t.rl.online, never: t.rl.never }); const tip = [iso ? `${t.rl.actT}: ${seenExact(iso, lang)}` : t.rl.never, u.last_sign_in ? `${t.rl.lastLogin}: ${seenExact(u.last_sign_in, lang)}` : "", `${t.rl.regAt}: ${seenExact(u.created_at, lang)}`].filter(Boolean).join("\n"); return (
+                <span title={tip} className={`inline-flex flex-none items-center gap-[6px] rounded-[8px] px-[9px] py-1 text-[11.5px] font-semibold ${si.online ? "bg-[#e4f6ee] text-[#0f9d6b]" : iso ? "bg-bg-2 text-text-2" : "bg-bg-2 text-muted"}`}>
+                  <span className={`h-[7px] w-[7px] rounded-full ${si.online ? "bg-[#22c15e]" : si.ms !== null && si.ms < 86400e3 ? "bg-[#f4b42a]" : "bg-[#c3cad6]"}`} />{si.label}
+                </span>); })()}
               {u.role === "realtor" && <Link href={`/catalog?owner=${u.id}`} title={t.cat.profObjs} className="inline-flex flex-none items-center gap-1 rounded-[9px] bg-bg-2 px-[10px] py-[5px] text-[12px] font-bold text-text hover:bg-blue-tint hover:text-blue"><IconHome2 size={13} /> {listingsBy[u.id] ?? 0}</Link>}
               {u.paid_to && <span className="flex-none text-[11.5px] text-muted">{t.rl.payOk} {new Date(u.paid_to).toLocaleDateString("ru-RU")}</span>}
               {u.status === "pending" && <button type="button" disabled={pending} onClick={() => run(() => updateUser(u.id, { status: "active" }), t.rl.apprT)} className="flex-none cursor-pointer rounded-[9px] bg-[#22c15e] px-[13px] py-2 text-[12px] font-bold text-white">{t.rl.ok}</button>}

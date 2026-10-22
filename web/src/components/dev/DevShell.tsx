@@ -19,6 +19,7 @@ import { NtfIcon } from "@/components/ntf/NtfIcon";
 import type { DevRole } from "@/lib/dev/types";
 import { initViewRole, markNotifRead, setCurrentUserName, setViewRole, syncRealCompanies, useDev, type RealCompany } from "@/store/dev";
 import { startDevSync } from "@/store/devRemote";
+import { Presence } from "@/components/Presence";
 import { DevIcon } from "./DevIcon";
 import { LogoMark } from "@/components/Logo";
 import { UserMenu } from "@/components/ui/UserMenu";
@@ -104,6 +105,7 @@ export function DevShell({ me, children }: { me: DevMe; children: ReactNode }) {
 
   return (
     <div data-dev="1">
+      <Presence meId={me.id ?? null} />
       <header className="flex min-h-[62px] flex-wrap items-center gap-[clamp(10px,3vw,30px)] gap-y-[6px] border-b border-line bg-surface px-[clamp(14px,4vw,28px)] py-2">
         {logo}
         {me.platformAdmin && (
