@@ -382,6 +382,8 @@
     "note": "Demo: portal bağlantılarını veritabanı yöneticisi yapılandırır."
   },
   "login": {
+    "showPw": "Şifreyi göster",
+    "hidePw": "Şifreyi gizle",
     "regCapL": "Spam koruması",
     "regCapErr": "Yanlış cevap — toplamı kontrol edin",
     "regRate": "Başvuru zaten gönderildi. Bir dakika sonra tekrar deneyin.",
@@ -532,6 +534,9 @@
   "add": {
     "photoBusy": "Fotoğraf işleniyor {done} / {total}…",
     "photoFail": "Fotoğraf eklenemedi: {n}. Başka dosya deneyin veya yeniden çekin.",
+    "photoLimit": "İlanda en fazla {max} fotoğraf olabilir. İlk {added} eklendi, {skipped} tanesi yüklenmedi — bu bir hata değil, sınır.",
+    "photoLimitFull": "İlanda zaten {max} fotoğraf var — bu üst sınır. Yeni eklemek için fazlalıkları silin.",
+    "photoCount": "{n} / {max}",
     "badgeL": "İlan etiketi",
     "badgeNone": "Etiketsiz",
     "badgeHint": "“Rezerve” ve “Satıldı” ilan durumundan otomatik uygulanır ve manuel etiketi geçersiz kılar.",
@@ -559,7 +564,7 @@
     "floorsL": "Kat sayısı",
     "flagsL": "Ek özellikler",
     "upT": "Fotoğrafları buraya sürükleyin veya tıklayıp seçin",
-    "upS": "Toplu yükleme, en fazla 20 fotoğraf · ilki kapak olur",
+    "upS": "Toplu yükleme, en fazla 40 fotoğraf · ilki kapak olur",
     "cover": "Kapak",
     "reorder": "Sırayı değiştirmek için küçük resimleri sürükleyin — ilk fotoğraf kapaktır",
     "titleL": "İlan başlığı",

@@ -7,6 +7,7 @@
 //   2. для invite / recovery / signup показываем форму «Задайте пароль» (updateUser);
 //   3. ведём в раздел по роли: застройщик → /dev, остальные → /catalog (или `next`).
 import { IconKey, IconLoader2 } from "@tabler/icons-react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useT } from "@/i18n/provider";
@@ -120,9 +121,9 @@ function Inner() {
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.login.email}</label>
             <input type="email" name="username" autoComplete="username" value={email} readOnly className={`${inputCls} mb-[12px] bg-bg-2 text-text-2`} />
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.auth.pass}</label>
-            <input type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} className={`${inputCls} mb-[12px]`} autoFocus />
+            <PasswordInput autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} className={inputCls} wrapClass="mb-[12px]" autoFocus />
             <label className="mb-[6px] block text-[12.5px] font-semibold text-text-2">{t.auth.pass2}</label>
-            <input type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} className={`${inputCls} mb-[16px]`} />
+            <PasswordInput autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} className={inputCls} wrapClass="mb-[16px]" />
             {err && <div className="mb-3 rounded-[11px] bg-red-tint px-[13px] py-[10px] text-[12.5px] text-red-2">{err}</div>}
             <button type="submit" disabled={busy} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-blue py-3 text-[14px] font-bold text-white disabled:opacity-60">{busy ? <IconLoader2 size={16} className="animate-spin" /> : <IconKey size={16} />} {t.auth.set_btn}</button>
             <div className="mt-3 text-[12px] leading-[1.5] text-muted">{t.auth.pending_hint}</div>

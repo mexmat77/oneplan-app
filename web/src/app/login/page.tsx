@@ -5,6 +5,7 @@
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { IconAlertCircle, IconCircleCheck, IconFilePencil, IconLock, IconLogin2, IconMailCheck, IconMailForward, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
 import { Logo } from "@/components/Logo";
 import { LangSwitch } from "@/components/LangSwitch";
@@ -93,7 +94,7 @@ function LoginInner() {
         <label className={labelCls} htmlFor="email">{t.login.email}</label>
         <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setMiss([]); }} className={`${inputCls} mb-[14px] ${miss.includes("email") ? badCls : ""}`} />
         <label className={labelCls} htmlFor="pass">{t.login.pass}</label>
-        <input id="pass" type="password" autoComplete="current-password" value={pass} onChange={(e) => { setPass(e.target.value); setMiss([]); }} className={`${inputCls} mb-[20px] ${miss.includes("pass") ? badCls : ""}`} />
+        <PasswordInput id="pass" autoComplete="current-password" value={pass} onChange={(e) => { setPass(e.target.value); setMiss([]); }} className={`${inputCls} ${miss.includes("pass") ? badCls : ""}`} wrapClass="mb-[20px]" />
         <div className="-mt-[6px] mb-3 flex justify-end">
           <button type="button" onClick={() => setModal("fpw")} className="cursor-pointer text-[12.5px] font-semibold text-blue hover:underline">{t.login.forgot}</button>
         </div>

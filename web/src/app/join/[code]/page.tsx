@@ -8,6 +8,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { IconAlertCircle, IconCircleCheck, IconLock, IconTicket } from "@tabler/icons-react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Logo } from "@/components/Logo";
 import { LangSwitch } from "@/components/LangSwitch";
 import { useI18n } from "@/i18n/provider";
@@ -84,8 +85,8 @@ export default function JoinPage() {
             <div className="mb-2 flex flex-wrap gap-[6px]"><button type="button" onClick={() => set({ ag: "" })} className={chipCls(free)}>{t.rl.agFree}</button></div>
             <input value={f.ag} onChange={(e) => set({ ag: e.target.value })} placeholder={t.rl.agWrite} className={`${inputCls} mb-4`} />
             <div className="mb-4 grid grid-cols-2 gap-3 max-md:grid-cols-1">
-              <div><label className={labelCls}>{t.login.pass} <span className="text-red">*</span></label><input type="password" value={f.pass} onChange={(e) => set({ pass: e.target.value })} className={`${inputCls} ${bad("pass")}`} autoComplete="new-password" /></div>
-              <div><label className={labelCls}>{t.prof.confP} <span className="text-red">*</span></label><input type="password" value={f.pass2} onChange={(e) => set({ pass2: e.target.value })} className={`${inputCls} ${bad("pass2")}`} autoComplete="new-password" /></div>
+              <div><label className={labelCls}>{t.login.pass} <span className="text-red">*</span></label><PasswordInput value={f.pass} onChange={(e) => set({ pass: e.target.value })} className={`${inputCls} ${bad("pass")}`} autoComplete="new-password" /></div>
+              <div><label className={labelCls}>{t.prof.confP} <span className="text-red">*</span></label><PasswordInput value={f.pass2} onChange={(e) => set({ pass2: e.target.value })} className={`${inputCls} ${bad("pass2")}`} autoComplete="new-password" /></div>
             </div>
             {err && <div className="mb-3 flex items-start gap-2 rounded-[11px] bg-red-tint px-[13px] py-[11px] text-left text-[12.5px] text-red-2"><IconAlertCircle size={16} className="mt-[1px] shrink-0" /><span>{err}</span></div>}
             <button type="button" disabled={pending} onClick={submit} className="flex w-full cursor-pointer items-center justify-center rounded-[12px] bg-blue-2 py-[13px] text-[14.5px] font-bold text-white transition hover:bg-blue-3 disabled:opacity-60">{t.login.joinB}</button>

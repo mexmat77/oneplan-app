@@ -382,6 +382,8 @@
     "note": "Demo: portal connections are configured by the database admin."
   },
   "login": {
+    "showPw": "Show password",
+    "hidePw": "Hide password",
     "regCapL": "Spam protection",
     "regCapErr": "Wrong answer — check the sum",
     "regRate": "Request already sent. Try again in a minute.",
@@ -532,6 +534,9 @@
   "add": {
     "photoBusy": "Processing photo {done} of {total}…",
     "photoFail": "Could not add photos: {n}. Try other files or retake the photo.",
+    "photoLimit": "Up to {max} photos per listing. The first {added} were added, {skipped} more were not — this is a limit, not an error.",
+    "photoLimitFull": "The listing already has {max} photos — that is the maximum. Remove some to add new ones.",
+    "photoCount": "{n} of {max}",
     "badgeL": "Listing label",
     "badgeNone": "No label",
     "badgeHint": "“Reserved” and “Sold” are applied automatically from the listing status and override the manual label.",
@@ -559,7 +564,7 @@
     "floorsL": "Building floors",
     "flagsL": "Extras",
     "upT": "Drag photos here or click to choose",
-    "upS": "Batch upload, up to 20 photos · the first becomes the cover",
+    "upS": "Batch upload, up to 40 photos · the first becomes the cover",
     "cover": "Cover",
     "reorder": "Drag thumbnails to reorder — the first photo is the cover",
     "titleL": "Listing title",

@@ -59,6 +59,7 @@ const EMPTY: Form = {
 };
 
 const digits = (s: string) => s.replace(/\D/g, "");
+const MAX_PHOTOS = 40; // лимит фото в объявлении (22.10.2026: было 20; при превышении — понятное предупреждение, не «ошибка»)
 const fmtIn = (s: string) => { const d = digits(s).slice(0, 12); return d ? (+d).toLocaleString("ru-RU").replace(/ /g, " ") : ""; };
 
 function fromListing(o: Listing, lang: Lang): Form {
@@ -70,7 +71,7 @@ function fromListing(o: Listing, lang: Lang): Form {
     dep: o.deposit ? fmtIn(String(o.deposit)) : "", heat: o.heat.length ? o.heat.slice() : ["none"], bath: String(o.bath || 2), furn: o.furn ? "yes" : "no",
     balc: o.balcony, lift: o.lift, gas: o.gasline, site: o.inSite, vnj: o.vnj, cit: o.cit, credit: o.credit, takas: o.takas, own5: !!o.own5,
     badge: o.badge ?? "", usage: o.usage ?? "empty", commType: o.commType ?? "shop", kiraci: !!o.kiraci, devir: !!o.devir,
-    imar: o.imar ?? "konut", tapu: o.tapu === "hisseli" ? "hisseli" : "mustakil", feats: o.feats.slice(), photos: o.photos.slice(0, 20),
+    imar: o.imar ?? "konut", tapu: o.tapu === "hisseli" ? "hisseli" : "mustakil", feats: o.feats.slice(), photos: o.photos.slice(0, MAX_PHOTOS),
     price: fmtIn(String(o.price)), title: o.t[lang], desc: o.desc[lang],
     descs: Object.fromEntries((["RU", "EN", "TR"] as Lang[]).filter((l) => l !== lang && o.desc[l] && o.desc[l] !== o.desc[lang]).map((l) => [l, o.desc[l]])),
     titles: Object.fromEntries((["RU", "EN", "TR"] as Lang[]).filter((l) => l !== lang && o.t[l] && o.t[l] !== o.t[lang]).map((l) => [l, o.t[l]])),
@@ -261,8 +262,12 @@ export function AddForm() {
   const [photoBusy, setPhotoBusy] = useState<{ done: number; total: number } | null>(null);
   async function addFiles(files: FileList | null) {
     if (!files) return;
-    const list = Array.from(files).filter((x) => x.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(x.name)).slice(0, 40);
-    if (!list.length) return;
+    const all = Array.from(files).filter((x) => x.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(x.name));
+    if (!all.length) return;
+    const room = Math.max(0, MAX_PHOTOS - f.photos.length);
+    if (room === 0) { showToast(t.add.photoLimitFull.replace("{max}", String(MAX_PHOTOS))); return; }
+    const list = all.slice(0, room);
+    if (all.length > room) showToast(t.add.photoLimit.replace("{max}", String(MAX_PHOTOS)).replace("{added}", String(list.length)).replace("{skipped}", String(all.length - room)));
     setPhotoBusy({ done: 0, total: list.length });
     let failed = 0;
     for (let i = 0; i < list.length; i++) {
@@ -558,6 +563,7 @@ export function AddForm() {
             <IconCloudUpload size={28} className="mx-auto text-blue" />
             <div className="mt-[6px] text-[13.5px] font-bold text-ink">{t.add.upT}</div>
             <div className="mt-[3px] text-[12px] text-muted">{photoBusy ? t.add.photoBusy.replace("{done}", String(photoBusy.done)).replace("{total}", String(photoBusy.total)) : t.add.upS}</div>
+            {f.photos.length > 0 && !photoBusy && <div className={`mt-[6px] inline-block rounded-[8px] px-[8px] py-[2px] text-[11.5px] font-bold ${f.photos.length >= MAX_PHOTOS ? "bg-[#fdf5df] text-[#c98d00]" : "bg-bg-2 text-text-2"}`}>{t.add.photoCount.replace("{n}", String(f.photos.length)).replace("{max}", String(MAX_PHOTOS))}</div>}
           </div>
           <input ref={fileRef} type="file" accept="image/*" multiple id="ph-input" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
           {f.photos.length > 0 && (
