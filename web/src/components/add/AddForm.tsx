@@ -565,7 +565,10 @@ export function AddForm() {
             <div className="mt-[3px] text-[12px] text-muted">{photoBusy ? t.add.photoBusy.replace("{done}", String(photoBusy.done)).replace("{total}", String(photoBusy.total)) : t.add.upS}</div>
             {f.photos.length > 0 && !photoBusy && <div className={`mt-[6px] inline-block rounded-[8px] px-[8px] py-[2px] text-[11.5px] font-bold ${f.photos.length >= MAX_PHOTOS ? "bg-[#fdf5df] text-[#c98d00]" : "bg-bg-2 text-text-2"}`}>{t.add.photoCount.replace("{n}", String(f.photos.length)).replace("{max}", String(MAX_PHOTOS))}</div>}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple id="ph-input" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+          {/* accept с HEIC (22.10.2026, видео Ольги): с «image/*» iOS в окне выбора конвертирует каждый HEIC в JPEG ДО передачи
+              странице — при 26 снимках кнопка «Добавить» минутами серая, люди думают, что сломалось. Со списком HEIC/HEIF Safari
+              отдаёт оригиналы сразу, а сжатие до 1600 px (HEIC декодирует сам Safari) делаем мы с прогрессом «N из M». */}
+          <input ref={fileRef} type="file" accept="image/*,image/heic,image/heif,.heic,.heif" multiple id="ph-input" className="hidden" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
           {f.photos.length > 0 && (
             <>
               <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-[10px]">
