@@ -1155,6 +1155,9 @@
   (Node 22, pm2, nginx, certbot). Приложение — standalone-сборка в `/var/www/oneplan` (`node server.js` под pm2 «oneplan», env в
   `/var/www/oneplan/.env`), nginx → 127.0.0.1:3000 (`/etc/nginx/sites-available/oneplan`, body 30m, таймауты 600s), сертификат certbot.
   Деплой одной командой: `cd web && ./scripts/deploy.sh` (tsc + eslint → `next build` локально → rsync → pm2 restart).
+  SSH И ПЕРЕБОРЩИКИ (04.11.2026): боты перебирали пароли (111 попыток/час), sshd упирался в MaxStartups 10 и сбрасывал наши
+  подключения — «ssh: Operation timed out» при живом сайте. Лечение — `~/Desktop/AutoCRM/web/scripts/server-ssh-harden.sh`
+  (fail2ban, только ключи, MaxStartups 50:30:200); в своих ssh/rsync ставить `-o ConnectTimeout=10 -o ConnectionAttempts=12`.
   Прежний сервер 130.49.173.203 (ihc.ru, Россия; алиас `oneplan-old`) не использовать: API Anthropic оттуда отвечает 403
   «Request not allowed», сеть теряла пакеты 1500 байт. DNS-зона `one-plan.pro` живёт у ihc.ru (ns1/ns2.ihc.ru), `one-plan.pro` и `www`
   указывают на другой сервер с основным сайтом — трогать только запись `ai`.

@@ -1,7 +1,17 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "prototype", "url": "http://localhost:8765" },
-    { "name": "web", "url": "http://localhost:3000" }
+    {
+      "name": "prototype",
+      "url": "http://localhost:8765"
+    },
+    {
+      "name": "web",
+      "url": "http://localhost:3000"
+    },
+    {
+      "name": "autocrm-design",
+      "url": "http://localhost:8766"
+    }
   ]
 }
